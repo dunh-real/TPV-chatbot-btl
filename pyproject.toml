@@ -1,0 +1,30 @@
+[project]
+name = "chatbot-btl"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain-experimental>=0.4.2",
+    "transformers>=5.16.1",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "sentence-transformers>=6.0.1",
+    "qdrant-client>=1.19.0",
+    "ollama>=0.6.2",
+    "redis>=8.1.0",
+    "pypdfium2>=5.13.0",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.4",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+torchvision = { index = "pytorch" }
+torchaudio = { index = "pytorch" }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
