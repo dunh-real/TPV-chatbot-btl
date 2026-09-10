@@ -55,19 +55,34 @@ class ProcessFileInput():
     def __init__(self):
         pass
     
-    def process_file_upload(self, src_file, tenant_id, accessed_role_list):
+    def process_file_upload(self, src_file, tenant_id, accessed_role_list, document_id: str = None):
+        """
+        Process a PDF file: run OCR (returns markdown text), upload markdown to MinIO, then chunk and ingest to vector DB.
+
+        Returns: (markdown_text, processing_time_seconds, minio_object_name, presigned_get_url)
+        """
         first_time = time.time()
         
         db_client = _get_db_client()
         ocr_client = _get_ocr_client()
         chunking_client = _get_chunking_client()
         
-        # 1. input data (pdf) -> ocr model -> output data (md)
-        ocr_client.processing_data(src_file)
-        md_output = Path(PATH_OUTPUT_FILE) / (src_file.stem + ".md")
-        with open(md_output, "r", encoding = 'utf-8') as f:
-            markdown_doc = f.read()
-        
+        # 1. input data (pdf) -> ocr model -> output data (md) (returns markdown string now)
+        markdown_doc = ocr_client.processing_data(src_file)
+
+        # 1b. Upload markdown to MinIO so backend and other services can retrieve it
+        try:
+            from src.services.storage_service import upload_text, generate_presigned_get_url
+            # object path: ocr/{tenant_id}/{document_id or src_file.stem}.md
+            object_name = f"ocr/{tenant_id}/{document_id or src_file.stem}.md"
+            upload_res = upload_text(object_name, markdown_doc)
+            presigned_url = generate_presigned_get_url(object_name)
+        except Exception as e:
+            # Log but don't fail ingestion — continue with local text processing
+            object_name = None
+            presigned_url = None
+            print(f"[WARN] Không thể upload markdown lên MinIO: {e}")
+
         # 2. output data (md) -> chunking -> list chunks
         chunks = chunking_client.process_hybrid_splitting(markdown_doc, tenant_id, src_file, accessed_role_list)
         
@@ -77,5 +92,5 @@ class ProcessFileInput():
         
         end_time = time.time() - first_time
         
-        # return markdown text for backend server and time processing
-        return markdown_doc, end_time
+        # return markdown text for backend server and time processing, plus minio metadata
+        return markdown_doc, end_time, object_name, presigned_url

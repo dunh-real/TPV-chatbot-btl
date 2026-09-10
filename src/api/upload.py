@@ -22,13 +22,30 @@ def process_file_background(temp_path: Path, tenant_id: str, role_list: list, do
         
         from src.core.upload import ProcessFileInput
         processor = ProcessFileInput()
-        markdown_doc, processing_time = processor.process_file_upload(
+        result = processor.process_file_upload(
             src_file = temp_path,
             tenant_id = tenant_id,
             accessed_role_list = role_list,
+            document_id = document_id,
         )
-        
+
+        # result expected: markdown_doc, processing_time, minio_object, presigned_url
+        if isinstance(result, tuple):
+            markdown_doc = result[0]
+            processing_time = result[1]
+            minio_object = result[2] if len(result) > 2 else None
+            presigned_url = result[3] if len(result) > 3 else None
+        else:
+            markdown_doc = result
+            processing_time = None
+            minio_object = None
+            presigned_url = None
+
         print(f"[BG] Hoàn thành: {temp_path.name} trong {time.time() - start:.1f}s")
+        if minio_object:
+            print(f"[BG] Markdown uploaded to MinIO: {minio_object}")
+            if presigned_url:
+                print(f"[BG] Presigned URL: {presigned_url}")
     
     except Exception as e:
         print(f"[BG] Lỗi xử lý file {temp_path.name}: {e}")
