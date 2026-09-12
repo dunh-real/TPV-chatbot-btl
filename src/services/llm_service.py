@@ -1,4 +1,7 @@
-import ollama
+try:
+    import ollama
+except Exception:  # pragma: no cover - optional dependency for local runtime
+    ollama = None
 import json
 import torch
 import os
@@ -23,6 +26,9 @@ class OllamaChatLLM:
         }
     
     def invoke(self, messages: List[BaseMessage]):
+        if ollama is None:
+            return AIMessage(content = "Ollama package chưa được cài đặt. Vui lòng cài dependency trước khi sử dụng chatbot."), ""
+
         payload = []
         for m in messages:
             role = 'user'

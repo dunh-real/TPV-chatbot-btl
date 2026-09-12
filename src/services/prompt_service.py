@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Optional
 from langchain_core.messages import BaseMessage, AIMessage, SystemMessage, HumanMessage
 
 class PromptBuilder:
@@ -129,11 +129,19 @@ class PromptBuilder:
         return history_str
     
     # response format
-    def build_chat_messages(self, query: str, search_results: List[Any], chat_history: List[Any], reasoning: bool = False) -> List[Any]:
+    def build_chat_messages(self, query: str, search_results: List[Any], chat_history: List[Any], reasoning: bool = False, database_context: Optional[List[str]] = None) -> List[Any]:
         
         # 1. prepare the context
         context_str = self._format_context(search_results)
         history_str = self._format_history(chat_history)
+        
+        database_context_str = ""
+        if database_context:
+            formatted_db = "\n\n".join(
+                f"--- KẾT QUẢ MSSQL SỐ [{idx+1}] ---\n{entry}"
+                for idx, entry in enumerate(database_context)
+            )
+            database_context_str = f"\n=== BẮT ĐẦU NGỮ CẢNH TỪ CSDL (MSSQL) ===\n{formatted_db}\n=== KẾT THÚC NGỮ CẢNH TỪ CSDL ===\n"
         
         # 2. choose output instruction based on reasoning mode
         output_instruction = self.reasoning_instructions if reasoning else self.normal_instructions
@@ -147,6 +155,7 @@ class PromptBuilder:
             f"=== KẾT THÚC LỊCH SỬ ===\n"
             f"\n BẮT ĐẦU NGỮ CẢNH (CONTEXT) ===\n"
             f"{context_str}\n"
+            f"{database_context_str}\n"
             f"=== KẾT THÚC NGỮ CẢNH ===\n\n"
             f"{output_instruction}"
         )

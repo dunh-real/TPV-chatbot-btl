@@ -1,12 +1,20 @@
-import redis
+try:
+    import redis
+except Exception:  # pragma: no cover - optional dependency for local runtime
+    redis = None
+
 import json
-import ollama
+
+try:
+    import ollama
+except Exception:  # pragma: no cover - optional dependency for local runtime
+    ollama = None
 
 NAME_LLM_MODEL = "qwen2.5:latest"
 
 class RedisChatMemory:
     def __init__(self, host = 'localhost', port = 6379, db = 0, password = None, max_message = 40):
-        self.redis_client = redis.Redis(
+        self.redis_client = None if redis is None else redis.Redis(
             host = host,
             port = port,
             db = db,
@@ -22,6 +30,9 @@ class RedisChatMemory:
         return f"chat_history:{tenant_id}:{employee_id}"
     
     def add_message(self, tenant_id, employee_id, role, content):
+        if self.redis_client is None:
+            return
+
         key = self._generate_key(tenant_id, employee_id)
         message = json.dumps({"role": role, "content": content}, ensure_ascii = False)
         
@@ -31,12 +42,18 @@ class RedisChatMemory:
             self.redis_client.ltrim(key, -self.max_message, -1)
     
     def get_history(self, tenant_id, employee_id, limit = 2):
+        if self.redis_client is None:
+            return []
+
         key = self._generate_key(tenant_id, employee_id)
         raw_history = self.redis_client.lrange(key, -limit, -1)
         
         return [json.loads(msg) for msg in raw_history]
     
     def clear_history(self, tenant_id, employee_id):
+        if self.redis_client is None:
+            return
+
         key = self._generate_key(tenant_id, employee_id)
         self.redis_client.delete(key)
     
@@ -82,6 +99,9 @@ class RedisChatMemory:
         KẾT QUẢ ĐỘC LẬP:
         """
         
+        if ollama is None:
+            return user_query
+
         response = ollama.chat(
             model = NAME_LLM_MODEL,
             messages = [{'role': 'user', 'content': context_prompt}],

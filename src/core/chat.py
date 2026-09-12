@@ -7,10 +7,13 @@ logger = logging.getLogger("uvicorn.error")
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from types import SimpleNamespace
+
 from src.services.llm_service import OllamaChatLLM
 from src.services.rerank_service import RerankerService
 from src.services.prompt_service import PromptBuilder
 from src.services.qdrant_service import VectorStoreService
+from src.services.mssql_retrieval_service import MSSQLRetrievalService
 from src.services.memory_service import RedisChatMemory
 
 """
@@ -47,6 +50,7 @@ rerank_lient = RerankerService()
 prompt_client = PromptBuilder()
 memory_client = RedisChatMemory()
 llm_client = OllamaChatLLM()
+sql_retriever = MSSQLRetrievalService()
 
 class ChatSession():
     def __init__(self):
@@ -83,14 +87,35 @@ class ChatSession():
         logger.info("[CHAT] Step 3: Reranking...")
         top_docs = rerank_lient.rerank(query, search_results, top_k = 5)
         logger.info(f"[CHAT] Step 3: Done. Top {len(top_docs)} docs.")
+
+        # 4. retrieve trusted data from MSSQL as a second source
+        logger.info("[CHAT] Step 4: Querying SQL database for structured data...")
+        sql_context = sql_retriever.retrieve_context(query)
+        sql_context_text = []
+        if sql_context:
+            for item in sql_context:
+                sql_context_text.append(item.get("content", ""))
+        logger.info(f"[CHAT] Step 4: MSSQL context returned {len(sql_context_text)} rows.")
+
+        if sql_context_text:
+            for raw_context in sql_context_text:
+                top_docs.append(
+                    SimpleNamespace(
+                        payload = {
+                            "content": raw_context,
+                            "src_file": "mssql_database_result",
+                        }
+                    )
+                )
         
-        # 4. llm generate
-        logger.info("[CHAT] Step 4: Building prompt and calling Ollama LLM...")
+        # 5. llm generate
+        logger.info("[CHAT] Step 5: Building prompt and calling Ollama LLM...")
         messages = prompt_client.build_chat_messages(
             query = query,
             search_results = top_docs,
             chat_history = chat_history,
-            reasoning = False
+            reasoning = False,
+            database_context = sql_context_text,
         )
         
         response_obj, citation = llm_client.invoke(messages)
