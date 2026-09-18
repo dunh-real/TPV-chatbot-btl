@@ -1,0 +1,183 @@
+"""State dùng chung cho các workflow LangGraph."""
+
+from __future__ import annotations
+
+from typing import Any, TypedDict
+
+from app.rag.retrieval import RetrievalResult, RetrievedChunk
+
+
+class Citation(TypedDict):
+    """Một nguồn được đánh số trong câu trả lời."""
+
+    id: int
+    doc_id: str
+    doc_title: str
+    section: str
+    source: str
+    page: int | None
+    snippet: str
+    score: float
+
+
+class QAState(TypedDict, total=False):
+    """Trạng thái của workflow 1: hỏi đáp / tra cứu (RAG)."""
+
+    # --- đầu vào ---
+    question: str
+    conversation_id: str
+    history: list[dict[str, str]]
+    doc_ids: list[str]
+    sources: list[str]
+    doc_types: list[str]
+    top_n: int
+    use_rerank: bool
+
+    # --- trung gian ---
+    standalone_query: str
+    query_variants: list[str]
+    retrieval: RetrievalResult
+    chunks: list[RetrievedChunk]
+    context: str
+    citations: list[Citation]
+
+    # --- đầu ra ---
+    answer: str
+    used_citations: list[Citation]
+    trace: dict[str, Any]
+    error: str
+
+
+class DocumentState(TypedDict, total=False):
+    """Trạng thái của workflow 2: xử lý văn bản tự động."""
+
+    # --- đầu vào ---
+    file_path: str
+    file_name: str
+    document_type: str
+    noi_gui: str
+    departments: list[dict[str, str]]     # danh mục lấy từ CSDL, không để LLM tự nghĩ
+
+    # --- trung gian ---
+    structure: Any                        # app.documents.parser.DocumentStructure
+    components: Any                       # app.documents.structure.DocumentComponents
+    rule_result: Any                      # app.documents.rules.RuleCheckResult
+    llm_findings: list[dict[str, Any]]
+    classification: dict[str, Any] | None
+    summary: str
+    summary_refs: list[dict[str, Any]]      # nguồn cho từng ý trong tóm tắt
+    all_refs: list[dict[str, Any]]          # toàn bộ nguồn, dãy số dùng chung
+    deadline: str | None
+    tasks: list[dict[str, Any]]
+
+    # --- đầu ra ---
+    result: dict[str, Any]
+    trace: dict[str, Any]
+    error: str
+
+
+class DraftState(TypedDict, total=False):
+    """Trạng thái của workflow 3: soạn văn bản theo mẫu."""
+
+    # --- đầu vào ---
+    request: str
+    ma_don_vi: str
+    history: list[dict[str, str]]   # để hiểu "vẫn đơn vị đó", "cũng kỳ đó"
+    inputs: dict[str, Any]          # người ký, chức vụ, số ký hiệu... do người dùng nhập
+
+    # --- trung gian ---
+    params: dict[str, Any]
+    template: dict[str, Any]
+    template_choice: dict[str, Any]
+    data: dict[str, Any]            # số liệu từ SQL - nguồn sự thật duy nhất
+    data_notes: list[str]
+    regulations: list[dict[str, Any]]
+    sections: list[dict[str, Any]]
+    validation: dict[str, Any]
+    retry_count: int
+
+    # --- đầu ra ---
+    output_path: str
+    registered_as: str
+    assumptions: list[str]
+    missing_input: list[str]
+    error: str
+
+
+class AggregateState(TypedDict, total=False):
+    """Trạng thái của workflow 4: tổng hợp báo cáo."""
+
+    # --- đầu vào ---
+    request: str
+    history: list[dict[str, str]]
+    inputs: dict[str, Any]
+
+    # --- trung gian ---
+    params: dict[str, Any]
+    data: dict[str, Any]              # kết quả các data tool - nguồn số duy nhất
+    reconciliation: list[dict[str, Any]]
+    has_discrepancy: bool
+    charts: dict[str, bytes]          # PNG do code vẽ
+    sections: list[dict[str, Any]]
+    validation: dict[str, Any]
+
+    # --- đầu ra ---
+    output_path: str
+    so_ky_hieu: str
+    registered_as: str
+    assumptions: list[str]
+    error: str
+
+
+class AgentState(TypedDict, total=False):
+    """Trạng thái của agent tổng: định tuyến rồi giao cho đúng workflow.
+
+    Giữ đầu vào của cả năm workflow trong một state duy nhất vì người dùng chỉ gõ
+    một câu - hệ thống phải tự quyết định câu đó thuộc nghiệp vụ nào.
+    """
+
+    # --- đầu vào ---
+    request: str
+    conversation_id: str
+    history: list[dict[str, str]]
+    file_id: str                      # có file đính kèm thì mới đi được nhánh document
+    ma_don_vi: str
+    inputs: dict[str, Any]            # người ký, số ký hiệu... cho nhánh soạn văn bản
+
+    # --- định tuyến ---
+    intent: str
+    routing: dict[str, Any]
+
+    # --- đầu ra ---
+    answer: str                       # câu trả lời cho người dùng
+    citations: list[Citation]         # chỉ nhánh hỏi đáp mới có
+    refs: list[dict[str, Any]]        # nguồn cho câu trả lời của các nhánh còn lại
+    result: dict[str, Any]            # kết quả thô của workflow con
+    artifacts: list[dict[str, Any]]   # file sinh ra, kèm đường dẫn tải về
+    missing_input: list[str]
+    trace: dict[str, Any]
+    error: str
+
+
+class PresentationState(TypedDict, total=False):
+    """Trạng thái của workflow 5: tạo bộ slide."""
+
+    # --- đầu vào ---
+    request: str
+    history: list[dict[str, str]]
+    inputs: dict[str, Any]
+
+    # --- trung gian (tái dùng phần lấy số liệu và biểu đồ của workflow 4) ---
+    params: dict[str, Any]
+    data: dict[str, Any]
+    charts: dict[str, bytes]
+    outline: dict[str, Any]           # JSON trung gian do LLM sinh, đã lọc
+    slides: list[dict[str, Any]]
+    validation: dict[str, Any]
+
+    # --- đầu ra ---
+    output_path: str
+    slide_count: int
+    removed_bullets: int
+    assumptions: list[str]
+    error: str

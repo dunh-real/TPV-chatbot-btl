@@ -1,0 +1,66 @@
+[project]
+name = "chatbot-btl-backend"
+version = "0.1.0"
+description = "TPV chatbot backend - multi-agent (LangGraph) orchestrator with RAG, structured data, document drafting, report and presentation workflows"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.52.4",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "python-multipart>=0.0.20",
+    # AI orchestration
+    "langgraph>=0.2.60",
+    "langchain-core>=0.3.0",
+    # LLM / embeddings / rerank
+    "ollama>=0.6.2",
+    "sentence-transformers>=6.0.1",
+    "transformers>=5.16.1",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    # Vector DB
+    "qdrant-client>=1.19.0",
+    # Business database (SQL Server)
+    "sqlalchemy>=2.0.36",
+    "pyodbc>=5.3.0",
+    # Cache / conversation memory
+    "redis>=8.1.0",
+    # Object storage
+    "minio>=7.2.20",
+    # Document / presentation generation
+    "python-pptx>=1.0.2",
+    "pypdfium2>=5.13.0",
+    "sentencepiece>=0.2.2",
+    "pymupdf4llm>=1.28.2",
+    "markitdown[docx,pptx,xlsx]>=0.1.7",
+    "pillow>=12.3.0",
+    "aiosqlite>=0.22.1",
+    "aioodbc>=0.5.0",
+    "python-docx>=1.2.0",
+    "matplotlib>=3.11.2",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+torchvision = { index = "pytorch" }
+torchaudio = { index = "pytorch" }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "slow: cần nạp model lên GPU (embedding + reranker)",
+]

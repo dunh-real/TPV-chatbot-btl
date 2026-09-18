@@ -1,0 +1,111 @@
+# Bộ tiêu chí thể thức văn bản hành chính, lấy Nghị định 30/2020/NĐ-CP làm nền.
+#
+# CẢNH BÁO: các con số dưới đây cần đối chiếu lại với văn bản gốc trước khi dùng
+# chính thức. Chúng để ở đây chính là để sửa được mà không phải đụng vào code.
+#
+# severity: error   -> sai thể thức, phải sửa
+#           warning -> nên xem lại
+#           info    -> chỉ ghi nhận
+
+meta:
+  name: "Nghị định 30/2020/NĐ-CP"
+  version: "2020-03-05"
+
+format:
+  font:
+    allowed: ["Times New Roman"]
+    severity: error
+    message: "Phông chữ phải là Times New Roman (bộ mã Unicode TCVN 6909:2001)"
+
+  size_pt:
+    min: 13
+    max: 14
+    severity: error
+    message: "Cỡ chữ phần nội dung phải từ 13 đến 14"
+    # Bỏ qua tiêu đề: tên loại văn bản và quốc hiệu được phép cỡ khác.
+    skip_components: [quoc_hieu, tieu_ngu, ten_loai, chu_ky]
+
+  page_mm:
+    width: [200, 220]        # khổ A4: 210mm
+    height: [290, 305]       # 297mm
+    severity: warning
+    message: "Văn bản phải trình bày trên khổ giấy A4"
+
+  margin_mm:
+    top: [20, 25]
+    bottom: [20, 25]
+    left: [30, 35]
+    right: [15, 20]
+    severity: warning
+    message: "Lề trang chưa đúng quy định"
+    # Word lưu lề theo inch rồi quy sang mm, nên lề "1.5cm" đọc về là 14.993mm.
+    # Không có dung sai thì mọi văn bản đặt lề đúng đều bị báo sai.
+    tolerance_mm: 0.5
+    # Với PDF, lề chỉ đo được từ vùng chữ thực tế nên lề dưới/phải không đáng tin.
+    measured_only: [top, left]
+
+  # --- các tiêu chí dưới đây chỉ áp cho phần NỘI DUNG ---------------------- #
+  # Tiêu đề mục, quốc hiệu, chữ ký có quy tắc riêng nên được loại ra.
+  alignment:
+    body: JUSTIFY
+    severity: warning
+    message: "Phần nội dung phải canh đều hai bên (Justified)"
+
+  line_spacing:
+    # "dòng đơn HOẶC tối thiểu 1.15" - nên 1.0 hợp lệ, 1.15 trở lên hợp lệ,
+    # còn khoảng hở giữa hai mốc thì không.
+    single: 1.0
+    min: 1.15
+    severity: warning
+    message: "Dòng cách dòng phải là dòng đơn hoặc tối thiểu 1.15"
+
+  paragraph_spacing_pt:
+    min: 3
+    max: 6
+    severity: warning
+    message: "Khoảng cách giữa các đoạn phải từ 3 đến 6pt"
+
+# Định dạng riêng của từng thành phần thể thức. Khác `required_components` ở chỗ
+# phần kia chỉ hỏi "có hay không", phần này hỏi "trình bày đã đúng chưa".
+component_format:
+  quoc_hieu:
+    label: "Quốc hiệu"
+    uppercase: true
+    bold: true
+    size_pt: [12, 13]
+    severity: warning
+  tieu_ngu:
+    label: "Tiêu ngữ"
+    uppercase: false
+    bold: true
+    size_pt: [13, 14]
+    alignment: CENTER
+    severity: warning
+
+required_components:
+  - id: quoc_hieu
+    label: "Quốc hiệu"
+    severity: error
+  - id: tieu_ngu
+    label: "Tiêu ngữ (Độc lập - Tự do - Hạnh phúc)"
+    severity: error
+  - id: so_ky_hieu
+    label: "Số, ký hiệu văn bản"
+    severity: error
+    validate: so_ky_hieu
+  - id: dia_danh_ngay
+    label: "Địa danh và ngày tháng năm ban hành"
+    severity: error
+    validate: ngay_ban_hanh
+  - id: ten_loai
+    label: "Tên loại văn bản"
+    severity: warning
+  - id: trich_yeu
+    label: "Trích yếu nội dung (V/v ...)"
+    severity: warning
+  - id: noi_nhan
+    label: "Nơi nhận"
+    severity: warning
+  - id: chu_ky
+    label: "Quyền hạn, chức vụ người ký"
+    severity: error
