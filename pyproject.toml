@@ -19,6 +19,7 @@ dependencies = [
     "uvicorn>=0.52.4",
     "pyodbc>=5.3.0",
     "minio>=7.2.20",
+    "python-docx>=1.2.0",
 ]
 
 [tool.uv.sources]
