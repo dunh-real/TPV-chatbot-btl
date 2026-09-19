@@ -47,16 +47,19 @@ def period_start(ky: str) -> datetime:
     return datetime(int(ky[:4]), int(ky[5:]), 1)
 
 
+def _chua_xoa_tai(model: Any, moment: datetime) -> Any:
+    """Dòng chưa bị xoá mềm tính tới `moment`.
+
+    Tách riêng vì mọi phép đếm đều cần đúng mệnh đề này: hồ sơ sửa lại trong ERP
+    để lại bản cũ với `IsDeleted=1`, quên lọc là một người bị đếm thành nhiều.
+    """
+    # `== False` chứ không phải `.is_(False)`: cột là BIT, SQL Server cần "= 0".
+    return (model.is_deleted == False) | (model.deletion_time >= moment)  # noqa: E712
+
+
 def _alive_at(model: Any, moment: datetime) -> Any:
     """Dòng đã tồn tại và chưa bị xoá mềm tính tới `moment`."""
-    return (
-        (model.creation_time < moment)
-        # `== False` chứ không phải `.is_(False)`: cột là BIT, SQL Server cần "= 0".
-        & (
-            (model.is_deleted == False)  # noqa: E712
-            | (model.deletion_time >= moment)
-        )
-    )
+    return (model.creation_time < moment) & _chua_xoa_tai(model, moment)
 
 
 def _thuoc_don_vi(model: Any, dept_ids: list[int], *, gom_chua_gan: bool) -> Any:
@@ -227,10 +230,7 @@ class ErpNhanSuRepository:
                 EmployeeProfile.resignation_date.is_(None),
                 EmployeeProfile.resignation_date >= moment,
             )
-            & (
-                (EmployeeProfile.is_deleted == False)  # noqa: E712
-                | (EmployeeProfile.deletion_time >= moment)
-            )
+            & _chua_xoa_tai(EmployeeProfile, moment)
         )
 
     async def headcount_by_dept(
@@ -271,13 +271,21 @@ class ErpNhanSuRepository:
         gom_chua_gan: bool = False,
         cot_nhom: Any | None = None,
     ) -> dict[str, dict[int | None, int]]:
-        """Tuyển mới / nghỉ việc trong khoảng [start, end), gộp theo `cot_nhom`."""
+        """Tuyển mới / nghỉ việc trong khoảng [start, end), gộp theo `cot_nhom`.
+
+        Bản ghi đã xoá mềm tính tới `end` bị loại, cùng mốc với `headcount_by_dept`
+        chốt kỳ. Thiếu bộ lọc này thì một hồ sơ được sửa vài lần trong tháng - ERP
+        giữ lại từng bản cũ với `IsDeleted=1` - được đếm thành bấy nhiêu lần tuyển
+        mới: tháng 9/2026 ra 4 người tuyển mới trong khi chỉ có 2, và quân số tăng
+        2 không còn khớp với tuyển mới trừ nghỉ việc.
+        """
         nhom = EmployeeProfile.work_department_id if cot_nhom is None else cot_nhom
 
         async def count_by_dept(column) -> dict[int | None, int]:
             stmt = (
                 select(nhom, func.count())
-                .where(column >= start, column < end)
+                .where(column >= start, column < end,
+                       _chua_xoa_tai(EmployeeProfile, end))
                 .group_by(nhom)
             )
             if dept_ids is not None:
