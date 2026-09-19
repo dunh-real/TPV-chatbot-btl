@@ -455,7 +455,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     params = state["params"]
     suffix = params.get("ky") or date.today().strftime("%Y%m%d")
     stem = f"{template['ma_template']}_{state['ma_don_vi']}_{suffix}"
-    stem = storage.tenant_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", stem))
+    stem = storage.versioned_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", stem))
     output_path = Path(cfg.output_dir) / f"{stem}.docx"
 
     import anyio

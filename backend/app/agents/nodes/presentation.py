@@ -450,7 +450,7 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
                     subtitle=state["outline"].get("subtitle") or period,
                     slides=specs)
 
-    stem = storage.tenant_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", f"SLIDE_{params['ky']}"))
+    stem = storage.versioned_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", f"SLIDE_{params['ky']}"))
     output_path = Path(cfg.output_dir) / f"{stem}.pptx"
     path = await anyio.to_thread.run_sync(lambda: build_pptx(deck, output_path))
 

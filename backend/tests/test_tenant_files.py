@@ -73,3 +73,34 @@ def test_bao_loi_khong_lo_ra_file_co_that(output_dir):
             storage.resolve_output("BC_TONGHOP_2026-08__t64.docx")
     assert "Không tìm thấy file" in str(co_that.value)
     assert "Không tìm thấy file" in str(khong_co.value)
+
+
+# --------------------------------------------------------------------------- #
+# Mỗi lần tạo là một file mới
+# --------------------------------------------------------------------------- #
+def test_tao_lai_ra_ten_file_khac(output_dir):
+    """Tên cố định thì tạo lần hai ghi đè lần một, và trình duyệt lưu bản mới
+    thành "... (1).pptx" - người dùng mở lại bản đầu rồi kết luận chưa sửa gì."""
+    import time
+
+    with use_principal(Principal(tenant_id=64)):
+        mot = storage.versioned_stem("SLIDE_2026-08")
+        time.sleep(1.05)
+        hai = storage.versioned_stem("SLIDE_2026-08")
+
+    assert mot != hai
+    assert mot.startswith("SLIDE_2026-08__t64__")
+
+
+def test_ten_co_moc_thoi_gian_van_doc_duoc_tenant(output_dir):
+    """Dấu tenant không còn đứng cuối tên, phép kiểm chéo thuê bao phải vẫn đúng."""
+    with use_principal(Principal(tenant_id=64)):
+        ten = storage.versioned_stem("BC_TONGHOP_2026-08") + ".docx"
+    (output_dir / ten).write_bytes(b"x")
+
+    assert storage.tenant_of(ten) == 64
+    with use_principal(Principal(tenant_id=64)):
+        assert storage.resolve_output(ten).path.is_file()
+    with use_principal(Principal(tenant_id=63)):
+        with pytest.raises(storage.StorageError):
+            storage.resolve_output(ten)

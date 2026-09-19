@@ -727,7 +727,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
         ],
     )
 
-    stem = storage.tenant_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", f"BC_TONGHOP_{params['ky']}"))
+    stem = storage.versioned_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", f"BC_TONGHOP_{params['ky']}"))
     output_path = Path(cfg.output_dir) / f"{stem}.docx"
     path = await anyio.to_thread.run_sync(
         lambda: build_docx(payload, output_path, template_file or None)

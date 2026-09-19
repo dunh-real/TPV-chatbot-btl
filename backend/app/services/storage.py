@@ -96,13 +96,29 @@ def safe_name(filename: str) -> str:
 # một đường dẫn, cùng một cái tên đoán được - và người tải sau nhận nguyên bộ số
 # liệu của người trước. Thư mục output là kho dùng chung, nên chỗ tách thuê bao
 # phải nằm ngay ở tên file.
-_TENANT_SUFFIX_RE = re.compile(r"__t(\d+)$")
+# Dấu tenant không còn đứng cuối (sau nó còn mốc thời gian), nên tìm ở bất kỳ đâu.
+_TENANT_SUFFIX_RE = re.compile(r"__t(\d+)(?:__|$)")
 
 
 def tenant_stem(stem: str) -> str:
     """Gắn tenant của request hiện tại vào phần tên file (chưa có đuôi)."""
     tenant = current_tenant_id()
     return stem if tenant is None else f"{stem}__t{tenant}"
+
+
+def versioned_stem(stem: str) -> str:
+    """Tên file đầu ra: kèm tenant VÀ mốc thời gian, nên mỗi lần tạo là một file mới.
+
+    Tên cố định theo kỳ ("SLIDE_2026-08__t64.pptx") nghe thì gọn, nhưng tạo lại
+    lần hai là ghi đè lần một trên cùng một URL và cùng một tên. Hệ quả ở phía
+    người dùng: trình duyệt đã có file trùng tên trong thư mục tải về nên lưu bản
+    mới thành "... (1).pptx", còn người dùng mở lại bản đầu và kết luận hệ thống
+    chưa sửa gì. Chuyện này đã xảy ra ba lần trong một buổi.
+
+    Đổi lại, thư mục output dồn file theo thời gian và cần dọn định kỳ. Đó là cái
+    giá rẻ hơn nhiều so với việc người dùng đọc nhầm một bản báo cáo cũ.
+    """
+    return f"{tenant_stem(stem)}__{datetime.now():%Y%m%d-%H%M%S}"
 
 
 def tenant_of(filename: str) -> int | None:

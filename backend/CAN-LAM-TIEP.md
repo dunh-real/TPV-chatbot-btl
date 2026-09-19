@@ -154,6 +154,12 @@ danh sách nhân sự là dữ liệu cá nhân, cân nhắc ai được xem tr�
   (`app/core/context.py`) rồi đặt cờ này thành `false`. Không phải sửa gì ở tầng
   truy vấn.
 
+- **Tên file đầu ra nay kèm mốc thời gian**: `SLIDE_2026-08__t64__20260919-175015.pptx`.
+  Mỗi lần tạo là một file mới, nên thư mục `backend/data/output/` sẽ dồn lại và
+  cần dọn định kỳ. Đổi lại, trình duyệt không bao giờ còn lưu bản mới thành
+  "... (1).pptx" rồi để người dùng mở nhầm bản cũ - lỗi đã xảy ra ba lần trong
+  một buổi và mỗi lần đều mất khá lâu mới truy ra vì file trên máy chủ luôn đúng.
+
 - **File đầu ra cũ không mang dấu tenant thì không tải được nữa** (cố ý — chúng
   chứa số liệu của thuê bao không xác định). Xoá `backend/data/output/*` không có
   hậu tố `__t<N>` là được.
