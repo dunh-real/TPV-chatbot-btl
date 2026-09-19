@@ -184,5 +184,17 @@ def shift(texts: list[str], refs: list[Reference], offset: int) -> tuple[list[st
 
 
 def strip_markers(text: str) -> str:
-    """Bỏ marker khỏi câu chữ sẽ đổ vào DOCX/PPTX - văn bản hành chính không có "[1]"."""
-    return re.sub(r"\s*\[\d{1,2}\]", "", text or "").strip()
+    """Bỏ marker khỏi câu chữ sẽ đổ vào DOCX/PPTX - văn bản hành chính không có "[1]".
+
+    Gỡ xong phải dọn dấu câu còn lại. Model hay viết "5 chủng loại [1], [2]." và
+    nếu chỉ xoá marker thì trong file trình ký còn nguyên "5 chủng loại ,,." -
+    ba lần chạy thật đều dính, có lần ra tận sáu dấu phẩy liền nhau.
+    """
+    text = re.sub(r"\s*\[\d{1,2}\]", "", text or "")
+    # ", ," hoặc ",," (do nhiều marker cách nhau bằng dấu phẩy) -> một dấu phẩy.
+    text = re.sub(r"(?:\s*,)+(\s*,)", r"\1", text)
+    # Dấu phẩy đứng ngay trước dấu kết câu -> bỏ hẳn.
+    text = re.sub(r"\s*,\s*(?=[.;:!?])", "", text)
+    # Khoảng trắng thừa trước dấu câu, sinh ra khi marker nằm giữa chữ và dấu.
+    text = re.sub(r"\s+([.,;:!?])", r"\1", text)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()

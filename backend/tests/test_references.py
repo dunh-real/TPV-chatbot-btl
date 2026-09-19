@@ -135,3 +135,22 @@ def test_khong_co_marker_thi_khong_doi_gi():
     texts, dung = R.renumber(["không trích dẫn gì"], refs)
 
     assert texts == ["không trích dẫn gì"] and dung == []
+
+
+# --------------------------------------------------------------------------- #
+# Gỡ marker rồi phải dọn dấu câu
+#
+# Model viết "5 chủng loại [1], [2]." - xoá mỗi marker thì trong văn bản trình ký
+# còn "5 chủng loại ,,.". Ba lần chạy thật đều dính, có lần sáu dấu phẩy liền nhau.
+# --------------------------------------------------------------------------- #
+def test_go_marker_khong_de_lai_dau_phay_thua():
+    assert R.strip_markers("Tổng 21 trang thiết bị thuộc 5 chủng loại [1], [2].") == \
+        "Tổng 21 trang thiết bị thuộc 5 chủng loại."
+    assert R.strip_markers("Quân số 3 người [1],,,,,, đơn vị kiến nghị rà soát.") == \
+        "Quân số 3 người, đơn vị kiến nghị rà soát."
+    assert R.strip_markers("Kiểm kê ngày 31/8/2026 [1] .") == "Kiểm kê ngày 31/8/2026."
+
+
+def test_dau_phay_that_van_duoc_giu():
+    assert R.strip_markers("Quân số 3 người, trang bị 21 chiếc.") == \
+        "Quân số 3 người, trang bị 21 chiếc."

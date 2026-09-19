@@ -6,8 +6,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.schemas.common import ReferenceModel
-
 from app.schemas.reports import ValidationModel
 
 
@@ -19,43 +17,25 @@ class PresentationRequest(BaseModel):
     )
 
 
-class MetricBoxModel(BaseModel):
-    label: str
-    value: str
-    note: str = ""
-
-
-class SlideModel(BaseModel):
-    kind: str = Field(description="title | summary | bullet | chart | table")
-    title: str = ""
-    subtitle: str = ""
-    focus: str = ""
-    bullets: list[str] = Field(
-        default_factory=list, description="Bản sạch - đúng thứ đã lên slide"
-    )
-    bullets_cited: list[str] = Field(
-        default_factory=list, description="Cùng nội dung nhưng còn marker [n]"
-    )
-    refs: list[ReferenceModel] = Field(default_factory=list)
-    metrics: list[MetricBoxModel] = Field(default_factory=list)
-    chart_key: str | None = None
-    data_key: str | None = None
-    notes: str = ""
-
-
 class PresentationResponse(BaseModel):
     request: str
     params: dict[str, Any] = Field(default_factory=dict)
-    outline: dict[str, Any] = Field(
-        default_factory=dict, description="JSON trung gian do LLM sinh, đã lọc"
+    brief: str = Field(
+        default="",
+        description="Bản tóm tắt số liệu do hệ thống dựng và gửi cho Presenton. "
+                    "Đây là toàn bộ thứ bên kia nhìn thấy - đối chiếu ở đây để biết "
+                    "một con số lạ trên slide là do số liệu sai hay do bên kia viết thêm.",
     )
-    slides: list[SlideModel] = Field(default_factory=list)
+    engine: str = Field(
+        default="", description="presenton | local (đường lùi hệ thống tự dựng)"
+    )
     validation: ValidationModel = Field(default_factory=ValidationModel)
     output_path: str = ""
     download_url: str = ""
-    slide_count: int = 0
-    removed_bullets: int = Field(
-        default=0, description="Số gạch đầu dòng bị loại vì có con số không truy được"
+    edit_url: str = Field(
+        default="", description="Đường dẫn sửa bộ slide ngay trong giao diện Presenton"
     )
+    slide_count: int = Field(default=0, description="Đếm từ chính file .pptx")
+    elapsed_seconds: float = 0.0
     assumptions: list[str] = Field(default_factory=list)
     error: str = ""

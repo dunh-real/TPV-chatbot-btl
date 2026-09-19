@@ -17,6 +17,7 @@ def date_to_dt(y, m, d):
     return datetime(y, m, d)
 from app.documents.charts import compare_bar_chart, status_bar_chart
 from app.documents.extract_figures import extract_figures, reconcile_file
+from app.db.models import VanBan
 from app.tools.data import (
     Metric,
     ToolError,
@@ -30,7 +31,7 @@ from app.tools.data import (
 @pytest.fixture
 async def app_session():
     """CSDL app: chỉ còn sổ văn bản (dùng để biết đơn vị nào đã gửi báo cáo)."""
-    from app.db.models import Base, VanBan
+    from app.db.models import Base
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
@@ -151,6 +152,44 @@ async def test_biet_don_vi_nao_chua_gui_bao_cao(session):
 
     assert status["units_reported"] == 1
     assert [m["ma_don_vi"] for m in status["missing"]] == ["00001"]
+
+
+async def test_bao_cao_ky_thang_8_ky_ngay_thang_9_van_tinh_dung_ky(session, app_session):
+    """Lỗi làm mục "tình hình gửi báo cáo" luôn in 0 đơn vị đã gửi.
+
+    Báo cáo kỳ tháng 8 hầu như luôn được ký vào tháng 9. Lấy `ngay_van_ban` làm
+    mốc kỳ thì nó rơi ra ngoài khoảng tháng 8 và đơn vị bị coi là chưa gửi -
+    trong khi sổ văn bản đang có đúng bản báo cáo đó.
+    """
+    app_session.add(VanBan(ma_van_ban="11/BC-00001", ten_van_ban="Báo cáo Đơn vị 1",
+                           loai_van_ban="bao_cao_di", ma_don_vi="00001", ky="2026-08",
+                           noi_gui="Đơn vị 1", noi_nhan="Ban Giám đốc",
+                           ngay_van_ban=date(2026, 9, 19), file_path="", dang_file="docx"))
+    await app_session.commit()
+
+    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+
+    assert status["units_reported"] == 2
+    assert status["missing"] == []
+
+
+async def test_bao_cao_ky_khac_khong_bi_tinh_nham(session, app_session):
+    app_session.add(VanBan(ma_van_ban="12/BC-00001", ten_van_ban="Báo cáo Đơn vị 1",
+                           loai_van_ban="bao_cao_di", ma_don_vi="00001", ky="2026-07",
+                           noi_gui="Đơn vị 1", noi_nhan="Ban Giám đốc",
+                           ngay_van_ban=date(2026, 8, 5), file_path="", dang_file="docx"))
+    await app_session.commit()
+
+    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+
+    # Ngày văn bản nằm trong tháng 8 nhưng KỲ là tháng 7 - không phải báo cáo kỳ này.
+    assert [m["ma_don_vi"] for m in status["missing"]] == ["00001"]
+
+
+async def test_ban_ghi_cu_khong_co_ky_van_do_duoc_theo_ten(session):
+    """Sổ văn bản cũ không có mã đơn vị lẫn kỳ; đổi lược đồ không được làm nó rỗng."""
+    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+    assert [r["ma_don_vi"] for r in status["reported"]] == ["00002"]
 
 
 async def test_chan_tham_so_va_ten_tool_la(session):
@@ -580,3 +619,27 @@ def test_muc_trang_thiet_bi_co_bang_chi_tiet():
     assert muc["table"]["columns"] == ["Đơn vị", "Trang bị", "Số lượng", "Tình trạng"]
     assert len(muc["table"]["rows"]) == 2
     assert muc["table"]["rows"][0][:2] == ["Phòng IT", "Máy in"]
+
+
+# --------------------------------------------------------------------------- #
+# Đọc số từ file báo cáo: mốc thời gian không phải số liệu
+# --------------------------------------------------------------------------- #
+def test_trich_yeu_co_thang_khong_bi_doc_thanh_quan_so():
+    """Chênh lệch giả đã lọt vào một bản tổng hợp thật.
+
+    Trích yếu "V/v báo cáo quân số và trang thiết bị tháng 8/2026" khớp mẫu quân
+    số và trả về 8. Đơn vị báo cáo quân số 3, kiểm kê cũng 3, nhưng bản tổng hợp
+    vẫn in mục "ĐỐI CHIẾU SỐ LIỆU: báo cáo ghi 8, kiểm kê 3".
+    """
+    text = ("V/v báo cáo quân số và trang thiết bị tháng 8/2026\n"
+            "I. TÌNH HÌNH QUÂN SỐ\nQuân số: 3; Ngày kiểm kê: 31/8/2026.")
+    assert extract_figures(text)["quan_so"] == 3
+
+
+def test_quan_so_viet_kieu_nao_cung_doc_duoc():
+    assert extract_figures("Tổng quân số là 28 người")["quan_so"] == 28
+    assert extract_figures("Quân số hiện có: 11")["quan_so"] == 11
+
+
+def test_khong_co_so_that_thi_bo_qua_chu_khong_doan():
+    assert "quan_so" not in extract_figures("Báo cáo quân số tháng 8/2026")

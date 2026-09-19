@@ -317,3 +317,33 @@ def build_pptx(deck: DeckSpec, output_path: str | Path,
     output_path.parent.mkdir(parents=True, exist_ok=True)
     presentation.save(str(output_path))
     return output_path
+
+
+def append_to_pptx(path: str | Path, specs: list[SlideSpec]) -> int:
+    """Chèn thêm slide vào một file .pptx đã có. Trả về số slide đã thêm.
+
+    Dùng cho bộ slide do Presenton dựng: mọi template của Presenton đều giới hạn
+    bảng ở 3-6 dòng, nên bảng chi tiết 33 dòng vừa không dựng được vừa làm cả bộ
+    slide hỏng (schema từ chối, dựng lại 3 lần, kết quả là không slide nào).
+
+    Bảng số liệu là thứ không được phép thiếu dòng, nên nó quay về chỗ kiểm soát
+    được: code tự dựng và ghép vào cuối file. Khác phong cách với phần Presenton
+    làm, nhưng đủ - và "đủ" là yêu cầu cứng, "đẹp" thì không.
+    """
+    path = Path(path)
+    presentation = Presentation(str(path))
+    width_in = Emu(presentation.slide_width).inches
+
+    added = 0
+    for spec in _paginate_tables(specs):
+        renderer = RENDERERS.get(spec.kind)
+        if renderer is None:
+            logger.warning("Bỏ qua slide kiểu lạ: %r", spec.kind)
+            continue
+        slide = renderer(presentation, spec, width_in)
+        if spec.notes:
+            slide.notes_slide.notes_text_frame.text = spec.notes
+        added += 1
+
+    presentation.save(str(path))
+    return added

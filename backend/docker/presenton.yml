@@ -1,0 +1,53 @@
+# Presenton cho workflow 5 - dựng bộ slide.
+#
+# Máy dev này đã có một Presenton của dự án khác chiếm cổng 5001, nên bản của dự
+# án này chạy RIÊNG: container riêng, volume riêng, cổng riêng (giống cách Redis
+# của dự án nằm ở 6382 thay vì 6379). Đừng gộp chung - dự án kia dùng key Gemini
+# và hiện đang crash-loop; dùng nhờ container đó là mượn luôn cả sự cố của họ.
+#
+#   cd backend && docker compose --env-file .env -f docker/presenton.yml up -d
+#
+# Đổi .env thì phải `--force-recreate`: Presenton đọc cấu hình LLM lúc khởi động.
+
+name: tpv-btl
+
+services:
+  presenton:
+    image: ghcr.io/presenton/presenton:latest
+    container_name: tpv-btl-presenton
+    restart: unless-stopped
+    ports:
+      # Chỉ mở trên loopback: bộ slide chứa số liệu nhân sự của thuê bao.
+      - "127.0.0.1:${PRESENTON_PORT:-5002}:80"
+    environment:
+      # "custom" = bất kỳ endpoint OpenAI-compatible nào; ở đây là OpenRouter.
+      - LLM=${PRESENTON_LLM:-custom}
+      - CUSTOM_LLM_URL=${PRESENTON_CUSTOM_LLM_URL:-https://openrouter.ai/api/v1}
+      - CUSTOM_LLM_API_KEY=${llm_slide_api_key:?thiếu llm_slide_api_key trong backend/.env}
+      - CUSTOM_MODEL=${PRESENTON_CUSTOM_MODEL:-qwen/qwen3.6-plus}
+      # Sinh ảnh minh hoạ tốn thêm một vòng gọi API và không dùng được cho báo
+      # cáo số liệu - ảnh do model vẽ không phải là dữ liệu.
+      - DISABLE_IMAGE_GENERATION=true
+      # Khoá đổi key từ giao diện: key nằm trong .env, không để sửa qua web.
+      - CAN_CHANGE_KEYS=false
+      # Tắt lớp đăng nhập của Presenton. KHÔNG phải để tiện: bật đăng nhập thì
+      # bước export tự gọi lại API của chính nó bằng cookie và nhận 401, bộ slide
+      # sinh xong vẫn xuất ra file rỗng ("Presentation slides not found") - đã tái
+      # hiện được bằng /api/v1/ppt/presentation/derive, hỏng cả với curl lẫn httpx.
+      #
+      # An toàn vì cổng chỉ mở trên 127.0.0.1 (xem `ports` ở trên): chỉ tiến trình
+      # trên chính máy này gọi được. Nếu về sau mở ra mạng thì phải bật lại đăng
+      # nhập và xử lý cho ra lẽ chỗ 401 kia trước.
+      - DISABLE_AUTH=${PRESENTON_DISABLE_AUTH:-true}
+    volumes:
+      - presenton-data:/app_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:80/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  presenton-data:
+    name: tpv-btl-presenton-data

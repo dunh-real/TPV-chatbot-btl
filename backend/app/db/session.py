@@ -70,6 +70,34 @@ async def create_all() -> None:
     """Tạo bảng nếu chưa có - dùng cho demo/test, không thay cho migration."""
     async with get_engine().begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+        await connection.run_sync(_them_cot_con_thieu)
+
+
+def _them_cot_con_thieu(connection) -> None:
+    """Thêm cột mới vào bảng đã tồn tại.
+
+    `create_all` chỉ tạo BẢNG chưa có; bảng cũ thiếu cột thì nó im lặng bỏ qua và
+    mọi truy vấn sau đó chết với "no such column" - trên CSDL đang có dữ liệu
+    thật, tức là đúng lúc không ai muốn gặp. Dự án chưa dùng migration nên chỗ
+    này vá đúng một việc: cột nullable thêm sau, thêm được bằng một câu ALTER.
+
+    Không xoá, không đổi kiểu, không đụng dữ liệu - những việc đó cần migration
+    thật chứ không phải một hàm chạy lúc khởi động.
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(connection)
+    for table in Base.metadata.sorted_tables:
+        if table.name not in inspector.get_table_names():
+            continue
+        dang_co = {col["name"] for col in inspector.get_columns(table.name)}
+        for column in table.columns:
+            if column.name in dang_co or not column.nullable:
+                continue
+            kieu = column.type.compile(connection.dialect)
+            logger.info("Thêm cột %s.%s (%s)", table.name, column.name, kieu)
+            connection.execute(
+                text(f"ALTER TABLE {table.name} ADD COLUMN {column.name} {kieu}"))
 
 
 async def dispose_engine() -> None:

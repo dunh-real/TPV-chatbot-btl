@@ -176,6 +176,27 @@ class Settings(BaseSettings):
     erp_asset_status_labels: str = ""
     erp_asset_status_good: str = ""
 
+    # -------------------------------------------- Presenton (workflow 5) ---
+    # Bộ slide do Presenton dựng (Docker, xem docker/presenton.yml). Nó có LLM
+    # RIÊNG - một model API - trong khi phần còn lại của hệ thống chạy vLLM nội
+    # bộ. Lý do: dựng slide là việc trình bày, không phải việc đọc số; đổi model
+    # ở đây không ảnh hưởng tới các workflow khác.
+    #
+    # Ranh giới không đổi so với bản tự dựng: SỐ LIỆU VẪN DO SQL LẤY. Presenton
+    # chỉ nhận bản tóm tắt số liệu đã chốt và bày nó ra slide.
+    presenton_url: str = "http://127.0.0.1:5002"
+    presenton_username: str = ""
+    presenton_password: str = ""
+    presenton_template: str = "general"
+    # 0 = code tự tính theo lượng số liệu thật sự có.
+    presenton_n_slides: int = 0
+    presenton_max_wait_seconds: float = 900.0
+    presenton_poll_interval: float = 5.0
+    # Model API dùng riêng cho việc sinh slide. Khoá đọc từ `llm_slide_api_key`
+    # (tên do người dùng đặt trong .env); Presenton nhận qua biến môi trường của
+    # container chứ backend không tự gọi model này.
+    llm_slide_api_key: str = ""
+
     # ------------------------------------------------------------ Storage ---
     minio_endpoint: str = "localhost:9000"
     minio_access_key: str = "minioadmin"

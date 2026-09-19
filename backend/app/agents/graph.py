@@ -51,10 +51,9 @@ from app.agents.nodes.report import (
     validate_node as agg_validate_node,
 )
 from app.agents.nodes.presentation import (
-    content_node,
-    outline_node,
+    brief_node as ppt_brief_node,
     render_node as ppt_render_node,
-    validate_node as ppt_validate_node,
+    verify_node as ppt_verify_node,
 )
 from app.agents import progress, references
 from app.agents.planner import Plan, PlanStep, make_plan
@@ -353,29 +352,26 @@ async def run_aggregate_workflow(
 # Workflow 5: tạo bộ slide
 # --------------------------------------------------------------------------- #
 def build_presentation_graph():
-    """Tái dùng phần lấy số liệu và vẽ biểu đồ của workflow 4.
+    """Tái dùng nguyên phần lấy số liệu của workflow 4, rồi giao việc trình bày
+    cho Presenton.
 
-    LLM chỉ sinh dàn ý và chữ; việc dựng file .pptx do code làm ở node cuối.
+    Chuỗi thẳng, không nhánh song song: bản tóm tắt phải dựng xong mới gọi được
+    Presenton, và chỉ đối chiếu số được sau khi đã có file trong tay.
     """
     graph = StateGraph(PresentationState)
     graph.add_node("extract_params", agg_extract_params_node)
     graph.add_node("gather_data", gather_data_node)
-    graph.add_node("charts", charts_node)
-    graph.add_node("outline", outline_node)
-    graph.add_node("content", content_node)
-    graph.add_node("validate", ppt_validate_node)
+    graph.add_node("brief", ppt_brief_node)
     graph.add_node("render", ppt_render_node)
+    graph.add_node("verify", ppt_verify_node)
 
     graph.set_entry_point("extract_params")
     graph.add_edge("extract_params", "gather_data")
     graph.add_conditional_edges("gather_data", route_after_gather,
-                                {"reconcile": "outline", "__end__": END})
-    graph.add_edge("gather_data", "charts")
-    graph.add_edge("outline", "content")
-    graph.add_edge("charts", "content")
-    graph.add_edge("content", "validate")
-    graph.add_edge("validate", "render")
-    graph.add_edge("render", END)
+                                {"reconcile": "brief", "__end__": END})
+    graph.add_edge("brief", "render")
+    graph.add_edge("render", "verify")
+    graph.add_edge("verify", END)
     return graph.compile()
 
 
@@ -393,19 +389,18 @@ async def run_presentation_workflow(
                                 "inputs": inputs or {}}
     result = await get_presentation_graph().ainvoke(state)
 
-    slides = [
-        {k: v for k, v in slide.items() if k not in ("source_data",)}
-        for slide in result.get("slides", [])
-    ]
+    # `brief` là thứ đã gửi cho Presenton. Trả về luôn để khi bộ slide có câu
+    # lạ, người kiểm tra biết ngay là số liệu đưa vào sai hay bên kia viết thêm.
     return {
         "request": request,
         "params": result.get("params", {}),
-        "outline": result.get("outline", {}),
-        "slides": slides,
+        "brief": result.get("brief", ""),
+        "engine": result.get("engine", ""),
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
         "slide_count": result.get("slide_count", 0),
-        "removed_bullets": result.get("removed_bullets", 0),
+        "edit_url": result.get("edit_url", ""),
+        "elapsed_seconds": result.get("elapsed_seconds", 0.0),
         "assumptions": result.get("assumptions", []),
         "error": result.get("error", ""),
     }
@@ -973,8 +968,11 @@ def _summarize_presentation(result: dict[str, Any]) -> str:
         return f"Không tạo được bộ slide: {result['error']}"
 
     parts = [f"Đã tạo bộ slide {result.get('slide_count', 0)} trang."]
-    if (removed := result.get("removed_bullets")):
-        parts.append(f"Đã bỏ {removed} gạch đầu dòng có số liệu không đối chiếu được.")
+    # Con số đáng ngờ không còn bị âm thầm xoá khỏi slide như bản cũ - Presenton
+    # giữ nguyên chữ nó viết - nên phải nói ra, nếu không sẽ không ai biết.
+    if (issues := result.get("validation", {}).get("issues")):
+        parts.append(f"Có {len(issues)} chỗ chứa con số chưa đối chiếu được với dữ liệu "
+                     f"gốc, cần đọc lại trước khi trình bày.")
     for item in result.get("assumptions", []):
         parts.append(f"Lưu ý: {item}.")
     return " ".join(parts)

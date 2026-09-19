@@ -52,6 +52,14 @@ class VanBan(Base):
     loai_van_ban: Mapped[str] = mapped_column(Unicode(100), nullable=False, default="")
     noi_gui: Mapped[str] = mapped_column(Unicode(255), nullable=False, default="")
     noi_nhan: Mapped[str] = mapped_column(Unicode(500), nullable=False, default="")
+    # Mã đơn vị và kỳ của báo cáo - hai trường quyết định câu "đơn vị nào đã gửi
+    # báo cáo kỳ này". Trước đây phải suy ra bằng cách dò TÊN đơn vị trong
+    # `noi_gui` và lấy `ngay_van_ban` làm kỳ; cả hai đều sai: tên đơn vị đổi cách
+    # viết là mất dấu, còn báo cáo tháng 8 ký ngày 19/9 thì bị tính sang kỳ 9 -
+    # nên mục "tình hình gửi báo cáo" luôn in 0/9 đơn vị dù sổ có bản ghi.
+    # Để trống với văn bản đến hoặc bản ghi cũ; khi đó vẫn dò theo cách cũ.
+    ma_don_vi: Mapped[str | None] = mapped_column(Unicode(50), nullable=True, index=True)
+    ky: Mapped[str | None] = mapped_column(Unicode(7), nullable=True, index=True)
     mo_ta: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="")
     ngay_van_ban: Mapped[date | None] = mapped_column(Date, nullable=True)
     file_path: Mapped[str] = mapped_column(Unicode(1000), nullable=False, default="")

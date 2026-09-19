@@ -114,3 +114,25 @@ async def test_ngoai_http_thi_roi_ve_cau_hinh(erp_session, monkeypatch):
 
     monkeypatch.setattr(get_settings(), "erp_tenant_id", ERP_TENANT + 1)
     assert await ErpDonViRepository(erp_session).list_all() == []
+
+
+async def test_cache_danh_muc_khong_lan_giua_hai_thue_bao(erp_session):
+    """Cache danh mục phòng ban phải khoá theo thuê bao.
+
+    Cache chung cho cả tiến trình thì báo cáo của thuê bao này in ra tên đơn vị
+    của thuê bao khác - và không có van chắn nào phía sau bắt được, vì tên đơn vị
+    đó là tên thật, chỉ của sai cơ quan.
+    """
+    from app.db.erp_repository import ErpDonViRepository
+
+    don_vi = ErpDonViRepository(erp_session)
+
+    with use_principal(Principal(tenant_id=ERP_TENANT, source="header")):
+        assert len(await don_vi.list_all()) == 2
+        assert len(await don_vi.list_all()) == 2          # lần hai lấy từ cache
+
+    with use_principal(Principal(tenant_id=ERP_TENANT + 1, source="header")):
+        assert await don_vi.list_all() == []
+
+    with use_principal(Principal(tenant_id=ERP_TENANT, source="header")):
+        assert len(await don_vi.list_all()) == 2

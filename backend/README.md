@@ -6,7 +6,7 @@ Backend đa workflow (LangGraph + FastAPI). Đã hoàn thiện:
 - **Workflow 2** — xử lý văn bản tự động (rule engine thể thức + soát chữ nghĩa + định tuyến)
 - **Workflow 3** — soạn văn bản theo mẫu (số liệu từ CSDL + mẫu DOCX + kiểm chứng số)
 - **Workflow 4** — tổng hợp báo cáo nhiều đơn vị (data tool + biểu đồ + đối chiếu file)
-- **Workflow 5** — tạo bộ slide PowerPoint (JSON trung gian + python-pptx)
+- **Workflow 5** — tạo bộ slide PowerPoint (Presenton trong Docker + bảng do code ghép)
 - **Agent tổng** — một endpoint tự lập kế hoạch rồi chạy một hoặc nhiều workflow
 
 ## Agent tổng: một câu yêu cầu → một kế hoạch → nhiều bước
@@ -564,48 +564,84 @@ curl -X POST localhost:8080/api/reports/aggregate -H 'Content-Type: application/
 
 ```
 "Tạo slide báo cáo quân số tháng 8"
-  └─> lấy số liệu + vẽ biểu đồ   (tái dùng nguyên của workflow 4)
-      ├─> dàn ý (LLM)   -> JSON trung gian: slide nào, kiểu gì
-      │     └─> LỌC: kiểu slide phải trong whitelist, chart/table phải có dữ liệu thật
-      └─> nội dung từng slide (LLM) -> bullets ≤ 15 từ, chỉ dùng số đã cho
-          └─> đối chiếu số -> render .pptx bằng code
+  └─> lấy số liệu (SQL)            tái dùng nguyên của workflow 4
+      └─> bản tóm tắt số liệu      CODE dựng, không qua LLM
+          └─> Presenton dựng .pptx  (Docker, model API riêng)
+              └─> ghép bảng chi tiết đầy đủ + đối chiếu lại số TRONG FILE
 ```
 
-**LLM không chạm vào python-pptx.** Nó chỉ sinh JSON trung gian; việc chọn layout,
-đặt shape, chèn ảnh, dựng bảng đều do [pptx_builder.py](app/documents/pptx_builder.py)
-làm. Nhờ vậy dàn ý kiểm tra được trước khi dựng file, và bố cục test được.
+**Presenton chỉ làm phần trình bày.** Nó nhận một bản tóm tắt số liệu đã chốt -
+[build_brief](app/agents/nodes/presentation.py) - chứ không nhận câu hỏi gốc của
+người dùng và không nối được vào CSDL. Mọi con số, kể cả tỷ lệ và mức tăng giảm,
+vẫn do [tools/data.py](app/tools/data.py) tính sẵn.
 
-Năm kiểu slide cố định: `title`, `summary` (ô số lớn), `bullet`, `chart`, `table`.
-Dàn ý do LLM sinh bị lọc qua whitelist — slide kiểu lạ hoặc `chart_key` không có dữ
-liệu tương ứng đều bị bỏ. LLM hỏng thì có dàn ý mặc định, vẫn ra được bộ slide.
+Lý do đổi: bản cũ để LLM tự lập dàn ý và viết từng gạch đầu dòng. Ba lần chạy
+liên tiếp trên cùng một câu hỏi đều ra câu bịa - "Phòng Kinh doanh và Kỹ thuật
+thiếu số liệu" (model tự chọn tên đơn vị), "8 đơn vị thiếu dữ liệu nhân sự"
+(danh sách thật có 9; van chắn không bắt vì 8 trùng tháng báo cáo).
 
-Khác workflow 3-4 một điểm: số bịa trên slide **không chặn cả file** mà chỉ bỏ đúng
-gạch đầu dòng đó (`removed_bullets`). Slide là tài liệu nội bộ để trình bày; chặn hẳn
-thì người dùng không còn gì để sửa, trong khi văn bản hành chính thì phải chặn.
+**Bảng chi tiết không giao cho Presenton.** Mọi template của nó chặn bảng ở 3-6
+dòng, và khi schema từ chối thì cả bộ slide trả về rỗng. Bảng do code dựng và
+ghép vào cuối file ([append_to_pptx](app/documents/pptx_builder.py)), bảng dài
+tự tách trang - không dòng nào mất.
 
-Ô chỉ tiêu ở slide `summary` do code dựng thẳng từ số liệu, nên LLM hỏng thì slide
-vẫn còn số, chỉ mất phần chữ.
+**Vẫn còn van chắn số**, nhưng nay chạy trên chính file .pptx đã dựng chứ không
+trên JSON trung gian: con số nào trên slide không truy được về dữ liệu gốc thì
+vào `validation.issues` kèm tên slide. Khác workflow 3-4, số đáng ngờ **không
+chặn file** - file đã dựng xong ở phía Presenton, xoá đi thì người dùng không
+còn gì để sửa.
+
+**Presenton hỏng thì vẫn ra file**: đường lùi dựng bằng `pptx_builder`, và đường
+lùi đó không gọi LLM - chỉ ô chỉ tiêu, biểu đồ, bảng, ghi chú do code viết.
+`engine` trong kết quả nói rõ file đến từ đâu (`presenton` hay `local`).
+
+### Dựng Presenton
+
+```bash
+cd backend
+docker compose --env-file .env -f docker/presenton.yml up -d
+```
+
+Cấu hình trong `.env` (`PRESENTON_*`). Vài điểm đã trả giá mới biết:
+
+| Thiết lập | Vì sao |
+|---|---|
+| cổng `5002`, chỉ mở `127.0.0.1` | máy dev đã có Presenton của dự án khác ở 5001; và bộ slide chứa số liệu nhân sự |
+| `DISABLE_AUTH=true` | bật đăng nhập thì bước export tự gọi API của chính nó và nhận 401, file xuất ra rỗng |
+| `LLM=custom` + OpenRouter | sinh slide dùng model API riêng; chat/agent vẫn chạy vLLM nội bộ |
+| `DISABLE_IMAGE_GENERATION=true` | ảnh do model vẽ không phải là dữ liệu |
+
+Đổi `.env` thì phải `up -d --force-recreate`: Presenton đọc cấu hình LLM lúc khởi động.
 
 ```bash
 curl -X POST localhost:8080/api/presentations/create -H 'Content-Type: application/json' -d '{
-  "request": "Tạo slide báo cáo quân số tháng 8"
+  "request": "Tạo slide báo cáo quân số tháng 8",
+  "inputs": {"nguoi_trinh_bay": "Nguyễn Tiến Anh"}
 }'
 ```
 
 ## CSDL nghiệp vụ
 
-Bốn bảng phục vụ workflow 2+ (định tuyến văn bản, sinh báo cáo từ số liệu thật):
+Số liệu nghiệp vụ (quân số, trang thiết bị, phòng ban) nay đọc thẳng từ **ERP,
+chỉ đọc** — xem mục ERP bên dưới. CSDL của riêng ứng dụng chỉ còn hai bảng:
 
 | Bảng | Vai trò |
 |---|---|
-| `phong_ban` | danh mục phòng ban; cột `mo_ta` là căn cứ để LLM đề xuất đơn vị xử lý |
 | `template_bao_cao` | mẫu báo cáo; `mo_ta` để chọn mẫu, `truong_du_lieu` (JSON) để điền |
-| `don_vi` / `trang_bi` | quân số và trang thiết bị hiện trạng — tách hai bảng để quân số không lặp theo từng dòng trang bị |
-| `kiem_ke` / `kiem_ke_trang_bi` | số liệu **theo kỳ** (`"2026-08"`) — không có nó thì "báo cáo tháng 8" và "tháng 9" ra cùng một con số |
-| `van_ban` | sổ văn bản, `doc_id` nối sang Qdrant của workflow 1 |
+| `van_ban` | sổ văn bản. `ma_don_vi` + `ky` trả lời "đơn vị nào đã gửi báo cáo kỳ này"; `doc_id` nối sang Qdrant của workflow 1 |
+
+Trước đây hai trường `ma_don_vi`/`ky` không có: phải dò TÊN đơn vị trong `noi_gui`
+và lấy `ngay_van_ban` làm kỳ. Báo cáo kỳ tháng 8 thì ký vào tháng 9, nên mục
+"tình hình gửi báo cáo" luôn in 0/9 đơn vị dù sổ có đủ bản ghi.
+
+Bảng cũ thiếu cột thì `create_all()` tự thêm bằng một câu `ALTER TABLE` lúc khởi
+động (chỉ cột nullable — xem `_them_cot_con_thieu`); dự án chưa dùng migration.
 
 ```bash
-uv run python scripts/seed_demo.py --reset        # tạo bảng + dữ liệu mẫu (SQLite)
+# `scripts/seed_demo.py` đã cũ từ đợt chuyển sang ERP: nó còn import các model
+# đã bị xoá (`DonVi`, `TrangBi`, `KyKiemKe`) nên chạy là lỗi ngay. Mẫu báo cáo
+# hiện nằm sẵn trong `data/demo.db`.
+uv run python scripts/seed_demo.py --reset        # ĐANG HỎNG, xem ghi chú trên
 uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql   # DDL cho SQL Server
 ```
 

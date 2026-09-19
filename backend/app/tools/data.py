@@ -281,7 +281,9 @@ async def get_equipment_statistics(
          "ten_trang_bi": asset.name, "so_luong": asset.so_luong,
          "tinh_trang": labels.get(asset.status, f"Trạng thái {asset.status}"),
          "chung_loai": category or "",
-         "bao_duong_cuoi": asset.last_modification_time.date().isoformat()
+         # Xem ghi chú ở `ErpTaiNguyenRepository.get_tai_nguyen`: đây là mốc
+         # sửa bản ghi ERP, không phải ngày bảo dưỡng.
+         "cap_nhat_cuoi": asset.last_modification_time.date().isoformat()
          if asset.last_modification_time else None}
         for dept_id, asset, category in sorted(current, key=sort_key)
     ]
@@ -320,6 +322,14 @@ async def get_equipment_statistics(
 # --------------------------------------------------------------------------- #
 # Tool 3: tình hình nộp báo cáo
 # --------------------------------------------------------------------------- #
+def _don_vi_cua(van_ban: VanBan, units: list[str], names: dict[str, str]) -> list[str]:
+    """Văn bản này là của đơn vị nào, trong phạm vi đang hỏi."""
+    if van_ban.ma_don_vi:
+        return [van_ban.ma_don_vi] if van_ban.ma_don_vi in units else []
+    noi_gui = van_ban.noi_gui or ""
+    return [code for code in units if names.get(code) and names[code] in noi_gui]
+
+
 async def get_reporting_status(
     session: AsyncSession, ky: str, ma_don_vi: list[str] | str | None = None
 ) -> dict[str, Any]:
@@ -347,18 +357,27 @@ async def get_reporting_status(
 
     submitted: dict[str, dict[str, Any]] = {}
     for van_ban in van_ban_list:
-        # Khớp theo tên đơn vị gửi, ưu tiên báo cáo có kỳ nằm trong khoảng.
-        for code in units:
-            if names.get(code, "") and names[code] in (van_ban.noi_gui or ""):
+        # Bản ghi mới có sẵn mã đơn vị và kỳ -> khớp thẳng, không phải đoán.
+        #
+        # Bản ghi cũ thì dò theo tên đơn vị trong `noi_gui` và lấy `ngay_van_ban`
+        # làm mốc kỳ. Cách cũ giữ lại để sổ văn bản có sẵn không rỗng đi sau khi
+        # đổi lược đồ, nhưng nó sai một cách có hệ thống: báo cáo kỳ tháng 8 ký
+        # ngày 19/9 bị tính là ngoài kỳ, nên mục "tình hình gửi báo cáo" luôn ra
+        # 0 đơn vị đã gửi.
+        for code in _don_vi_cua(van_ban, units, names):
+            if van_ban.ky:
+                in_period = van_ban.ky == ky
+            else:
                 in_period = van_ban.ngay_van_ban is None or start <= van_ban.ngay_van_ban < end
-                if code not in submitted or in_period:
-                    submitted[code] = {
-                        "ma_van_ban": van_ban.ma_van_ban,
-                        "ngay_van_ban": van_ban.ngay_van_ban.isoformat()
-                        if van_ban.ngay_van_ban else None,
-                        "file_path": van_ban.file_path,
-                        "trong_ky": in_period,
-                    }
+            if code not in submitted or in_period:
+                submitted[code] = {
+                    "ma_van_ban": van_ban.ma_van_ban,
+                    "ngay_van_ban": van_ban.ngay_van_ban.isoformat()
+                    if van_ban.ngay_van_ban else None,
+                    "file_path": van_ban.file_path,
+                    "ky": van_ban.ky,
+                    "trong_ky": in_period,
+                }
 
     reported = sorted(code for code, info in submitted.items() if info["trong_ky"])
     missing = sorted(set(units) - set(reported))

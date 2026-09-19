@@ -58,11 +58,15 @@ METRIC_LABELS = {
 }
 
 
-async def _next_so_ky_hieu(session, loai_van_ban: str, nam: int, ky_hieu: str) -> str:
-    """Số thứ tự tiếp theo trong sổ văn bản của năm.
+async def next_so_ky_hieu(session, nam: int, ky_hieu: str) -> str:
+    """Số thứ tự tiếp theo trong sổ văn bản của năm, cho một ký hiệu cụ thể.
 
     Văn bản hành chính đánh số thứ tự trong sổ ("88/BC-HCQT"), không đánh theo
     tháng - dạng "TH08/BC-HCQT" không qua được kiểm tra thể thức.
+
+    Đếm theo KÝ HIỆU chứ không theo loại văn bản: mỗi đơn vị có sổ riêng, nên
+    "BC-00003" và "BC-HCQT" là hai dãy số độc lập. Đếm chung thì báo cáo đầu tiên
+    của một đơn vị đã mang số 45 vì các đơn vị khác đã phát hành 44 văn bản.
     """
     from sqlalchemy import extract, func, select
 
@@ -70,7 +74,7 @@ async def _next_so_ky_hieu(session, loai_van_ban: str, nam: int, ky_hieu: str) -
 
     result = await session.execute(
         select(func.count()).select_from(VanBan).where(
-            VanBan.loai_van_ban == loai_van_ban,
+            VanBan.ma_van_ban.like(f"%/{ky_hieu}"),
             extract("year", VanBan.ngay_van_ban) == nam,
         )
     )
@@ -700,8 +704,8 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     async with session_scope() as session:
         template = await TemplateRepository(session).get("BC_TONGHOP")
         template_file = template.file_path if template else ""
-        so_ky_hieu = inputs.get("so_ky_hieu") or await _next_so_ky_hieu(
-            session, "bao_cao_tong_hop", params["nam"], "BC-HCQT"
+        so_ky_hieu = inputs.get("so_ky_hieu") or await next_so_ky_hieu(
+            session, params["nam"], "BC-HCQT"
         )
 
     payload = DocumentPayload(
@@ -751,6 +755,9 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
                 ten_van_ban=f"Báo cáo tổng hợp quân số và trang thiết bị "
                             f"tháng {params['thang']}/{params['nam']}",
                 loai_van_ban="bao_cao_tong_hop",
+                # Báo cáo tổng hợp là của cơ quan, không của đơn vị nào - để
+                # trống `ma_don_vi` thì nó không bị đếm nhầm là báo cáo đơn vị.
+                ky=params["ky"],
                 noi_gui="Phòng Hành chính nhân sự",
                 noi_nhan="Ban Giám đốc",
                 mo_ta=f"Tổng hợp kỳ {params['ky']}",

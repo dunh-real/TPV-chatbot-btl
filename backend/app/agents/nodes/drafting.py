@@ -39,6 +39,7 @@ from app.db.erp_repository import AS_OF_NOTE, ErpTaiNguyenRepository
 from app.services import storage
 from app.db.erp_session import erp_session_scope
 from app.services import errors
+from app.agents.nodes.report import next_so_ky_hieu
 from app.db.repository import TemplateRepository, VanBanRepository
 from app.db.session import session_scope
 from app.services.llm import LLMError, get_llm
@@ -49,7 +50,7 @@ COLUMN_LABELS = {
     "ten_trang_bi": "Tên trang bị",
     "so_luong": "Số lượng",
     "tinh_trang": "Tình trạng",
-    "bao_duong_cuoi": "Bảo dưỡng gần nhất",
+    "cap_nhat_cuoi": "Cập nhật gần nhất (ERP)",
     "quan_so": "Quân số",
     "quan_so_kiem_ke": "Ngày kiểm kê",
 }
@@ -265,6 +266,47 @@ def _build_table(section_spec: dict[str, Any], data: dict[str, Any]) -> Rendered
     )
 
 
+# Trường nhận dạng: mục nào cũng cần để gọi đúng tên đơn vị và đúng kỳ.
+IDENTITY_FIELDS = {"ma_don_vi", "ten_don_vi", "ky", "ghi_chu"}
+
+# Trường tóm tắt: con số duy nhất về toàn bộ tài nguyên đơn vị, dùng được ở mọi
+# mục. Danh sách chi tiết (`trang_bi`) thì KHÔNG - xem `_section_data`.
+SUMMARY_FIELDS = {"quan_so", "quan_so_kiem_ke", "tong_so_trang_bi", "so_loai_trang_bi",
+                  "so_loai_can_bao_duong"}
+
+
+def _section_data(spec: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
+    """Phần số liệu mục này ĐƯỢC NHÌN THẤY - cũng chính là phạm vi đối chiếu số.
+
+    Trước đây mọi mục đều nhận nguyên khối dữ liệu đơn vị, nên phạm vi số hợp lệ
+    rộng bằng cả khối: model viết "5 loại đang cần bảo dưỡng" và van chắn cho qua
+    chỉ vì số 5 tình cờ là số chủng loại. Thu hẹp lại thì cùng câu đó bị bắt.
+
+    Workflow 4 đã làm đúng như vậy từ đầu (`source_data` theo từng mục); đây là
+    phần workflow 3 còn nợ.
+    """
+    payload = {k: v for k, v in data.items() if k in IDENTITY_FIELDS and v not in (None, "")}
+
+    kind = spec.get("type", "llm")
+    if kind == "data":
+        for field_name in spec.get("fields", []):
+            if data.get(field_name) is not None:
+                payload[field_name] = data[field_name]
+    elif kind == "table":
+        # Mục bảng: bảng do code dựng, phần chữ chỉ được nói về con số tổng của
+        # chính bảng đó - không đi vào từng dòng.
+        key = spec.get("query", "")
+        if isinstance(data.get(key), list):
+            payload[f"so_dong_{key}"] = len(data[key])
+        payload.update({k: v for k, v in data.items()
+                        if k in SUMMARY_FIELDS and v is not None})
+    else:
+        # Mục nhận xét/kiến nghị: chỉ số tổng, không có danh sách chi tiết.
+        payload.update({k: v for k, v in data.items()
+                        if k in SUMMARY_FIELDS and v is not None})
+    return payload
+
+
 async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or state.get("missing_input"):
         return {}
@@ -275,16 +317,8 @@ async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
     params = state["params"]
     period = f"tháng {params['thang']}/{params['nam']}" if params.get("ky") else "hiện tại"
 
-    # Số liệu SQL và quy định từ RAG đánh số chung một dãy: model chỉ cần ghi [n],
-    # không phải phân biệt mình đang trích loại nguồn nào.
     regulations = state.get("regulations") or []
-    data_refs = references.from_data(data)
-    all_refs = references.merge(data_refs, references.from_regulations(regulations[:2]))
-    data_block = references.render(all_refs[:len(data_refs)])
-    reg_block = ""
-    if len(all_refs) > len(data_refs):
-        reg_block = ("\n\nQUY ĐỊNH LIÊN QUAN (chỉ để tham khảo cách diễn đạt):\n"
-                     + references.render(all_refs[len(data_refs):]))
+    reg_refs = references.from_regulations(regulations[:2])
 
     llm = get_llm()
     sections: list[dict[str, Any]] = []
@@ -307,6 +341,16 @@ async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
         narrative = spec.get("narrative")
         section_cited: list[str] = []
         section_refs: list[references.Reference] = []
+        # Phạm vi số liệu của riêng mục này: vừa là thứ gửi cho model, vừa là
+        # thứ bước đối chiếu số dùng làm tập hợp lệ. Hai thứ đó PHẢI bằng nhau,
+        # nếu không van chắn lại rộng hơn thứ model nhìn thấy.
+        section_data = _section_data(spec, data)
+        data_refs = references.from_data(section_data)
+        all_refs = references.merge(data_refs, reg_refs)
+        reg_block = ""
+        if len(all_refs) > len(data_refs):
+            reg_block = ("\n\nQUY ĐỊNH LIÊN QUAN (chỉ để tham khảo cách diễn đạt):\n"
+                         + references.render(all_refs[len(data_refs):]))
         if narrative:
             try:
                 result = await llm.chat_json(
@@ -318,7 +362,7 @@ async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
                             period=period,
                             section_title=title,
                             narrative=narrative,
-                            data=data_block,
+                            data=references.render(all_refs[:len(data_refs)]),
                             regulations=reg_block,
                         )},
                     ],
@@ -342,7 +386,8 @@ async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
                          "llm_written": [p for p in paragraphs if narrative and p not in
                                          ([_facts_paragraph(spec, data)] if kind == "data" else [])],
                          "llm_written_cited": section_cited,
-                         "refs": section_refs})
+                         "refs": section_refs,
+                         "source_data": section_data})
 
     return {"sections": sections}
 
@@ -355,15 +400,19 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"validation": {"status": "skipped", "issues": []}}
 
     data = state.get("data", {})
-    known = collect_known_numbers(data)
     # Kỳ báo cáo cũng là số hợp lệ (xuất hiện trong tiêu đề, câu mở đầu).
     params = state.get("params", {})
-    for value in (params.get("thang"), params.get("nam")):
-        if value:
-            known.add(str(value))
+    period_numbers = {str(v) for v in (params.get("thang"), params.get("nam")) if v}
 
     issues: list[dict[str, Any]] = []
+    checked_total = 0
     for section in state.get("sections", []):
+        # Phạm vi đúng bằng số liệu đã đưa cho model ở MỤC NÀY. Lấy cả khối dữ
+        # liệu đơn vị làm tập hợp lệ thì một khẳng định bịa vẫn lọt chỉ vì con số
+        # trong đó tình cờ trùng một giá trị ở chỗ khác.
+        known = collect_known_numbers(
+            section.get("source_data", data)) | period_numbers
+        checked_total = max(checked_total, len(known))
         for paragraph in section.get("llm_written", []):
             check = check_numbers(paragraph, known, section["id"])
             if not check.ok:
@@ -384,7 +433,7 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
         "validation": {
             "status": "failed" if blocking else ("warning" if issues else "passed"),
             "issues": issues,
-            "checked_numbers": len(known),
+            "checked_numbers": checked_total,
         }
     }
 
@@ -425,7 +474,10 @@ def _resolve_meta(template: dict[str, Any], state: dict[str, Any]) -> dict[str, 
     meta["trich_yeu"] = inputs.get(
         "trich_yeu", f"V/v {template['ten_bao_cao'].lower()} {period}"
     )
-    meta.setdefault("so_ky_hieu", inputs.get("so_ky_hieu") or f"01/BC-{state.get('ma_don_vi', '')}")
+    # Số ký hiệu do `export_node` cấp từ sổ văn bản. Còn "01" ở đây là đường lùi
+    # cho lúc chưa qua bước xuất file (xem trước, test) - không phải số thật.
+    meta.setdefault("so_ky_hieu", inputs.get("so_ky_hieu") or state.get("so_ky_hieu")
+                    or f"01/BC-{state.get('ma_don_vi', '')}")
     if not meta.get("can_cu") and state.get("regulations"):
         meta["can_cu"] = f"Căn cứ {state['regulations'][0]['doc_title']};"
     return meta
@@ -440,6 +492,22 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
 
     cfg = get_settings()
     template = state["template"]
+
+    # Đánh số trong sổ thay vì gán cứng "01": báo cáo thứ hai của cùng một đơn vị
+    # trong năm mà cũng mang số 01 thì sổ văn bản có hai văn bản trùng số, và bản
+    # sau ghi đè bản trước lúc vào sổ.
+    inputs = state.get("inputs", {})
+    ma_don_vi = state.get("ma_don_vi", "")
+    try:
+        async with session_scope() as session:
+            so_ky_hieu = inputs.get("so_ky_hieu") or await next_so_ky_hieu(
+                session, state["params"].get("nam") or date.today().year,
+                f"BC-{ma_don_vi}")
+    except Exception as exc:  # noqa: BLE001 - sổ hỏng không được chặn việc xuất file
+        logger.warning("Không cấp được số ký hiệu từ sổ văn bản: %s", exc)
+        so_ky_hieu = inputs.get("so_ky_hieu") or f"01/BC-{ma_don_vi}"
+    state = {**state, "so_ky_hieu": so_ky_hieu}
+
     payload = DocumentPayload(
         meta=_resolve_meta(template, state),
         sections=[
@@ -463,7 +531,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     path = await anyio.to_thread.run_sync(
         lambda: build_docx(payload, output_path, template.get("file_path") or None)
     )
-    return {"output_path": str(path)}
+    return {"output_path": str(path), "so_ky_hieu": so_ky_hieu}
 
 
 # --------------------------------------------------------------------------- #
@@ -485,6 +553,10 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
                 ma_van_ban=ma_van_ban,
                 ten_van_ban=f"{state['template']['ten_bao_cao']} - {state['data'].get('ten_don_vi', '')}",
                 loai_van_ban="bao_cao_di",
+                # Mã đơn vị và kỳ ghi thẳng vào sổ: mục "đơn vị nào đã gửi báo
+                # cáo kỳ này" khớp bằng hai trường này chứ không dò tên nữa.
+                ma_don_vi=state.get("ma_don_vi") or None,
+                ky=state["params"].get("ky"),
                 noi_gui=str(state["data"].get("ten_don_vi", "")),
                 noi_nhan=meta.get("noi_nhan", ""),
                 mo_ta=state["params"].get("loai_bao_cao", ""),

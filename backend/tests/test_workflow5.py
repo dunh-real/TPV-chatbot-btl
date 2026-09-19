@@ -1,4 +1,7 @@
-"""Workflow 5: tạo slide - LLM sinh JSON trung gian, code dựng file."""
+"""Workflow 5: tạo slide.
+
+Hai tầng: bản dựng file .pptx (dùng cho đường lùi) và đường chính - tóm tắt số
+liệu do code dựng, Presenton bày ra slide, rồi đối chiếu lại số trong chính file."""
 
 from __future__ import annotations
 
@@ -148,93 +151,164 @@ def test_slide_kieu_la_bi_bo_qua(tmp_path):
     assert len(Presentation(str(build_pptx(deck, tmp_path / "d.pptx"))).slides) == 1
 
 
-# ------------------------------------------------------- lọc dàn ý LLM ---- #
+
+# --------------------------------------------------------------------------- #
+# Bản tóm tắt số liệu gửi cho Presenton
+#
+# Đây là ranh giới của cả workflow: Presenton chỉ nhìn thấy chuỗi này. Thiếu một
+# con số ở đây thì slide không thể có nó; thừa một câu ở đây thì model được mời
+# suy diễn. Nên phần này kiểm kỹ hơn phần dựng file.
+# --------------------------------------------------------------------------- #
 DATA = {
     "personnel": {
-        "metrics": {"total_personnel": {"value": 113, "prev": 110, "delta": 3,
-                                        "delta_pct": 2.7, "share_pct": None},
-                    "present": {"value": 104, "prev": 102, "delta": 2,
-                                "delta_pct": 2.0, "share_pct": 92.0}},
-        "scope": {"units_requested": 2, "units_with_data": 2, "units_missing": []},
-        "breakdown": [{"ma_don_vi": "DV01", "ten_don_vi": "Đơn vị 1", "quan_so": 48,
-                       "co_mat": 44, "vang": 4, "di_hoc": 3, "nghi_phep": 1}],
+        "metrics": {
+            "total_personnel": {"value": 28, "prev": 27, "delta": 1,
+                                "delta_pct": 3.7, "share_pct": None},
+            "new_hires": {"value": 1, "prev": None, "delta": None,
+                          "delta_pct": None, "share_pct": 3.6},
+        },
+        "scope": {"units_requested": 2, "units_with_data": 2, "units_missing": [],
+                  "nguon": "Hrm_EmployeeProfile", "ghi_chu": "Số liệu kỳ được dựng lại.",
+                  "khong_co_chi_tieu": ["có mặt", "vắng"]},
+        "breakdown": [
+            {"ma_don_vi": "00001", "ten_don_vi": "Đơn vị 1", "quan_so": 11,
+             "quan_so_ky_truoc": 10, "tuyen_moi": 1, "nghi_viec": 0},
+            {"ma_don_vi": "00002", "ten_don_vi": "Đơn vị 2", "quan_so": 17,
+             "quan_so_ky_truoc": 17, "tuyen_moi": 0, "nghi_viec": 0},
+        ],
+        "consistency": [],
     },
     "reporting": {"units_total": 2, "units_reported": 1,
-                  "missing": [{"ma_don_vi": "DV01", "ten_don_vi": "Đơn vị 1"}],
+                  "missing": [{"ma_don_vi": "00001", "ten_don_vi": "Đơn vị 1"}],
                   "reported": []},
 }
 PARAMS = {"ky": "2026-08", "thang": 8, "nam": 2026, "compare_to": "2026-07"}
 
 
-class OutlineLLM:
-    def __init__(self, outline: dict | None = None, bullets: list[str] | None = None) -> None:
-        self.outline = outline
-        self.bullets = bullets or ["Quân số tăng 3 người so với kỳ trước"]
+def test_tom_tat_co_du_moi_con_so_se_len_slide():
+    """Model không được tính gì: chênh lệch và tỷ lệ đều phải có sẵn trong tóm tắt."""
+    brief, _ = pr.build_brief(DATA, PARAMS)
 
-    async def chat_json(self, messages, **kwargs):
-        if "lập dàn ý" in messages[0]["content"]:
-            if self.outline is None:
-                raise RuntimeError("LLM hỏng")
-            return self.outline
-        return {"bullets": self.bullets, "notes": ""}
+    assert "Tổng quân số: 28" in brief
+    assert "kỳ trước 27" in brief
+    assert "+1 (+3.7%)" in brief
+    assert "chiếm 3.6%" in brief
+    assert "tháng 8/2026" in brief and "tháng 7/2026" in brief
 
 
-async def test_loai_slide_kieu_la_va_chart_khong_co_du_lieu(monkeypatch):
-    monkeypatch.setattr(pr, "get_llm", lambda: OutlineLLM({
-        "title": "Báo cáo", "slides": [
-            {"kind": "title", "title": "Bìa"},
-            {"kind": "chart", "title": "Có dữ liệu", "chart_key": "personnel"},
-            {"kind": "chart", "title": "Không có dữ liệu", "chart_key": "khong_co"},
-            {"kind": "table", "title": "Bảng lạ", "data_key": "bang_khong_ton_tai"},
-            {"kind": "kieu_tu_nghi", "title": "Lạ"},
-        ]}))
+def test_tom_tat_liet_ke_du_so_lieu_tung_don_vi():
+    """Model phải có số của từng đơn vị mới viết nhận xét được."""
+    brief, _ = pr.build_brief(DATA, PARAMS)
 
-    result = await pr.outline_node({"request": "x", "data": DATA, "params": PARAMS})
-    slides = result["outline"]["slides"]
-    kinds = [s["kind"] for s in slides]
-
-    # Chart không có dữ liệu, bảng không tồn tại và kiểu tự nghĩ đều bị loại.
-    assert "khong_co" not in [s.get("chart_key") for s in slides]
-    assert "bang_khong_ton_tai" not in [s.get("data_key") for s in slides]
-    assert all(k in SLIDE_KINDS for k in kinds)
-
-    # Còn lại là slide bìa, biểu đồ quân số, kèm bảng chi tiết quân số mà
-    # `_ensure_detail_tables` thêm vào vì dàn ý có biểu đồ quân số mà thiếu bảng.
-    assert kinds == ["title", "chart", "table"]
-    assert slides[2]["data_key"] == "personnel_breakdown"
+    assert "Đơn vị 1 / 11 / 10 / 1 / 0" in brief
+    assert "Đơn vị 2 / 17 / 17 / 0 / 0" in brief
 
 
-async def test_llm_hong_thi_dung_dan_y_mac_dinh(monkeypatch):
-    monkeypatch.setattr(pr, "get_llm", lambda: OutlineLLM(outline=None))
-
-    result = await pr.outline_node({"request": "x", "data": DATA, "params": PARAMS})
-    slides = result["outline"]["slides"]
-
-    assert slides[0]["kind"] == "title"
-    assert any(s["kind"] == "chart" for s in slides)
-    assert slides[-1]["kind"] == "bullet"
+def test_tom_tat_dan_khong_dung_bang():
+    """Template nào của Presenton cũng chặn bảng quá 3-6 dòng, và khi schema từ
+    chối thì cả bộ slide về rỗng. Bảng thật do code ghép vào sau."""
+    brief, _ = pr.build_brief(DATA, PARAMS)
+    assert "KHÔNG dựng thành bảng" in brief
+    assert "KHÔNG dựng slide dạng bảng" in pr.INSTRUCTIONS
 
 
-async def test_luon_co_slide_bia(monkeypatch):
-    monkeypatch.setattr(pr, "get_llm", lambda: OutlineLLM({
-        "title": "Báo cáo", "slides": [{"kind": "bullet", "title": "Đánh giá"}]}))
+def test_bang_qua_dai_thi_noi_thang_la_da_cat():
+    """Không cắt im lặng: slide phải biết mình đang thiếu dòng."""
+    data = {"personnel": {
+        "metrics": {}, "scope": {}, "consistency": [],
+        "breakdown": [{"ma_don_vi": f"{i:05d}", "ten_don_vi": f"Đơn vị {i}", "quan_so": i,
+                       "quan_so_ky_truoc": i, "tuyen_moi": 0, "nghi_viec": 0}
+                      for i in range(pr.MAX_BRIEF_ROWS + 5)]}}
+    brief, _ = pr.build_brief(data, PARAMS)
 
-    result = await pr.outline_node({"request": "x", "data": DATA, "params": PARAMS})
-    assert result["outline"]["slides"][0]["kind"] == "title"
-
-
-def test_o_chi_tieu_do_code_dung_tu_so_lieu():
-    boxes = pr._metric_boxes(DATA, "quan_so")
-    assert boxes[0].label == "Tổng quân số" and boxes[0].value == "113"
-    assert boxes[0].note == "+3 (2.7%)"          # lấy thẳng delta đã tính sẵn
+    assert "còn 5 dòng nữa không liệt kê" in brief
 
 
-def test_moi_slide_chi_nhan_so_lieu_cua_muc_do():
-    payload = pr._slide_payload("quan_so", DATA)
-    assert "quan_so" in payload and "trang_bi" not in payload
+def test_tom_tat_noi_ro_chi_tieu_khong_co_nguon():
+    """Chỉ tiêu không có số liệu phải được nêu, nếu không model sẽ nhận xét về nó."""
+    brief, _ = pr.build_brief(DATA, PARAMS)
+    assert "Không có số liệu về: có mặt, vắng." in brief
 
 
-# ------------------------------------------------ toàn bộ workflow 5 ------ #
+def test_tom_tat_khong_mang_theo_cau_hoi_goc():
+    """Câu người dùng gõ ("cho đẹp vào", "chi tiết hơn") là lời mời thêm thắt."""
+    brief, _ = pr.build_brief(DATA, PARAMS)
+    assert "slide" not in brief.lower() or "đề xuất" not in brief.lower()
+    assert "Ghi chú: Số liệu kỳ được dựng lại." in brief
+
+
+def test_canh_bao_du_lieu_thanh_muc_rieng():
+    data = {**DATA, "personnel": {**DATA["personnel"],
+                                  "consistency": [{"ma_don_vi": "*", "message": "Quân số lệch."}]}}
+    brief, _ = pr.build_brief(data, PARAMS)
+    assert "SỐ LIỆU CẦN KIỂM TRA LẠI" in brief and "Quân số lệch." in brief
+
+
+def test_so_slide_de_xuat_nam_trong_khoang():
+    assert pr.MIN_SLIDES <= pr.build_brief(DATA, PARAMS)[1] <= pr.MAX_SLIDES
+    assert pr.MIN_SLIDES <= pr.build_brief({}, PARAMS)[1] <= pr.MAX_SLIDES
+
+
+# --------------------------------------------------------------------------- #
+# Đối chiếu số TRÊN FILE đã dựng
+# --------------------------------------------------------------------------- #
+def _lam_file(tmp_path, *bullets: str) -> str:
+    deck = DeckSpec(title="Báo cáo", slides=[
+        SlideSpec(kind="title", title="Báo cáo quân số tháng 8/2026"),
+        SlideSpec(kind="bullet", title="Đánh giá", bullets=list(bullets)),
+    ])
+    return str(build_pptx(deck, tmp_path / "deck.pptx"))
+
+
+async def test_so_bia_tren_slide_bi_neu_ten(tmp_path):
+    """Presenton giữ nguyên chữ nó viết, nên van chắn phải NÓI RA chứ không xoá."""
+    path = _lam_file(tmp_path, "Tổng quân số 28 người", "Có 47 đơn vị chưa gửi báo cáo")
+
+    result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
+                                   "engine": "presenton", "verify_upto": 2})
+
+    assert result["validation"]["status"] == "warning"
+    assert result["slide_count"] == 2
+    [issue] = result["validation"]["issues"]
+    assert issue["numbers"] == ["47"]
+    assert "47" in issue["quote"]
+
+
+async def test_slide_toan_so_that_thi_khong_canh_bao(tmp_path):
+    path = _lam_file(tmp_path, "Tổng quân số 28 người, tăng 1 so với kỳ trước")
+
+    result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
+                                   "engine": "presenton", "verify_upto": 2})
+    assert result["validation"]["status"] == "passed"
+
+
+async def test_so_trong_bang_cung_duoc_soi(tmp_path):
+    """Bảng là chỗ dễ lọt nhất: nó trông như dữ liệu nên không ai đọc kỹ."""
+    deck = DeckSpec(title="x", slides=[
+        SlideSpec(kind="table", title="Chi tiết",
+                  table=SlideTable(columns=["Đơn vị", "Quân số"],
+                                   rows=[["Đơn vị 1", "11"], ["Đơn vị 2", "99"]]))])
+    path = str(build_pptx(deck, tmp_path / "d.pptx"))
+
+    result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
+                                   "engine": "presenton", "verify_upto": 1})
+    assert ["99"] in [i["numbers"] for i in result["validation"]["issues"]]
+
+
+async def test_khong_doc_lai_duoc_file_thi_noi_la_chua_kiem(tmp_path):
+    """Im lặng ở đây nguy hiểm hơn: người dùng tưởng đã đối chiếu xong."""
+    hong = tmp_path / "hong.pptx"
+    hong.write_bytes(b"khong phai pptx")
+
+    result = await pr.verify_node({"data": DATA, "params": PARAMS, "verify_upto": 2,
+                                   "output_path": str(hong), "engine": "presenton"})
+    assert result["validation"]["status"] == "skipped"
+    assert result["validation"]["ghi_chu"]
+
+
+# --------------------------------------------------------------------------- #
+# Toàn bộ workflow 5, với Presenton giả
+# --------------------------------------------------------------------------- #
 @pytest.fixture
 async def ppt_env(tmp_path, monkeypatch, erp_session):
     """Số liệu đọc từ ERP tạm, sổ văn bản ở CSDL app tạm, output vào thư mục tạm."""
@@ -259,6 +333,7 @@ async def ppt_env(tmp_path, monkeypatch, erp_session):
     class _Settings:
         output_dir = str(tmp_path)
         utility_model = "test"
+        presenton_n_slides = 0
 
     import app.db.session as db_session
 
@@ -272,184 +347,146 @@ async def ppt_env(tmp_path, monkeypatch, erp_session):
     await engine.dispose()
 
 
-class DeckLLM:
-    """LLM giả cho cả ba bước: tham số, dàn ý, nội dung slide."""
-
-    def __init__(self, bullets: list[str]) -> None:
-        self.bullets = bullets
-
-    async def chat_json(self, messages, **kwargs):
-        system = messages[0]["content"]
-        if "trích tham số" in system:
-            return {"thang": 8, "nam": 2026, "ma_don_vi": [], "so_sanh_thang": None,
-                    "noi_dung": ["quan_so", "trang_bi"]}
-        if "lập dàn ý" in system:
-            return {"title": "Báo cáo quân số tháng 8/2026", "subtitle": "Toàn cơ quan",
-                    "slides": [
-                        {"kind": "title", "title": "Báo cáo quân số tháng 8/2026"},
-                        {"kind": "summary", "title": "Tổng quan", "focus": "quan_so"},
-                        {"kind": "chart", "title": "Biến động quân số",
-                         "chart_key": "personnel", "focus": "quan_so"},
-                        {"kind": "table", "title": "Chi tiết theo đơn vị",
-                         "data_key": "personnel_breakdown"},
-                        {"kind": "bullet", "title": "Đánh giá", "focus": "quan_so"},
-                    ]}
-        return {"bullets": self.bullets, "notes": "ghi chú"}
-
-
-async def test_tao_bo_slide_hoan_chinh(ppt_env, monkeypatch):
-    from app.agents.graph import run_presentation_workflow
-
-    llm = DeckLLM(["Tổng quân số 5 người", "Trong kỳ tuyển mới 1 người"])
-    monkeypatch.setattr(rp, "get_llm", lambda: llm)
-    monkeypatch.setattr(pr, "get_llm", lambda: llm)
-
-    result = await run_presentation_workflow("Tạo slide báo cáo quân số tháng 8")
-
-    assert result["validation"]["status"] == "passed"
-    assert result["slide_count"] == 5
-    assert Path(result["output_path"]).exists()
-
-    presentation = Presentation(result["output_path"])
-    assert len(presentation.slides) == 5
-    assert any(shape.shape_type == 13 for shape in presentation.slides[2].shapes)
-
-
-async def test_bullet_co_so_bia_bi_loai_nhung_van_ra_file(ppt_env, monkeypatch):
-    """Slide là tài liệu nội bộ: bỏ đúng bullet sai, không chặn cả bộ slide."""
-    from app.agents.graph import run_presentation_workflow
-
-    llm = DeckLLM(["Tổng quân số 5 người", "Đề nghị bổ sung 47 biên chế"])
-    monkeypatch.setattr(rp, "get_llm", lambda: llm)
-    monkeypatch.setattr(pr, "get_llm", lambda: llm)
-
-    result = await run_presentation_workflow("Tạo slide báo cáo quân số tháng 8")
-
-    assert result["validation"]["status"] == "failed"
-    assert result["removed_bullets"] > 0
-    assert Path(result["output_path"]).exists()        # vẫn có file để người dùng sửa
-
-    texts = " ".join(
-        shape.text_frame.text
-        for slide in Presentation(result["output_path"]).slides
-        for shape in slide.shapes if shape.has_text_frame
-    )
-    assert "47" not in texts                           # bullet bịa không lọt vào file
-    assert "Tổng quân số 5 người" in texts
-
-
-async def test_o_chi_tieu_khong_phu_thuoc_llm(ppt_env, monkeypatch):
-    """LLM không viết được chữ thì slide tổng quan vẫn có số liệu."""
-    from app.agents.graph import run_presentation_workflow
-
-    class BrokenContentLLM(DeckLLM):
-        async def chat_json(self, messages, **kwargs):
-            if "viết nội dung cho một slide" in messages[0]["content"]:
-                raise RuntimeError("LLM hỏng")
-            return await super().chat_json(messages, **kwargs)
-
-    llm = BrokenContentLLM([])
-    monkeypatch.setattr(rp, "get_llm", lambda: llm)
-    monkeypatch.setattr(pr, "get_llm", lambda: llm)
-
-    result = await run_presentation_workflow("Tạo slide quân số tháng 8")
-    summary = next(s for s in result["slides"] if s["kind"] == "summary")
-
-    assert summary["metrics"]          # ô chỉ tiêu do code dựng, vẫn còn
-    assert summary["bullets"] == []    # chỉ mất phần chữ
-    assert Path(result["output_path"]).exists()
-
-
-# ------------------------------------------------- lịch sử hội thoại ------- #
-class GhiPromptLLM:
-    """Ghi lại prompt để kiểm tra dàn ý có nhìn thấy lượt trước hay không."""
+class ParamsLLM:
+    """Chỉ còn MỘT lời gọi LLM trong workflow 5: bước trích tham số."""
 
     def __init__(self) -> None:
-        self.messages: list[dict[str, str]] = []
+        self.calls = 0
 
     async def chat_json(self, messages, **kwargs):
-        self.messages = messages
-        return {"title": "Báo cáo", "slides": [{"kind": "title", "title": "Bìa"}]}
+        self.calls += 1
+        return {"thang": 8, "nam": 2026, "ma_don_vi": [], "so_sanh_thang": None,
+                "noi_dung": ["quan_so", "trang_bi"]}
 
 
-async def test_dan_y_nhin_thay_luot_truoc(monkeypatch):
-    """"làm luôn slide từ số liệu đó" chỉ hiểu được nếu lượt trước đi vào prompt."""
-    llm = GhiPromptLLM()
-    monkeypatch.setattr(pr, "get_llm", lambda: llm)
+class FakePresenton:
+    """Presenton giả: nhận tóm tắt, trả về một file .pptx thật để còn đọc lại."""
 
-    await pr.outline_node({
-        "request": "làm luôn slide từ số liệu đó",
-        "data": DATA, "params": PARAMS,
-        "history": [{"role": "user", "content": "soạn báo cáo tài nguyên DV01 tháng 8"},
-                    {"role": "assistant", "content": "Đã soạn báo cáo tài nguyên DV01."}],
-    })
+    def __init__(self, tmp_path, bullets: list[str] | None = None,
+                 loi: Exception | None = None) -> None:
+        self.tmp_path = tmp_path
+        self.bullets = bullets or []
+        self.loi = loi
+        self.brief = ""
+        self.instructions = ""
+        self.n_slides = 0
 
-    user = llm.messages[1]["content"]
-    assert "soạn báo cáo tài nguyên DV01 tháng 8" in user
-    assert "làm luôn slide từ số liệu đó" in user
+    async def generate(self, content, *, n_slides, instructions="", **kwargs):
+        from app.services.presenton import Deck
+
+        self.brief, self.instructions, self.n_slides = content, instructions, n_slides
+        if self.loi:
+            raise self.loi
+        deck = DeckSpec(title="Báo cáo", slides=[
+            SlideSpec(kind="title", title="Báo cáo quân số tháng 8/2026"),
+            SlideSpec(kind="bullet", title="Đánh giá", bullets=self.bullets),
+        ])
+        path = build_pptx(deck, self.tmp_path / "presenton.pptx")
+        return Deck(presentation_id="p1", content=Path(path).read_bytes(),
+                    remote_path="/app_data/exports/p1.pptx", edit_path="/presentation?id=p1",
+                    elapsed_seconds=1.0)
 
 
-async def test_khong_co_lich_su_van_chay_binh_thuong(monkeypatch):
-    llm = GhiPromptLLM()
-    monkeypatch.setattr(pr, "get_llm", lambda: llm)
+async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
+    from app.agents.graph import run_presentation_workflow
 
-    result = await pr.outline_node({"request": "tạo slide", "data": DATA, "params": PARAMS})
+    llm = ParamsLLM()
+    gia = FakePresenton(ppt_env, ["Tổng quân số 5 người, tăng 1 so với kỳ trước"])
+    monkeypatch.setattr(rp, "get_llm", lambda: llm)
+    monkeypatch.setattr(pr, "get_presenton", lambda: gia)
 
-    assert "(chưa có)" in llm.messages[1]["content"]
-    assert result["outline"]["slides"][0]["kind"] == "title"
+    result = await run_presentation_workflow("Tạo slide báo cáo quân số tháng 8/2026")
+
+    assert result["error"] == ""
+    assert result["engine"] == "presenton"
+    assert result["validation"]["status"] == "passed"
+    assert Path(result["output_path"]).exists()
+    assert result["edit_url"] == "/presentation?id=p1"
+
+    # 2 slide của Presenton + bảng chi tiết quân số do code ghép vào.
+    assert result["slide_count"] == 3
+    presentation = Presentation(result["output_path"])
+    bang = [sh.table for s in presentation.slides for sh in s.shapes if sh.has_table]
+    assert len(bang) == 1
+    assert len(bang[0].rows) == 1 + 2          # tiêu đề cột + 2 đơn vị, không thiếu dòng
+
+    # Đúng một lời gọi LLM nội bộ: bước trích tham số. Phần chữ trên slide không
+    # còn đi qua model của hệ thống nữa.
+    assert llm.calls == 1
+    # Và Presenton chỉ thấy số liệu, không thấy câu hỏi gốc.
+    assert "Tạo slide báo cáo" not in gia.brief
+    assert "Tổng quân số" in gia.brief
+    assert "KHÔNG tự cộng" in gia.instructions
+
+
+async def test_presenton_hong_thi_van_ra_file_bang_duong_lui(ppt_env, monkeypatch):
+    """Hỏng ở bên kia không được làm người dùng ra về tay trắng."""
+    from app.agents.graph import run_presentation_workflow
+    from app.services.presenton import PresentonError
+
+    llm = ParamsLLM()
+    gia = FakePresenton(ppt_env, loi=PresentonError("container chưa chạy"))
+    monkeypatch.setattr(rp, "get_llm", lambda: llm)
+    monkeypatch.setattr(pr, "get_presenton", lambda: gia)
+
+    result = await run_presentation_workflow("Tạo slide báo cáo quân số tháng 8/2026")
+
+    assert result["engine"] == "local"
+    assert Path(result["output_path"]).exists()
+    assert result["slide_count"] > 1
+    # Nói rõ bộ slide này khác thứ người dùng chờ đợi, và vì sao.
+    assert any("container chưa chạy" in a for a in result["assumptions"])
+    # Đường lùi không gọi LLM viết chữ: vẫn đúng một lời gọi của bước tham số.
+    assert llm.calls == 1
+
+
+async def test_duong_lui_van_du_so_lieu(ppt_env, monkeypatch):
+    """Bộ slide đường lùi khô khan nhưng không được thiếu bảng chi tiết."""
+    from app.agents.graph import run_presentation_workflow
+    from app.services.presenton import PresentonError
+
+    monkeypatch.setattr(rp, "get_llm", lambda: ParamsLLM())
+    monkeypatch.setattr(pr, "get_presenton",
+                        lambda: FakePresenton(ppt_env, loi=PresentonError("hỏng")))
+
+    result = await run_presentation_workflow("Tạo slide báo cáo tháng 8/2026")
+    presentation = Presentation(result["output_path"])
+
+    assert any(sh.has_table for slide in presentation.slides for sh in slide.shapes)
+    chu = " ".join(sh.text_frame.text for slide in presentation.slides
+                   for sh in slide.shapes if sh.has_text_frame)
+    assert "Đơn vị 1" in chu
 
 
 # --------------------------------------------------------------------------- #
-# `focus` là enum, không phải chú thích tự do
+# Đường lùi dựng bằng code: không một chữ nào của LLM
 # --------------------------------------------------------------------------- #
-def test_focus_van_xuoi_bi_ep_ve_gia_tri_dung_duoc():
-    """Model từng trả về cả câu; khi đó không nhánh dữ liệu nào khớp."""
-    from app.agents.nodes.presentation import _normalize_focus
+def test_duong_lui_khong_co_cau_nao_do_model_viet():
+    deck = pr._fallback_deck(DATA, PARAMS)
+    bullets = [b for s in deck.slides for b in s.bullets]
 
-    assert _normalize_focus("Tổng quan nhanh về quân số và trang bị", None, None) == "tong_hop"
-    assert _normalize_focus("quan_so", None, None) == "quan_so"
-    assert _normalize_focus("  TRANG_BI  ", None, None) == "trang_bi"
-
-
-def test_focus_suy_tu_khoa_du_lieu_khi_model_viet_lung_tung():
-    """Slide biểu đồ đã tự khai nói về cái gì - tin khoá dữ liệu hơn tin chữ."""
-    from app.agents.nodes.presentation import _normalize_focus
-
-    assert _normalize_focus("Tình hình thiết bị kỹ thuật", "equipment", None) == "trang_bi"
-    assert _normalize_focus("", None, "personnel_breakdown") == "quan_so"
+    # Mọi câu trong bộ slide đường lùi đều phải truy được về dữ liệu gốc.
+    assert bullets
+    assert all("Đơn vị" in b or "đơn vị" in b for b in bullets)
+    assert [box.value for s in deck.slides for box in s.metrics] == ["28", "1"]
 
 
-def test_o_chi_tieu_bam_theo_focus():
-    """Slide nói về trang bị không được hiện ô quân số."""
-    from app.agents.nodes.presentation import _metric_boxes
-
-    data = {
-        "personnel": {"metrics": {"total_personnel": {"value": 28, "delta": None,
-                                                     "delta_pct": None, "share_pct": None}}},
-        "equipment": {"metrics": {"total_equipment": {"value": 194, "delta": None,
-                                                     "delta_pct": None, "share_pct": None}}},
-    }
-    assert [b.value for b in _metric_boxes(data, "trang_bi")] == ["194"]
-    assert [b.value for b in _metric_boxes(data, "quan_so")] == ["28"]
-    # Slide "chỉ tiêu chính" của bộ slide hỗn hợp phải thấy cả hai, không rỗng.
-    assert [b.value for b in _metric_boxes(data, "tong_hop")] == ["28", "194"]
+def test_o_chi_tieu_giu_nguyen_bien_dong_da_tinh_san():
+    box = pr._metric_box("total_personnel", DATA["personnel"]["metrics"]["total_personnel"])
+    assert box.value == "28" and box.note == "+1 (3.7%)"
 
 
-def test_bo_slide_chi_co_trang_bi_khong_ra_slide_chi_tieu_rong():
-    """Đúng cái slide trắng trong bộ slide đang dùng: deck trang bị, ô lấy quân số."""
-    from app.agents.nodes.presentation import _metric_boxes
-
-    chi_trang_bi = {"equipment": {"metrics": {"total_equipment": {
-        "value": 194, "delta": None, "delta_pct": None, "share_pct": None}}}}
-    assert _metric_boxes(chi_trang_bi, "tong_hop") != []
+def test_bang_rong_khong_thanh_slide_bang():
+    """Kỳ chưa có trang bị nào: bảng rỗng thì slide chỉ còn dòng tiêu đề cột."""
+    assert pr._slide_table("equipment_breakdown", {"equipment": {"breakdown": []}}) is None
+    assert pr._slide_table("personnel_breakdown", DATA) is not None
 
 
+# --------------------------------------------------------------------------- #
+# Đếm slide: nhãn trên giao diện phải khớp file
+# --------------------------------------------------------------------------- #
 def test_slide_count_dem_ca_slide_sinh_them_khi_phan_trang():
-    """Nhãn "N slide" trên giao diện phải khớp số slide trong file.
-
-    `len(specs)` đếm trước bước phân trang, nên một bảng 33 dòng làm giao diện ghi
-    "5 slide" trên một file 7 slide - người dùng tin cái nhãn chứ không mở ra đếm.
-    """
+    """`len(specs)` đếm trước bước phân trang, nên bảng 33 dòng làm nhãn sai."""
     from app.documents.pptx_builder import count_slides
 
     specs = [
@@ -473,99 +510,56 @@ def test_slide_count_khop_voi_file_dung_ra(tmp_path):
     assert count_slides(specs) == len(Presentation(str(output)).slides)
 
 
-# --------------------------------------------------------------------------- #
-# Bảng chi tiết không được phụ thuộc vào ý thích của model
-# --------------------------------------------------------------------------- #
-def test_dan_y_quen_bang_thi_code_tu_them():
-    """Ba lần chạy thật với "báo cáo thông tin nhân viên" đều ra dàn ý không bảng."""
-    from app.agents.nodes.presentation import _ensure_detail_tables
+def test_ghep_bang_dai_vao_file_co_san_khong_mat_dong(tmp_path):
+    """Bảng 33 dòng ghép vào bộ slide Presenton phải còn đủ 33 dòng.
 
-    slides = [
-        {"kind": "title", "title": "Bìa", "focus": "tong_hop",
-         "chart_key": None, "data_key": None},
-        {"kind": "chart", "title": "Biến động quân số", "focus": "quan_so",
-         "chart_key": "personnel", "data_key": None},
-        {"kind": "bullet", "title": "Đánh giá", "focus": "tong_hop",
-         "chart_key": None, "data_key": None},
-    ]
-    ket_qua = _ensure_detail_tables(slides, ["personnel_breakdown"])
-
-    assert [s["kind"] for s in ket_qua] == ["title", "chart", "table", "bullet"]
-    assert ket_qua[2]["data_key"] == "personnel_breakdown"
-    assert ket_qua[2]["focus"] == "quan_so"
-
-
-def test_khong_them_bang_cua_mang_khong_nhac_toi():
-    """Bộ slide chỉ nói về quân số thì không tự nhiên mọc ra bảng trang bị."""
-    from app.agents.nodes.presentation import _ensure_detail_tables
-
-    slides = [
-        {"kind": "chart", "title": "Quân số", "focus": "quan_so",
-         "chart_key": "personnel", "data_key": None},
-    ]
-    ket_qua = _ensure_detail_tables(slides, ["personnel_breakdown", "equipment_breakdown"])
-
-    assert [s.get("data_key") for s in ket_qua if s["kind"] == "table"] == ["personnel_breakdown"]
-
-
-def test_bang_da_co_thi_khong_them_lan_hai():
-    from app.agents.nodes.presentation import _ensure_detail_tables
-
-    slides = [
-        {"kind": "chart", "title": "Quân số", "focus": "quan_so",
-         "chart_key": "personnel", "data_key": None},
-        {"kind": "table", "title": "Chi tiết", "focus": "quan_so",
-         "chart_key": None, "data_key": "personnel_breakdown"},
-    ]
-    assert _ensure_detail_tables(slides, ["personnel_breakdown"]) == slides
-
-
-def test_dan_y_toan_tong_hop_thi_them_du_ca_hai_bang():
-    from app.agents.nodes.presentation import _ensure_detail_tables
-
-    slides = [{"kind": "summary", "title": "Chỉ tiêu", "focus": "tong_hop",
-               "chart_key": None, "data_key": None}]
-    ket_qua = _ensure_detail_tables(slides, ["personnel_breakdown", "equipment_breakdown"])
-
-    assert [s.get("data_key") for s in ket_qua if s["kind"] == "table"] == [
-        "personnel_breakdown", "equipment_breakdown"]
-
-
-def test_bang_chen_truoc_slide_nhan_xet():
-    """Số liệu phải đến trước kết luận, không phải sau."""
-    from app.agents.nodes.presentation import _ensure_detail_tables
-
-    slides = [
-        {"kind": "chart", "title": "Quân số", "focus": "quan_so",
-         "chart_key": "personnel", "data_key": None},
-        {"kind": "bullet", "title": "Đánh giá", "focus": "tong_hop",
-         "chart_key": None, "data_key": None},
-        {"kind": "bullet", "title": "Kiến nghị", "focus": "tong_hop",
-         "chart_key": None, "data_key": None},
-    ]
-    assert [s["kind"] for s in _ensure_detail_tables(slides, ["personnel_breakdown"])] == [
-        "chart", "table", "bullet", "bullet"]
-
-
-def test_bang_rong_khong_duoc_chao_len():
-    """Kỳ 7/2026 trên ERP thật: chưa trang bị nào, breakdown rỗng.
-
-    Chào bảng rỗng thì bộ slide mọc một slide chỉ có mỗi dòng tiêu đề cột. Chỉ
-    tiêu "0 trang bị" vẫn giữ - đó là kết luận thật về kỳ đó, khác với một bảng
-    trống không nói gì.
+    Đây là lý do bảng không giao cho Presenton: schema của nó chặn ở 6 dòng, còn
+    ở đây bảng dài chỉ nở thêm trang chứ không mất dòng nào.
     """
-    data = {"equipment": {"metrics": {"total_equipment": {"value": 0, "delta": None,
-                                                          "delta_pct": None, "share_pct": None}},
-                          "breakdown": []}}
-    _, charts, tables = pr._available_data(data)
+    from app.documents.pptx_builder import append_to_pptx
 
-    assert charts == ["equipment"]          # chỉ tiêu 0 vẫn được nói tới
-    assert tables == []                     # nhưng không có bảng rỗng
+    goc = build_pptx(DeckSpec(title="x", slides=[SlideSpec(kind="title", title="Bìa")]),
+                     tmp_path / "goc.pptx")
+    rows = [[f"Đơn vị {i}", str(i)] for i in range(33)]
+    them = append_to_pptx(goc, [SlideSpec(kind="table", title="Chi tiết",
+                                          table=SlideTable(columns=["Đơn vị", "Quân số"],
+                                                           rows=rows))])
+
+    presentation = Presentation(str(goc))
+    assert them == 3                                  # 33 dòng tách thành 3 trang
+    assert len(presentation.slides) == 1 + 3          # slide cũ được giữ nguyên
+    dem = sum(len(sh.table.rows) - 1 for s in presentation.slides
+              for sh in s.shapes if sh.has_table)
+    assert dem == 33
 
 
-def test_bang_co_dong_thi_van_duoc_chao():
-    data = {"equipment": {"metrics": {"total_equipment": {"value": 194, "delta": None,
-                                                          "delta_pct": None, "share_pct": None}},
-                          "breakdown": [{"ten_don_vi": "Phòng IT"}]}}
-    _, _, tables = pr._available_data(data)
-    assert tables == ["equipment_breakdown"]
+def test_chi_dan_nhac_muc_canh_bao_khi_that_su_co_canh_bao():
+    """Dặn cứng thì kỳ nào sạch số liệu cũng mọc dòng "cần kiểm tra lại: chưa nêu"."""
+    assert "kiểm tra lại" not in pr.instructions_for(DATA)
+
+    co_canh_bao = {**DATA, "personnel": {**DATA["personnel"],
+                                         "consistency": [{"ma_don_vi": "*",
+                                                          "message": "Quân số lệch."}]}}
+    assert "kiểm tra lại" in pr.instructions_for(co_canh_bao)
+
+
+async def test_bang_ghep_them_khong_bi_soi_thanh_so_bia(tmp_path):
+    """Chú thích phân trang do CODE viết, không phải model - soi nó là báo oan.
+
+    Tầng live đỏ đúng chỗ này: bảng 33 dòng tách ba trang, mỗi trang mang chú
+    thích "Nguồn: Asm_Assets - dòng 12-22/33", và van chắn đọc 12, 22, 33 thành
+    ba con số không truy được về dữ liệu gốc.
+    """
+    from app.documents.pptx_builder import append_to_pptx
+
+    path = _lam_file(tmp_path, "Tổng quân số 28 người")
+    append_to_pptx(path, [SlideSpec(
+        kind="table", title="Chi tiết", caption="Nguồn: Asm_Assets",
+        table=SlideTable(columns=["Đơn vị", "Số lượng"],
+                         rows=[[f"Đơn vị {i}", str(i)] for i in range(33)]))])
+
+    result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
+                                   "engine": "presenton", "verify_upto": 2})
+
+    assert result["validation"]["status"] == "passed"
+    assert result["slide_count"] == 2 + 3        # vẫn đếm đủ slide trong file

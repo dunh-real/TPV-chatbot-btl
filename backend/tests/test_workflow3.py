@@ -25,9 +25,9 @@ DATA = {
     "tong_so_trang_bi": 80, "so_loai_trang_bi": 4, "so_loai_can_bao_duong": 2,
     "trang_bi": [
         {"ten_trang_bi": "Máy chủ", "so_luong": 6, "tinh_trang": "Tốt",
-         "bao_duong_cuoi": "2026-08-02"},
+         "cap_nhat_cuoi": "2026-08-02"},
         {"ten_trang_bi": "Xe công vụ", "so_luong": 2, "tinh_trang": "Cần bảo dưỡng",
-         "bao_duong_cuoi": "2026-01-25"},
+         "cap_nhat_cuoi": "2026-01-25"},
     ],
 }
 

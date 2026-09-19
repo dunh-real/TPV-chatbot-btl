@@ -21,10 +21,12 @@ router = APIRouter(prefix="/api/presentations", tags=["presentations"])
 
 @router.post("/create", response_model=PresentationResponse, summary="Tạo bộ slide báo cáo")
 async def create(request: PresentationRequest) -> PresentationResponse:
-    """LLM chỉ sinh dàn ý và chữ; biểu đồ và file .pptx đều do code dựng.
+    """Presenton dựng slide từ bản tóm tắt số liệu do hệ thống chốt sẵn.
 
-    `outline` trả về là JSON trung gian đã lọc - xem được hệ thống định dựng slide
-    nào trước khi mở file.
+    Mất khoảng 60-90 giây - giao diện nên hiện tiến trình, `elapsed_seconds` có
+    trong kết quả. `brief` trả về là toàn bộ thứ Presenton nhìn thấy: đối chiếu
+    ở đó để biết một con số lạ trên slide là do số liệu sai hay do bên kia viết
+    thêm. `engine` cho biết file đến từ Presenton hay từ đường lùi tự dựng.
     """
     result = await run_presentation_workflow(request.request, inputs=request.inputs)
     if result.get("output_path"):

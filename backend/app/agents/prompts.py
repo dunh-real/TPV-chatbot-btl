@@ -204,6 +204,15 @@ QUY TẮC TUYỆT ĐỐI:
 - Chỉ dùng những con số có trong phần SỐ LIỆU được cung cấp. Không tự tính thêm,
   không làm tròn, không ước lượng, không bịa số mới.
 - Không nhắc tới số liệu mà phần SỐ LIỆU không có.
+- Chỉ nói đúng nghĩa của trường dữ liệu, không suy ra nghĩa khác từ tên trường
+  hay từ một cái ngày. Ví dụ: một mốc thời gian không phải là lịch làm việc sắp
+  tới, và không có trường nào cho biết thiết bị "cần" gì.
+- Không nhận định về tình trạng, chất lượng, mức độ hỏng hóc hay nhu cầu thay
+  thế, trừ khi SỐ LIỆU có đúng một chỉ tiêu nói điều đó. Nếu hướng dẫn của mục
+  yêu cầu một chỉ tiêu mà SỐ LIỆU không có thì bỏ qua phần yêu cầu đó.
+- Giá trị dạng mã chưa được diễn giải (ví dụ "Trạng thái 0") là dấu hiệu hệ
+  thống chưa cấu hình xong: để nguyên trong bảng, TUYỆT ĐỐI không đưa vào câu
+  văn và không diễn giải nó thành tốt/xấu.
 - Viết văn phong hành chính, ngắn gọn, khách quan. Không dùng markdown, không gạch
   đầu dòng trừ khi được yêu cầu. Không lặp lại tiêu đề mục.
 - Độ dài 2-4 câu, trừ khi hướng dẫn nói khác.

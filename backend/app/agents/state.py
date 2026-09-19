@@ -101,6 +101,7 @@ class DraftState(TypedDict, total=False):
 
     # --- đầu ra ---
     output_path: str
+    so_ky_hieu: str                 # số cấp từ sổ văn bản lúc xuất file
     registered_as: str
     assumptions: list[str]
     missing_input: list[str]
@@ -190,17 +191,20 @@ class PresentationState(TypedDict, total=False):
     history: list[dict[str, str]]
     inputs: dict[str, Any]
 
-    # --- trung gian (tái dùng phần lấy số liệu và biểu đồ của workflow 4) ---
+    # --- trung gian (tái dùng phần lấy số liệu của workflow 4) ---
     params: dict[str, Any]
     data: dict[str, Any]
-    charts: dict[str, bytes]
-    outline: dict[str, Any]           # JSON trung gian do LLM sinh, đã lọc
-    slides: list[dict[str, Any]]
+    brief: str                        # bản tóm tắt số liệu gửi cho Presenton
+    n_slides: int
+    verify_upto: int                  # số slide đầu do model viết - phạm vi soi số
     validation: dict[str, Any]
 
     # --- đầu ra ---
     output_path: str
+    engine: str                       # presenton | local (đường lùi tự dựng)
+    presentation_id: str
+    edit_url: str
+    elapsed_seconds: float
     slide_count: int
-    removed_bullets: int
     assumptions: list[str]
     error: str

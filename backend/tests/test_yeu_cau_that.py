@@ -132,9 +132,11 @@ async def dong_ket_noi_khi_xong():
     yield
     from app.db.erp_session import dispose_erp_engine
     from app.services.llm import get_llm
+    from app.services.presenton import close_presenton
 
     await get_llm().close()
     await dispose_erp_engine()
+    await close_presenton()
 
 
 @pytest.mark.live
@@ -184,39 +186,45 @@ KHOA_CUA_MANG = {"quan_so": ("personnel", "personnel_breakdown"),
 @_pytest_asyncio_module_loop
 @pytest.mark.parametrize("cau, mang", CAU_DUNG_SLIDE, ids=[c for c, _ in CAU_DUNG_SLIDE])
 async def test_bo_slide_dung_voi_cau_hoi(cau, mang, dong_ket_noi_khi_xong):
+    """Câu tiếng Việt -> bộ slide .pptx thật, dựng bằng Presenton.
+
+    Bộ slide do bên ngoài sinh chữ, nên ba bất biến dưới đây là thứ duy nhất giữ
+    cho nó dùng được: đúng mảng số liệu được hỏi, không con số nào ngoài dữ liệu,
+    và bảng chi tiết đủ dòng.
+    """
     from pptx import Presentation
 
     from app.agents.graph import run_presentation_workflow
-    from app.agents.nodes.presentation import FOCUS_KINDS
     from app.core.context import Principal, use_principal
 
     with use_principal(Principal(tenant_id=64)):
-        ket_qua = await run_presentation_workflow(cau, inputs={})
+        ket_qua = await run_presentation_workflow(
+            cau, inputs={"nguoi_trinh_bay": "Nguyễn Tiến Anh"})
 
     assert not ket_qua["error"], ket_qua["error"]
-    slides = ket_qua["outline"]["slides"]
+    # Đường lùi tự dựng vẫn ra file, nhưng ở tầng live thì nó là thất bại: nghĩa
+    # là Presenton không dùng được và cả bộ slide mất phần diễn giải.
+    assert ket_qua["engine"] == "presenton", ket_qua["assumptions"]
 
-    # `focus` là enum: model từng trả về cả câu và không nhánh dữ liệu nào khớp.
-    assert all(s["focus"] in FOCUS_KINDS for s in slides), \
-        [s["focus"] for s in slides]
-
-    # Hỏi một mảng thì không mọc ra slide của mảng kia.
-    if mang:
-        cam = KHOA_CUA_MANG[MANG_NGUOC[mang]]
-        dung = [s.get("chart_key") or s.get("data_key") for s in slides]
-        assert not (set(dung) & set(cam)), f"lẫn số liệu {MANG_NGUOC[mang]}: {dung}"
+    # Hỏi một mảng thì bản tóm tắt không được mang mảng kia sang.
+    brief = ket_qua["brief"]
+    if mang == "quan_so":
+        assert "TRANG THIẾT BỊ" not in brief
+    elif mang == "trang_bi":
+        assert "QUÂN SỐ" not in brief
 
     presentation = Presentation(ket_qua["output_path"])
-
-    # Nhãn "N slide" trên giao diện phải khớp số slide trong file.
     assert ket_qua["slide_count"] == len(presentation.slides)
 
+    # Mọi con số trên slide phải truy được về dữ liệu gốc. Bản cũ trượt đúng chỗ
+    # này: "8 đơn vị thiếu dữ liệu nhân sự" trong khi danh sách thật có 9.
+    assert ket_qua["validation"]["issues"] == [], \
+        [i["quote"] for i in ket_qua["validation"]["issues"]]
+
     bang = [sh.table for s in presentation.slides for sh in s.shapes if sh.has_table]
-    # Bảng chi tiết phải có mặt, và không bảng nào rỗng.
     assert bang, "bộ slide không có bảng chi tiết nào"
     assert all(len(t.rows) > 1 for t in bang), "có bảng chỉ còn dòng tiêu đề cột"
 
-    # Không còn dấu vết của lối cắt cụt cũ.
     chu = " ".join(sh.text_frame.text for s in presentation.slides
                    for sh in s.shapes if sh.has_text_frame)
     assert "xem chi tiết trong báo cáo" not in chu
@@ -225,8 +233,7 @@ async def test_bo_slide_dung_voi_cau_hoi(cau, mang, dong_ket_noi_khi_xong):
     #
     # Chỉ kiểm "bảng không rỗng" thì không bắt được lối cắt cụt - cắt 33 dòng còn
     # 8 vẫn qua. Phải hỏi lại chính tool số liệu xem đáng lẽ có bao nhiêu dòng,
-    # rồi đếm dòng thật trong file. Thiếu một dòng là người đọc cộng ra số khác
-    # với tổng in ở slide trước đó.
+    # rồi đếm dòng thật trong file.
     mong_doi = await _so_dong_dang_le_co(ket_qua["params"])
     dem = _dem_dong_theo_cot(presentation)
     for cot_dau, so_dong in mong_doi.items():

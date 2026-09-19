@@ -230,17 +230,39 @@ FIELD_LABELS = {
 }
 
 
+# Từ chỉ thời gian nằm giữa tên chỉ tiêu và con số -> con số đó là MỐC THỜI GIAN.
+#
+# Trích yếu "V/v báo cáo quân số và trang thiết bị tháng 8/2026" khớp mẫu quân số
+# và trả về 8. Báo cáo của Phòng Kế toán ghi quân số 3, kiểm kê cũng 3, nhưng bản
+# tổng hợp vẫn in ra một mục "ĐỐI CHIẾU SỐ LIỆU: báo cáo ghi 8, kiểm kê 3" - một
+# chênh lệch không có thật, nằm trong văn bản trình ký.
+_TIME_WORD_RE = re.compile(r"tháng|quý|năm|ngày|tuần|kỳ", re.I)
+# "8/2026" - số nằm trong một mốc ngày tháng, không phải số liệu.
+_PART_OF_DATE_RE = re.compile(r"\s*[/-]\s*\d")
+
+
+def _dang_tin(match: re.Match[str], text: str) -> bool:
+    """Con số bắt được có thật sự là số liệu, hay chỉ là mốc thời gian đi ngang qua."""
+    truoc_so = match.group(0)[: match.start(1) - match.start(0)]
+    if _TIME_WORD_RE.search(truoc_so):
+        return False
+    return not _PART_OF_DATE_RE.match(text[match.end(1):match.end(1) + 6])
+
+
 def extract_figures(text: str) -> dict[str, int]:
     """Lấy các chỉ tiêu nhận ra được; chỉ tiêu không chắc chắn thì bỏ qua."""
     figures: dict[str, int] = {}
     for field_name, patterns in FIELD_PATTERNS.items():
         for pattern in patterns:
-            match = pattern.search(text)
-            if match:
+            for match in pattern.finditer(text):
+                if not _dang_tin(match, text):
+                    continue
                 try:
                     figures[field_name] = int(match.group(1))
                 except (TypeError, ValueError):
                     continue
+                break
+            if field_name in figures:
                 break
     return figures
 

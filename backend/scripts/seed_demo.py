@@ -106,15 +106,22 @@ TEMPLATE_TAI_NGUYEN = {
             "title": "II. TÌNH TRẠNG TRANG THIẾT BỊ",
             "type": "table",
             "query": "trang_bi",
-            "columns": ["ten_trang_bi", "so_luong", "tinh_trang", "bao_duong_cuoi"],
-            "narrative": "Sau bảng, nêu tổng số đầu trang bị và số loại đang cần bảo dưỡng.",
+            "columns": ["ten_trang_bi", "so_luong", "tinh_trang", "cap_nhat_cuoi"],
+            # Không hỏi "số loại đang cần bảo dưỡng": ERP không có chỉ tiêu đó.
+            # Mẫu hỏi một chỉ tiêu không tồn tại thì model sẽ dựng ra một con số
+            # để trả lời - và con số đó truy được về dữ liệu nên van chắn không
+            # bắt. Ba lần chạy thật đều ra "có 5 loại đang cần bảo dưỡng".
+            "narrative": "Sau bảng, nêu tổng số lượng trang bị và số chủng loại. "
+                         "Không nhận xét về tình trạng nếu bảng chưa có nhãn tình trạng.",
         },
         {
             "id": "de_xuat",
             "title": "III. ĐỀ XUẤT, KIẾN NGHỊ",
             "type": "llm",
-            "narrative": "Căn cứ tình trạng ở mục II, đề xuất bổ sung hoặc thay thế trang bị. "
-                         "Chỉ đề xuất dựa trên số liệu đã nêu, không bịa thêm hạng mục.",
+            "narrative": "Nêu kiến nghị rà soát dựa trên số lượng và chủng loại đã nêu ở "
+                         "mục II. Không suy ra tình trạng, hạn bảo dưỡng hay nhu cầu "
+                         "thay thế của bất kỳ trang bị nào - số liệu không có những "
+                         "thông tin đó.",
         },
     ],
 }
@@ -310,7 +317,7 @@ async def main(reset: bool) -> int:
             for ten, so_luong, tinh_trang, bao_duong in danh_sach:
                 await session.merge(
                     TrangBi(ma_don_vi=don_vi.ma_don_vi, ten_trang_bi=ten, so_luong=so_luong,
-                            tinh_trang=tinh_trang, bao_duong_cuoi=bao_duong)
+                            tinh_trang=tinh_trang, cap_nhat_cuoi=bao_duong)
                 )
         await session.merge(VAN_BAN)
         await session.flush()
@@ -339,7 +346,7 @@ async def main(reset: bool) -> int:
                 for ten, so_luong, tinh_trang, bao_duong in danh_sach:
                     session.add(KiemKeTrangBi(
                         kiem_ke_id=kiem_ke.id, ten_trang_bi=ten, so_luong=so_luong,
-                        tinh_trang=tinh_trang, bao_duong_cuoi=bao_duong))
+                        tinh_trang=tinh_trang, cap_nhat_cuoi=bao_duong))
                 so_ky += 1
 
     print(f"Đã nạp: {len(PHONG_BAN)} phòng ban, {len(TEMPLATES)} template, "

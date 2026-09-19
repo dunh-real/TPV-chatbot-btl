@@ -1,181 +1,205 @@
-# Việc còn lại — ghi ngày 19/09/2026
+# Việc còn lại — cập nhật 19/09/2026 (phiên chiều)
 
 Ghi cho người tiếp tục sửa backend (Tiến Anh và đội dev khi nối giao diện).
 
-Trạng thái cuối phiên: **419 test mặc định + 24 test `live` đều xanh** trên ERP thật.
+Trạng thái cuối phiên: **432 test mặc định + 24 test `live` đều xanh**, tầng
+`live` chạy trên ERP, vLLM và Presenton thật.
+
+Phiên này làm ba việc: đổi phần tạo slide sang Presenton, tinh chỉnh workflow 3,
+và sửa mấy chỗ truy xuất CSDL cho đúng.
 
 ---
 
-## 0. ĐÃ KIỂM CHỨNG (ERP mở lại lúc cuối phiên)
+## 0. ĐÃ KIỂM CHỨNG BẰNG CHẠY THẬT
 
-Mục này giữ lại để biết cái gì đã mắt thấy, cái gì mới chỉ chạy qua test.
+### Workflow 4 (tổng hợp) — dùng được cho demo
 
-- `pytest -m live` -> **24/24 xanh** với LLM + ERP thật.
-- Phép đối chiếu số dòng bảng **có tác dụng thật**: gài lại lỗi cắt bảng
-  (`rows[:8]` trong `pptx_builder.py`) thì test đỏ với đúng thông báo
-  `bảng 'Đơn vị | Trang bị | ...': file có 24 dòng, số liệu có 33 dòng`.
-  Bỏ lỗi đi thì xanh lại.
-- Báo cáo tổng hợp thật, tenant 64, kỳ 2026-08 so với 2025-08:
+Chạy thật tenant 64, kỳ 2026-08: `passed`, xuất file, 5/5 lần không câu nào sai.
 
-  ```
-  I.   TÌNH HÌNH GỬI BÁO CÁO
-  II.  TÌNH HÌNH QUÂN SỐ          [bảng 9 dòng]
-  III. TÌNH HÌNH TRANG THIẾT BỊ   [bảng 33 dòng]
-  IV.  SỐ LIỆU CẦN KIỂM TRA LẠI
-  giả định: Đối chiếu với kỳ 2025-08, không phải kỳ liền trước
-  ```
-
-  Đầu mục ra `IV` chứ không phải `IIII`, và mục III đã có bảng. Hai lỗi
-  sửa đúng.
-
-### Việc CÒN LẠI của mục này: xuất file thỉnh thoảng bị chặn
-
-Chạy lặp bản báo cáo tổng hợp: **9/10 lần xuất được file, 1 lần `failed`**
-(lần đầu, câu có so sánh khác năm). Chi tiết:
-
-- câu thường, 5 lần -> `passed` cả 5, xuất file cả 5;
-- câu "so với cùng kỳ năm ngoái", 4 lần -> `warning` cả 4, xuất file cả 4
-  (warning là cảnh báo dữ liệu thật: quân số tăng 12 nhưng tuyển mới 1 -
-  nghỉ việc 0 = 1, tức hồ sơ ERP thiếu ngày vào làm/nghỉ việc);
-- lần `failed` không bắt lại được, nên **chưa biết con số nào bị chặn**.
-
-Đây là van chắn số làm đúng việc của nó - chặn con số không truy được về
-dữ liệu gốc. Nhưng chưa rõ lần đó là model bịa số thật hay van chắn chặn
-oan. **Việc cần làm**: log lại `quote` và `numbers` của mọi issue mức
-`error` ra file, chạy bản báo cáo vài chục lần, rồi đọc. Không đoán.
-
----
-
-## 0b. Quy trình mỗi lần khởi động lại
-
-`dbnews.tpvtech.vn:7679` hiện không nhận kết nối. Kiểm bằng:
-
-```bash
-bash -c '</dev/tcp/dbnews.tpvtech.vn/7679' && echo mở || echo tắt
+```
+I.   TÌNH HÌNH GỬI BÁO CÁO      9 đơn vị, 1 đã gửi
+II.  TÌNH HÌNH QUÂN SỐ          [bảng 9 dòng]  28 người, +1
+III. TÌNH HÌNH TRANG THIẾT BỊ   [bảng 33 dòng] 194 cái, 33 chủng loại
+IV.  ĐỐI CHIẾU SỐ LIỆU          chỉ hiện khi thật sự lệch
+V.   SỐ LIỆU CẦN KIỂM TRA LẠI   49/194 trang bị chưa gán phòng ban
 ```
 
-Mở rồi thì chạy theo thứ tự:
+### Workflow 5 (slide) — đã đổi sang Presenton, chạy thật được
+
+```
+engine=presenton | 6 slide | 62 giây | validation passed, 0 con số đáng ngờ
+```
+
+Bộ slide gồm 5 slide Presenton dựng + 1 slide bảng chi tiết 9 dòng do code ghép.
+Không còn câu bịa kiểu "Phòng Kinh doanh và Kỹ thuật thiếu số liệu".
+
+### Workflow 3 (soạn báo cáo) — hết ba lỗi chữ, chạy 3/3 lần sạch
+
+Trước khi sửa, cả ba lần chạy đều có: "đang ở trạng thái 0", "cần được bảo trì
+vào ngày 19/9/2026" (lịch bảo trì không tồn tại), "có 5 loại đang cần bảo dưỡng"
+(chỉ tiêu không tồn tại). Sau khi sửa: không còn câu nào trong ba loại đó.
+
+---
+
+## 1. Phần tạo slide chạy bằng Presenton
+
+### Dựng lại sau khi khởi động máy
 
 ```bash
 cd backend
-.venv/bin/python -m pytest -m live -q        # 24 ca: câu tiếng Việt -> tham số -> file
+docker compose --env-file .env -f docker/presenton.yml up -d
+curl -s localhost:5002/api/v1/ppt/presentation/all >/dev/null && echo "sống"
 ```
 
-Thói quen nên giữ: mỗi khi sửa gì trong `app/`, chạy cả hai tầng.
+Container `tpv-btl-presenton`, cổng **5002** (dự án khác đã chiếm 5001 — và
+container của họ đang crash-loop vì key Gemini hỏng; đừng dùng nhờ).
 
-```bash
-.venv/bin/python -m pytest tests/ -q     # 419, khép kín
-.venv/bin/python -m pytest -m live -q    # 24, cần ERP + LLM
-```
+### Ba thiết lập không được đổi nếu chưa hiểu lý do
 
-Và khi thêm một phép kiểm mới, **cố ý làm hỏng rồi xem nó có đỏ không** trước khi
-tin. Trong phiên này có hai phép kiểm viết xong mà hoá ra không bắt được gì.
+| Thiết lập | Vì sao |
+|---|---|
+| `DISABLE_AUTH=true` | bật đăng nhập thì bước export tự gọi API của chính nó, nhận **401**, và trả về file rỗng: `Export task failed ... Presentation slides not found`. Tái hiện trong 10 giây bằng `POST /api/v1/ppt/presentation/derive`, hỏng với cả curl lẫn httpx. An toàn vì cổng chỉ mở trên `127.0.0.1`. |
+| cổng chỉ bind `127.0.0.1` | bộ slide chứa số liệu nhân sự |
+| bảng KHÔNG giao cho Presenton | mọi template của nó chặn bảng ở 3-6 dòng; bảng 9 dòng làm schema từ chối, dựng lại 3 lần rồi trả về bộ slide rỗng — **hỏng cả bộ vì một cái bảng**. Bảng chi tiết do `append_to_pptx` ghép vào cuối file. |
+
+### Model
+
+`PRESENTON_CUSTOM_MODEL=openai/gpt-5.6-luna-pro` qua OpenRouter, khoá
+`llm_slide_api_key`. Chat/agent **vẫn chạy vLLM nội bộ** — chỉ phần sinh slide
+đi ra ngoài.
+
+Đã thử `qwen/qwen3.6-plus`: chạy được nhưng là model suy luận (285 token suy
+luận cho một câu hỏi tầm thường), và lần thử đầu bộ slide về rỗng. Đổi model thì
+`up -d --force-recreate`, Presenton đọc cấu hình lúc khởi động.
+
+**Tốn tiền thật** cho mỗi lần tạo slide. Trước buổi demo nên chạy thử một lần để
+biết còn hạn mức.
+
+### Còn lại của phần này
+
+- **Mỗi bộ slide mất khoảng 60-90 giây.** Giao diện cần hiện tiến trình, nếu
+  không người dùng tưởng treo. `elapsed_seconds` có trong kết quả trả về.
+- **`data/output/` chỉ dồn thêm.** Nay mỗi lần tạo là một file mới; cần dọn định kỳ.
+- **Slide bìa in chữ "Chưa cung cấp"** nếu không truyền `inputs.nguoi_trinh_bay`.
+  Cố ý không tự điền — bịa một cái tên ngay trang đầu thì tệ hơn.
+- **Van chắn số chỉ soi phần Presenton viết** (`verify_upto` = số slide đầu).
+  Bảng ghép thêm đến thẳng từ CSDL; soi chúng thì chú thích phân trang do chính
+  code viết ("dòng 12-22/33") bị đọc thành ba con số bịa — tầng `live` đã đỏ
+  đúng chỗ đó một lần.
 
 ---
 
-## 1. Ba việc CHẶN, không sửa bằng code được
+## 2. Workflow 3 đã tinh chỉnh những gì
 
-### 1.1 Mã trạng thái trang bị
-`Asm_Assets.Status` có đúng một giá trị `0` trên toàn bộ 98 dòng, và enum nằm
-trong mã nguồn ERP chứ không có bảng tra trong CSDL. Slide và báo cáo vì thế in
-`Trạng thái 0`.
+| Sửa | Vì sao |
+|---|---|
+| `bao_duong_cuoi` → `cap_nhat_cuoi`, nhãn "Cập nhật gần nhất (ERP)" | cột này là `Asm_Assets.LastModificationTime` — giờ SỬA BẢN GHI, không phải ngày bảo dưỡng. Nhãn cũ nói sai về dữ liệu, và model tin theo rồi suy tiếp thành lịch bảo trì. |
+| mẫu `BC_TAINGUYEN` bỏ yêu cầu "số loại đang cần bảo dưỡng" | mẫu hỏi một chỉ tiêu KHÔNG TỒN TẠI thì model buộc phải dựng ra một con số để trả lời. Sửa ở mẫu rẻ hơn sửa ở prompt. |
+| phạm vi đối chiếu số thu về từng mục (`_section_data`) | trước đây mọi mục nhận nguyên khối dữ liệu đơn vị nên van chắn rộng bằng cả khối; giờ `checked_numbers` còn 6 thay vì vài chục. Đây là việc `§3` bản ghi chú cũ nói là "phải đổi thiết kế". |
+| số ký hiệu lấy từ sổ văn bản | trước gán cứng `01/BC-<đơn vị>`, báo cáo thứ hai trong năm trùng số và ghi đè bản trước lúc vào sổ. Nay ra 02, 03, 04. |
+| `strip_markers` dọn dấu câu | gỡ `[1]` để lại `,,` và `,.` ngay trong văn bản trình ký. |
 
-Cần: xin đội ERP bảng tra, rồi khai vào `.env`:
+Prompt `DRAFT_SECTION_SYSTEM` thêm bốn điều cấm, mỗi điều ứng với một lỗi đã
+thật sự xảy ra — đừng rút gọn lại cho ngắn.
+
+---
+
+## 3. Truy xuất CSDL đã sửa những gì
+
+- **`van_ban` có thêm `ma_don_vi` và `ky`.** Mục "tình hình gửi báo cáo" trước
+  đây luôn in 0/9 đơn vị: nó dò TÊN đơn vị trong `noi_gui` và lấy `ngay_van_ban`
+  làm kỳ, mà báo cáo kỳ tháng 8 thì ký vào tháng 9. Bản ghi cũ không có hai
+  trường này vẫn dò theo cách cũ.
+- **`create_all()` tự thêm cột nullable còn thiếu.** Bảng cũ thiếu cột thì trước
+  đây mọi truy vấn chết với "no such column" — trên CSDL đang có dữ liệu thật.
+  Không thay cho migration: chỉ thêm cột, không xoá, không đổi kiểu.
+- **Danh mục phòng ban cache theo phiên VÀ theo thuê bao.** Một báo cáo tổng hợp
+  từng quét bảng phòng ban 9 lần cho cùng một danh mục. Cache phải khoá theo
+  tenant — quên khoá thì báo cáo của thuê bao này in tên đơn vị của thuê bao
+  khác, và không van chắn nào bắt được vì tên đó là tên thật.
+- **Mốc thời gian không còn bị đọc thành số liệu.** Trích yếu "V/v báo cáo quân
+  số ... tháng 8/2026" khớp mẫu quân số và trả về 8, nên bản tổng hợp in ra mục
+  "ĐỐI CHIẾU SỐ LIỆU: báo cáo ghi 8, kiểm kê 3" — một chênh lệch không có thật,
+  trong văn bản trình ký.
+
+---
+
+## 4. Ba việc CHẶN, không sửa bằng code được
+
+### 4.1 Mã trạng thái trang bị
+`Asm_Assets.Status` có đúng một giá trị `0` trên toàn bộ 98 dòng, enum nằm trong
+mã nguồn ERP. Báo cáo và slide vì thế in `Trạng thái 0` trong bảng.
+
+Cần xin đội ERP bảng tra rồi khai vào `.env`:
 
 ```
 ERP_ASSET_STATUS_LABELS=0=Đang dùng,1=Hỏng,2=Chờ thanh lý
 ERP_ASSET_STATUS_GOOD=0
 ```
 
-Chưa khai thì hệ thống **cố ý** bỏ hai chỉ tiêu "tình trạng tốt"/"cần xử lý" thay
-vì đoán. Đừng khai bừa cho đẹp — cả 98 dòng đang là `0`, khai xong sẽ thành
-"100% tốt", một con số sai đi thẳng vào báo cáo trình ký.
+Chưa khai thì hệ thống **cố ý** bỏ hai chỉ tiêu "tình trạng tốt"/"cần xử lý".
+Đừng khai bừa cho đẹp — cả 98 dòng đang là `0`, khai xong sẽ thành "100% tốt".
 
-### 1.2 Chưa có tool "thông tin nhân viên"
-Hỏi "báo cáo thông tin nhân viên" hiện trả về **quân số theo đơn vị**, không có
-tên, chức vụ, ngày vào làm của từng người. `Hrm_EmployeeProfile` có sẵn
-`FullName`, `WorkPositionId`, `HireDate` và `Dms_WorkPosition` đã nằm trong
-`ALLOWED_TABLES` — thiếu đúng một tool phơi ra.
+### 4.2 Chưa có tool "thông tin nhân viên"
+Hỏi "báo cáo thông tin nhân viên" hiện trả về quân số theo đơn vị, không có tên,
+chức vụ, ngày vào làm. `Hrm_EmployeeProfile` có sẵn `FullName`,
+`WorkPositionId`, `HireDate`; `Dms_WorkPosition` đã trong `ALLOWED_TABLES` —
+thiếu đúng một tool phơi ra. Làm theo khuôn `get_personnel_statistics`, và nhớ:
+danh sách nhân sự là dữ liệu cá nhân.
 
-Làm thì theo khuôn `get_personnel_statistics` trong `app/tools/data.py`, và nhớ:
-danh sách nhân sự là dữ liệu cá nhân, cân nhắc ai được xem trước khi mở.
-
-### 1.3 Chất lượng dữ liệu ERP
-- 66/98 trang bị chưa gán `WorkDepartmentId` (đầu phiên là 90/98 — đang được điền
-  dần). Hệ thống đã đếm đủ và cảnh báo, nhưng không chia được về đơn vị.
-- Thông tin vị trí nằm trong `Description` dạng văn xuôi ("24 màn ở tầng 4",
-  "1 máy ở VP Đăk Lawk"). Không nối được với phòng ban, và **đừng** viết code
-  đoán — đó là bịa ra liên kết không có thật.
+### 4.3 Chất lượng dữ liệu ERP
+- 49/194 đơn vị trang bị chưa gán `WorkDepartmentId` (đang được điền dần).
+- Vị trí nằm trong `Description` dạng văn xuôi ("24 màn ở tầng 4"). Không nối
+  được với phòng ban, và **đừng** viết code đoán.
 - Tenant 78 có 52 nhân sự, 10 phòng ban, **0 trang bị**.
 
 ---
 
-## 2. Ba việc nhỏ còn tồn
+## 5. Việc nhỏ còn tồn
 
-1. **Slide đánh giá của deck nhân sự vẫn nhắc "0/9 đơn vị gửi báo cáo".**
-   `bao_cao` không nằm trong phạm vi khoanh vùng của `scope_from_request`. Cần
-   quyết: coi nó là bối cảnh chung của mọi báo cáo kỳ (giữ nguyên) hay tách nốt.
-2. **Câu nhắc cả hai mảng** (`"trang bị cấp cho nhân viên"`) rơi về phán đoán của
-   LLM. Cố ý không đè vì ý định thật sự mơ hồ. Nếu muốn quy tắc cứng thì phải
-   định nghĩa quy tắc đó trước.
-3. **`MAX_SLIDES = 8`** trong `app/agents/nodes/presentation.py` lệch với prompt
-   ghi "4-6 slide".
-
----
-
-## 3. Giới hạn theo thiết kế (không phải lỗi)
-
-- **Workflow 3 đưa toàn bộ dữ liệu đơn vị cho LLM ở mọi mục**, nên phạm vi đối
-  chiếu số cũng rộng bằng chừng đó. Workflow 4 và 5 thu hẹp theo từng mục nên
-  chặt hơn. Muốn workflow 3 chặt bằng thì phải thu hẹp cả payload gửi LLM — đổi
-  thiết kế, không phải vá lỗi.
-- **`_normalize_focus` là lưới an toàn cho lúc model đổi hành vi.** Prompt hiện đã
-  công bố enum nên model tự viết đúng, và tầng `live` không ép model "trôi" được.
-  Nó chỉ có test đơn vị ở `tests/test_workflow5.py`.
-- **Van chắn số không bắt được số nhỏ trùng ngẫu nhiên** — xem đầu file
-  `app/documents/verify.py`. Văn bản vẫn cần người duyệt trước khi phát hành.
+1. **`scripts/seed_demo.py` đã hỏng** từ đợt chuyển sang ERP: nó import `DonVi`,
+   `TrangBi`, `KyKiemKe` — các model đã bị xoá. Mẫu báo cáo hiện nằm sẵn trong
+   `data/demo.db`. Hoặc sửa lại script cho khớp, hoặc xoá hẳn và ghi rõ mẫu lấy
+   từ đâu; để nguyên là bẫy cho người cài mới.
+2. **Câu nhắc cả hai mảng** (`"trang bị cấp cho nhân viên"`) vẫn rơi về phán
+   đoán của LLM. Cố ý không đè vì ý định thật sự mơ hồ.
+3. **Workflow 4 từng có 1/10 lần bị van chắn số chặn** và không bắt lại được.
+   Phiên này chạy 5 lần đều `passed`, nhưng chưa đủ để kết luận là hết. Cách tìm
+   nếu gặp lại: log `quote` và `numbers` của mọi issue mức `error` ra file, chạy
+   vài chục lần rồi đọc. Đừng đoán.
 
 ---
 
-## 4. Bẫy vận hành
+## 6. Bẫy vận hành
 
-- **Server không chạy `--reload`.** Sửa code xong phải khởi động lại tay, nếu
-  không sẽ gặp đúng cảnh "code mới mà báo cáo vẫn ra số cũ". Sửa `.env` thì
-  **bắt buộc** khởi động lại vì `get_settings()` có `@lru_cache`.
+- **Server không chạy `--reload`.** Sửa `app/` hay `.env` xong phải khởi động lại.
 
   ```bash
   PID=$(ss -ltnp | grep ':8081' | grep -oP 'pid=\K[0-9]+') && kill $PID
   cd backend && .venv/bin/uvicorn app.main:app --port 8081 --host 127.0.0.1
   ```
 
+- **Presenton cũng đọc cấu hình lúc khởi động**: đổi `.env` thì
+  `docker compose --env-file .env -f docker/presenton.yml up -d --force-recreate`.
+
 - **`TRUST_IDENTITY_HEADERS=true` là lỗ hổng có chủ ý.** Ai gọi được API cũng tự
-  xưng tenant bất kỳ qua `X-Tenant-Id`. Chấp nhận được trong mạng nội bộ. Khi
-  giao diện có đăng nhập: viết phần giải mã JWT trong `_from_token()`
-  (`app/core/context.py`) rồi đặt cờ này thành `false`. Không phải sửa gì ở tầng
-  truy vấn.
+  xưng tenant bất kỳ qua `X-Tenant-Id`. Khi giao diện có đăng nhập: viết phần
+  giải mã JWT trong `_from_token()` (`app/core/context.py`) rồi đặt `false`.
 
-- **Tên file đầu ra nay kèm mốc thời gian**: `SLIDE_2026-08__t64__20260919-175015.pptx`.
-  Mỗi lần tạo là một file mới, nên thư mục `backend/data/output/` sẽ dồn lại và
-  cần dọn định kỳ. Đổi lại, trình duyệt không bao giờ còn lưu bản mới thành
-  "... (1).pptx" rồi để người dùng mở nhầm bản cũ - lỗi đã xảy ra ba lần trong
-  một buổi và mỗi lần đều mất khá lâu mới truy ra vì file trên máy chủ luôn đúng.
-
-- **File đầu ra cũ không mang dấu tenant thì không tải được nữa** (cố ý — chúng
-  chứa số liệu của thuê bao không xác định). Xoá `backend/data/output/*` không có
-  hậu tố `__t<N>` là được.
+- **File đầu ra cũ không mang dấu tenant thì không tải được nữa** (cố ý). Xoá
+  `backend/data/output/*` không có hậu tố `__t<N>`.
 
 ---
 
-## 5. Điều đáng lo nhất
+## 7. Điều đáng lo nhất
 
-Trong phiên này, **mỗi câu hỏi mới của người dùng đều lòi ra một lỗi mới** — không
-lần nào tìm ra trước. Ba lỗi nặng nhất (`focus` nhận văn xuôi, bảng 33 dòng bị cắt
-còn 8, kỳ đối chiếu trùng chính nó) đều lọt qua 300+ test cũ, vì test cũ **mớm sẵn
-tham số đúng** rồi mới kiểm hàm.
+Vẫn như phiên trước, và phiên này lặp lại y hệt: **mỗi lần chạy thật một câu hỏi
+mới là lòi ra một lỗi mới**, không lần nào tìm ra trước bằng đọc code hay chạy
+test. Lỗi nhãn cột `bao_duong_cuoi`, lỗi mẫu hỏi chỉ tiêu không tồn tại, lỗi
+trích yếu bị đọc thành quân số — cả ba đều lọt qua 419 test cũ.
 
-`tests/test_yeu_cau_that.py` được viết để bịt khoảng đó, nhưng khi thử tái tạo 4
-lỗi cũ thì **nó chỉ bắt được 2**. Nên đừng coi "419 test xanh" là bằng chứng phần
-tạo slide và báo cáo đã dùng được cho văn bản trình ký. Chưa.
+Cách duy nhất đang hiệu quả: **chạy thật, đọc từng câu trong file xuất ra**, và
+mỗi lần tìm ra lỗi thì thêm ca đó vào test TRƯỚC khi sửa, kiểm rằng nó đỏ.
 
-Cách tăng độ tin: mỗi lần tìm ra lỗi mới, **thêm câu hỏi gây ra nó vào `CORPUS`**
-trước khi sửa, và kiểm rằng test đỏ trước rồi mới xanh sau.
+Và đừng coi "432 test xanh" là bằng chứng phần tạo slide/báo cáo đã dùng được
+cho văn bản trình ký. Văn bản vẫn cần người duyệt.

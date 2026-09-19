@@ -87,10 +87,36 @@ class ErpDonViRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    # Khoá cache danh mục phòng ban trong `session.info` - sống đúng bằng một
+    # phiên, tức một request. Danh mục này bị hỏi lại rất nhiều lần cho cùng một
+    # câu hỏi của người dùng: mỗi tool số liệu gọi `_resolve_units`, `name_map`
+    # và `id_map`, mà cả ba đều nạp lại đúng một danh sách; một báo cáo tổng hợp
+    # gọi ba tool nên hoá đơn là 9 lần quét bảng cho một thứ không đổi.
+    #
+    # Không cache lâu hơn một phiên: phòng ban có thể được thêm hoặc đổi tên
+    # giữa hai request, và một danh mục cũ thì đơn vị mới biến mất khỏi báo cáo
+    # mà không ai biết vì sao.
+    _CACHE_KEY = "erp_don_vi_hien_tai"
+
     async def list_all(self, moment: datetime | None = None) -> list[WorkDepartment]:
+        # Cache PHẢI khoá theo tenant. Một tiến trình phục vụ nhiều thuê bao, và
+        # danh mục phòng ban của thuê bao này mà trả cho thuê bao kia thì báo cáo
+        # in ra tên đơn vị của một cơ quan khác - lỗi tệ nhất mà hệ thống này có
+        # thể mắc. `tests/test_identity.py` bắt đúng chỗ đó.
+        #
+        # Chỉ cache truy vấn "hiện tại"; hỏi theo mốc thời gian quá khứ thì mỗi
+        # mốc một kết quả khác nhau, cache theo mốc chỉ thêm rối.
+        cache = self.session.info.setdefault(self._CACHE_KEY, {})
+        tenant_id = current_tenant_id()
+        if moment is None and tenant_id in cache:
+            return cache[tenant_id]
+
         stmt = select(WorkDepartment).where(_alive_at(WorkDepartment, moment or datetime.now()))
         stmt = _tenant_scoped(stmt, WorkDepartment).order_by(WorkDepartment.code)
-        return list((await self.session.execute(stmt)).scalars())
+        rows = list((await self.session.execute(stmt)).scalars())
+        if moment is None:
+            cache[tenant_id] = rows
+        return rows
 
     async def name_map(self, moment: datetime | None = None) -> dict[str, str]:
         return {dv.ma_don_vi: dv.display_name for dv in await self.list_all(moment)}
@@ -250,7 +276,12 @@ class ErpTaiNguyenRepository:
                 # còn hơn gán đại một nhãn rồi người đọc tin là thật.
                 "tinh_trang": labels.get(asset.status, f"Trạng thái {asset.status}"),
                 "tinh_trang_tot": (asset.status in good_codes) if good_codes else None,
-                "bao_duong_cuoi": asset.last_modification_time.date().isoformat()
+                # `LastModificationTime` là lúc SỬA BẢN GHI trong ERP, không
+                # phải ngày bảo dưỡng thiết bị. Từng đặt tên là `bao_duong_cuoi`
+                # và gắn nhãn "Bảo dưỡng gần nhất": model đọc xong viết thẳng vào
+                # báo cáo trình ký câu "cần được bảo trì vào ngày 19/9/2026" - một
+                # lịch bảo trì không tồn tại, suy ra từ một cái nhãn đặt sai.
+                "cap_nhat_cuoi": asset.last_modification_time.date().isoformat()
                 if asset.last_modification_time else None,
                 "ma_trang_bi": asset.code,
                 "chung_loai": category or "",

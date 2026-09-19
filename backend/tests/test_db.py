@@ -225,3 +225,69 @@ async def test_erp_va_app_la_hai_co_so_du_lieu_tach_roi(erp_session, session):
     """Bảng app không được rơi vào ERP: `create_all` của app phải mù với bảng ERP."""
     with pytest.raises(Exception):
         await erp_session.execute(text("SELECT 1 FROM van_ban"))
+
+
+# --------------------------------------------------------------------------- #
+# Danh mục phòng ban: hỏi nhiều lần trong một phiên, quét bảng đúng một lần
+# --------------------------------------------------------------------------- #
+def _sync_engine(session):
+    """Engine đồng bộ nằm dưới phiên async - chỗ gắn được sự kiện đếm truy vấn."""
+    bind = session.get_bind()
+    return getattr(bind, "sync_engine", bind)
+
+async def test_danh_muc_phong_ban_chi_quet_bang_mot_lan(erp_session):
+    """Một báo cáo tổng hợp từng quét bảng phòng ban 9 lần cho cùng một danh mục.
+
+    Mỗi tool số liệu gọi `_resolve_units`, `name_map` và `id_map`; cả ba nạp lại
+    đúng một danh sách không đổi, và một báo cáo gọi ba tool.
+    """
+    from sqlalchemy import event
+
+    from app.db.erp_repository import ErpDonViRepository
+
+    dem = 0
+
+    def ghi_nhan(conn, cursor, statement, params, context, executemany):
+        nonlocal dem
+        if "Dms_WorkDepartment" in statement:
+            dem += 1
+
+    engine = _sync_engine(erp_session)
+    event.listen(engine, "before_cursor_execute", ghi_nhan)
+    try:
+        repo = ErpDonViRepository(erp_session)
+        await repo.name_map()
+        await repo.id_map()
+        await ErpDonViRepository(erp_session).list_all()     # repo khác, cùng phiên
+    finally:
+        event.remove(engine, "before_cursor_execute", ghi_nhan)
+
+    assert dem == 1
+
+
+async def test_hoi_theo_moc_qua_khu_khong_dung_cache(erp_session):
+    """Danh mục "hiện tại" cache được; danh mục tại một mốc cũ thì không."""
+    from datetime import datetime
+
+    from sqlalchemy import event
+
+    from app.db.erp_repository import ErpDonViRepository
+
+    repo = ErpDonViRepository(erp_session)
+    await repo.list_all()
+
+    dem = 0
+
+    def ghi_nhan(conn, cursor, statement, params, context, executemany):
+        nonlocal dem
+        if "Dms_WorkDepartment" in statement:
+            dem += 1
+
+    engine = _sync_engine(erp_session)
+    event.listen(engine, "before_cursor_execute", ghi_nhan)
+    try:
+        await repo.list_all(datetime(2026, 3, 1))
+    finally:
+        event.remove(engine, "before_cursor_execute", ghi_nhan)
+
+    assert dem == 1
