@@ -2,12 +2,51 @@
 
 Ghi cho người tiếp tục sửa backend (Tiến Anh và đội dev khi nối giao diện).
 
-Trạng thái cuối phiên: **419 test mặc định xanh**, 24 test `live` chưa chạy lại
-được vì CSDL ERP đang tắt.
+Trạng thái cuối phiên: **419 test mặc định + 24 test `live` đều xanh** trên ERP thật.
 
 ---
 
-## 0. Việc đầu tiên khi ERP mở lại
+## 0. ĐÃ KIỂM CHỨNG (ERP mở lại lúc cuối phiên)
+
+Mục này giữ lại để biết cái gì đã mắt thấy, cái gì mới chỉ chạy qua test.
+
+- `pytest -m live` -> **24/24 xanh** với LLM + ERP thật.
+- Phép đối chiếu số dòng bảng **có tác dụng thật**: gài lại lỗi cắt bảng
+  (`rows[:8]` trong `pptx_builder.py`) thì test đỏ với đúng thông báo
+  `bảng 'Đơn vị | Trang bị | ...': file có 24 dòng, số liệu có 33 dòng`.
+  Bỏ lỗi đi thì xanh lại.
+- Báo cáo tổng hợp thật, tenant 64, kỳ 2026-08 so với 2025-08:
+
+  ```
+  I.   TÌNH HÌNH GỬI BÁO CÁO
+  II.  TÌNH HÌNH QUÂN SỐ          [bảng 9 dòng]
+  III. TÌNH HÌNH TRANG THIẾT BỊ   [bảng 33 dòng]
+  IV.  SỐ LIỆU CẦN KIỂM TRA LẠI
+  giả định: Đối chiếu với kỳ 2025-08, không phải kỳ liền trước
+  ```
+
+  Đầu mục ra `IV` chứ không phải `IIII`, và mục III đã có bảng. Hai lỗi
+  sửa đúng.
+
+### Việc CÒN LẠI của mục này: xuất file thỉnh thoảng bị chặn
+
+Chạy lặp bản báo cáo tổng hợp: **9/10 lần xuất được file, 1 lần `failed`**
+(lần đầu, câu có so sánh khác năm). Chi tiết:
+
+- câu thường, 5 lần -> `passed` cả 5, xuất file cả 5;
+- câu "so với cùng kỳ năm ngoái", 4 lần -> `warning` cả 4, xuất file cả 4
+  (warning là cảnh báo dữ liệu thật: quân số tăng 12 nhưng tuyển mới 1 -
+  nghỉ việc 0 = 1, tức hồ sơ ERP thiếu ngày vào làm/nghỉ việc);
+- lần `failed` không bắt lại được, nên **chưa biết con số nào bị chặn**.
+
+Đây là van chắn số làm đúng việc của nó - chặn con số không truy được về
+dữ liệu gốc. Nhưng chưa rõ lần đó là model bịa số thật hay van chắn chặn
+oan. **Việc cần làm**: log lại `quote` và `numbers` của mọi issue mức
+`error` ra file, chạy bản báo cáo vài chục lần, rồi đọc. Không đoán.
+
+---
+
+## 0b. Quy trình mỗi lần khởi động lại
 
 `dbnews.tpvtech.vn:7679` hiện không nhận kết nối. Kiểm bằng:
 
@@ -22,17 +61,15 @@ cd backend
 .venv/bin/python -m pytest -m live -q        # 24 ca: câu tiếng Việt -> tham số -> file
 ```
 
-Ba thứ **đã sửa nhưng chưa chạy thật lần nào**, phải mắt thấy:
+Thói quen nên giữ: mỗi khi sửa gì trong `app/`, chạy cả hai tầng.
 
-1. Đầu mục báo cáo phải ra `I, II, III, IV, V` — trước đây ra `IIII`, `IIIII`.
-2. Mục "TÌNH HÌNH TRANG THIẾT BỊ" phải có bảng chi tiết theo đơn vị.
-3. Phép đối chiếu số dòng bảng trong `tests/test_yeu_cau_that.py`
-   (`_so_dong_dang_le_co`) — viết xong nhưng chưa kiểm chứng.
+```bash
+.venv/bin/python -m pytest tests/ -q     # 419, khép kín
+.venv/bin/python -m pytest -m live -q    # 24, cần ERP + LLM
+```
 
-Với (3), cách kiểm chứng là **cố ý làm hỏng rồi xem test có đỏ không**: sửa
-`app/documents/pptx_builder.py` dòng `rows = spec.table.rows` thành
-`rows = spec.table.rows[:8]`, chạy `pytest -m live`. Không đỏ nghĩa là phép đối
-chiếu đó vô dụng, phải viết lại.
+Và khi thêm một phép kiểm mới, **cố ý làm hỏng rồi xem nó có đỏ không** trước khi
+tin. Trong phiên này có hai phép kiểm viết xong mà hoá ra không bắt được gì.
 
 ---
 
