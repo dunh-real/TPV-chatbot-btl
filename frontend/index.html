@@ -312,7 +312,7 @@
       <div class="panel">
         <div class="panel-inner">
           <h2 class="panel-title">Tạo bộ slide</h2>
-          <p class="panel-sub">LLM chỉ sinh JSON dàn ý; layout, biểu đồ và file .pptx đều do code dựng.</p>
+          <p class="panel-sub">Hệ thống soạn sẵn nội dung từng slide từ số liệu; Presenton chọn layout và render .pptx. Bảng chi tiết do code ghép vào cuối file.</p>
           <label class="field">
             <span>Yêu cầu</span>
             <textarea id="slideRequest" rows="3">Tạo slide báo cáo quân số tháng 8</textarea>
@@ -325,7 +325,7 @@
           <button class="primary-btn" id="slideRun">Tạo slide</button>
         </div>
       </div>
-      <div class="result" id="slideResult"><div class="result-empty">Bản xem trước từng slide sẽ hiện ở đây.</div></div>
+      <div class="result" id="slideResult"><div class="result-empty">Liên kết tải .pptx, trình sửa Presenton và bản số liệu đã gửi sẽ hiện ở đây.</div></div>
     </section>
 
     <!-- ========== VIEW: CORPUS ========== -->
@@ -399,6 +399,8 @@
   </div>
   <div class="drawer-body">
     <label class="field"><span>API base URL</span><input type="text" id="apiBase" placeholder="http://localhost:8080" /></label>
+    <label class="field"><span>Thuê bao (X-Tenant-Id)</span><input type="text" id="tenantId" inputmode="numeric" placeholder="bỏ trống = mặc định của backend" />
+      <em>Số liệu ERP luôn bị giới hạn trong đúng một thuê bao. Bỏ trống thì backend dùng ERP_TENANT_ID trong .env.</em></label>
     <label class="field"><span>Mã đơn vị mặc định</span><input type="text" id="prefUnit" placeholder="VD: DV01" /></label>
     <h3 class="drawer-sub">Inputs mặc định cho agent</h3>
     <p class="muted sm">Người ký, chức vụ, số ký hiệu… gửi kèm mọi yêu cầu soạn/tổng hợp.</p>

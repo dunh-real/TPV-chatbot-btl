@@ -122,7 +122,7 @@
     review: ['Soát văn bản', 'Workflow 2 · rule engine thể thức + soát chữ nghĩa + phân rã nhiệm vụ'],
     draft: ['Soạn báo cáo', 'Workflow 3 · số liệu từ CSDL, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
-    slides: ['Tạo slide', 'Workflow 5 · JSON trung gian → python-pptx'],
+    slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
     corpus: ['Kho tri thức', 'Nạp tài liệu vào Qdrant và xem thống kê collection'],
     retrieval: ['Truy hồi (debug)', 'Xem hạng từng nhánh, điểm RRF và điểm rerank'],
     tools: ['Công cụ & hệ thống', 'Danh mục tool của agent và trạng thái hạ tầng'],
@@ -1393,33 +1393,52 @@
   /* ══════════════════════════════════════════════════════════════════════
      VIEW: TỔNG HỢP (workflow 4)
      ══════════════════════════════════════════════════════════════════ */
+  /* Giữ khớp với `METRIC_LABELS` ở backend (app/agents/nodes/report.py). Chỉ tiêu
+     chấm công (có mặt/vắng/đi học/nghỉ phép) đã bỏ hẳn từ đợt chuyển sang ERP -
+     không còn nguồn số liệu - nên cũng không còn nhãn ở đây.
+
+     "Số loại trang bị" = số TÊN trang bị khác nhau, KHÁC "chủng loại" của ERP
+     (`Asm_AssetCategories`). Nhãn cũ là "Số chủng loại" nên bảng gộp theo chủng
+     loại in "Số chủng loại: 33" ngay trên một cái bảng có 8 dòng. */
   var METRIC_LABELS = {
-    total_personnel: 'Tổng quân số', present: 'Có mặt', absent: 'Vắng',
-    training: 'Đi học', leave: 'Nghỉ phép',
+    total_personnel: 'Tổng quân số', new_hires: 'Tuyển mới', resignations: 'Nghỉ việc',
     total_equipment: 'Tổng trang bị', good: 'Tình trạng tốt',
-    needs_attention: 'Cần xử lý', equipment_types: 'Số chủng loại',
+    needs_attention: 'Cần xử lý', equipment_types: 'Số loại trang bị',
   };
+  /* Chỉ là ĐƯỜNG LÙI cho những bảng API không khai cột (danh sách file đã đọc...).
+     Bảng số liệu lấy cột từ `breakdown_columns` - xem `rowsTable`. */
   var COLUMN_LABELS = {
-    ma_don_vi: 'Mã đơn vị', ten_don_vi: 'Đơn vị', quan_so: 'Quân số', co_mat: 'Có mặt',
-    vang: 'Vắng', di_hoc: 'Đi học', nghi_phep: 'Nghỉ phép', ngay_kiem_ke: 'Ngày kiểm kê',
+    ma_nhom: 'Mã', ten_nhom: 'Tên',
+    ma_don_vi: 'Mã đơn vị', ten_don_vi: 'Đơn vị', quan_so: 'Quân số',
+    quan_so_ky_truoc: 'Kỳ trước', tuyen_moi: 'Tuyển mới', nghi_viec: 'Nghỉ việc',
     ten_trang_bi: 'Tên trang bị', so_luong: 'Số lượng', tinh_trang: 'Tình trạng',
-    bao_duong_cuoi: 'Bảo dưỡng gần nhất',
+    chung_loai: 'Chủng loại', so_dau_muc: 'Số đầu mục',
+    // `Asm_Assets.LastModificationTime`: giờ SỬA BẢN GHI, không phải ngày bảo dưỡng.
+    cap_nhat_cuoi: 'Cập nhật gần nhất (ERP)',
     don_vi: 'Đơn vị', tep: 'Tệp báo cáo', so_ky_hieu: 'Số ký hiệu',
     so_dong_bang: 'Số dòng bảng', tong_trang_bi: 'Tổng trang bị',
     hoat_dong_tot: 'Hoạt động tốt', can_xu_ly: 'Cần xử lý', nguon_file: 'Nguồn',
   };
 
-  /** Mảng dict -> bảng, cột theo khoá của bản ghi đầu tiên. */
-  function rowsTable(rows, limit) {
+  /** Mảng dict -> bảng. `columns` là `breakdown_columns` do chính data tool khai.
+
+     Tự suy cột từ khoá của bản ghi đầu tiên chỉ là đường lùi: bản ghi số liệu
+     mang cả khoá nội bộ trùng nhau (`ma_nhom` ≡ `ma_don_vi`, `ten_nhom` ≡
+     `ten_don_vi`), nên bảng quân số từng ra 8 cột trong đó 4 cột là tên khoá thô.
+     Chiều gộp nào có những cột nào là việc của tool, không phải của giao diện. */
+  function rowsTable(rows, columns, limit) {
     if (!rows || !rows.length) return '';
-    var keys = Object.keys(rows[0]);
+    var cols = (columns && columns.length)
+      ? columns.filter(function (c) { return c && c.key; })
+      : Object.keys(rows[0]).map(function (k) { return { key: k }; });
     var shown = rows.slice(0, limit || 30);
     return '<div class="table-scroll"><table><thead><tr>' +
-      keys.map(function (k) { return '<th>' + esc(COLUMN_LABELS[k] || k) + '</th>'; }).join('') +
+      cols.map(function (c) { return '<th>' + esc(c.label || COLUMN_LABELS[c.key] || c.key) + '</th>'; }).join('') +
       '</tr></thead><tbody>' +
       shown.map(function (r) {
-        return '<tr>' + keys.map(function (k) {
-          return '<td>' + (typeof r[k] === 'number' ? fmtNum(r[k]) : esc(String(r[k] == null ? '' : r[k]))) + '</td>';
+        return '<tr>' + cols.map(function (c) {
+          var v = r[c.key];
+          return '<td>' + (typeof v === 'number' ? fmtNum(v) : esc(String(v == null ? '' : v))) + '</td>';
         }).join('') + '</tr>';
       }).join('') + '</tbody></table></div>' +
       (rows.length > shown.length ? '<div class="muted sm" style="margin-top:6px">… còn ' + (rows.length - shown.length) + ' dòng, xem ở JSON thô.</div>' : '');
@@ -1482,17 +1501,32 @@
       var d = data[pair[0]];
       if (!d || !d.metrics) return;
       var scope = d.scope || {};
+      /* `units_with_data` chỉ có nghĩa khi gộp theo đơn vị - gộp theo chức vụ hay
+         chủng loại thì backend cố ý không trả về, nên không ghép cứng vào chuỗi. */
+      var pham_vi = scope.units_with_data != null
+        ? ' · ' + scope.units_with_data + '/' + scope.units_requested + ' đơn vị có số liệu'
+        : '';
       var body = '<div class="card-sub">Kỳ ' + esc(d.period || '') + ' · đối chiếu ' + esc(d.compare_to || '—') +
-        ' · ' + (scope.units_with_data != null ? scope.units_with_data + '/' + scope.units_requested + ' đơn vị có số liệu' : '') + '</div>' +
+        pham_vi + '</div>' +
         metricTiles(d.metrics);
+      /* Chỉ tiêu không có nguồn bị BỎ HẲN chứ không trả về 0. Không nói ra thì
+         người đọc tưởng "vắng: 0" chứ không phải "không biết". */
+      if ((scope.khong_co_chi_tieu || []).length) {
+        body += '<div class="card-sub" style="margin-top:8px">Không có số liệu: ' +
+          esc(scope.khong_co_chi_tieu.join(', ')) + '</div>';
+      }
       if ((d.consistency || []).length) {
         body += '<div class="card-sub" style="margin-top:10px">Lệch ràng buộc nghiệp vụ</div>' +
           d.consistency.map(function (c) {
-            return '<div class="quote">' + esc(typeof c === 'string' ? c : JSON.stringify(c)) + '</div>';
+            // Mỗi mục là {ma_don_vi, message}; in nguyên JSON thì người đọc phải tự bóc.
+            return '<div class="quote">' + esc(typeof c === 'string' ? c : (c.message || JSON.stringify(c))) + '</div>';
           }).join('');
       }
       if ((d.breakdown || []).length) {
-        body += '<div class="card-sub" style="margin-top:12px">Chi tiết theo đơn vị</div>' + rowsTable(d.breakdown);
+        var nhom_theo = scope.nhom_theo || 'Đơn vị';
+        body += '<div class="card-sub" style="margin-top:12px">Chi tiết theo ' +
+          esc(nhom_theo.toLowerCase()) + '</div>' +
+          rowsTable(d.breakdown, d.breakdown_columns);
       }
       card.appendChild(block(pair[1], (d.breakdown || []).length || null, body, true));
     });
@@ -1611,53 +1645,36 @@
   /* ══════════════════════════════════════════════════════════════════════
      VIEW: SLIDE (workflow 5)
      ══════════════════════════════════════════════════════════════════ */
-  var SLIDE_LABEL = { title: 'Trang bìa', summary: 'Ô chỉ tiêu', bullet: 'Gạch đầu dòng', chart: 'Biểu đồ', table: 'Bảng' };
-
-  function renderSlides(box, slides) {
-    (slides || []).forEach(function (s, i) {
-      var mid = 'slide-' + i;
-      sourceRegistry.set(mid, s.refs || []);
-      var card = el('div', { class: 'slide-card', dataset: { mid: mid } });
-      var bullets = (s.bullets_cited && s.bullets_cited.length ? s.bullets_cited : s.bullets || []);
-      card.innerHTML =
-        '<div class="slide-top"><span>Slide ' + (i + 1) + '</span>' +
-        '<span class="pill">' + esc(SLIDE_LABEL[s.kind] || s.kind) + '</span>' +
-        (s.chart_key ? '<span class="pill info">chart: ' + esc(s.chart_key) + '</span>' : '') +
-        (s.data_key ? '<span class="pill">data: ' + esc(s.data_key) + '</span>' : '') + '</div>' +
-        '<div class="slide-body">' +
-        (s.title ? '<h4>' + esc(s.title) + '</h4>' : '') +
-        (s.subtitle ? '<div class="muted sm">' + esc(s.subtitle) + '</div>' : '') +
-        ((s.metrics || []).length ? '<div class="slide-metrics">' + s.metrics.map(function (m) {
-          return '<div class="slide-metric"><b>' + esc(m.value) + '</b><span>' + esc(m.label) +
-            (m.note ? ' · ' + esc(m.note) : '') + '</span></div>';
-        }).join('') + '</div>' : '') +
-        (bullets.length ? '<ul>' + bullets.map(function (b) { return '<li>' + MD.inline(b) + '</li>'; }).join('') + '</ul>' : '') +
-        (s.chart_key ? '<div class="card-sub" style="margin-top:10px">📊 Biểu đồ <b>' + esc(s.chart_key) + '</b> do code vẽ, nằm trong file .pptx</div>' : '') +
-        (s.notes ? '<div class="card-sub" style="margin-top:8px">Ghi chú: ' + esc(s.notes) + '</div>' : '') +
-        '</div>';
-      var rb = sourcesBlock('Nguồn của slide', s.refs);
-      if (rb) { rb.style.margin = '0 14px 14px'; card.appendChild(rb); }
-      box.appendChild(card);
-    });
-  }
 
   function renderPresentation(data) {
     var box = $('#slideResult');
     if (data.error) box.appendChild(el('div', { class: 'card' }, '<div style="color:var(--err)">' + esc(data.error) + '</div>'));
 
     var meta = '<span class="pill accent">' + (data.slide_count || 0) + ' slide</span>' +
-      validationPill(data.validation) +
-      (data.removed_bullets ? '<span class="pill warn">bỏ ' + data.removed_bullets + ' gạch đầu dòng</span>' : '');
+      (data.engine ? '<span class="pill info">engine: ' + esc(data.engine) + '</span>' : '') +
+      (data.elapsed_seconds ? '<span class="pill">' + Math.round(data.elapsed_seconds) + ' giây</span>' : '') +
+      validationPill(data.validation);
     box.appendChild(downloadCard('Bộ slide', data.download_url, (data.output_path || '').split('/').pop(), meta));
+
+    /* Bộ slide vẫn nằm bên Presenton sau khi xuất file, sửa tiếp được ở đó.
+       `edit_url` là đường dẫn TƯƠNG ĐỐI (`/presentation?id=...`) và backend proxy
+       đường đó sang Presenton, nên nó mở được ở bất cứ đâu mở được giao diện này -
+       kể cả qua Cloudflare - và vẫn nằm sau chốt token như mọi đường khác. */
+    if (data.edit_url) {
+      box.appendChild(el('div', { class: 'card' },
+        '<div class="card-head"><h3>Sửa tiếp trong Presenton</h3></div>' +
+        '<a class="ghost-btn sm" href="' + esc(data.edit_url) + '" target="_blank" rel="noopener">Mở trình sửa slide</a>' +
+        '<div class="card-sub" style="margin-top:8px">Sửa xong thì tải lại file từ Presenton — bản .pptx ở trên là bản lúc tạo.</div>'));
+    }
 
     var v = validationNode(data.validation);
     if (v) box.appendChild(el('div', { class: 'card' })).appendChild(v);
 
-    renderSlides(box, data.slides);
-
-    if (data.outline && Object.keys(data.outline).length) {
+    /* Đây là TOÀN BỘ thứ Presenton nhìn thấy. Một con số trên slide mà không có
+       trong này thì là bên kia viết thêm, không phải số liệu sai. */
+    if (data.brief) {
       box.appendChild(el('div', { class: 'card' })).appendChild(
-        block('JSON trung gian (đã lọc qua whitelist)', null, '<pre class="json">' + prettyJSON(data.outline) + '</pre>', false));
+        block('Số liệu đã gửi cho Presenton', null, '<pre class="json">' + esc(data.brief) + '</pre>', false));
     }
     if ((data.assumptions || []).length) {
       box.appendChild(el('div', { class: 'card' },
@@ -1672,7 +1689,7 @@
     runWorkflow({
       button: this,
       box: $('#slideResult'),
-      label: 'Đang lấy số liệu, dựng dàn ý, lọc whitelist và render .pptx…',
+      label: 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render (60-90 giây)…',
       call: function (signal) {
         return API.presentation({
           request: request,
@@ -1963,6 +1980,16 @@
     pollHealth();
     toast('Đã đổi API base: ' + v, 'ok');
   });
+  /* Đổi thuê bao là đổi toàn bộ số liệu đang xem, nên xoá cache tool và hỏi lại
+     sức khoẻ backend giống hệt lúc đổi API base. */
+  $('#tenantId').value = API.getTenant();
+  $('#tenantId').addEventListener('change', function () {
+    var v = API.setTenant(this.value);
+    this.value = v;
+    toolsCache = null;
+    pollHealth();
+    toast(v ? 'Đang xem số liệu thuê bao ' + v : 'Dùng thuê bao mặc định của backend', 'ok');
+  });
   $('#prefUnit').value = prefs.unit || '';
   $('#prefUnit').addEventListener('change', function () { prefs.unit = this.value.trim(); savePrefs(); });
   $('#prefTopN').value = prefs.topN || '';
@@ -1980,6 +2007,7 @@
 
   $('#prefReset').addEventListener('click', function () {
     localStorage.removeItem(PREFS_KEY);
+    API.setTenant('');
     location.reload();
   });
 

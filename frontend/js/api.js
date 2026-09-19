@@ -6,6 +6,7 @@
   'use strict';
 
   var LS_KEY = 'tpv.apiBase';
+  var LS_TENANT = 'tpv.tenantId';
 
   function defaultBase() {
     // Mở qua chính backend (uvicorn mount /ui) -> gọi cùng origin.
@@ -22,6 +23,26 @@
     return base;
   }
   function url(path) { return base + path; }
+
+  /* Thuê bao đang xem. Backend đọc `X-Tenant-Id` (app/core/context.py) và chỉ
+     rơi về `ERP_TENANT_ID` trong .env khi request không khai gì - bỏ trống ô này
+     là giữ đúng hành vi cũ. Gửi chuỗi rỗng thì backend coi là khai sai định dạng
+     và chặn, nên header chỉ được gắn khi thật sự có giá trị. */
+  var tenant = localStorage.getItem(LS_TENANT) || '';
+
+  function getTenant() { return tenant; }
+  function setTenant(value) {
+    tenant = String(value == null ? '' : value).trim();
+    localStorage.setItem(LS_TENANT, tenant);
+    return tenant;
+  }
+
+  /** Gắn định danh vào mọi lời gọi - một chỗ duy nhất, để không sót endpoint. */
+  function withIdentity(headers) {
+    var out = Object.assign({}, headers || {});
+    if (tenant) out['X-Tenant-Id'] = tenant;
+    return out;
+  }
 
   function ApiError(message, status, detail) {
     this.name = 'ApiError';
@@ -45,8 +66,10 @@
 
   async function request(path, options) {
     var res;
+    options = Object.assign({}, options || {});
+    options.headers = withIdentity(options.headers);
     try {
-      res = await fetch(url(path), options || {});
+      res = await fetch(url(path), options);
     } catch (e) {
       if (e && e.name === 'AbortError') throw e;
       throw new ApiError('Không kết nối được backend tại ' + base + ' — kiểm tra uvicorn đã chạy chưa.', 0, String(e));
@@ -60,7 +83,7 @@
   function postJSON(path, body, signal) {
     return request(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withIdentity({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body || {}),
       signal: signal,
     });
@@ -76,7 +99,7 @@
     try {
       res = await fetch(url(path), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        headers: withIdentity({ 'Content-Type': 'application/json', Accept: 'text/event-stream' }),
         body: JSON.stringify(body || {}),
         signal: signal,
       });
@@ -120,6 +143,8 @@
     ApiError: ApiError,
     getBase: function () { return base; },
     setBase: setBase,
+    getTenant: getTenant,
+    setTenant: setTenant,
     url: url,
 
     // hệ thống

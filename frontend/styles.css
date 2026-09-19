@@ -536,17 +536,6 @@ pre.json {
 .score-bar { height: 4px; border-radius: 99px; background: var(--border); overflow: hidden; margin-top: 8px; }
 .score-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
 
-.slide-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
-.slide-card + .slide-card { margin-top: 12px; }
-.slide-top { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
-.slide-body { padding: 16px 18px; min-height: 108px; }
-.slide-body h4 { font-size: 16px; margin-bottom: 4px; }
-.slide-body ul { margin: 8px 0 0; padding-left: 1.2em; font-size: 13.2px; }
-.slide-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 9px; margin-top: 10px; }
-.slide-metric { background: var(--accent-soft); border-radius: 9px; padding: 9px 11px; }
-.slide-metric b { display: block; font-size: 18px; color: var(--accent-text); }
-.slide-metric span { font-size: 11.4px; color: var(--muted); }
-
 .task-row { border: 1px solid var(--border); border-radius: 11px; padding: 11px 13px; background: var(--surface); }
 .task-row + .task-row { margin-top: 9px; }
 .task-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
