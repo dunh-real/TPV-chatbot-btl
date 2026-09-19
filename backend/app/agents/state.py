@@ -194,9 +194,10 @@ class PresentationState(TypedDict, total=False):
     # --- trung gian (tái dùng phần lấy số liệu của workflow 4) ---
     params: dict[str, Any]
     data: dict[str, Any]
-    brief: str                        # bản tóm tắt số liệu gửi cho Presenton
+    slides_markdown: list[str]        # nội dung từng slide, do code soạn
+    brief: str                        # chính các slide trên, ghép lại để xem nhanh
     n_slides: int
-    verify_upto: int                  # số slide đầu do model viết - phạm vi soi số
+    so_cua_code: list[str]            # số do code viết ra (số trang bảng đã cắt)
     validation: dict[str, Any]
 
     # --- đầu ra ---

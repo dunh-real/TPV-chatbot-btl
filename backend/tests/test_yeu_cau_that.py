@@ -221,61 +221,38 @@ async def test_bo_slide_dung_voi_cau_hoi(cau, mang, dong_ket_noi_khi_xong):
     assert ket_qua["validation"]["issues"] == [], \
         [i["quote"] for i in ket_qua["validation"]["issues"]]
 
-    bang = [sh.table for s in presentation.slides for sh in s.shapes if sh.has_table]
-    assert bang, "bộ slide không có bảng chi tiết nào"
-    assert all(len(t.rows) > 1 for t in bang), "có bảng chỉ còn dòng tiêu đề cột"
-
     chu = " ".join(sh.text_frame.text for s in presentation.slides
                    for sh in s.shapes if sh.has_text_frame)
     assert "xem chi tiết trong báo cáo" not in chu
 
     # Và quan trọng hơn cả: ĐỦ DÒNG.
     #
-    # Chỉ kiểm "bảng không rỗng" thì không bắt được lối cắt cụt - cắt 33 dòng còn
-    # 8 vẫn qua. Phải hỏi lại chính tool số liệu xem đáng lẽ có bao nhiêu dòng,
-    # rồi đếm dòng thật trong file.
-    mong_doi = await _so_dong_dang_le_co(ket_qua["params"])
-    dem = _dem_dong_theo_cot(presentation)
-    for cot_dau, so_dong in mong_doi.items():
-        assert dem.get(cot_dau) == so_dong, (
-            f"bảng '{cot_dau}': file có {dem.get(cot_dau)} dòng, "
-            f"số liệu có {so_dong} dòng")
+    # Không đếm ô bảng nữa: Presenton render bảng bằng các ô chữ đặt theo lưới
+    # chứ không phải đối tượng bảng của PowerPoint. Bất biến thật nằm ở chỗ khác
+    # và chặt hơn - MỌI dòng của bảng chi tiết phải có mặt trong bộ slide. Cắt
+    # 33 dòng còn 8 là trượt ngay.
+    for ten in await _ten_tung_dong(ket_qua["params"]):
+        assert ten in chu, f"bảng chi tiết thiếu dòng {ten!r}"
 
 
-def _dem_dong_theo_cot(presentation) -> dict[str, int]:
-    """Tổng số dòng dữ liệu của mỗi bảng, gộp các trang của cùng một bảng.
-
-    Bảng dài được tách ra nhiều slide, nên đếm theo tiêu đề cột đầu tiên chứ không
-    theo từng slide - nếu không thì bảng 3 trang bị đếm thành ba bảng riêng.
-    """
-    dem: dict[str, int] = {}
-    for slide in presentation.slides:
-        for shape in slide.shapes:
-            if not shape.has_table:
-                continue
-            khoa = " | ".join(cell.text for cell in shape.table.rows[0].cells)
-            dem[khoa] = dem.get(khoa, 0) + len(shape.table.rows) - 1
-    return dem
-
-
-async def _so_dong_dang_le_co(params: dict) -> dict[str, int]:
-    """Hỏi thẳng tool số liệu: bảng này đáng lẽ có bao nhiêu dòng."""
+async def _ten_tung_dong(params: dict) -> list[str]:
+    """Hỏi thẳng tool số liệu: bảng chi tiết đáng lẽ có những dòng nào."""
     from app.db.erp_session import erp_session_scope
     from app.tools.data import get_equipment_statistics, get_personnel_statistics
 
-    cot = {"quan_so": "Đơn vị | Quân số | Kỳ trước | Tuyển mới | Nghỉ việc",
-           "trang_bi": "Đơn vị | Trang bị | Số lượng | Tình trạng"}
     ham = {"quan_so": get_personnel_statistics, "trang_bi": get_equipment_statistics}
+    nhom = {"quan_so": "chuc_vu", "trang_bi": "chung_loai"}
 
-    mong_doi: dict[str, int] = {}
+    ten: list[str] = []
     async with erp_session_scope() as session:
         for mang in params["noi_dung"]:
-            ket_qua = await ham[mang](session, params["ky"],
-                                      ma_don_vi=params["ma_don_vi"] or None,
-                                      compare_to=params["compare_to"])
-            if ket_qua.breakdown:
-                mong_doi[cot[mang]] = len(ket_qua.breakdown)
-    return mong_doi
+            ket_qua = await ham[mang](
+                session, params["ky"], ma_don_vi=params["ma_don_vi"] or None,
+                compare_to=params["compare_to"],
+                group_by=nhom[mang] if params.get("nhom_theo") == nhom[mang]
+                else "phong_ban")
+            ten += [row["ten_nhom"] for row in ket_qua.breakdown]
+    return ten
 
 
 # --------------------------------------------------------------------------- #

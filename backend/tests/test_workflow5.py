@@ -185,68 +185,97 @@ DATA = {
 PARAMS = {"ky": "2026-08", "thang": 8, "nam": 2026, "compare_to": "2026-07"}
 
 
-def test_tom_tat_co_du_moi_con_so_se_len_slide():
-    """Model không được tính gì: chênh lệch và tỷ lệ đều phải có sẵn trong tóm tắt."""
-    brief, _ = pr.build_brief(DATA, PARAMS)
-
-    assert "Tổng quân số: 28" in brief
-    assert "kỳ trước 27" in brief
-    assert "+1 (+3.7%)" in brief
-    assert "chiếm 3.6%" in brief
-    assert "tháng 8/2026" in brief and "tháng 7/2026" in brief
+def _slides() -> list[str]:
+    return pr.build_slides_markdown(DATA, PARAMS)[0]
 
 
-def test_tom_tat_liet_ke_du_so_lieu_tung_don_vi():
-    """Model phải có số của từng đơn vị mới viết nhận xét được."""
-    brief, _ = pr.build_brief(DATA, PARAMS)
+def test_moi_con_so_se_len_slide_deu_co_san():
+    """Model không được tính gì: chênh lệch và tỷ lệ đều phải có sẵn trong slide."""
+    tat_ca = "\n".join(_slides())
 
-    assert "Đơn vị 1 / 11 / 10 / 1 / 0" in brief
-    assert "Đơn vị 2 / 17 / 17 / 0 / 0" in brief
-
-
-def test_tom_tat_dan_khong_dung_bang():
-    """Template nào của Presenton cũng chặn bảng quá 3-6 dòng, và khi schema từ
-    chối thì cả bộ slide về rỗng. Bảng thật do code ghép vào sau."""
-    brief, _ = pr.build_brief(DATA, PARAMS)
-    assert "KHÔNG dựng thành bảng" in brief
-    assert "KHÔNG dựng slide dạng bảng" in pr.INSTRUCTIONS
+    assert "Tổng quân số: 28" in tat_ca
+    assert "kỳ trước 27" in tat_ca
+    assert "+1 (+3.7%)" in tat_ca
+    assert "chiếm 3.6%" in tat_ca
+    assert "tháng 8/2026" in tat_ca and "tháng 7/2026" in tat_ca
 
 
-def test_bang_qua_dai_thi_noi_thang_la_da_cat():
-    """Không cắt im lặng: slide phải biết mình đang thiếu dòng."""
+def test_bang_chi_tiet_la_bang_markdown_du_dong():
+    """Presenton chỉ dựng được bảng khi nội dung slide LÀ bảng markdown."""
+    bang = [s for s in _slides() if "| Đơn vị |" in s]
+    assert len(bang) == 1
+    assert "| Đơn vị | Quân số | Kỳ trước | Tuyển mới | Nghỉ việc |" in bang[0]
+    assert "| Đơn vị 1 | 11 | 10 | 1 | 0 |" in bang[0]
+    assert "| Đơn vị 2 | 17 | 17 | 0 | 0 |" in bang[0]
+
+
+def test_bang_dai_cat_thanh_nhieu_slide_chu_khong_cat_dong():
+    """Layout bảng của Presenton chặn ở 6 dòng.
+
+    Đưa cả bảng dài thì schema từ chối, nó dựng lại ba lần rồi trả về bộ slide
+    RỖNG - hỏng cả bộ vì một cái bảng. Nên cắt TRANG ở đây, và cắt thì phải đủ.
+    """
     data = {"personnel": {
         "metrics": {}, "scope": {}, "consistency": [],
-        "breakdown": [{"ma_don_vi": f"{i:05d}", "ten_don_vi": f"Đơn vị {i}", "quan_so": i,
-                       "quan_so_ky_truoc": i, "tuyen_moi": 0, "nghi_viec": 0}
-                      for i in range(pr.MAX_BRIEF_ROWS + 5)]}}
-    brief, _ = pr.build_brief(data, PARAMS)
+        "breakdown": [{"ten_nhom": f"Đơn vị {i}", "ten_don_vi": f"Đơn vị {i}",
+                       "quan_so": i, "quan_so_ky_truoc": i, "tuyen_moi": 0,
+                       "nghi_viec": 0}
+                      for i in range(1, 15)]}}
+    slides, so_cua_code = pr.build_slides_markdown(data, PARAMS)
 
-    assert "còn 5 dòng nữa không liệt kê" in brief
+    bang = [s for s in slides if "| Quân số |" in s]
+    assert len(bang) == 3                       # 14 dòng / 6 = 3 trang
+    assert "(1/3)" in bang[0] and "(3/3)" in bang[2]
+    assert all(s.count("\n|") <= pr.MAX_TABLE_ROWS_SLIDE + 2 for s in bang)
+
+    # Không dòng nào rơi: 14 đơn vị đều có mặt đúng một lần.
+    tat_ca = "\n".join(bang)
+    for i in range(1, 15):
+        assert tat_ca.count(f"| Đơn vị {i} |") == 1
+
+    # Số trang do code viết, phải được khai ra cho bước đối chiếu số.
+    assert so_cua_code == {"1", "2", "3"}
 
 
-def test_tom_tat_noi_ro_chi_tieu_khong_co_nguon():
+def test_slide_chi_tieu_khong_qua_ba_o():
+    """Layout chỉ tiêu của Presenton nhận 2-3 ô; quá thì schema từ chối."""
+    metrics = {f"m{i}": {"value": i, "prev": None, "delta": None,
+                         "delta_pct": None, "share_pct": None} for i in range(5)}
+    data = {"personnel": {"metrics": metrics, "scope": {}, "consistency": [],
+                          "breakdown": []}}
+    slides = pr.build_slides_markdown(data, PARAMS)[0]
+
+    chi_tieu = [s for s in slides if s.startswith("## Chỉ tiêu")]
+    assert [s.count("\n- ") for s in chi_tieu] == [3, 2]
+
+
+def test_slide_noi_ro_chi_tieu_khong_co_nguon():
     """Chỉ tiêu không có số liệu phải được nêu, nếu không model sẽ nhận xét về nó."""
-    brief, _ = pr.build_brief(DATA, PARAMS)
-    assert "Không có số liệu về: có mặt, vắng." in brief
+    assert "Không có số liệu về: có mặt, vắng." in "\n".join(_slides())
 
 
-def test_tom_tat_khong_mang_theo_cau_hoi_goc():
-    """Câu người dùng gõ ("cho đẹp vào", "chi tiết hơn") là lời mời thêm thắt."""
-    brief, _ = pr.build_brief(DATA, PARAMS)
-    assert "slide" not in brief.lower() or "đề xuất" not in brief.lower()
-    assert "Ghi chú: Số liệu kỳ được dựng lại." in brief
+def test_slide_khong_mang_theo_cau_hoi_goc():
+    """Câu người dùng gõ ("cho đẹp vào") là lời mời thêm thắt."""
+    tat_ca = "\n".join(_slides())
+    assert "Ghi chú" in tat_ca or "ghi chú" in tat_ca
+    assert "Số liệu kỳ được dựng lại." in tat_ca
 
 
-def test_canh_bao_du_lieu_thanh_muc_rieng():
+def test_canh_bao_du_lieu_thanh_slide_rieng():
     data = {**DATA, "personnel": {**DATA["personnel"],
                                   "consistency": [{"ma_don_vi": "*", "message": "Quân số lệch."}]}}
-    brief, _ = pr.build_brief(data, PARAMS)
-    assert "SỐ LIỆU CẦN KIỂM TRA LẠI" in brief and "Quân số lệch." in brief
+    slides = pr.build_slides_markdown(data, PARAMS)[0]
+    assert any("kiểm tra lại" in s and "Quân số lệch." in s for s in slides)
 
 
-def test_so_slide_de_xuat_nam_trong_khoang():
-    assert pr.MIN_SLIDES <= pr.build_brief(DATA, PARAMS)[1] <= pr.MAX_SLIDES
-    assert pr.MIN_SLIDES <= pr.build_brief({}, PARAMS)[1] <= pr.MAX_SLIDES
+def test_slide_bia_chi_ghi_nguoi_trinh_bay_khi_duoc_dua_vao():
+    """Bịa một cái tên ngay trang đầu thì tệ hơn một chỗ trống."""
+    khong_nhap = pr.build_slides_markdown(DATA, PARAMS)[0][0]
+    co_nhap = pr.build_slides_markdown(
+        DATA, PARAMS, {"nguoi_trinh_bay": "Nguyễn Tiến Anh"})[0][0]
+
+    assert "Nguyễn Tiến Anh" not in khong_nhap
+    assert "Nguyễn Tiến Anh" in co_nhap
 
 
 # --------------------------------------------------------------------------- #
@@ -265,7 +294,7 @@ async def test_so_bia_tren_slide_bi_neu_ten(tmp_path):
     path = _lam_file(tmp_path, "Tổng quân số 28 người", "Có 47 đơn vị chưa gửi báo cáo")
 
     result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
-                                   "engine": "presenton", "verify_upto": 2})
+                                   "engine": "presenton"})
 
     assert result["validation"]["status"] == "warning"
     assert result["slide_count"] == 2
@@ -278,7 +307,7 @@ async def test_slide_toan_so_that_thi_khong_canh_bao(tmp_path):
     path = _lam_file(tmp_path, "Tổng quân số 28 người, tăng 1 so với kỳ trước")
 
     result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
-                                   "engine": "presenton", "verify_upto": 2})
+                                   "engine": "presenton"})
     assert result["validation"]["status"] == "passed"
 
 
@@ -291,7 +320,7 @@ async def test_so_trong_bang_cung_duoc_soi(tmp_path):
     path = str(build_pptx(deck, tmp_path / "d.pptx"))
 
     result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
-                                   "engine": "presenton", "verify_upto": 1})
+                                   "engine": "presenton"})
     assert ["99"] in [i["numbers"] for i in result["validation"]["issues"]]
 
 
@@ -300,7 +329,7 @@ async def test_khong_doc_lai_duoc_file_thi_noi_la_chua_kiem(tmp_path):
     hong = tmp_path / "hong.pptx"
     hong.write_bytes(b"khong phai pptx")
 
-    result = await pr.verify_node({"data": DATA, "params": PARAMS, "verify_upto": 2,
+    result = await pr.verify_node({"data": DATA, "params": PARAMS,
                                    "output_path": str(hong), "engine": "presenton"})
     assert result["validation"]["status"] == "skipped"
     assert result["validation"]["ghi_chu"]
@@ -371,15 +400,21 @@ class FakePresenton:
         self.instructions = ""
         self.n_slides = 0
 
-    async def generate(self, content, *, n_slides, instructions="", **kwargs):
+    async def generate(self, content, *, n_slides, instructions="",
+                       slides_markdown=None, **kwargs):
         from app.services.presenton import Deck
 
         self.brief, self.instructions, self.n_slides = content, instructions, n_slides
+        self.slides_markdown = slides_markdown or []
         if self.loi:
             raise self.loi
+        # Dựng đúng số slide được gửi sang, để bên gọi đếm được như hàng thật.
         deck = DeckSpec(title="Báo cáo", slides=[
             SlideSpec(kind="title", title="Báo cáo quân số tháng 8/2026"),
-            SlideSpec(kind="bullet", title="Đánh giá", bullets=self.bullets),
+            # Tiêu đề không mang số: van chắn soi cả tiêu đề, một con số bịa
+            # trong đồ giả sẽ thành lỗi giả của bài test.
+            *[SlideSpec(kind="bullet", title="Nội dung", bullets=self.bullets)
+              for _ in range(1, len(self.slides_markdown))],
         ])
         path = build_pptx(deck, self.tmp_path / "presenton.pptx")
         return Deck(presentation_id="p1", content=Path(path).read_bytes(),
@@ -399,16 +434,19 @@ async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
 
     assert result["error"] == ""
     assert result["engine"] == "presenton"
-    assert result["validation"]["status"] == "passed"
+    assert result["validation"]["status"] == "passed", \
+        [i["quote"] for i in result["validation"]["issues"]]
     assert Path(result["output_path"]).exists()
     assert result["edit_url"] == "/presentation?id=p1"
 
-    # 2 slide của Presenton + bảng chi tiết quân số do code ghép vào.
-    assert result["slide_count"] == 3
-    presentation = Presentation(result["output_path"])
-    bang = [sh.table for s in presentation.slides for sh in s.shapes if sh.has_table]
+    # Số slide trong file đúng bằng số slide đã soạn và gửi đi.
+    assert result["slide_count"] == len(gia.slides_markdown)
+    assert len(Presentation(result["output_path"]).slides) == result["slide_count"]
+
+    # Bảng chi tiết đi sang Presenton dưới dạng bảng markdown, đủ dòng.
+    bang = [s for s in gia.slides_markdown if "| Đơn vị |" in s]
     assert len(bang) == 1
-    assert len(bang[0].rows) == 1 + 2          # tiêu đề cột + 2 đơn vị, không thiếu dòng
+    assert "| Đơn vị 1 |" in bang[0] and "| Đơn vị 2 |" in bang[0]
 
     # Đúng một lời gọi LLM nội bộ: bước trích tham số. Phần chữ trên slide không
     # còn đi qua model của hệ thống nữa.
@@ -510,29 +548,6 @@ def test_slide_count_khop_voi_file_dung_ra(tmp_path):
     assert count_slides(specs) == len(Presentation(str(output)).slides)
 
 
-def test_ghep_bang_dai_vao_file_co_san_khong_mat_dong(tmp_path):
-    """Bảng 33 dòng ghép vào bộ slide Presenton phải còn đủ 33 dòng.
-
-    Đây là lý do bảng không giao cho Presenton: schema của nó chặn ở 6 dòng, còn
-    ở đây bảng dài chỉ nở thêm trang chứ không mất dòng nào.
-    """
-    from app.documents.pptx_builder import append_to_pptx
-
-    goc = build_pptx(DeckSpec(title="x", slides=[SlideSpec(kind="title", title="Bìa")]),
-                     tmp_path / "goc.pptx")
-    rows = [[f"Đơn vị {i}", str(i)] for i in range(33)]
-    them = append_to_pptx(goc, [SlideSpec(kind="table", title="Chi tiết",
-                                          table=SlideTable(columns=["Đơn vị", "Quân số"],
-                                                           rows=rows))])
-
-    presentation = Presentation(str(goc))
-    assert them == 3                                  # 33 dòng tách thành 3 trang
-    assert len(presentation.slides) == 1 + 3          # slide cũ được giữ nguyên
-    dem = sum(len(sh.table.rows) - 1 for s in presentation.slides
-              for sh in s.shapes if sh.has_table)
-    assert dem == 33
-
-
 def test_chi_dan_nhac_muc_canh_bao_khi_that_su_co_canh_bao():
     """Dặn cứng thì kỳ nào sạch số liệu cũng mọc dòng "cần kiểm tra lại: chưa nêu"."""
     assert "kiểm tra lại" not in pr.instructions_for(DATA)
@@ -542,24 +557,3 @@ def test_chi_dan_nhac_muc_canh_bao_khi_that_su_co_canh_bao():
                                                           "message": "Quân số lệch."}]}}
     assert "kiểm tra lại" in pr.instructions_for(co_canh_bao)
 
-
-async def test_bang_ghep_them_khong_bi_soi_thanh_so_bia(tmp_path):
-    """Chú thích phân trang do CODE viết, không phải model - soi nó là báo oan.
-
-    Tầng live đỏ đúng chỗ này: bảng 33 dòng tách ba trang, mỗi trang mang chú
-    thích "Nguồn: Asm_Assets - dòng 12-22/33", và van chắn đọc 12, 22, 33 thành
-    ba con số không truy được về dữ liệu gốc.
-    """
-    from app.documents.pptx_builder import append_to_pptx
-
-    path = _lam_file(tmp_path, "Tổng quân số 28 người")
-    append_to_pptx(path, [SlideSpec(
-        kind="table", title="Chi tiết", caption="Nguồn: Asm_Assets",
-        table=SlideTable(columns=["Đơn vị", "Số lượng"],
-                         rows=[[f"Đơn vị {i}", str(i)] for i in range(33)]))])
-
-    result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
-                                   "engine": "presenton", "verify_upto": 2})
-
-    assert result["validation"]["status"] == "passed"
-    assert result["slide_count"] == 2 + 3        # vẫn đếm đủ slide trong file

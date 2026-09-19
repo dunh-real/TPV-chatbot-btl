@@ -593,36 +593,40 @@ curl -X POST localhost:8080/api/reports/aggregate -H 'Content-Type: application/
 
 ```
 "Tạo slide báo cáo quân số tháng 8"
-  └─> lấy số liệu (SQL)            tái dùng nguyên của workflow 4
-      └─> bản tóm tắt số liệu      CODE dựng, không qua LLM
-          └─> Presenton dựng .pptx  (Docker, model API riêng)
-              └─> ghép bảng chi tiết đầy đủ + đối chiếu lại số TRONG FILE
+  └─> lấy số liệu (SQL)                 tái dùng nguyên của workflow 4
+      └─> soạn NỘI DUNG TỪNG SLIDE      code dựng, một markdown = một slide
+          └─> Presenton chỉ render       (slides_markdown → bỏ bước dàn ý của nó)
+              └─> đối chiếu lại số TRONG FILE
 ```
 
-**Presenton chỉ làm phần trình bày.** Nó nhận một bản tóm tắt số liệu đã chốt -
-[build_brief](app/agents/nodes/presentation.py) - chứ không nhận câu hỏi gốc của
-người dùng và không nối được vào CSDL. Mọi con số, kể cả tỷ lệ và mức tăng giảm,
-vẫn do [tools/data.py](app/tools/data.py) tính sẵn.
+**Ranh giới: mình viết nội dung, Presenton lo phần nhìn.** `build_slides_markdown`
+dựng sẵn từng slide - bìa, slide chỉ tiêu, các trang bảng chi tiết, tình hình gửi
+báo cáo, ghi chú - rồi gửi qua `slides_markdown`. Presenton bỏ hẳn bước tự lập dàn
+ý: nó chỉ chọn layout và render. Nhờ vậy thứ tự, số lượng và nội dung slide do bên
+này quyết, còn phần trình bày - thứ code dựng ra xấu - thì giao cho nó.
 
-Lý do đổi: bản cũ để LLM tự lập dàn ý và viết từng gạch đầu dòng. Ba lần chạy
-liên tiếp trên cùng một câu hỏi đều ra câu bịa - "Phòng Kinh doanh và Kỹ thuật
-thiếu số liệu" (model tự chọn tên đơn vị), "8 đơn vị thiếu dữ liệu nhân sự"
-(danh sách thật có 9; van chắn không bắt vì 8 trùng tháng báo cáo).
+Đổi lại còn nhanh hơn: **45-60 giây** cho một bộ slide, thay vì ~4 phút khi để
+Presenton tự nghĩ dàn ý.
 
-**Bảng chi tiết không giao cho Presenton.** Mọi template của nó chặn bảng ở 3-6
-dòng, và khi schema từ chối thì cả bộ slide trả về rỗng. Bảng do code dựng và
-ghép vào cuối file ([append_to_pptx](app/documents/pptx_builder.py)), bảng dài
-tự tách trang - không dòng nào mất.
+Presenton không nhận câu hỏi gốc của người dùng và không nối được vào CSDL. Mọi
+con số, kể cả tỷ lệ và mức tăng giảm, vẫn do [tools/data.py](app/tools/data.py)
+tính sẵn.
 
-**Vẫn còn van chắn số**, nhưng nay chạy trên chính file .pptx đã dựng chứ không
-trên JSON trung gian: con số nào trên slide không truy được về dữ liệu gốc thì
-vào `validation.issues` kèm tên slide. Khác workflow 3-4, số đáng ngờ **không
-chặn file** - file đã dựng xong ở phía Presenton, xoá đi thì người dùng không
-còn gì để sửa.
+**Giới hạn layout là ràng buộc thật, không phải con số chọn cho đẹp**: bảng tối đa
+6 dòng, ô chỉ tiêu 2-3 ô mỗi slide. Vượt ngưỡng thì schema từ chối, Presenton dựng
+lại ba lần rồi trả về bộ slide RỖNG - hỏng cả bộ vì một cái bảng. Nên bảng dài
+được cắt trang tại [nodes/presentation.py](app/agents/nodes/presentation.py), và
+cắt thì cắt đủ: mỗi dòng đều lên slide, số trang ghi ngay trên tiêu đề "(2/6)".
 
-**Presenton hỏng thì vẫn ra file**: đường lùi dựng bằng `pptx_builder`, và đường
-lùi đó không gọi LLM - chỉ ô chỉ tiêu, biểu đồ, bảng, ghi chú do code viết.
-`engine` trong kết quả nói rõ file đến từ đâu (`presenton` hay `local`).
+**Vẫn còn van chắn số**, chạy trên chính file .pptx đã dựng: con số nào trên slide
+không truy được về dữ liệu gốc thì vào `validation.issues` kèm tên slide. Số trang
+bảng do code viết ra được khai riêng (`so_cua_code`) nên không bị tính là số bịa.
+Khác workflow 3-4, số đáng ngờ **không chặn file** - file đã dựng xong ở phía
+Presenton, xoá đi thì người dùng không còn gì để sửa.
+
+**Presenton hỏng thì vẫn ra file**: đường lùi dựng bằng `pptx_builder`, không gọi
+LLM - chỉ ô chỉ tiêu, biểu đồ, bảng, ghi chú do code viết. `engine` trong kết quả
+nói rõ file đến từ đâu (`presenton` hay `local`).
 
 ### Dựng Presenton
 
@@ -637,6 +641,7 @@ Cấu hình trong `.env` (`PRESENTON_*`). Vài điểm đã trả giá mới bi�
 |---|---|
 | cổng `5002`, chỉ mở `127.0.0.1` | máy dev đã có Presenton của dự án khác ở 5001; và bộ slide chứa số liệu nhân sự |
 | `DISABLE_AUTH=true` | bật đăng nhập thì bước export tự gọi API của chính nó và nhận 401, file xuất ra rỗng |
+| image có **một bản vá** | `slides_markdown` chết ở image gốc vì `to_string()` thiếu tham số `with_schema` — xem [docker/presenton/Dockerfile](docker/presenton/Dockerfile) |
 | `LLM=custom` + OpenRouter | sinh slide dùng model API riêng; chat/agent vẫn chạy vLLM nội bộ |
 | `DISABLE_IMAGE_GENERATION=true` | ảnh do model vẽ không phải là dữ liệu |
 

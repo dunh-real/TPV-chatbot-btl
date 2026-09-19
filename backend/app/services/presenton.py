@@ -119,10 +119,18 @@ class PresentonClient:
 
     # ----------------------------------------------------------- dựng slide --
     async def generate(self, content: str, *, n_slides: int, instructions: str = "",
+                       slides_markdown: list[str] | None = None,
                        template: str | None = None, language: str = "Vietnamese") -> Deck:
-        """Dựng bộ slide và tải file về dạng bytes. Chặn cho tới khi xong hoặc lỗi."""
+        """Dựng bộ slide và tải file về dạng bytes. Chặn cho tới khi xong hoặc lỗi.
+
+        `slides_markdown` là đường đang dùng: một chuỗi markdown = một slide.
+        Presenton bỏ hẳn bước tự lập dàn ý, chỉ chọn layout và render - nên nội
+        dung, thứ tự và số lượng slide do bên này quyết, và nó chạy nhanh hơn
+        hẳn (khoảng 60 giây thay vì 4 phút).
+        """
         started = time.monotonic()
         task_id = await self._start(content, n_slides=n_slides, instructions=instructions,
+                                    slides_markdown=slides_markdown,
                                     template=template, language=language)
         result = await self._wait(task_id)
 
@@ -139,15 +147,19 @@ class PresentonClient:
         )
 
     async def _start(self, content: str, *, n_slides: int, instructions: str,
+                     slides_markdown: list[str] | None,
                      template: str | None, language: str) -> str:
         body: dict[str, Any] = {
             "content": content,
             "n_slides": n_slides,
             "template": template or self.settings.presenton_template,
             "export_as": "pptx",
-            "include_title_slide": True,
+            # Đã tự soạn slide bìa thì đừng để Presenton chèn thêm một cái nữa.
+            "include_title_slide": not slides_markdown,
             "language": language,
         }
+        if slides_markdown:
+            body["slides_markdown"] = slides_markdown
         if instructions:
             body["instructions"] = instructions
 

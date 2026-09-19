@@ -40,7 +40,6 @@ from app.documents.pptx_builder import (
     MetricBox,
     SlideSpec,
     SlideTable,
-    append_to_pptx,
     build_pptx,
     count_slides,
 )
@@ -50,10 +49,11 @@ from app.services.presenton import PresentonError, get_presenton
 
 logger = logging.getLogger(__name__)
 
-# Số slide đề xuất cho Presenton. Đây là gợi ý, không phải ràng buộc: bảng dài
-# thì Presenton tự tách thêm trang.
-MIN_SLIDES = 4
-MAX_SLIDES = 12
+# Giới hạn THẬT của template `general` bên Presenton, không phải con số chọn cho
+# đẹp: layout bảng nhận tối đa 6 dòng, layout chỉ tiêu nhận 2-3 ô. Vượt ngưỡng
+# thì schema từ chối, Presenton dựng lại ba lần rồi trả về bộ slide rỗng.
+MAX_TABLE_ROWS_SLIDE = 6
+MAX_METRICS_PER_SLIDE = 3
 
 # Bảng chi tiết dài tới đâu thì vẫn liệt kê đủ trong bản tóm tắt. Cắt bảng là lỗi
 # đã từng xảy ra (33 dòng còn 8) và nó âm thầm: người đọc cộng các dòng ra một số
@@ -131,94 +131,122 @@ def _bang_tu_tool(source: dict[str, Any], mac_dinh: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # 1. Bản tóm tắt số liệu - do CODE dựng
 # --------------------------------------------------------------------------- #
-def build_brief(data: dict[str, Any], params: dict[str, Any],
-                inputs: dict[str, Any] | None = None) -> tuple[str, int]:
-    """Trả (bản tóm tắt, số slide đề xuất).
-
-    Đây là thứ DUY NHẤT Presenton nhìn thấy. Câu hỏi gốc của người dùng không đi
-    kèm: nó chứa những chữ như "cho đẹp", "chi tiết vào" - vô hại với một trợ lý
-    nhưng với một bộ sinh nội dung thì đó là lời mời thêm thắt.
-    """
+def _slide_bia(data: dict[str, Any], params: dict[str, Any],
+               inputs: dict[str, Any]) -> str:
     period = _period_label(params)
-    compare = _compare_label(params)
-
-    lines: list[str] = [
-        f"BÁO CÁO SỐ LIỆU {period.upper()}",
-        "",
-        f"Kỳ báo cáo: {period}." + (f" Kỳ đối chiếu: {compare}." if compare else ""),
-    ]
-    # Slide bìa của Presenton có chỗ cho người trình bày; không nêu thì nó in
-    # "Chưa cung cấp". Chỉ điền khi người dùng thật sự đưa vào - tự nghĩ ra một
-    # cái tên hay một tên đơn vị thì đó là bịa ngay trên trang đầu.
-    inputs = inputs or {}
-    for key, nhan in (("nguoi_trinh_bay", "Người trình bày"),
-                      ("don_vi_trinh_bay", "Đơn vị trình bày")):
+    dong_phu = []
+    # Slide bìa có chỗ cho người trình bày; không nêu thì Presenton in "Chưa
+    # cung cấp". Chỉ điền khi người dùng thật sự đưa vào - tự nghĩ ra một cái
+    # tên ngay trang đầu thì tệ hơn một chỗ trống.
+    for key in ("don_vi_trinh_bay", "nguoi_trinh_bay"):
         if (value := str(inputs.get(key) or "").strip()):
-            lines.append(f"{nhan}: {value}.")
+            dong_phu.append(value)
+    if (compare := _compare_label(params)):
+        dong_phu.append(f"Kỳ đối chiếu: {compare}")
+    if (reporting := data.get("reporting")):
+        dong_phu.append(f"Phạm vi: {reporting['units_total']} đơn vị")
+    return f"# Báo cáo số liệu {period}\n\n" + " — ".join(dong_phu)
 
-    personnel = data.get("personnel")
-    equipment = data.get("equipment")
-    reporting = data.get("reporting")
 
-    if reporting:
-        lines.append(f"Phạm vi: {reporting['units_total']} đơn vị.")
-    lines.append("")
+def _slide_chi_tieu(source: dict[str, Any], ten_mang: str, period: str) -> list[str]:
+    """Slide chỉ tiêu. Tách mỗi slide tối đa 3 ô - layout của Presenton chặn ở đó."""
+    muc = list(source.get("metrics", {}).items())
+    slides: list[str] = []
+    for i in range(0, len(muc), MAX_METRICS_PER_SLIDE):
+        phan = muc[i:i + MAX_METRICS_PER_SLIDE]
+        # Layout chỉ tiêu cần TỐI THIỂU hai ô; một ô lẻ thì gộp ngược lên slide
+        # trước thay vì dựng một slide mà layout từ chối.
+        if len(phan) == 1 and slides:
+            slides[-1] += "\n" + _dong_chi_tieu(*phan[0])
+            continue
+        slides.append(f"## Chỉ tiêu {ten_mang} {period}\n\n"
+                      + "\n".join(_dong_chi_tieu(k, m) for k, m in phan))
+    return slides
 
-    muc = 0
-    if personnel:
-        muc += 1
-        lines += [f"{muc}. QUÂN SỐ (nguồn: {personnel['scope'].get('nguon', 'CSDL nhân sự')})"]
-        lines += [_dong_chi_tieu(k, m) for k, m in personnel["metrics"].items()]
-        lines += _bang_tu_tool(personnel, "personnel")
-        if (thieu := personnel["scope"].get("khong_co_chi_tieu")):
-            lines.append("Không có số liệu về: " + ", ".join(thieu) + ".")
-        lines.append("")
 
-    if equipment:
-        muc += 1
-        lines += [f"{muc}. TRANG THIẾT BỊ (nguồn: {equipment['scope'].get('nguon', 'CSDL tài sản')})"]
-        lines += [_dong_chi_tieu(k, m) for k, m in equipment["metrics"].items()]
-        lines += _bang_tu_tool(equipment, "equipment")
-        if (thieu := equipment["scope"].get("khong_co_chi_tieu")):
-            lines.append("Không có số liệu về: " + ", ".join(thieu) + ".")
-        lines.append("")
+def _slide_bang(source: dict[str, Any], mac_dinh: str, ten_mang: str,
+                period: str) -> tuple[list[str], set[str]]:
+    """Bảng chi tiết, cắt thành nhiều slide vừa sức layout của Presenton.
 
-    if reporting:
-        muc += 1
-        lines += [
-            f"{muc}. TÌNH HÌNH GỬI BÁO CÁO",
-            f"- Đã gửi trong kỳ: {reporting['units_reported']}/{reporting['units_total']} đơn vị.",
-        ]
+    Layout bảng của template `general` chặn ở 6 dòng. Đưa cả bảng 33 dòng thì
+    schema từ chối, Presenton dựng lại ba lần rồi trả về bộ slide RỖNG - nên
+    việc cắt trang phải làm ở đây, và cắt thì phải cắt ĐỦ: mỗi dòng đều lên
+    slide, không dòng nào rơi.
+    """
+    from app.agents.nodes.report import bang_chi_tiet
+
+    table = bang_chi_tiet(source, mac_dinh)
+    if table is None:
+        return [], set()
+
+    nhan = (source.get("scope") or {}).get("nhom_theo") or "đơn vị"
+    trang = [table.rows[i:i + MAX_TABLE_ROWS_SLIDE]
+             for i in range(0, len(table.rows), MAX_TABLE_ROWS_SLIDE)]
+    dau_bang = ("| " + " | ".join(table.columns) + " |\n"
+                + "|" + "---|" * len(table.columns))
+
+    slides: list[str] = []
+    for index, dong in enumerate(trang, start=1):
+        so_trang = f" ({index}/{len(trang)})" if len(trang) > 1 else ""
+        than = "\n".join("| " + " | ".join(o) + " |" for o in dong)
+        slides.append(f"## Chi tiết {ten_mang} theo {str(nhan).lower()}{so_trang}\n\n"
+                      f"{dau_bang}\n{than}")
+
+    # Số trang do CODE viết ra, không phải model bịa - bước đối chiếu số phải
+    # biết điều đó, nếu không "(2/6)" thành hai con số không truy được.
+    so_cua_code = {str(index) for index in range(1, len(trang) + 1)}
+    return slides, so_cua_code
+
+
+def build_slides_markdown(
+    data: dict[str, Any], params: dict[str, Any], inputs: dict[str, Any] | None = None
+) -> tuple[list[str], set[str]]:
+    """Nội dung TỪNG SLIDE, do code dựng từ số liệu SQL. Trả (slide, số của code).
+
+    Một chuỗi markdown = một slide. Presenton nhận danh sách này qua
+    `slides_markdown`: nó bỏ hẳn bước tự lập dàn ý, chỉ chọn layout và render.
+    Nhờ vậy mình giữ được thứ tự, số lượng và nội dung slide, còn phần trình bày
+    - thứ code dựng ra xấu - thì giao cho nó.
+
+    Câu hỏi gốc của người dùng không đi kèm: nó chứa những chữ như "cho đẹp",
+    "chi tiết vào" - vô hại với một trợ lý nhưng với một bộ sinh nội dung thì đó
+    là lời mời thêm thắt.
+    """
+    inputs = inputs or {}
+    period = _period_label(params)
+    slides: list[str] = [_slide_bia(data, params, inputs)]
+    so_cua_code: set[str] = set()
+
+    for key, ten_mang, mac_dinh in (("personnel", "quân số", "personnel"),
+                                    ("equipment", "trang thiết bị", "equipment")):
+        if not (source := data.get(key)):
+            continue
+        slides += _slide_chi_tieu(source, ten_mang, period)
+        bang, so = _slide_bang(source, mac_dinh, ten_mang, period)
+        slides += bang
+        so_cua_code |= so
+        if (thieu := (source.get("scope") or {}).get("khong_co_chi_tieu")):
+            slides[-1] += ("\n\nKhông có số liệu về: " + ", ".join(thieu) + ".")
+
+    if (reporting := data.get("reporting")):
+        dong = [f"- Đã gửi trong kỳ: {reporting['units_reported']}/"
+                f"{reporting['units_total']} đơn vị."]
         if (missing := reporting.get("missing")):
-            lines.append("- Chưa gửi: " + ", ".join(m["ten_don_vi"] for m in missing) + ".")
-        lines.append("")
+            dong.append("- Chưa gửi: "
+                        + ", ".join(m["ten_don_vi"] for m in missing) + ".")
+        slides.append(f"## Tình hình gửi báo cáo {period}\n\n" + "\n".join(dong))
 
-    # Cảnh báo chất lượng dữ liệu là phần người ký cần thấy nhất, nên nó được nêu
-    # thành mục riêng chứ không lẫn vào ghi chú cuối slide.
-    canh_bao = [item["message"] for key in ("personnel", "equipment")
-                for item in (data.get(key) or {}).get("consistency", [])]
-    if canh_bao:
-        muc += 1
-        lines += [f"{muc}. SỐ LIỆU CẦN KIỂM TRA LẠI"] + [f"- {c}" for c in canh_bao] + [""]
+    # Cảnh báo chất lượng dữ liệu và ghi chú nguồn là phần người ký cần thấy
+    # nhất, nên chúng đứng thành slide riêng chứ không nép vào chân trang.
+    cuoi: list[str] = [item["message"] for key in ("personnel", "equipment")
+                       for item in (data.get(key) or {}).get("consistency", [])]
+    cuoi += sorted({note for key in ("personnel", "equipment")
+                    if (note := (data.get(key) or {}).get("scope", {}).get("ghi_chu"))})
+    if cuoi:
+        slides.append("## Ghi chú và số liệu cần kiểm tra lại\n\n"
+                      + "\n".join(f"- {c}" for c in cuoi))
 
-    ghi_chu = {(data.get(key) or {}).get("scope", {}).get("ghi_chu")
-               for key in ("personnel", "equipment")}
-    for note in sorted(n for n in ghi_chu if n):
-        lines.append(f"Ghi chú: {note}")
-
-    n_slides = get_settings().presenton_n_slides or _de_xuat_so_slide(data)
-    return "\n".join(lines).strip(), n_slides
-
-
-def _de_xuat_so_slide(data: dict[str, Any]) -> int:
-    """Bìa + mỗi mảng số liệu hai slide (tổng quan, chi tiết) + kết luận."""
-    count = 2
-    for key in ("personnel", "equipment"):
-        if data.get(key):
-            count += 2 if (data[key].get("breakdown")) else 1
-    if data.get("reporting"):
-        count += 1
-    return max(MIN_SLIDES, min(MAX_SLIDES, count))
+    return slides, so_cua_code
 
 
 # Lời dặn gửi kèm. Viết bằng tiếng Việt vì bộ slide là tiếng Việt, và viết theo
@@ -226,17 +254,22 @@ def _de_xuat_so_slide(data: dict[str, Any]) -> int:
 INSTRUCTIONS = (
     "Đây là bộ slide báo cáo hành chính, trình bày trong cuộc họp giao ban. "
     "Toàn bộ nội dung bằng tiếng Việt, văn phong báo cáo, không dùng từ tiếp thị.\n"
+    "Mỗi slide đã được soạn sẵn nội dung; việc của bạn là chọn layout và trình "
+    "bày lại cho gọn, KHÔNG viết thêm nội dung mới.\n"
     "QUY TẮC BẮT BUỘC:\n"
-    "1. Chỉ dùng những con số có sẵn trong phần số liệu. KHÔNG tự cộng, trừ, "
+    "1. Chỉ dùng những con số có sẵn trong nội dung slide. KHÔNG tự cộng, trừ, "
     "tính tỷ lệ hay ước lượng thêm bất kỳ con số nào.\n"
-    "2. Chỉ nhắc tên đơn vị có trong phần số liệu, và chỉ gán cho đơn vị đó đúng "
-    "con số ghi kèm tên nó. Không nêu tên đơn vị làm ví dụ.\n"
+    "2. Chỉ nhắc tên đơn vị, chức vụ, chủng loại có trong nội dung slide, và chỉ "
+    "gán cho nó đúng con số ghi kèm. Không nêu tên nào làm ví dụ.\n"
     "3. Không suy diễn nguyên nhân, không dự báo, không đề xuất điều gì mà số "
     "liệu không nói tới.\n"
     "4. Chỉ tiêu nào ghi là không có số liệu thì không được nhận xét về nó.\n"
-    "5. KHÔNG dựng slide dạng bảng. Bảng chi tiết theo từng đơn vị sẽ được hệ "
-    "thống ghép vào cuối bộ slide; đừng dựng lại và đừng rút gọn nó thành vài "
-    'dòng, cũng đừng viết "xem chi tiết trong báo cáo".'
+    "5. Slide có bảng markdown thì BẮT BUỘC chọn layout có bảng. Không chọn "
+    "layout biểu đồ, không chọn layout thẻ/gạch đầu dòng, không chuyển bảng "
+    "thành câu chữ. Giữ ĐỦ số dòng và số cột của bảng.\n"
+    "6. Với layout chỉ tiêu: phần mô tả của mỗi ô PHẢI mở đầu bằng tên chỉ tiêu "
+    '(ví dụ "Tổng quân số: kỳ trước 27..."). Ô chỉ có con số mà không có tên '
+    "chỉ tiêu thì người xem không biết nó là gì."
 )
 
 # Chỉ dặn nêu mục cảnh báo KHI CÓ cảnh báo. Dặn cứng thì kỳ nào số liệu sạch, bộ
@@ -256,9 +289,17 @@ def instructions_for(data: dict[str, Any]) -> str:
 async def brief_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error"):
         return {}
-    brief, n_slides = build_brief(state["data"], state["params"], state.get("inputs"))
-    logger.info("Bản tóm tắt số liệu: %d ký tự, đề xuất %d slide", len(brief), n_slides)
-    return {"brief": brief, "n_slides": n_slides}
+    slides, so_cua_code = build_slides_markdown(
+        state["data"], state["params"], state.get("inputs"))
+    logger.info("Đã soạn %d slide để Presenton render", len(slides))
+    return {
+        "slides_markdown": slides,
+        "n_slides": len(slides),
+        "so_cua_code": sorted(so_cua_code),
+        # Giữ `brief` trong kết quả trả về: đây vẫn là toàn bộ thứ Presenton
+        # nhìn thấy, và là chỗ đối chiếu khi trên slide có một con số lạ.
+        "brief": "\n\n---\n\n".join(slides),
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -345,6 +386,7 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
     try:
         deck = await get_presenton().generate(
             state["brief"], n_slides=state["n_slides"],
+            slides_markdown=state["slides_markdown"],
             instructions=instructions_for(state["data"]))
     except PresentonError as exc:
         logger.warning("Presenton không dựng được slide (%s) - dùng bản tự dựng", exc)
@@ -354,47 +396,21 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
         return {
             "output_path": str(path),
             "engine": "local",
-            # Không một chữ nào của model, nên không có gì để soi.
-            "verify_upto": 0,
             "slide_count": count_slides(spec.slides),
             "assumptions": [f"Presenton không dùng được ({exc}); bộ slide này do hệ "
                             f"thống tự dựng nên chỉ có số liệu, không có phần nhận xét."],
         }
 
     await anyio.to_thread.run_sync(lambda: output_path.write_bytes(deck.content))
-    # Đếm TRƯỚC khi ghép bảng: đây đúng là số slide do model viết, và cũng là
-    # phạm vi mà bước đối chiếu số được phép soi.
-    cua_presenton, _ = await anyio.to_thread.run_sync(lambda: doc_text_slide(output_path))
-    them = await anyio.to_thread.run_sync(
-        lambda: append_to_pptx(output_path, _bang_chi_tiet(state["data"], state["params"])))
-    logger.info("Presenton dựng xong sau %.0fs, ghép thêm %d slide bảng: %s",
-                deck.elapsed_seconds, them, output_path)
+    logger.info("Presenton render xong %d slide sau %.0fs: %s",
+                state["n_slides"], deck.elapsed_seconds, output_path)
     return {
         "output_path": str(output_path),
         "engine": "presenton",
         "presentation_id": deck.presentation_id,
         "edit_url": deck.edit_path,
         "elapsed_seconds": deck.elapsed_seconds,
-        "verify_upto": cua_presenton,
     }
-
-
-def _bang_chi_tiet(data: dict[str, Any], params: dict[str, Any]) -> list[SlideSpec]:
-    """Slide bảng do code dựng, ghép vào cuối bộ slide của Presenton.
-
-    Đây là chỗ DUY NHẤT người nghe đối chiếu được con số tổng về từng đơn vị, nên
-    nó không đi qua model: bảng dài thì tự tách trang (`_paginate_tables`), không
-    dòng nào bị bỏ.
-    """
-    period = _period_label(params)
-    specs: list[SlideSpec] = []
-    for key, ten in (("personnel", "quân số"), ("equipment", "trang thiết bị")):
-        if (table := _slide_table(f"{key}_breakdown", data)):
-            nhan = (data[key].get("scope") or {}).get("nhom_theo") or "đơn vị"
-            specs.append(SlideSpec(
-                kind="table", title=f"Chi tiết {ten} theo {str(nhan).lower()} - {period}",
-                table=table, caption=f"Nguồn: {(data[key].get('scope') or {}).get('nguon', 'CSDL nghiệp vụ')}"))
-    return specs
 
 
 # --------------------------------------------------------------------------- #
@@ -430,8 +446,8 @@ def doc_text_slide(path: str | Path) -> tuple[int, list[tuple[int, str, str]]]:
 async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
     """Đọc lại file vừa dựng và soi từng con số trong đó.
 
-    Khác bản cũ ở chỗ kiểm TRÊN FILE chứ không trên JSON trung gian: Presenton
-    tự viết chữ nên thứ duy nhất đáng tin để kiểm là thứ đã nằm trong file.
+    Kiểm TRÊN FILE chứ không trên markdown đã gửi đi: Presenton viết lại chữ khi
+    dựng slide, nên thứ duy nhất đáng tin để kiểm là thứ đã nằm trong file.
 
     Số không truy được về dữ liệu gốc là CẢNH BÁO chứ không chặn xuất file: file
     đã dựng xong ở phía Presenton, xoá đi thì người dùng không còn gì để sửa. Bù
@@ -451,15 +467,11 @@ async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"validation": {"status": "skipped", "issues": [],
                                "ghi_chu": "Chưa đối chiếu được số trong file"}}
 
-    # Chỉ soi phần DO MODEL VIẾT: những slide đầu, đúng bằng thứ Presenton trả
-    # về. Bảng chi tiết ghép thêm ở cuối đến thẳng từ CSDL, soi chúng chỉ tạo
-    # cảnh báo giả - chú thích phân trang "dòng 12-22/33" do chính code viết mà
-    # vẫn bị đọc thành ba con số không truy được.
-    den_slide = int(state.get("verify_upto") or 0)
+    # Số do CODE viết ra cũng là số thật: số trang của bảng đã cắt ("2/6").
+    known |= set(state.get("so_cua_code") or [])
+
     issues: list[dict[str, Any]] = []
-    for index, tieu_de, dong in doan_van:
-        if index > den_slide:
-            continue
+    for _index, tieu_de, dong in doan_van:
         check = check_numbers(dong, known, tieu_de)
         if not check.ok:
             issues.append({"type": "unverified_number", "section": tieu_de,

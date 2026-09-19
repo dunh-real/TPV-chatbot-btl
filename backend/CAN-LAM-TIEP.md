@@ -24,14 +24,19 @@ IV.  ĐỐI CHIẾU SỐ LIỆU          chỉ hiện khi thật sự lệch
 V.   SỐ LIỆU CẦN KIỂM TRA LẠI   49/194 trang bị chưa gán phòng ban
 ```
 
-### Workflow 5 (slide) — đã đổi sang Presenton, chạy thật được
+### Workflow 5 (slide) — mình soạn nội dung, Presenton render
 
 ```
-engine=presenton | 6 slide | 62 giây | validation passed, 0 con số đáng ngờ
+engine=presenton | 6 slide | 45 giây | validation passed, 0 con số đáng ngờ
 ```
 
-Bộ slide gồm 5 slide Presenton dựng + 1 slide bảng chi tiết 9 dòng do code ghép.
-Không còn câu bịa kiểu "Phòng Kinh doanh và Kỹ thuật thiếu số liệu".
+Đường đi cuối cùng: `build_slides_markdown` dựng sẵn TỪNG SLIDE (một chuỗi
+markdown = một slide) rồi gửi qua `slides_markdown`; Presenton bỏ bước tự lập
+dàn ý, chỉ chọn layout và render. Không còn slide bảng do code ghép thêm ở cuối
+- thứ trước đây lạc hẳn phong cách với phần Presenton dựng.
+
+Đã xem tận mắt bản PDF render ra: slide chỉ tiêu, bảng chi tiết cắt trang
+(1/2, 2/2) và slide ghi chú đều đúng và đủ dòng.
 
 ### Workflow 3 (soạn báo cáo) — hết ba lỗi chữ, chạy 3/3 lần sạch
 
@@ -53,6 +58,20 @@ curl -s localhost:5002/api/v1/ppt/presentation/all >/dev/null && echo "sống"
 
 Container `tpv-btl-presenton`, cổng **5002** (dự án khác đã chiếm 5001 — và
 container của họ đang crash-loop vì key Gemini hỏng; đừng dùng nhờ).
+
+### Image có MỘT bản vá
+
+`slides_markdown` - thứ cho phép mình soạn nội dung còn Presenton chỉ render -
+chết ở image gốc (27/05/2026):
+
+```
+LLM API error: PresentationLayoutModel.to_string()
+got an unexpected keyword argument 'with_schema'
+```
+
+Lỗi của chính image, không phải của cách gọi. `docker/presenton/Dockerfile` vá
+đúng một file; khi nâng image gốc thì **thử bỏ dòng COPY trước** - upstream sửa
+rồi mà vẫn đè bản cũ lên là tự tạo ra lỗi khó tìm.
 
 ### Ba thiết lập không được đổi nếu chưa hiểu lý do
 
