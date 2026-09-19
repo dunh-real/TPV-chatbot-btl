@@ -256,7 +256,8 @@ Trả về JSON:
   "so_sanh_thang": <tháng để so sánh nếu người dùng nêu, ngược lại null>,
   "so_sanh_nam": <năm của kỳ so sánh; nêu "cùng kỳ năm ngoái" thì là năm trước,
                   không nêu năm thì null>,
-  "noi_dung": ["quan_so" và/hoặc "trang_bi" - những nội dung người dùng yêu cầu]}}
+  "noi_dung": ["quan_so" và/hoặc "trang_bi" - những nội dung người dùng yêu cầu],
+  "nhom_theo": <"chuc_vu" | "chung_loai" | null - chiều gộp bảng chi tiết>}}
 
 Quy tắc:
 - Chỉ trích thứ người dùng thực sự nói - trong yêu cầu hiện tại HOẶC trong lịch sử
@@ -265,6 +266,9 @@ Quy tắc:
   thì lấy kỳ và phạm vi đơn vị từ lịch sử.
 - Giá trị nêu trong yêu cầu hiện tại luôn thắng giá trị cũ trong lịch sử.
 - Không nêu nội dung cụ thể thì trả về cả hai: ["quan_so", "trang_bi"].
+- "nhom_theo" chỉ nhận đúng ba giá trị: "chuc_vu" khi người dùng muốn chia quân số
+  theo chức vụ, "chung_loai" khi muốn cộng trang bị theo chủng loại, null trong
+  mọi trường hợp còn lại. Mặc định (null) là chia theo đơn vị.
 - "so với cùng kỳ năm ngoái" nghĩa là so_sanh_thang = tháng báo cáo và
   so_sanh_nam = năm báo cáo trừ 1. Nêu tháng so sánh mà không nêu năm thì
   so_sanh_nam để null.

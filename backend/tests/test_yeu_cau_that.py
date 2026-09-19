@@ -276,3 +276,62 @@ async def _so_dong_dang_le_co(params: dict) -> dict[str, int]:
             if ket_qua.breakdown:
                 mong_doi[cot[mang]] = len(ket_qua.breakdown)
     return mong_doi
+
+
+# --------------------------------------------------------------------------- #
+# Chiều gộp: từ câu tiếng Việt tới nhãn cột trong file
+#
+# Đây là biến thể truy vấn duy nhất model được chọn, nên nó cũng là chỗ mới để
+# sai: gộp nhầm chiều thì mọi con số vẫn đúng, chỉ có câu hỏi là khác.
+# --------------------------------------------------------------------------- #
+CORPUS_NHOM: list[tuple[str, str | None]] = [
+    ("Báo cáo tổng hợp quân số theo chức vụ tháng 8/2026", "chuc_vu"),
+    ("Thống kê quân số theo từng chức vụ", "chuc_vu"),
+    ("Tổng hợp trang thiết bị theo chủng loại tháng 8/2026", "chung_loai"),
+    ("báo cáo trang bị theo loại trang bị", "chung_loai"),
+    # Không nêu chiều nào thì phải là None - gộp theo đơn vị như cũ.
+    ("Báo cáo tổng hợp tháng 8/2026", None),
+    ("Báo cáo quân số Phòng Kế toán tháng 8/2026", None),
+]
+
+
+@pytest.mark.live
+@_pytest_asyncio_module_loop
+@pytest.mark.parametrize("cau, nhom", CORPUS_NHOM, ids=[c for c, _ in CORPUS_NHOM])
+async def test_trich_chieu_gop_that(cau, nhom, dong_ket_noi_khi_xong):
+    from app.agents.nodes.report import extract_params_node
+    from app.core.context import Principal, use_principal
+
+    with use_principal(Principal(tenant_id=64)):
+        ket_qua = await extract_params_node({"request": cau, "history": [], "inputs": {}})
+
+    assert ket_qua["params"]["nhom_theo"] == nhom
+
+
+@pytest.mark.live
+@_pytest_asyncio_module_loop
+async def test_bao_cao_gop_theo_chuc_vu_dung_nhan_va_dung_tong(dong_ket_noi_khi_xong):
+    """Gộp là chia lại các dòng, không phải lọc: tổng cột phải bằng chỉ tiêu tổng.
+
+    Kiểm trên FILE chứ không trên dict: nhãn cột sai thì chỉ nhìn file mới thấy -
+    bảng in "Đơn vị" trên một cột đang chứa tên chức vụ.
+    """
+    from docx import Document
+
+    from app.agents.graph import run_aggregate_workflow
+    from app.core.context import Principal, use_principal
+
+    with use_principal(Principal(tenant_id=64)):
+        ket_qua = await run_aggregate_workflow(
+            "Báo cáo tổng hợp quân số theo chức vụ tháng 8/2026", inputs={})
+
+    assert not ket_qua["error"], ket_qua["error"]
+    assert ket_qua["params"]["nhom_theo"] == "chuc_vu"
+    assert any("chức vụ" in gia_dinh for gia_dinh in ket_qua["assumptions"])
+
+    bang = [t for t in Document(ket_qua["output_path"]).tables
+            if t.rows[0].cells[0].text.strip() == "Chức vụ"]
+    assert bang, "không có bảng nào gộp theo chức vụ trong file"
+
+    tong_cot = sum(int(r.cells[1].text) for r in bang[0].rows[1:] if r.cells[1].text.isdigit())
+    assert tong_cot == ket_qua["data"]["personnel"]["metrics"]["total_personnel"]["value"]

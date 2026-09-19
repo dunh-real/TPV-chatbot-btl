@@ -54,7 +54,12 @@ logger = logging.getLogger(__name__)
 METRIC_LABELS = {
     "total_personnel": "Tổng quân số", "new_hires": "Tuyển mới", "resignations": "Nghỉ việc",
     "total_equipment": "Tổng trang bị", "good": "Tình trạng tốt",
-    "needs_attention": "Cần xử lý", "equipment_types": "Số chủng loại",
+    "needs_attention": "Cần xử lý",
+    # "Số loại trang bị" = số TÊN trang bị khác nhau (33 trên dữ liệu thật), khác
+    # hẳn "chủng loại" của ERP (`Asm_AssetCategories`, 8 nhóm). Nhãn cũ là "Số
+    # chủng loại" nên báo cáo gộp theo chủng loại in ra "Số chủng loại: 33" ngay
+    # phía trên một cái bảng chủng loại có 8 dòng.
+    "equipment_types": "Số loại trang bị",
 }
 
 
@@ -83,6 +88,38 @@ async def next_so_ky_hieu(session, nam: int, ky_hieu: str) -> str:
 
 def _ngay_tieng_viet(value: date) -> str:
     return f"ngày {value.day:02d} tháng {value.month} năm {value.year}"
+
+
+# Cột mặc định cho số liệu cũ không khai `breakdown_columns` (báo cáo đọc từ tài
+# liệu, dữ liệu đã lưu từ phiên trước).
+_COT_MAC_DINH = {
+    "personnel": [{"key": "ten_don_vi", "label": "Đơn vị"},
+                  {"key": "quan_so", "label": "Quân số"},
+                  {"key": "quan_so_ky_truoc", "label": "Kỳ trước"},
+                  {"key": "tuyen_moi", "label": "Tuyển mới"},
+                  {"key": "nghi_viec", "label": "Nghỉ việc"}],
+    "equipment": [{"key": "ten_don_vi", "label": "Đơn vị"},
+                  {"key": "ten_trang_bi", "label": "Trang bị"},
+                  {"key": "so_luong", "label": "Số lượng"},
+                  {"key": "tinh_trang", "label": "Tình trạng"}],
+}
+
+
+def bang_chi_tiet(source: dict[str, Any], mac_dinh: str) -> RenderedTable | None:
+    """Bảng chi tiết dựng theo đúng cột mà TOOL khai, không viết cứng ở đây.
+
+    Chiều gộp đổi thì nhãn cột đổi theo. Viết cứng danh sách cột ở nơi dựng bảng
+    thì thêm một chiều gộp là phải nhớ sửa cả báo cáo lẫn slide, và quên một chỗ
+    là bảng in nhãn "Đơn vị" trên cột đang chứa tên chức vụ.
+    """
+    rows = source.get("breakdown") or []
+    if not rows:
+        return None
+    columns = source.get("breakdown_columns") or _COT_MAC_DINH[mac_dinh]
+    return RenderedTable(
+        columns=[c["label"] for c in columns],
+        rows=[[str(row.get(c["key"], "")) for c in columns] for row in rows],
+    )
 
 
 # Số La Mã cho đầu mục văn bản hành chính.
@@ -168,6 +205,26 @@ NOI_DUNG_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 
+# Chiều gộp cũng khoanh bằng từ khoá trước, y như `noi_dung`: câu "quân số theo
+# chức vụ" nói rõ ràng tới mức không cần hỏi model, và model thì lúc trả lúc
+# không. Chỉ đè khi câu chữ nêu ĐÚNG MỘT chiều.
+NHOM_THEO_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "chuc_vu": ("theo chức vụ", "theo từng chức vụ", "theo chức danh", "theo vị trí"),
+    "chung_loai": ("theo chủng loại", "theo từng chủng loại", "theo loại trang bị",
+                   "theo nhóm trang bị", "theo danh mục"),
+}
+
+
+def dimension_from_request(request: str, llm_choice: Any) -> str | None:
+    """Chiều gộp mà câu chữ thật sự yêu cầu; không rõ thì trả None (theo đơn vị)."""
+    lower = (request or "").lower()
+    nhac_toi = [key for key, words in NHOM_THEO_KEYWORDS.items()
+                if any(word in lower for word in words)]
+    if len(nhac_toi) == 1:
+        return nhac_toi[0]
+    return llm_choice if llm_choice in NHOM_THEO_KEYWORDS else None
+
+
 def scope_from_request(request: str, llm_choice: list[str]) -> list[str]:
     """Mảng nội dung mà yêu cầu thật sự hỏi tới."""
     lower = (request or "").lower()
@@ -221,9 +278,17 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
     ky = f"{nam:04d}-{thang:02d}"
     compare_to = _compare_period(ky, nam, params, assumptions)
 
+    nhom_theo = dimension_from_request(state.get("request", ""), params.get("nhom_theo"))
+    if nhom_theo:
+        # Nói ra chiều gộp: cùng một con số tổng, chia theo chức vụ hay theo đơn
+        # vị ra hai bảng khác hẳn nhau, và người đọc cần biết mình đang xem cái nào.
+        assumptions.append(
+            f"Bảng chi tiết gộp theo {'chức vụ' if nhom_theo == 'chuc_vu' else 'chủng loại'}")
+
     return {
         "params": {"ky": ky, "thang": thang, "nam": nam, "compare_to": compare_to,
-                   "ma_don_vi": requested, "noi_dung": noi_dung},
+                   "ma_don_vi": requested, "noi_dung": noi_dung,
+                   "nhom_theo": nhom_theo},
         "assumptions": assumptions,
     }
 
@@ -321,17 +386,23 @@ async def _gather_from_database(state, params, scope, data) -> dict[str, Any]:
                                      ma_don_vi=scope)
             data["reporting"] = status
 
+            # Hai chiều gộp có tên khác nhau nên không cần hỏi "của mảng nào":
+            # "chuc_vu" chỉ quân số hiểu, "chung_loai" chỉ trang bị hiểu.
+            nhom_theo = params.get("nhom_theo")
+
             if "quan_so" in params["noi_dung"]:
-                result = await call_tool(session, "get_personnel_statistics",
-                                         ky=params["ky"], ma_don_vi=scope,
-                                         compare_to=params["compare_to"])
+                result = await call_tool(
+                    session, "get_personnel_statistics",
+                    ky=params["ky"], ma_don_vi=scope, compare_to=params["compare_to"],
+                    group_by="chuc_vu" if nhom_theo == "chuc_vu" else "phong_ban")
                 data["personnel"] = result.as_dict()
                 data["personnel_consistent"] = result.is_consistent
 
             if "trang_bi" in params["noi_dung"]:
-                result = await call_tool(session, "get_equipment_statistics",
-                                         ky=params["ky"], ma_don_vi=scope,
-                                         compare_to=params["compare_to"])
+                result = await call_tool(
+                    session, "get_equipment_statistics",
+                    ky=params["ky"], ma_don_vi=scope, compare_to=params["compare_to"],
+                    group_by="chung_loai" if nhom_theo == "chung_loai" else "phong_ban")
                 data["equipment"] = result.as_dict()
         except ToolError as exc:
             return {"error": f"Tham số truy vấn không hợp lệ: {exc}"}
@@ -355,11 +426,22 @@ async def reconcile_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"reconciliation": [], "has_discrepancy": False}
 
     reporting = data.get("reporting", {})
-    personnel = {row["ma_don_vi"]: row for row in data.get("personnel", {}).get("breakdown", [])}
+
+    # Đối chiếu là phép so THEO ĐƠN VỊ: số trong báo cáo của đơn vị X với số kiểm
+    # kê của đơn vị X. Bảng đã gộp theo chức vụ hay chủng loại thì không còn dòng
+    # nào quy về được một đơn vị - bỏ qua phần đó thay vì so bừa.
+    def _theo_don_vi(key: str) -> list[dict[str, Any]]:
+        source = data.get(key) or {}
+        if source.get("dimension", "phong_ban") != "phong_ban":
+            return []
+        return source.get("breakdown", [])
+
+    personnel = {row["ma_don_vi"]: row for row in _theo_don_vi("personnel")}
 
     equipment_totals: dict[str, int] = {}
-    for row in data.get("equipment", {}).get("breakdown", []):
-        equipment_totals[row["ma_don_vi"]] = equipment_totals.get(row["ma_don_vi"], 0) + row["so_luong"]
+    for row in _theo_don_vi("equipment"):
+        ma = row["ma_don_vi"]
+        equipment_totals[ma] = equipment_totals.get(ma, 0) + row["so_luong"]
 
     results: list[dict[str, Any]] = []
     for item in reporting.get("reported", []):
@@ -557,15 +639,10 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
             "mới/nghỉ việc. Dùng đúng các giá trị delta, delta_pct, share_pct đã cho.",
             payload, params,
         )
-        table = RenderedTable(
-            columns=["Đơn vị", "Quân số", "Kỳ trước", "Tuyển mới", "Nghỉ việc"],
-            rows=[[r["ten_don_vi"], str(r["quan_so"]), str(r["quan_so_ky_truoc"]),
-                   str(r["tuyen_moi"]), str(r["nghi_viec"])]
-                  for r in personnel["breakdown"]],
-        )
+        table = bang_chi_tiet(personnel, "personnel")
         sections.append({
             "id": "quan_so", "title": title, "paragraphs": [facts, *written],
-            "table": {"columns": table.columns, "rows": table.rows},
+            "table": {"columns": table.columns, "rows": table.rows} if table else None,
             "image": charts.get("personnel"),
             "image_caption": f"Biểu đồ: Quân số {period_label} so với kỳ trước",
             # `llm_written` là bản sạch đi vào file; `_cited` giữ marker cho UI.
@@ -590,11 +667,7 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
         # từng đơn vị. Mục quân số có bảng, mục trang bị thì trước đây để cứng
         # `"table": None` - báo cáo ghi "tổng 194 trang bị" mà không một dòng nào
         # nói 194 đó nằm ở đâu.
-        table = RenderedTable(
-            columns=["Đơn vị", "Trang bị", "Số lượng", "Tình trạng"],
-            rows=[[r["ten_don_vi"], r["ten_trang_bi"], str(r["so_luong"]), r["tinh_trang"]]
-                  for r in equipment["breakdown"]],
-        ) if equipment.get("breakdown") else None
+        table = bang_chi_tiet(equipment, "equipment")
 
         sections.append({
             "id": "trang_bi", "title": title, "paragraphs": [facts, *written],

@@ -113,3 +113,25 @@ class EmployeeProfile(ErpBase):
     creation_time: Mapped[datetime] = mapped_column("CreationTime", DateTime)
     is_deleted: Mapped[bool] = mapped_column("IsDeleted", Boolean)
     deletion_time: Mapped[datetime | None] = mapped_column("DeletionTime", DateTime)
+
+
+class WorkPosition(ErpBase):
+    """`Dms_WorkPosition` - chức vụ, chiều gộp thứ hai của chỉ tiêu quân số.
+
+    Không có `DisplayName` như `Dms_WorkDepartment`; tên hiển thị nằm ở `Name`.
+    """
+
+    __tablename__ = "Dms_WorkPosition"
+
+    id: Mapped[int] = mapped_column("Id", Integer, primary_key=True)
+    tenant_id: Mapped[int | None] = mapped_column("TenantId", Integer)
+    code: Mapped[str | None] = mapped_column("Code", Unicode(95))
+    name: Mapped[str] = mapped_column("Name", Unicode(512))
+    is_active: Mapped[bool] = mapped_column("IsActive", Boolean)
+    creation_time: Mapped[datetime] = mapped_column("CreationTime", DateTime)
+    is_deleted: Mapped[bool] = mapped_column("IsDeleted", Boolean)
+    deletion_time: Mapped[datetime | None] = mapped_column("DeletionTime", DateTime)
+
+    @property
+    def ma_chuc_vu(self) -> str:
+        return self.code or str(self.id)

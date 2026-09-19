@@ -643,3 +643,99 @@ def test_quan_so_viet_kieu_nao_cung_doc_duoc():
 
 def test_khong_co_so_that_thi_bo_qua_chu_khong_doan():
     assert "quan_so" not in extract_figures("Báo cáo quân số tháng 8/2026")
+
+
+# --------------------------------------------------------------------------- #
+# Chiều gộp: danh sách đóng, code dựng SQL, model chỉ chọn khoá
+# --------------------------------------------------------------------------- #
+async def test_gop_quan_so_theo_chuc_vu(session):
+    ket_qua = (await call_tool(session, "get_personnel_statistics",
+                               ky="2026-08", group_by="chuc_vu")).as_dict()
+
+    assert ket_qua["dimension"] == "chuc_vu"
+    assert [c["label"] for c in ket_qua["breakdown_columns"]][0] == "Chức vụ"
+
+    theo_ten = {r["ten_nhom"]: r for r in ket_qua["breakdown"]}
+    # Tháng 8: Trưởng phòng 2 người; Nhân viên còn 2 (một người nghỉ 15/8);
+    # một hồ sơ chưa gán chức vụ, vào làm 10/8.
+    assert theo_ten["Trưởng phòng"]["quan_so"] == 2
+    assert theo_ten["Nhân viên"]["quan_so"] == 2
+    assert theo_ten["(chưa gán chức vụ)"]["quan_so"] == 1
+    assert theo_ten["(chưa gán chức vụ)"]["tuyen_moi"] == 1
+
+
+async def test_doi_chieu_gop_khong_doi_chi_tieu_tong(session):
+    """Phép kiểm rẻ nhất cho chiều gộp: cùng một tập dòng thì tổng phải bằng nhau.
+
+    Gộp là chia lại các dòng, không phải lọc. Lệch tổng nghĩa là cột gộp đang
+    làm rơi mất bản ghi - đúng cái bẫy `IN (...)` không khớp `NULL`.
+    """
+    theo_don_vi = await call_tool(session, "get_personnel_statistics", ky="2026-08")
+    theo_chuc_vu = await call_tool(session, "get_personnel_statistics", ky="2026-08",
+                                   group_by="chuc_vu")
+
+    assert theo_don_vi.as_dict()["metrics"] == theo_chuc_vu.as_dict()["metrics"]
+    assert (sum(r["quan_so"] for r in theo_chuc_vu.as_dict()["breakdown"])
+            == theo_don_vi.as_dict()["metrics"]["total_personnel"]["value"])
+
+
+async def test_gop_trang_bi_theo_chung_loai(session):
+    ket_qua = (await call_tool(session, "get_equipment_statistics",
+                               ky="2026-08", group_by="chung_loai")).as_dict()
+
+    assert ket_qua["dimension"] == "chung_loai"
+    assert [c["label"] for c in ket_qua["breakdown_columns"]] == [
+        "Chủng loại", "Số lượng", "Số đầu mục"]
+
+    theo_ten = {r["ten_nhom"]: r for r in ket_qua["breakdown"]}
+    # Tháng 8: máy in 8 + máy chủ 6 = 14 thiết bị; xe công vụ 2 là phương tiện.
+    assert theo_ten["Thiết bị"] == {"ma_nhom": "Thiết bị", "ten_nhom": "Thiết bị",
+                                    "so_luong": 14, "so_dau_muc": 2}
+    assert theo_ten["Phương tiện"]["so_luong"] == 2
+    assert (sum(r["so_luong"] for r in ket_qua["breakdown"])
+            == ket_qua["metrics"]["total_equipment"]["value"])
+
+
+async def test_gop_theo_chieu_la_bi_chan(session):
+    """Model đề xuất một chiều không có thật thì chặn, không im lặng chạy mặc định."""
+    with pytest.raises(ToolError, match="Chỉ dùng được"):
+        await call_tool(session, "get_personnel_statistics", ky="2026-08",
+                        group_by="gioi_tinh")
+    # Chiều của tool này không dùng được cho tool kia.
+    with pytest.raises(ToolError, match="Chỉ dùng được"):
+        await call_tool(session, "get_personnel_statistics", ky="2026-08",
+                        group_by="chung_loai")
+
+
+async def test_loc_theo_don_vi_van_giu_khi_gop_theo_chuc_vu(session):
+    """"Quân số Đơn vị 1 theo chức vụ" là lọc một đằng, gộp một nẻo."""
+    ket_qua = (await call_tool(session, "get_personnel_statistics", ky="2026-08",
+                               ma_don_vi="00001", group_by="chuc_vu")).as_dict()
+
+    # Đơn vị 1 tháng 8 còn 2 người: một trưởng phòng, một nhân viên.
+    assert ket_qua["metrics"]["total_personnel"]["value"] == 2
+    assert {r["ten_nhom"] for r in ket_qua["breakdown"]} == {"Trưởng phòng", "Nhân viên"}
+
+
+async def test_gop_chieu_khac_thi_bo_han_chi_tieu_theo_don_vi(session):
+    """Số đã gộp theo chức vụ thì không còn biết đơn vị nào thiếu dữ liệu.
+
+    Để nguyên `units_missing` tính từ khoá sai thì báo cáo in ra "cả 9 đơn vị
+    chưa cung cấp dữ liệu" - sai, và nghe rất giống thật.
+    """
+    scope = (await call_tool(session, "get_personnel_statistics", ky="2026-08",
+                             group_by="chuc_vu")).as_dict()["scope"]
+
+    assert "units_missing" not in scope and "units_with_data" not in scope
+    assert scope["nhom_theo"] == "Chức vụ"
+
+
+def test_cau_chu_quyet_dinh_chieu_gop():
+    """Câu đã nói rõ thì không hỏi model - cùng lối với `scope_from_request`."""
+    assert rp.dimension_from_request("báo cáo quân số theo chức vụ", None) == "chuc_vu"
+    assert rp.dimension_from_request("tổng hợp trang bị theo chủng loại", None) == "chung_loai"
+    # Không nêu chiều nào thì giữ phán đoán của model, kể cả khi model im lặng.
+    assert rp.dimension_from_request("báo cáo tháng 8", None) is None
+    assert rp.dimension_from_request("báo cáo tháng 8", "chuc_vu") == "chuc_vu"
+    # Model trả về giá trị lạ thì bỏ, không để nó đi tiếp xuống tầng truy vấn.
+    assert rp.dimension_from_request("báo cáo tháng 8", "gioi_tinh") is None

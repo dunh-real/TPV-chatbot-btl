@@ -22,7 +22,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.context import current_tenant_id
-from app.db.erp_models import Asset, AssetCategory, EmployeeProfile, WorkDepartment
+from app.db.erp_models import (
+    Asset,
+    AssetCategory,
+    EmployeeProfile,
+    WorkDepartment,
+    WorkPosition,
+)
 from app.db.repository import TaiNguyenDonVi
 
 logger = logging.getLogger(__name__)
@@ -145,6 +151,38 @@ class ErpDonViRepository:
         ]
 
 
+class ErpChucVuRepository:
+    """`Dms_WorkPosition` - danh mục chức vụ, chiều gộp thứ hai của quân số.
+
+    Cùng lối cache như danh mục phòng ban: một phiên hỏi lại nhiều lần cho cùng
+    một câu hỏi, và cache phải khoá theo thuê bao.
+    """
+
+    _CACHE_KEY = "erp_chuc_vu_hien_tai"
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def list_all(self) -> list[WorkPosition]:
+        cache = self.session.info.setdefault(self._CACHE_KEY, {})
+        tenant_id = current_tenant_id()
+        if tenant_id in cache:
+            return cache[tenant_id]
+
+        stmt = select(WorkPosition).where(_alive_at(WorkPosition, datetime.now()))
+        stmt = _tenant_scoped(stmt, WorkPosition).order_by(WorkPosition.name)
+        rows = list((await self.session.execute(stmt)).scalars())
+        cache[tenant_id] = rows
+        return rows
+
+    async def name_by_id(self) -> dict[int, str]:
+        """Khoá chính -> tên hiển thị, để đặt nhãn cho từng dòng đã gộp."""
+        return {cv.id: cv.name for cv in await self.list_all()}
+
+    async def code_by_id(self) -> dict[int, str]:
+        return {cv.id: cv.ma_chuc_vu for cv in await self.list_all()}
+
+
 class ErpTrangBiRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -201,11 +239,22 @@ class ErpNhanSuRepository:
         dept_ids: list[int] | None = None,
         *,
         gom_chua_gan: bool = False,
+        cot_nhom: Any | None = None,
     ) -> dict[int | None, int]:
+        """Đếm quân số tại `moment`, gộp theo `cot_nhom` (mặc định: phòng ban).
+
+        Cột gộp là tham số chứ không phải chuỗi ghép vào SQL: nơi gọi chỉ chọn
+        được trong danh sách đã khai ở `app.tools.data`, nên không có đường nào
+        để một chiều gộp lạ đi tới đây.
+
+        Phạm vi lọc VẪN theo phòng ban kể cả khi gộp theo chức vụ - "quân số
+        Phòng Kế toán theo chức vụ" là lọc một đằng, gộp một nẻo.
+        """
+        nhom = EmployeeProfile.work_department_id if cot_nhom is None else cot_nhom
         stmt = (
-            select(EmployeeProfile.work_department_id, func.count())
+            select(nhom, func.count())
             .where(self._in_service_at(moment))
-            .group_by(EmployeeProfile.work_department_id)
+            .group_by(nhom)
         )
         if dept_ids is not None:
             stmt = stmt.where(
@@ -220,14 +269,16 @@ class ErpNhanSuRepository:
         dept_ids: list[int] | None = None,
         *,
         gom_chua_gan: bool = False,
+        cot_nhom: Any | None = None,
     ) -> dict[str, dict[int | None, int]]:
-        """Tuyển mới / nghỉ việc trong khoảng [start, end)."""
+        """Tuyển mới / nghỉ việc trong khoảng [start, end), gộp theo `cot_nhom`."""
+        nhom = EmployeeProfile.work_department_id if cot_nhom is None else cot_nhom
 
         async def count_by_dept(column) -> dict[int | None, int]:
             stmt = (
-                select(EmployeeProfile.work_department_id, func.count())
+                select(nhom, func.count())
                 .where(column >= start, column < end)
-                .group_by(EmployeeProfile.work_department_id)
+                .group_by(nhom)
             )
             if dept_ids is not None:
                 stmt = stmt.where(

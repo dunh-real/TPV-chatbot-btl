@@ -117,6 +117,17 @@ def _bang(tieu_de: str, cot: list[str], dong: list[list[str]]) -> list[str]:
     return lines
 
 
+def _bang_tu_tool(source: dict[str, Any], mac_dinh: str) -> list[str]:
+    """Danh sách số liệu theo đúng cột tool khai, kèm nhãn chiều gộp."""
+    from app.agents.nodes.report import bang_chi_tiet
+
+    table = bang_chi_tiet(source, mac_dinh)
+    if table is None:
+        return []
+    nhan = (source.get("scope") or {}).get("nhom_theo") or "đơn vị"
+    return _bang(f"Chi tiết theo {str(nhan).lower()}", table.columns, table.rows)
+
+
 # --------------------------------------------------------------------------- #
 # 1. Bản tóm tắt số liệu - do CODE dựng
 # --------------------------------------------------------------------------- #
@@ -158,12 +169,7 @@ def build_brief(data: dict[str, Any], params: dict[str, Any],
         muc += 1
         lines += [f"{muc}. QUÂN SỐ (nguồn: {personnel['scope'].get('nguon', 'CSDL nhân sự')})"]
         lines += [_dong_chi_tieu(k, m) for k, m in personnel["metrics"].items()]
-        lines += _bang(
-            "Chi tiết theo đơn vị",
-            ["Đơn vị", "Quân số", "Kỳ trước", "Tuyển mới", "Nghỉ việc"],
-            [[r["ten_don_vi"], _so(r["quan_so"]), _so(r["quan_so_ky_truoc"]),
-              _so(r["tuyen_moi"]), _so(r["nghi_viec"])] for r in personnel["breakdown"]],
-        )
+        lines += _bang_tu_tool(personnel, "personnel")
         if (thieu := personnel["scope"].get("khong_co_chi_tieu")):
             lines.append("Không có số liệu về: " + ", ".join(thieu) + ".")
         lines.append("")
@@ -172,12 +178,7 @@ def build_brief(data: dict[str, Any], params: dict[str, Any],
         muc += 1
         lines += [f"{muc}. TRANG THIẾT BỊ (nguồn: {equipment['scope'].get('nguon', 'CSDL tài sản')})"]
         lines += [_dong_chi_tieu(k, m) for k, m in equipment["metrics"].items()]
-        lines += _bang(
-            "Chi tiết theo đơn vị",
-            ["Đơn vị", "Trang bị", "Số lượng", "Tình trạng"],
-            [[r["ten_don_vi"], r["ten_trang_bi"], _so(r["so_luong"]), r["tinh_trang"]]
-             for r in equipment["breakdown"]],
-        )
+        lines += _bang_tu_tool(equipment, "equipment")
         if (thieu := equipment["scope"].get("khong_co_chi_tieu")):
             lines.append("Không có số liệu về: " + ", ".join(thieu) + ".")
         lines.append("")
@@ -321,20 +322,16 @@ def _metric_box(key: str, metric: dict[str, Any]) -> MetricBox:
 
 
 def _slide_table(data_key: str, data: dict[str, Any]) -> SlideTable | None:
-    if data_key == "personnel_breakdown" and data.get("personnel", {}).get("breakdown"):
-        return SlideTable(
-            columns=["Đơn vị", "Quân số", "Kỳ trước", "Tuyển mới", "Nghỉ việc"],
-            rows=[[r["ten_don_vi"], _so(r["quan_so"]), _so(r["quan_so_ky_truoc"]),
-                   _so(r["tuyen_moi"]), _so(r["nghi_viec"])]
-                  for r in data["personnel"]["breakdown"]],
-        )
-    if data_key == "equipment_breakdown" and data.get("equipment", {}).get("breakdown"):
-        return SlideTable(
-            columns=["Đơn vị", "Trang bị", "Số lượng", "Tình trạng"],
-            rows=[[r["ten_don_vi"], r["ten_trang_bi"], _so(r["so_luong"]), r["tinh_trang"]]
-                  for r in data["equipment"]["breakdown"]],
-        )
-    return None
+    """Bảng chi tiết dựng theo đúng cột mà tool số liệu khai - xem
+    `report.bang_chi_tiet`. Chiều gộp đổi thì nhãn cột đổi theo, không phải sửa
+    ở đây."""
+    from app.agents.nodes.report import bang_chi_tiet
+
+    key = data_key.removesuffix("_breakdown")
+    if key not in ("personnel", "equipment") or not data.get(key):
+        return None
+    table = bang_chi_tiet(data[key], key)
+    return SlideTable(columns=table.columns, rows=table.rows) if table else None
 
 
 async def render_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -393,8 +390,9 @@ def _bang_chi_tiet(data: dict[str, Any], params: dict[str, Any]) -> list[SlideSp
     specs: list[SlideSpec] = []
     for key, ten in (("personnel", "quân số"), ("equipment", "trang thiết bị")):
         if (table := _slide_table(f"{key}_breakdown", data)):
+            nhan = (data[key].get("scope") or {}).get("nhom_theo") or "đơn vị"
             specs.append(SlideSpec(
-                kind="table", title=f"Chi tiết {ten} theo đơn vị - {period}",
+                kind="table", title=f"Chi tiết {ten} theo {str(nhan).lower()} - {period}",
                 table=table, caption=f"Nguồn: {(data[key].get('scope') or {}).get('nguon', 'CSDL nghiệp vụ')}"))
     return specs
 

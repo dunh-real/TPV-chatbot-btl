@@ -2,11 +2,11 @@
 
 Ghi cho người tiếp tục sửa backend (Tiến Anh và đội dev khi nối giao diện).
 
-Trạng thái cuối phiên: **432 test mặc định + 24 test `live` đều xanh**, tầng
+Trạng thái cuối phiên: **439 test mặc định + 31 test `live` đều xanh**, tầng
 `live` chạy trên ERP, vLLM và Presenton thật.
 
-Phiên này làm ba việc: đổi phần tạo slide sang Presenton, tinh chỉnh workflow 3,
-và sửa mấy chỗ truy xuất CSDL cho đúng.
+Phiên này làm bốn việc: đổi phần tạo slide sang Presenton, tinh chỉnh workflow 3,
+sửa mấy chỗ truy xuất CSDL cho đúng, và mở biến thể truy vấn bằng `group_by`.
 
 ---
 
@@ -124,6 +124,40 @@ thật sự xảy ra — đừng rút gọn lại cho ngắn.
 
 ---
 
+## 3b. Biến thể truy vấn: `group_by`
+
+Model vẫn không sinh SQL. Nó chọn một khoá trong danh sách đóng, code dựng SQL:
+
+| Tool | `group_by` |
+|---|---|
+| `get_personnel_statistics` | `phong_ban` (mặc định) / `chuc_vu` |
+| `get_equipment_statistics` | `phong_ban` (mặc định) / `chung_loai` |
+
+Đường từ câu tiếng Việt xuống: `dimension_from_request` khoanh bằng từ khoá
+trước ("theo chức vụ", "theo chủng loại"), chỉ khi câu chữ không nói rõ mới lấy
+phán đoán của model - cùng lối với `scope_from_request` đã có.
+
+**Bất biến phải giữ khi thêm chiều mới:** gộp là chia lại các dòng, không phải
+lọc, nên chỉ tiêu tổng không được đổi theo chiều gộp, và tổng các dòng phải bằng
+chỉ tiêu tổng. Đã có test cho cả hai, kể cả một test `live` trên ERP thật. Gài
+lại lỗi bỏ dòng "chưa gán" thì test đỏ đúng chỗ (`4 == 5`).
+
+**Ba chỗ dễ quên khi thêm chiều thứ ba:**
+
+1. `scope["units_with_data"]/["units_missing"]` chỉ có nghĩa khi gộp theo đơn vị.
+   Để nguyên chúng lúc gộp theo chức vụ thì `current` đang khoá theo chức vụ, tra
+   bằng id phòng ban ra 0 hết, và báo cáo in "cả 9 đơn vị chưa cung cấp dữ liệu".
+2. `reconcile_node` so số theo ĐƠN VỊ. Bảng gộp chiều khác thì không dòng nào quy
+   về được một đơn vị - phải bỏ qua, không so bừa.
+3. Cột bảng lấy từ `breakdown_columns` do tool khai. Đừng viết cứng lại ở nơi
+   dựng bảng: `report.py` và `presentation.py` từng mỗi bên giữ một danh sách.
+
+**Chưa mở** (dữ liệu có sẵn, chỉ thiếu code): gộp theo đơn vị cha
+(`Dms_WorkDepartment.ParentId`), trang bị mua trong kỳ (`PurchaseDate`), chuỗi
+nhiều kỳ liên tiếp. Gộp theo tình trạng trang bị thì vẫn vướng enum ở mục 4.1.
+
+---
+
 ## 4. Ba việc CHẶN, không sửa bằng code được
 
 ### 4.1 Mã trạng thái trang bị
@@ -201,5 +235,5 @@ trích yếu bị đọc thành quân số — cả ba đều lọt qua 419 test
 Cách duy nhất đang hiệu quả: **chạy thật, đọc từng câu trong file xuất ra**, và
 mỗi lần tìm ra lỗi thì thêm ca đó vào test TRƯỚC khi sửa, kiểm rằng nó đỏ.
 
-Và đừng coi "432 test xanh" là bằng chứng phần tạo slide/báo cáo đã dùng được
+Và đừng coi "439 test xanh" là bằng chứng phần tạo slide/báo cáo đã dùng được
 cho văn bản trình ký. Văn bản vẫn cần người duyệt.
