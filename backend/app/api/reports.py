@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
 from app.agents.graph import run_aggregate_workflow, run_draft_workflow
-from app.core.config import get_settings
+from app.api.files import output_file_response
 from app.db.repository import TemplateRepository
 from app.db.session import session_scope
 from app.schemas.reports import (
@@ -64,15 +64,5 @@ async def aggregate(request: AggregateRequest) -> AggregateResponse:
 
 @router.get("/download/{filename}", summary="Tải file báo cáo đã sinh")
 async def download(filename: str) -> FileResponse:
-    cfg = get_settings()
-    # Chỉ cho lấy file trong thư mục output, chặn đường dẫn kiểu ../../etc/passwd
-    output_dir = Path(cfg.output_dir).resolve()
-    target = (output_dir / Path(filename).name).resolve()
-    if output_dir not in target.parents or not target.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy file")
-
-    return FileResponse(
-        target,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        filename=target.name,
-    )
+    # Chặn cả vượt thư mục, đọc chéo thuê bao, lẫn bản cũ trong cache trình duyệt.
+    return output_file_response(filename)

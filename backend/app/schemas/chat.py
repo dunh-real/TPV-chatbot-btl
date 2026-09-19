@@ -16,6 +16,10 @@ class CitationModel(BaseModel):
     page: int | None = None
     snippet: str = ""
     score: float = Field(0.0, description="Điểm reranker trong [0,1]")
+    matched_by: str = Field(
+        default="rerank",
+        description="keyword = chunk khớp nguyên văn từ khoá, điểm reranker dưới ngưỡng",
+    )
 
 
 class RetrievalFilters(BaseModel):
@@ -63,6 +67,10 @@ class SearchHit(BaseModel):
     page: int | None = None
     rrf_score: float
     rerank_score: float
+    matched_by: str = Field(
+        default="rerank",
+        description="rerank = qua ngưỡng reranker; keyword = được van cứu từ khoá giữ lại",
+    )
     branch_ranks: dict[str, int] = Field(
         default_factory=dict, description="Hạng của chunk trong từng nhánh: dense / lexical / bm25"
     )

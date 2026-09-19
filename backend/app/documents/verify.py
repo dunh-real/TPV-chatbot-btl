@@ -57,6 +57,12 @@ def collect_known_numbers(data: Any, known: set[str] | None = None) -> set[str]:
         pass
     elif isinstance(data, (int, float)):
         known.add(_normalize_number(str(data)))
+        # Số thực tròn: Python viết 75.0, người viết văn bản viết "75%".
+        # `_normalize_number` coi dấu chấm là dấu phân cách nghìn (đúng với
+        # "5.000.000"), nên 75.0 thành "750" và câu "tăng 75%" bị kết luận là số
+        # bịa - báo cáo đúng bị chặn không xuất file. Nhận cả hai dạng.
+        if isinstance(data, float) and data.is_integer():
+            known.add(_normalize_number(str(int(data))))
     elif isinstance(data, str):
         for match in NUMBER_RE.findall(data):
             known.add(_normalize_number(match))

@@ -17,7 +17,8 @@ from typing import Any, Iterable
 import anyio
 
 from app.core.config import Settings, get_settings
-from app.rag.chunking import Chunker
+from app.rag.chunking import Chunk, Chunker
+from app.rag.doc_card import CARD_SECTION, build_card
 from app.rag.converter import SUPPORTED_SUFFIXES, LoadedDocument, get_converter
 from app.rag.embedding import embed_documents
 from app.rag.vectorstore import ChunkPoint, QdrantVectorStore, get_vector_store
@@ -108,6 +109,9 @@ class IngestionPipeline:
             return IngestResult(doc_id=doc_id, doc_title=doc_title, chunk_count=0,
                                 elapsed_ms=(time.perf_counter() - started) * 1000, source=source)
 
+        if self.settings.doc_card_enabled:
+            chunks = self._with_doc_card(text, doc_title, base_metadata, chunks)
+
         # Gắn số trang bằng cách dò vị trí chunk trong văn bản gốc.
         pages = self._locate_pages(text, chunks, page_offsets or [])
 
@@ -144,6 +148,33 @@ class IngestionPipeline:
         logger.info("Đã nạp %s: %d chunk trong %.0fms", doc_title, written, elapsed)
         return IngestResult(doc_id=doc_id, doc_title=doc_title, chunk_count=written,
                             elapsed_ms=elapsed, source=source)
+
+    def _with_doc_card(
+        self, text: str, doc_title: str, base_metadata: dict[str, Any], chunks: list[Chunk]
+    ) -> list[Chunk]:
+        """Thêm chunk "thông tin thể thức" cho văn bản hành chính.
+
+        Chi tiết hay bị hỏi lẻ (ai ký, số mấy, ngày nào) nằm rải trong một văn bản
+        dài thì chunk chứa nó không *về* chúng, và cross-encoder chấm rất thấp.
+        Thẻ ngắn này thì về đúng những câu đó. Tệp không phải văn bản hành chính
+        sẽ không có thẻ - `build_card` tự trả None.
+        """
+        card = build_card(text, doc_title)
+        if card is None:
+            return chunks
+
+        logger.debug("Thẻ thông tin văn bản %s: %s", doc_title, ", ".join(card.found))
+        return [
+            *chunks,
+            Chunk(
+                text=card.text,
+                index=len(chunks),
+                section=CARD_SECTION,
+                token_count=self.chunker.count_tokens(card.text),
+                metadata={**base_metadata, "chunk_type": "the_thuc",
+                          "components": card.found},
+            ),
+        ]
 
     def _locate_pages(self, text: str, chunks, page_offsets: list[int]) -> list[int | None]:
         if not page_offsets:

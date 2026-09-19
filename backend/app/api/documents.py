@@ -12,13 +12,15 @@ from app.core.config import get_settings
 from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline
 from app.rag.vectorstore import get_vector_store
 from app.agents.graph import run_document_workflow
-from app.db.repository import PhongBanRepository
-from app.db.session import session_scope
+from app.db.erp_repository import ErpDonViRepository
+from app.db.erp_session import erp_session_scope
+from app.documents.rules import available_rule_sets
 from app.schemas.documents import (
     CollectionStats,
     IngestResponse,
     IngestTextRequest,
     ReviewResponse,
+    RuleSetInfo,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,15 +78,37 @@ async def ingest_text(request: IngestTextRequest) -> IngestResponse:
     return IngestResponse(**result.__dict__)
 
 
+@router.get("/rule-sets", response_model=list[RuleSetInfo],
+            summary="Các bộ tiêu chí thể thức có thể chọn")
+async def rule_sets() -> list[RuleSetInfo]:
+    """Mỗi file YAML trong `config/rules/` là một bộ tiêu chí.
+
+    Thêm một bộ mới = thả thêm một file vào đó, không phải sửa code cũng không
+    phải khởi động lại để giao diện thấy nó.
+    """
+    return [RuleSetInfo(**item) for item in available_rule_sets()]
+
+
 @router.post("/review", response_model=ReviewResponse, summary="Xử lý văn bản (workflow 2)")
 async def review_document(
     file: UploadFile = File(...),
     noi_gui: str = Form(default=""),
+    rule_set: str = Form(default=""),
+    force_rules: bool = Form(default=False),
 ) -> ReviewResponse:
     """Kiểm tra thể thức, soát chữ nghĩa, phân loại và phân rã nhiệm vụ.
 
     Thể thức do rule engine kiểm tra từ định dạng file; LLM chỉ soát chữ nghĩa và
     đọc nội dung - hai việc dùng hai nguồn dữ liệu khác nhau.
+
+    Loại văn bản (công văn, quyết định, báo cáo...) được dò tất định từ chính văn
+    bản và quyết định danh sách thành phần bắt buộc: công văn không có tên loại,
+    quyết định không có dòng "V/v" - đòi đủ mọi thành phần cho mọi loại thì loại
+    nào cũng bị báo sai vài chỗ. `rule_set` để trống là dùng bộ mặc định.
+
+    Tệp không mang dấu hiệu văn bản hành chính thì `rule_check.status = "skipped"`
+    kèm lý do, thay vì dội ra hàng chục lỗi vô nghĩa - đặt `force_rules=true` nếu
+    vẫn muốn soát.
     """
     cfg = get_settings()
     suffix = Path(file.filename or "").suffix.lower()
@@ -106,14 +130,15 @@ async def review_document(
     # Danh mục phòng ban lấy từ CSDL - LLM chỉ được chọn trong danh sách này.
     departments: list[dict[str, str]] = []
     try:
-        async with session_scope() as session:
-            departments = await PhongBanRepository(session).catalog()
+        async with erp_session_scope() as session:
+            departments = await ErpDonViRepository(session).catalog()
     except Exception as exc:  # noqa: BLE001 - mất CSDL thì bỏ định tuyến, không chết cả API
         logger.warning("Không đọc được danh mục phòng ban: %s", exc)
 
     result = await run_document_workflow(
         file_path=str(target), file_name=target.name,
-        noi_gui=noi_gui, departments=departments,
+        noi_gui=noi_gui, departments=departments, rule_set=rule_set,
+        force_rules=force_rules,
     )
     return ReviewResponse(**result)
 

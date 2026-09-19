@@ -18,6 +18,7 @@ class Citation(TypedDict):
     page: int | None
     snippet: str
     score: float
+    matched_by: str
 
 
 class QAState(TypedDict, total=False):
@@ -57,6 +58,8 @@ class DocumentState(TypedDict, total=False):
     document_type: str
     noi_gui: str
     departments: list[dict[str, str]]     # danh mục lấy từ CSDL, không để LLM tự nghĩ
+    rule_set: str                         # tên file trong config/rules, rỗng = mặc định
+    force_rules: bool                     # soát cả khi tệp không giống văn bản hành chính
 
     # --- trung gian ---
     structure: Any                        # app.documents.parser.DocumentStructure
@@ -129,11 +132,29 @@ class AggregateState(TypedDict, total=False):
     error: str
 
 
+class StepResult(TypedDict, total=False):
+    """Kết quả một bước của kế hoạch - đủ để dựng lại câu trả lời và truy vết."""
+
+    id: str
+    intent: str                       # nghiệp vụ đã chạy (khác `planned_intent` nếu đã lùi)
+    planned_intent: str               # nghiệp vụ kế hoạch định chạy
+    request: str                      # yêu cầu con của riêng bước này
+    answer: str
+    result: dict[str, Any]
+    citations: list[Citation]
+    refs: list[dict[str, Any]]
+    missing_input: list[str]
+    attempts: int                     # số lần đã chạy, kể cả lần thử lại
+    retried_as: str                   # nghiệp vụ dùng cho lần thử lại, rỗng nếu không thử lại
+    empty: bool                       # chạy xong mà không ra kết quả dùng được
+    error: str
+
+
 class AgentState(TypedDict, total=False):
-    """Trạng thái của agent tổng: định tuyến rồi giao cho đúng workflow.
+    """Trạng thái của agent tổng: lập kế hoạch rồi chạy từng bước.
 
     Giữ đầu vào của cả năm workflow trong một state duy nhất vì người dùng chỉ gõ
-    một câu - hệ thống phải tự quyết định câu đó thuộc nghiệp vụ nào.
+    một câu - hệ thống phải tự quyết định câu đó cần chạy những gì.
     """
 
     # --- đầu vào ---
@@ -144,15 +165,17 @@ class AgentState(TypedDict, total=False):
     ma_don_vi: str
     inputs: dict[str, Any]            # người ký, số ký hiệu... cho nhánh soạn văn bản
 
-    # --- định tuyến ---
-    intent: str
+    # --- kế hoạch ---
+    plan: dict[str, Any]              # các bước đã qua kiểm tra, kèm lý do tách
+    steps: list[StepResult]           # kết quả từng bước, theo thứ tự chạy xong
+    intent: str                       # nghiệp vụ của bước chính - giữ cho hợp đồng cũ
     routing: dict[str, Any]
 
     # --- đầu ra ---
     answer: str                       # câu trả lời cho người dùng
     citations: list[Citation]         # chỉ nhánh hỏi đáp mới có
     refs: list[dict[str, Any]]        # nguồn cho câu trả lời của các nhánh còn lại
-    result: dict[str, Any]            # kết quả thô của workflow con
+    result: dict[str, Any]            # kết quả thô của bước chính
     artifacts: list[dict[str, Any]]   # file sinh ra, kèm đường dẫn tải về
     missing_input: list[str]
     trace: dict[str, Any]

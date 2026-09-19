@@ -35,12 +35,11 @@ from app.documents.docx_builder import (
     build_docx,
 )
 from app.documents.verify import check_numbers, collect_known_numbers
-from app.db.repository import (
-    KiemKeRepository,
-    TaiNguyenRepository,
-    TemplateRepository,
-    VanBanRepository,
-)
+from app.db.erp_repository import AS_OF_NOTE, ErpTaiNguyenRepository
+from app.services import storage
+from app.db.erp_session import erp_session_scope
+from app.services import errors
+from app.db.repository import TemplateRepository, VanBanRepository
 from app.db.session import session_scope
 from app.services.llm import LLMError, get_llm
 
@@ -71,9 +70,9 @@ def _ngay_tieng_viet(value: date) -> str:
 async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
     """Trích loại báo cáo, kỳ và đơn vị. Thiếu thì nêu rõ, không đoán bừa."""
     today = date.today()
-    async with session_scope() as session:
-        units = await TaiNguyenRepository(session).list_don_vi()
-    unit_lines = "\n".join(f"- {u.ma_don_vi}: {u.ten_don_vi}" for u in units)
+    async with erp_session_scope() as session:
+        units = await ErpTaiNguyenRepository(session).list_don_vi()
+    unit_lines = "\n".join(f"- {u['ma_don_vi']}: {u['ten_don_vi']}" for u in units)
 
     params: dict[str, Any] = {}
     try:
@@ -99,7 +98,7 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
         assumptions.append(f"Không nêu năm, hiểu là năm {nam}")
 
     # Đơn vị: ưu tiên người dùng nêu, sau đó mới tới đơn vị của tài khoản.
-    valid_units = {u.ma_don_vi for u in units}
+    valid_units = {u["ma_don_vi"] for u in units}
     ma_don_vi = params.get("ma_don_vi") if params.get("ma_don_vi") in valid_units else None
     ma_don_vi = ma_don_vi or state.get("ma_don_vi")
 
@@ -182,25 +181,19 @@ async def fetch_data_node(state: dict[str, Any]) -> dict[str, Any]:
     ky = state["params"].get("ky")
     notes: list[str] = []
 
-    async with session_scope() as session:
-        if ky:
-            kiem_ke = KiemKeRepository(session)
-            tai_nguyen = await kiem_ke.get_tai_nguyen_theo_ky(ma_don_vi, ky)
-            if tai_nguyen is None:
-                # Kỳ yêu cầu chưa kiểm kê -> lùi về kỳ gần nhất, nói rõ chứ không im lặng.
-                fallback = await kiem_ke.get_ky_gan_nhat(ma_don_vi, ky)
-                if fallback:
-                    tai_nguyen = await kiem_ke.get_tai_nguyen_theo_ky(ma_don_vi, fallback)
-                    notes.append(f"Kỳ {ky} chưa có số liệu kiểm kê, dùng số liệu kỳ {fallback}")
-                else:
-                    tai_nguyen = await TaiNguyenRepository(session).get_tai_nguyen(ma_don_vi)
-                    notes.append(f"Kỳ {ky} chưa có số liệu kiểm kê, dùng hiện trạng")
-        else:
-            tai_nguyen = await TaiNguyenRepository(session).get_tai_nguyen(ma_don_vi)
+    try:
+        async with erp_session_scope() as session:
+            tai_nguyen = await ErpTaiNguyenRepository(session).get_tai_nguyen(ma_don_vi, ky)
+    except Exception as exc:  # noqa: BLE001 - CSDL hỏng thì dừng gọn, đừng ném traceback lên chat
+        return {"error": errors.as_error(exc, "lấy số liệu đơn vị từ CSDL nghiệp vụ")}
 
     if tai_nguyen is None:
         return {"error": f"Không tìm thấy đơn vị {ma_don_vi}"}
 
+    # ERP không chốt số theo kỳ, nên số của kỳ cũ là hiện trạng suy ngược. Người
+    # ký văn bản cần biết điều này, vì đọc lại sau vài tháng có thể ra số khác.
+    if ky:
+        notes.append(AS_OF_NOTE)
     return {"data": tai_nguyen.as_dict(), "data_notes": notes}
 
 
@@ -462,7 +455,8 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     params = state["params"]
     suffix = params.get("ky") or date.today().strftime("%Y%m%d")
     stem = f"{template['ma_template']}_{state['ma_don_vi']}_{suffix}"
-    output_path = Path(cfg.output_dir) / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', stem)}.docx"
+    stem = storage.tenant_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", stem))
+    output_path = Path(cfg.output_dir) / f"{stem}.docx"
 
     import anyio
 

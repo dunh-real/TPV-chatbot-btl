@@ -40,16 +40,19 @@ from app.documents.docx_builder import (
 )
 from app.documents.extract_figures import reconcile_file
 from app.documents.verify import check_numbers, collect_known_numbers
+from app.db.erp_repository import ErpTaiNguyenRepository
+from app.db.erp_session import erp_session_scope
 from app.db.repository import TemplateRepository, VanBanRepository
 from app.db.session import session_scope
+from app.services import storage
 from app.services.llm import LLMError, get_llm
+from app.services import errors
 from app.tools.data import ToolError, call_tool, previous_ky
 
 logger = logging.getLogger(__name__)
 
 METRIC_LABELS = {
-    "total_personnel": "Tổng quân số", "present": "Có mặt", "absent": "Vắng",
-    "training": "Đi học", "leave": "Nghỉ phép",
+    "total_personnel": "Tổng quân số", "new_hires": "Tuyển mới", "resignations": "Nghỉ việc",
     "total_equipment": "Tổng trang bị", "good": "Tình trạng tốt",
     "needs_attention": "Cần xử lý", "equipment_types": "Số chủng loại",
 }
@@ -78,16 +81,105 @@ def _ngay_tieng_viet(value: date) -> str:
     return f"ngày {value.day:02d} tháng {value.month} năm {value.year}"
 
 
+# Số La Mã cho đầu mục văn bản hành chính.
+#
+# Trước đây đánh số bằng `"I" * index`, ra I, II, III rồi IIII, IIIII - đúng ba
+# mục đầu và sai từ mục thứ tư. Báo cáo có đủ cả sáu mục thì mục cuối thành
+# "IIIIII". Văn bản trình ký không đánh số kiểu đó.
+_LA_MA = ((10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
+
+
+def so_la_ma(n: int) -> str:
+    """1 -> "I", 4 -> "IV", 6 -> "VI". Ngoài khoảng 1-39 thì trả lại số thường."""
+    if not 1 <= n <= 39:
+        return str(n)
+    ket_qua = []
+    for gia_tri, ky_hieu in _LA_MA:
+        while n >= gia_tri:
+            ket_qua.append(ky_hieu)
+            n -= gia_tri
+    return "".join(ket_qua)
+
+
+def _compare_period(ky: str, nam: int, params: dict[str, Any],
+                    assumptions: list[str]) -> str:
+    """Kỳ đối chiếu. Mặc định là kỳ liền trước; người dùng nêu thì theo người dùng.
+
+    Trước đây năm của kỳ đối chiếu bị gán cứng bằng năm của kỳ báo cáo, nên
+    "tháng 8/2026 so với tháng 8 năm 2025" ra `compare_to = 2026-08` - so kỳ với
+    CHÍNH NÓ. Slide in "biến động 0 (0%)" và người đọc hiểu là quân số không đổi
+    suốt một năm. Một kết luận sai mà không con số nào trong đó là số bịa, nên
+    không van chắn nào bắt được: phải chặn ngay từ chỗ dựng tham số.
+    """
+    thang_ss = params.get("so_sanh_thang")
+    if not thang_ss:
+        return previous_ky(ky)
+
+    try:
+        thang_ss = int(thang_ss)
+        nam_ss = int(params.get("so_sanh_nam") or nam)
+    except (TypeError, ValueError):
+        assumptions.append("Không hiểu kỳ đối chiếu được nêu, lấy kỳ liền trước")
+        return previous_ky(ky)
+
+    if not 1 <= thang_ss <= 12:
+        assumptions.append(f"Tháng đối chiếu {thang_ss} không hợp lệ, lấy kỳ liền trước")
+        return previous_ky(ky)
+
+    compare_to = f"{nam_ss:04d}-{thang_ss:02d}"
+    if compare_to == ky:
+        # Người dùng nêu một kỳ đối chiếu trùng kỳ báo cáo: gần như luôn là do
+        # thiếu năm ("so với tháng 8" trong báo cáo tháng 8). So với chính mình
+        # thì mọi biến động bằng 0 - vô nghĩa, và tệ hơn là trông như có nghĩa.
+        assumptions.append(
+            f"Kỳ đối chiếu nêu ra trùng kỳ báo cáo ({ky}), lấy kỳ liền trước thay thế")
+        return previous_ky(ky)
+
+    if compare_to > ky:
+        assumptions.append(f"Kỳ đối chiếu {compare_to} nằm sau kỳ báo cáo {ky}, "
+                           f"lấy kỳ liền trước thay thế")
+        return previous_ky(ky)
+
+    if nam_ss != nam:
+        assumptions.append(f"Đối chiếu với kỳ {compare_to}, không phải kỳ liền trước")
+    return compare_to
+
+
 # --------------------------------------------------------------------------- #
 # 1. Trích tham số
+# Từ khoá khoanh vùng nội dung báo cáo.
+#
+# `noi_dung` do LLM trích ra, và nó đọc hụt: "báo cáo trang thiết bị" thì đúng,
+# nhưng "báo cáo thông tin nhân viên" lại trả về CẢ HAI mảng - bộ slide xin về
+# nhân sự mọc thêm biểu đồ trang bị. Người dùng hỏi một mảng thì phải nhận đúng
+# mảng đó, nên chỗ này không để LLM quyết một mình.
+#
+# Chỉ đè khi yêu cầu nhắc tới ĐÚNG MỘT mảng: nhắc cả hai, hoặc không nhắc mảng
+# nào ("báo cáo tổng hợp"), thì giữ nguyên kết quả của LLM.
+NOI_DUNG_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "quan_so": ("quân số", "nhân sự", "nhân viên", "cán bộ", "biên chế",
+                "người lao động", "lao động", "tuyển mới", "nghỉ việc"),
+    "trang_bi": ("trang bị", "trang thiết bị", "thiết bị", "tài sản", "vật tư",
+                 "khí tài", "phương tiện"),
+}
+
+
+def scope_from_request(request: str, llm_choice: list[str]) -> list[str]:
+    """Mảng nội dung mà yêu cầu thật sự hỏi tới."""
+    lower = (request or "").lower()
+    nhac_toi = [key for key, words in NOI_DUNG_KEYWORDS.items()
+                if any(word in lower for word in words)]
+    if len(nhac_toi) == 1:
+        return nhac_toi
+    return llm_choice
+
+
 # --------------------------------------------------------------------------- #
 async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
-    from app.db.repository import TaiNguyenRepository
-
     today = date.today()
-    async with session_scope() as session:
-        units = await TaiNguyenRepository(session).list_don_vi()
-    unit_lines = "\n".join(f"- {u.ma_don_vi}: {u.ten_don_vi}" for u in units)
+    async with erp_session_scope() as session:
+        units = await ErpTaiNguyenRepository(session).list_don_vi()
+    unit_lines = "\n".join(f"- {u['ma_don_vi']}: {u['ten_don_vi']}" for u in units)
 
     params: dict[str, Any] = {}
     try:
@@ -116,30 +208,110 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
         nam = nam or (today.year if today.month > 1 else today.year - 1)
         assumptions.append(f"Không nêu kỳ, lấy kỳ gần nhất đã khép: tháng {thang}/{nam}")
 
-    valid_codes = {u.ma_don_vi for u in units}
+    valid_codes = {u["ma_don_vi"] for u in units}
     requested = [c for c in (params.get("ma_don_vi") or []) if c in valid_codes]
 
     noi_dung = [c for c in (params.get("noi_dung") or []) if c in ("quan_so", "trang_bi")]
+    noi_dung = scope_from_request(state.get("request", ""),
+                                  noi_dung or ["quan_so", "trang_bi"])
     ky = f"{nam:04d}-{thang:02d}"
-    compare_to = (f"{nam:04d}-{int(params['so_sanh_thang']):02d}"
-                  if params.get("so_sanh_thang") else previous_ky(ky))
+    compare_to = _compare_period(ky, nam, params, assumptions)
 
     return {
         "params": {"ky": ky, "thang": thang, "nam": nam, "compare_to": compare_to,
-                   "ma_don_vi": requested, "noi_dung": noi_dung or ["quan_so", "trang_bi"]},
+                   "ma_don_vi": requested, "noi_dung": noi_dung},
         "assumptions": assumptions,
     }
 
 
 # --------------------------------------------------------------------------- #
-# 2. Gọi data tool
+# 2. Lấy số liệu: từ CSDL, hoặc từ chính báo cáo các đơn vị đã gửi
 # --------------------------------------------------------------------------- #
+async def _files_from_register(session, ky: str, scope: list[str] | None) -> list[tuple[str, str, str]]:
+    """(mã đơn vị, tên đơn vị, đường dẫn file) của các báo cáo đã vào sổ."""
+    status = await call_tool(session, "get_reporting_status", ky=ky, ma_don_vi=scope)
+    return [(item["ma_don_vi"], item.get("ten_don_vi", ""), item.get("file_path", ""))
+            for item in status.get("reported", []) if item.get("file_path")]
+
+
+async def _gather_from_documents(state: dict[str, Any], session) -> dict[str, Any]:
+    """Đọc thẳng bảng kiểm kê trong các báo cáo đơn vị.
+
+    Dùng khi chưa có CSDL kiểm kê, hoặc khi người dùng muốn con số đúng bằng thứ
+    đơn vị đã ký gửi lên chứ không phải thứ đã nhập vào hệ thống.
+    """
+    import anyio
+
+    from app.documents.collect import aggregate_reports, read_unit_report
+    from app.services import storage
+
+    params = state["params"]
+    scope = params["ma_don_vi"] or None
+    targets = await _files_from_register(session, params["ky"], scope)
+
+    # File người dùng chỉ đích danh (đã tải lên) luôn được đọc, kể cả chưa vào sổ.
+    for file_id in state.get("inputs", {}).get("files", "").split(","):
+        if not file_id.strip():
+            continue
+        try:
+            ref = storage.resolve(file_id.strip())
+        except storage.StorageError as exc:
+            logger.warning("Bỏ qua file %r: %s", file_id, exc)
+            continue
+        targets.append(("", "", str(ref.path)))
+
+    if not targets:
+        return {"error": "Không có báo cáo đơn vị nào để đọc. Hãy tải báo cáo lên rồi "
+                         "truyền file_id qua inputs.files, hoặc vào sổ văn bản trước."}
+
+    reports = await anyio.to_thread.run_sync(
+        lambda: [read_unit_report(path, code, name) for code, name, path in targets]
+    )
+    equipment = aggregate_reports(reports, params["ky"])
+    logger.info("Tổng hợp từ tài liệu: %d/%d báo cáo đọc được, tổng trang bị %s",
+                len(equipment["sources"]), len(targets),
+                equipment["metrics"]["total_equipment"]["value"])
+    return {
+        "equipment": equipment,
+        "unit_reports": [r.as_dict() for r in reports],
+    }
+
+
 async def gather_data_node(state: dict[str, Any]) -> dict[str, Any]:
     params = state["params"]
     scope = params["ma_don_vi"] or None
     data: dict[str, Any] = {}
 
-    async with session_scope() as session:
+    # Nguồn số liệu do người dùng chọn; mặc định vẫn là CSDL vì chỉ CSDL mới có
+    # kỳ trước để so sánh tăng/giảm.
+    nguon = str(state.get("inputs", {}).get("nguon_so_lieu", "csdl")).lower()
+    if nguon in ("tai_lieu", "file", "document"):
+        async with erp_session_scope() as session:
+            try:
+                data["reporting"] = await call_tool(session, "get_reporting_status",
+                                                    ky=params["ky"], ma_don_vi=scope)
+            except ToolError as exc:
+                return {"error": f"Tham số truy vấn không hợp lệ: {exc}"}
+            gathered = await _gather_from_documents(state, session)
+        if "error" in gathered:
+            return gathered
+        data.update(gathered)
+        data["nguon_so_lieu"] = "tai_lieu"
+        return {"data": data}
+
+    data["nguon_so_lieu"] = "csdl"
+    try:
+        return await _gather_from_database(state, params, scope, data)
+    except ToolError as exc:
+        return {"error": str(exc)}
+    except Exception as exc:  # noqa: BLE001 - CSDL hỏng là sự cố hạ tầng, không phải lỗi yêu cầu
+        # Trả về `error` thay vì ném lên: workflow dừng gọn, agent tổng còn đổi
+        # được sang nguồn khác thay vì cả kế hoạch đổ theo.
+        return {"error": errors.as_error(exc, "lấy số liệu từ CSDL nghiệp vụ")}
+
+
+async def _gather_from_database(state, params, scope, data) -> dict[str, Any]:
+    async with erp_session_scope() as session:
         try:
             status = await call_tool(session, "get_reporting_status", ky=params["ky"],
                                      ma_don_vi=scope)
@@ -174,6 +346,10 @@ async def reconcile_node(state: dict[str, Any]) -> dict[str, Any]:
         return {}
 
     data = state.get("data", {})
+    # Số liệu đã lấy thẳng từ tài liệu thì không còn hai bên để đối chiếu.
+    if data.get("nguon_so_lieu") == "tai_lieu":
+        return {"reconciliation": [], "has_discrepancy": False}
+
     reporting = data.get("reporting", {})
     personnel = {row["ma_don_vi"]: row for row in data.get("personnel", {}).get("breakdown", [])}
 
@@ -184,9 +360,11 @@ async def reconcile_node(state: dict[str, Any]) -> dict[str, Any]:
     results: list[dict[str, Any]] = []
     for item in reporting.get("reported", []):
         code = item["ma_don_vi"]
+        # Chỉ đối chiếu được chỉ tiêu mà ERP có nguồn. File đơn vị thường còn ghi
+        # có mặt/vắng, nhưng ERP không có dữ liệu chấm công nên không có gì để so;
+        # đối chiếu một chiều sẽ báo lệch giả, tệ hơn là không đối chiếu.
         db_values = {
-            **{k: v for k, v in personnel.get(code, {}).items()
-               if k in ("quan_so", "co_mat", "vang")},
+            **{k: v for k, v in personnel.get(code, {}).items() if k == "quan_so"},
             **({"tong_so_trang_bi": equipment_totals[code]} if code in equipment_totals else {}),
         }
         result = await anyio.to_thread.run_sync(
@@ -220,7 +398,15 @@ def _build_charts(data: dict[str, Any], params: dict[str, Any]) -> dict[str, byt
     if (equipment := data.get("equipment")):
         by_status: dict[str, int] = {}
         for row in equipment["breakdown"]:
-            by_status[row["tinh_trang"]] = by_status.get(row["tinh_trang"], 0) + row["so_luong"]
+            # Breakdown của CSDL có một dòng cho mỗi (trang bị, tình trạng); của
+            # tài liệu thì mỗi dòng là một chủng loại, tình trạng nằm ở các cột.
+            if (status := row.get("tinh_trang")):
+                by_status[status] = by_status.get(status, 0) + (row.get("so_luong") or 0)
+                continue
+            for field_name, label in (("hoat_dong_tot", "Hoạt động tốt"),
+                                      ("can_xu_ly", "Cần xử lý")):
+                if row.get(field_name) is not None:
+                    by_status[label] = by_status.get(label, 0) + row[field_name]
         if by_status:
             charts["equipment"] = status_bar_chart(
                 f"Tình trạng trang thiết bị {period_label}",
@@ -314,34 +500,64 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
     index = 1
 
     # --- I. Tình hình nộp báo cáo: thuần số liệu, không cần LLM ---
+    # Bỏ mục này khi số liệu đọc thẳng từ tài liệu: sổ văn bản nói "0 đơn vị đã
+    # gửi" ngay cạnh mục "đọc từ 2 báo cáo" thì người đọc không biết tin bên nào.
+    # Mục NGUỒN SỐ LIỆU bên dưới đã nói đúng thứ thực sự được đọc.
     reporting = data.get("reporting", {})
-    if reporting:
+    if reporting and data.get("nguon_so_lieu") != "tai_lieu":
         missing = reporting.get("missing", [])
         facts = (f"Tổng số {reporting['units_total']} đơn vị, "
                  f"{reporting['units_reported']} đơn vị đã gửi báo cáo.")
         if missing:
             facts += (" Các đơn vị chưa gửi: "
                       + ", ".join(m["ten_don_vi"] for m in missing) + ".")
-        sections.append({"id": "nop_bao_cao", "title": f"{'I'*index}. TÌNH HÌNH GỬI BÁO CÁO",
+        sections.append({"id": "nop_bao_cao", "title": f"{so_la_ma(index)}. TÌNH HÌNH GỬI BÁO CÁO",
                          "paragraphs": [facts], "table": None, "image": None,
+                         "image_caption": "", "llm_written": []})
+        index += 1
+
+    # --- Nguồn số liệu, khi đọc thẳng từ báo cáo đơn vị ---
+    # Người đọc phải biết con số đến từ đâu: cùng một kỳ, số trong tài liệu và số
+    # trong CSDL có thể khác nhau, và bản báo cáo này chỉ phản ánh một bên.
+    if data.get("nguon_so_lieu") == "tai_lieu":
+        equipment_src = data.get("equipment", {})
+        sources = equipment_src.get("sources", [])
+        failed = equipment_src.get("failed", [])
+        facts = (f"Số liệu trong báo cáo này được đọc trực tiếp từ {len(sources)} báo cáo "
+                 f"đơn vị đã gửi, không lấy từ cơ sở dữ liệu kiểm kê.")
+        if failed:
+            facts += (" Không đọc được: "
+                      + "; ".join(f"{f['file']} ({f['ly_do']})" for f in failed) + ".")
+        paragraphs = [facts, *equipment_src.get("notes", [])]
+        # Các mục khác lưu bảng dạng dict vì bước export dựng lại bằng
+        # RenderedTable(**...); giữ đúng quy ước đó.
+        table = {
+            "columns": ["Đơn vị", "Tệp báo cáo", "Số ký hiệu", "Số dòng bảng", "Tổng trang bị"],
+            "rows": [[src.get("ten_don_vi") or src.get("ma_don_vi") or "—", src["file"],
+                      src.get("so_ky_hieu") or "—", str(src.get("so_dong_bang", 0)),
+                      str(src.get("figures", {}).get("tong", 0))] for src in sources],
+        } if sources else None
+        sections.append({"id": "nguon_so_lieu", "title": f"{so_la_ma(index)}. NGUỒN SỐ LIỆU",
+                         "paragraphs": paragraphs, "table": table, "image": None,
                          "image_caption": "", "llm_written": []})
         index += 1
 
     # --- II. Quân số ---
     if (personnel := data.get("personnel")):
-        title = f"{'I'*index}. TÌNH HÌNH QUÂN SỐ"
+        title = f"{so_la_ma(index)}. TÌNH HÌNH QUÂN SỐ"
         facts = _metric_sentence(personnel["metrics"])
         payload = {"metrics": personnel["metrics"], "scope": personnel["scope"]}
         written, written_cited, refs = await _narrative(
             title,
-            "Nhận xét về quân số: nêu mức tăng/giảm so với kỳ trước và tỷ trọng vắng mặt. "
-            "Dùng đúng các giá trị delta, delta_pct, share_pct đã cho.",
+            "Nhận xét về quân số: nêu mức tăng/giảm so với kỳ trước và biến động tuyển "
+            "mới/nghỉ việc. Dùng đúng các giá trị delta, delta_pct, share_pct đã cho.",
             payload, params,
         )
         table = RenderedTable(
-            columns=["Đơn vị", "Quân số", "Có mặt", "Vắng", "Đi học", "Nghỉ phép"],
-            rows=[[r["ten_don_vi"], str(r["quan_so"]), str(r["co_mat"]), str(r["vang"]),
-                   str(r["di_hoc"]), str(r["nghi_phep"])] for r in personnel["breakdown"]],
+            columns=["Đơn vị", "Quân số", "Kỳ trước", "Tuyển mới", "Nghỉ việc"],
+            rows=[[r["ten_don_vi"], str(r["quan_so"]), str(r["quan_so_ky_truoc"]),
+                   str(r["tuyen_moi"]), str(r["nghi_viec"])]
+                  for r in personnel["breakdown"]],
         )
         sections.append({
             "id": "quan_so", "title": title, "paragraphs": [facts, *written],
@@ -356,17 +572,30 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
     # --- III. Trang thiết bị ---
     if (equipment := data.get("equipment")):
-        title = f"{'I'*index}. TÌNH HÌNH TRANG THIẾT BỊ"
+        title = f"{so_la_ma(index)}. TÌNH HÌNH TRANG THIẾT BỊ"
         facts = _metric_sentence(equipment["metrics"])
         payload = {"metrics": equipment["metrics"], "scope": equipment["scope"]}
         written, written_cited, refs = await _narrative(
             title,
-            "Nhận xét về trang thiết bị: nêu tỷ lệ tình trạng tốt và số lượng cần xử lý.",
+            "Nhận xét về trang thiết bị: nêu tổng số lượng, số chủng loại và mức "
+            "tăng/giảm so với kỳ trước. Chỉ nhận xét về tình trạng tốt/cần xử lý "
+            "nếu SỐ LIỆU có hai chỉ tiêu đó.",
             payload, params,
         )
+        # Bảng chi tiết là chỗ DUY NHẤT người đọc đối chiếu được con số tổng về
+        # từng đơn vị. Mục quân số có bảng, mục trang bị thì trước đây để cứng
+        # `"table": None` - báo cáo ghi "tổng 194 trang bị" mà không một dòng nào
+        # nói 194 đó nằm ở đâu.
+        table = RenderedTable(
+            columns=["Đơn vị", "Trang bị", "Số lượng", "Tình trạng"],
+            rows=[[r["ten_don_vi"], r["ten_trang_bi"], str(r["so_luong"]), r["tinh_trang"]]
+                  for r in equipment["breakdown"]],
+        ) if equipment.get("breakdown") else None
+
         sections.append({
             "id": "trang_bi", "title": title, "paragraphs": [facts, *written],
-            "table": None, "image": charts.get("equipment"),
+            "table": {"columns": table.columns, "rows": table.rows} if table else None,
+            "image": charts.get("equipment"),
             "image_caption": f"Biểu đồ: Tình trạng trang thiết bị {period_label}",
             "llm_written": written, "llm_written_cited": written_cited,
             "refs": refs, "source_data": payload,
@@ -381,7 +610,7 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
             for d in item["discrepancies"]
         ]
         sections.append({
-            "id": "doi_chieu", "title": f"{'I'*index}. ĐỐI CHIẾU SỐ LIỆU",
+            "id": "doi_chieu", "title": f"{so_la_ma(index)}. ĐỐI CHIẾU SỐ LIỆU",
             "paragraphs": ["Phát hiện chênh lệch giữa số liệu trong báo cáo của đơn vị "
                            "và số liệu kiểm kê trong hệ thống:"],
             "table": {"columns": ["Đơn vị", "Chỉ tiêu", "Báo cáo ghi", "Kiểm kê"],
@@ -391,10 +620,15 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
         index += 1
 
     # --- V. Cảnh báo số liệu không nhất quán ---
-    inconsistent = data.get("personnel", {}).get("consistency", [])
+    # Gộp cả quân số lẫn trang bị: mục này tên là "số liệu cần kiểm tra lại", bỏ
+    # sót nguồn nào thì chính chỗ đáng ngờ nhất lại là chỗ im lặng.
+    inconsistent = [
+        *data.get("personnel", {}).get("consistency", []),
+        *data.get("equipment", {}).get("consistency", []),
+    ]
     if inconsistent:
         sections.append({
-            "id": "canh_bao", "title": f"{'I'*index}. SỐ LIỆU CẦN KIỂM TRA LẠI",
+            "id": "canh_bao", "title": f"{so_la_ma(index)}. SỐ LIỆU CẦN KIỂM TRA LẠI",
             "paragraphs": [item["message"] for item in inconsistent],
             "table": None, "image": None, "image_caption": "", "llm_written": [],
         })
@@ -404,13 +638,25 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
 # --------------------------------------------------------------------------- #
 # 6. Đối chiếu số trong văn bản
+def _period_numbers(params: dict[str, Any]) -> set[str]:
+    """Số của kỳ báo cáo và kỳ đối chiếu, dạng van chắn số chấp nhận được."""
+    numbers = {str(v) for v in (params.get("thang"), params.get("nam")) if v}
+    if (compare_to := params.get("compare_to")):
+        nam, _, thang = str(compare_to).partition("-")
+        numbers.update({nam, thang, str(int(thang)) if thang.isdigit() else thang})
+    return numbers
+
+
 # --------------------------------------------------------------------------- #
 async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error"):
         return {"validation": {"status": "skipped", "issues": []}}
 
     params = state.get("params", {})
-    period_numbers = {str(v) for v in (params.get("thang"), params.get("nam")) if v}
+    # Kỳ báo cáo VÀ kỳ đối chiếu đều là số hợp lệ trong văn bản. Thiếu kỳ đối
+    # chiếu thì câu "so với tháng 8/2025" bị kết luận là bịa số, và cả mục bị
+    # loại - trong khi đó chính là câu người đọc cần nhất.
+    period_numbers = _period_numbers(params)
 
     issues: list[dict[str, Any]] = []
     checked_total = 0
@@ -481,7 +727,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
         ],
     )
 
-    stem = re.sub(r"[^A-Za-z0-9_.-]", "_", f"BC_TONGHOP_{params['ky']}")
+    stem = storage.tenant_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", f"BC_TONGHOP_{params['ky']}"))
     output_path = Path(cfg.output_dir) / f"{stem}.docx"
     path = await anyio.to_thread.run_sync(
         lambda: build_docx(payload, output_path, template_file or None)

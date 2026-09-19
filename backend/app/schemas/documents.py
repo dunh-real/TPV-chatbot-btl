@@ -51,6 +51,19 @@ class RuleCheckModel(BaseModel):
     passed: list[str] = Field(default_factory=list)
     skipped: list[str] = Field(default_factory=list)
     reason: str = ""
+    rule_set: str = Field(default="", description="Bộ tiêu chí đã áp, tên file trong config/rules")
+    document_type: str = Field(
+        default="", description="Loại văn bản dò được tất định: cong_van | quyet_dinh | bao_cao..."
+    )
+    document_type_label: str = Field(default="", description="Tên loại để hiển thị")
+
+
+class RuleSetInfo(BaseModel):
+    """Một bộ tiêu chí có thể chọn khi soát."""
+
+    id: str
+    label: str
+    version: str = ""
 
 
 class LLMFindingModel(BaseModel):

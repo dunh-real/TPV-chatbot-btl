@@ -6,20 +6,17 @@ import logging
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 from app.agents.graph import run_presentation_workflow
-from app.core.config import get_settings
+from app.api.files import output_file_response
 from app.schemas.presentations import PresentationRequest, PresentationResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/presentations", tags=["presentations"])
 
-PPTX_MEDIA_TYPE = (
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-)
 
 
 @router.post("/create", response_model=PresentationResponse, summary="Tạo bộ slide báo cáo")
@@ -39,9 +36,9 @@ async def create(request: PresentationRequest) -> PresentationResponse:
 
 @router.get("/download/{filename}", summary="Tải file .pptx đã tạo")
 async def download(filename: str) -> FileResponse:
-    cfg = get_settings()
-    output_dir = Path(cfg.output_dir).resolve()
-    target = (output_dir / Path(filename).name).resolve()
-    if output_dir not in target.parents or not target.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy file")
-    return FileResponse(target, media_type=PPTX_MEDIA_TYPE, filename=target.name)
+    """Chỉ trả file thuộc về thuê bao đang gọi.
+
+    Tên file đoán được (`SLIDE_2026-08__t64.pptx`), nên nếu chỉ kiểm "có nằm trong
+    thư mục output không" thì bất kỳ ai cũng tải được bộ slide của đơn vị khác.
+    """
+    return output_file_response(filename)

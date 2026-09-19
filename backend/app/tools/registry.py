@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from app.db.erp_session import erp_session_scope
 from app.db.session import session_scope
 from app.tools import data as data_tools
 from app.tools.base import ToolError, ToolSpec
@@ -141,6 +142,8 @@ async def call_tool(name: str, **kwargs: Any) -> Any:
         raise ToolError(f"{name}: tham số không hợp lệ {sorted(unknown)}")
 
     if spec.needs_session:
-        async with session_scope() as session:
+        # Tool số liệu đọc ERP; phiên ERP chặn ghi ngay tại engine.
+        scope = erp_session_scope if name in data_tools.TOOLS else session_scope
+        async with scope() as session:
             return _plain(await spec.func(session, **kwargs))
     return _plain(await spec.func(**kwargs))

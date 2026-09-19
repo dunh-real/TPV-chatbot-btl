@@ -21,6 +21,7 @@ from app.documents.pptx_builder import (
     SlideSpec,
     SlideTable,
     build_pptx,
+    count_slides,
 )
 from app.services import storage
 from app.tools.base import ToolError
@@ -145,6 +146,6 @@ async def generate_presentation(
         "file_id": storage.make_file_id("output", path.name),
         "file_name": path.name,
         "title": title,
-        "slide_count": len(slides),
+        "slide_count": count_slides(slides),
         "used_template_file": bool(template_file),
     }

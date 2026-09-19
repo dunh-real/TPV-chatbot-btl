@@ -62,7 +62,13 @@ async def parse_node(state: dict[str, Any]) -> dict[str, Any]:
         logger.exception("Không parse được %s", path)
         return {"error": f"Không đọc được tài liệu: {exc}"}
 
-    components = detect_components(structure)
+    # Chức danh người ký lấy theo bộ tiêu chí đang chọn: cơ quan khác nhau ký
+    # bằng chức danh khác nhau, dò bằng danh sách cứng thì báo thiếu chữ ký oan.
+    try:
+        titles = get_rule_engine(state.get("rule_set", "")).chu_ky_titles
+    except FileNotFoundError:
+        titles = get_rule_engine().chu_ky_titles
+    components = detect_components(structure, chu_ky_titles=titles)
     return {
         "structure": structure,
         "components": components,
@@ -79,7 +85,13 @@ async def parse_node(state: dict[str, Any]) -> dict[str, Any]:
 async def rule_check_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or "structure" not in state:
         return {}
-    result = get_rule_engine().check(state["structure"], state["components"])
+    try:
+        engine = get_rule_engine(state.get("rule_set", ""))
+    except FileNotFoundError as exc:
+        logger.warning("%s - dùng bộ tiêu chí mặc định", exc)
+        engine = get_rule_engine()
+    result = engine.check(state["structure"], state["components"],
+                          enforce_scope=not state.get("force_rules", False))
     return {"rule_result": result}
 
 
@@ -357,6 +369,9 @@ async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
             "passed": rule_result.passed,
             "skipped": rule_result.skipped,
             "reason": rule_result.reason,
+            "rule_set": rule_result.rule_set,
+            "document_type": rule_result.document_type,
+            "document_type_label": rule_result.document_type_label,
         }
 
     errors = rule_payload["status"] != "skipped" and rule_result is not None and rule_result.error_count

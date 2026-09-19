@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, BinaryIO, Literal
 
 from app.core.config import get_settings
+from app.core.context import current_tenant_id
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,46 @@ def safe_name(filename: str) -> str:
     """Bỏ mọi thành phần thư mục và ký tự lạ, chỉ giữ lại tên file."""
     name = _UNSAFE_RE.sub("_", Path(filename or "").name).strip("._") or "file"
     return name[:180]
+
+
+# Dấu tenant gắn vào tên file đầu ra: "SLIDE_2026-08__t64.pptx".
+#
+# Không có nó thì hai thuê bao cùng xin báo cáo một kỳ sẽ ghi đè lên nhau - cùng
+# một đường dẫn, cùng một cái tên đoán được - và người tải sau nhận nguyên bộ số
+# liệu của người trước. Thư mục output là kho dùng chung, nên chỗ tách thuê bao
+# phải nằm ngay ở tên file.
+_TENANT_SUFFIX_RE = re.compile(r"__t(\d+)$")
+
+
+def tenant_stem(stem: str) -> str:
+    """Gắn tenant của request hiện tại vào phần tên file (chưa có đuôi)."""
+    tenant = current_tenant_id()
+    return stem if tenant is None else f"{stem}__t{tenant}"
+
+
+def tenant_of(filename: str) -> int | None:
+    match = _TENANT_SUFFIX_RE.search(Path(filename).stem)
+    return int(match.group(1)) if match else None
+
+
+def readable_by_current_tenant(filename: str) -> bool:
+    """File này có thuộc về thuê bao đang gọi không.
+
+    File không mang dấu tenant chỉ đọc được khi request cũng không có tenant. Điều
+    đó khoá luôn những file sinh ra trước khi có cơ chế này - chúng chứa số liệu
+    của một thuê bao không xác định, nên để đọc được mới là sai.
+    """
+    return tenant_of(filename) == current_tenant_id()
+
+
+def resolve_output(filename: str) -> FileRef:
+    """File trong thư mục output, đã chặn cả vượt thư mục lẫn đọc chéo thuê bao."""
+    ref = resolve(filename, kinds=("output",))
+    if not readable_by_current_tenant(ref.name):
+        # Cùng một câu trả lời với file không tồn tại: nói "file này của thuê bao
+        # khác" là đã xác nhận nó có thật.
+        raise StorageError(f"Không tìm thấy file {filename!r}")
+    return ref
 
 
 def make_file_id(kind: Kind, name: str) -> str:

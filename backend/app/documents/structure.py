@@ -49,15 +49,13 @@ _PATTERNS: dict[str, tuple[re.Pattern[str], int | None]] = {
     "so_ky_hieu": (re.compile(r"^\s*Số\s*:\s*(\S+)", re.I | re.M), 1),
     "dia_danh_ngay": (
         re.compile(r"ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})", re.I), 0),
-    "trich_yeu": (re.compile(r"(?:^|\s)V/v\s+(.+)", re.I), 1),
+    # "V/v Kiểm kê..." và "V/v: Kiểm kê..." đều gặp trong thực tế.
+    "trich_yeu": (re.compile(r"(?:^|\s)V/v\s*:?\s*(.+)", re.I), 1),
     "kinh_gui": (re.compile(r"^\s*Kính\s+gửi\s*:\s*(.*)", re.I | re.M), 1),
     "noi_nhan": (re.compile(r"^\s*Nơi\s+nhận\s*:", re.I | re.M), None),
-    "chu_ky": (
-        # Chức danh người ký rất đa dạng: GIÁM ĐỐC, TRƯỞNG ĐƠN VỊ, CHỈ HUY TRƯỞNG,
-        # CHÁNH VĂN PHÒNG, hoặc ký thay/ký thừa lệnh (TM./KT./TL.).
-        re.compile(r"^\s*((?:PHÓ\s*)?(?:GIÁM\s*ĐỐC|CHÁNH\s*VĂN\s*PHÒNG)"
-                   r"|(?:[A-ZÀ-Ỹ]+\s+)?(?:THỦ\s*)?TRƯỞNG(?:\s+[A-ZÀ-Ỹ]+){0,3}"
-                   r"|TM\.\s*.+|KT\.\s*.+|TL\.\s*.+|\(đã\s*ký\))\s*$", re.I | re.M), 1),
+    # Chỗ dành sẵn; mẫu thật do build_chu_ky_pattern dựng từ danh sách chức danh
+    # trong file tiêu chí - xem DEFAULT_CHUC_DANH_KY.
+    "chu_ky": (re.compile(r"(?!)"), 1),
     "ten_loai": (
         re.compile(r"^\s*(CÔNG\s*VĂN|QUYẾT\s*ĐỊNH|THÔNG\s*BÁO|BÁO\s*CÁO|TỜ\s*TRÌNH|"
                    r"KẾ\s*HOẠCH|BIÊN\s*BẢN|GIẤY\s*MỜI|CHỈ\s*THỊ|NGHỊ\s*QUYẾT)\s*$", re.I | re.M), 1),
@@ -66,26 +64,150 @@ _PATTERNS: dict[str, tuple[re.Pattern[str], int | None]] = {
 # Dạng số ký hiệu hợp lệ: "105/CV-BGĐ", "12/QĐ-TPV", "07/2026/TT-BTC"
 SO_KY_HIEU_RE = re.compile(r"^\d+(?:/\d{4})?/[A-ZĐ]{2,}(?:-[A-ZĐ0-9.]+)*$", re.I)
 
+# Chức danh người ký khác nhau theo từng cơ quan: doanh nghiệp ký "TỔNG GIÁM ĐỐC",
+# đơn vị quân đội ký "CHỈ HUY TRƯỞNG", trường học ký "HIỆU TRƯỞNG". Danh sách này
+# chỉ là mặc định - cơ quan nào dùng chức danh khác thì thêm vào `chuc_danh_ky`
+# trong file tiêu chí, không phải sửa code.
+DEFAULT_CHUC_DANH_KY: tuple[str, ...] = (
+    "GIÁM ĐỐC", "TỔNG GIÁM ĐỐC", "PHÓ GIÁM ĐỐC", "PHÓ TỔNG GIÁM ĐỐC",
+    "CHÁNH VĂN PHÒNG", "PHÓ CHÁNH VĂN PHÒNG", "HIỆU TRƯỞNG", "CHỦ TỊCH",
+)
 
-def detect_components(structure: DocumentStructure) -> DocumentComponents:
+# Hình thức ký thay / ký thừa lệnh / quyền: cố định theo NĐ 30 nên không đưa ra
+# cấu hình. "(đã ký)" là bản sao scan hoặc bản điện tử.
+_KY_THAY_RE = r"TM\.\s*.+|KT\.\s*.+|TL\.\s*.+|Q\.\s*.+|\(đã\s*ký\)"
+
+# "TRƯỞNG PHÒNG KỸ THUẬT", "CHỈ HUY TRƯỞNG", "THỦ TRƯỞNG ĐƠN VỊ"...
+_TRUONG_RE = r"(?:[A-ZÀ-Ỹ]+\s+)?(?:THỦ\s*)?TRƯỞNG(?:\s+[A-ZÀ-Ỹ]+){0,3}"
+
+
+def build_chu_ky_pattern(titles: list[str] | tuple[str, ...] | None = None) -> re.Pattern[str]:
+    """Mẫu nhận dòng chức danh người ký, dựng từ danh sách chức danh cho trước."""
+    names = [re.escape(t.strip()).replace(r"\ ", r"\s*") for t in (titles or DEFAULT_CHUC_DANH_KY) if t.strip()]
+    # Chức danh dài đặt trước để "PHÓ GIÁM ĐỐC" không bị "GIÁM ĐỐC" ăn mất.
+    names.sort(key=len, reverse=True)
+    alternatives = "|".join([*names, _TRUONG_RE, _KY_THAY_RE])
+    return re.compile(rf"^\s*({alternatives})\s*$", re.I | re.M)
+
+
+# Mẫu mặc định nằm sẵn trong _PATTERNS; bộ tiêu chí nào khai chức danh riêng thì
+# `_patterns_for` dựng một bản sao cho riêng lần quét đó. Không sửa _PATTERNS tại
+# chỗ: hai request dùng hai bộ tiêu chí khác nhau sẽ giẫm lên nhau.
+_PATTERNS["chu_ky"] = (build_chu_ky_pattern(None), 1)
+
+
+def _patterns_for(chu_ky_titles: list[str] | None) -> dict[str, tuple[re.Pattern[str], int | None]]:
+    if not chu_ky_titles:
+        return _PATTERNS
+    return {**_PATTERNS, "chu_ky": (build_chu_ky_pattern(chu_ky_titles), 1)}
+
+
+# Văn bản CÓ tên loại (báo cáo, quyết định, tờ trình...) đặt trích yếu ngay dưới
+# tên loại và mở đầu bằng "Về ...", không dùng dạng "V/v" của công văn.
+_TRICH_YEU_DUOI_TEN_LOAI = re.compile(r"^\s*(?:V/v|Về)\b\s*:?\s*(.+)", re.I | re.S)
+
+_TABLE_BLOB_RE = re.compile(r"^T\d+")
+
+
+def _scan(text: str, component_id: str, patterns) -> tuple[bool, str]:
+    """Khớp một mẫu trên một đoạn text, trả về (có khớp, giá trị trích ra)."""
+    pattern, group = patterns[component_id]
+    match = pattern.search(text)
+    if match is None:
+        return False, ""
+    if group is None:
+        return True, ""
+    return True, (match.group(group) if group else match.group(0)).strip()
+
+
+def _trich_yeu_duoi_ten_loai(
+    structure: DocumentStructure, components: DocumentComponents
+) -> Component | None:
+    """Trích yếu của văn bản có tên loại: khối kế tiếp ngay dưới tên loại."""
+    ten_loai = components.get("ten_loai")
+    if ten_loai is None:
+        return None
+    ids = [b.id for b in structure.blocks]
+    if ten_loai.block_id not in ids:
+        return None
+
+    # Cùng một khối: file .md/.txt không tách "BÁO CÁO" và "Về tình hình..."
+    # thành hai đoạn, cả hai nằm chung một khối.
+    lines = ten_loai.text.splitlines()
+    name = (ten_loai.value or "").strip().upper()
+    for idx, line in enumerate(lines):
+        if line.strip().upper() != name:
+            continue
+        rest = "\n".join(lines[idx + 1:]).strip()
+        match = _TRICH_YEU_DUOI_TEN_LOAI.match(rest)
+        if match is not None:
+            value = " ".join(match.group(1).split())
+            if len(value) <= 300:
+                return Component(id="trich_yeu", block_id=ten_loai.block_id,
+                                 text=rest, value=value)
+        break
+
+    taken = {c.block_id for c in components.found.values()}
+    for block in structure.blocks[ids.index(ten_loai.block_id) + 1:]:
+        if block.is_empty:
+            continue
+        if block.id in taken:
+            return None
+        match = _TRICH_YEU_DUOI_TEN_LOAI.match(block.text.strip())
+        if match is None:
+            # Ngay dưới tên loại đã là nội dung khác -> văn bản thiếu trích yếu thật.
+            return None
+        value = " ".join(match.group(1).split())
+        # Trích yếu là một mệnh đề, không phải cả đoạn văn: dài quá thì gần như
+        # chắc chắn đã bắt nhầm phần nội dung.
+        if len(value) > 300:
+            return None
+        return Component(id="trich_yeu", block_id=block.id,
+                         text=block.text.strip(), value=value)
+    return None
+
+
+def detect_components(
+    structure: DocumentStructure, chu_ky_titles: list[str] | None = None
+) -> DocumentComponents:
     """Quét các khối, ghi nhận thành phần đầu tiên khớp mỗi mẫu."""
+    patterns = _patterns_for(chu_ky_titles)
     components = DocumentComponents()
 
     for block in structure.blocks:
         if block.is_empty:
             continue
-        for component_id, (pattern, group) in _PATTERNS.items():
+        for component_id in patterns:
             if component_id in components.found:
                 continue
-            match = pattern.search(block.text)
-            if match is None:
-                continue
-            value = ""
-            if group is not None:
-                value = (match.group(group) if group else match.group(0)).strip()
-            components.found[component_id] = Component(
-                id=component_id, block_id=block.id, text=block.text.strip(), value=value
-            )
+            hit, value = _scan(block.text, component_id, patterns)
+            if hit:
+                components.found[component_id] = Component(
+                    id=component_id, block_id=block.id, text=block.text.strip(), value=value
+                )
+
+    # Khối bảng là một blob gộp mọi ô bằng " | ", nên mẫu neo đầu dòng (chức danh
+    # người ký chẳng hạn) trượt hết. Quét lại từng ô cho những thành phần còn thiếu,
+    # nhưng vẫn ghi block_id là blob để `format_block` lần xuống đúng ô.
+    missing = [cid for cid in patterns if cid not in components.found]
+    if missing:
+        for cell in structure.table_cells:
+            for component_id in list(missing):
+                hit, value = _scan(cell.text, component_id, patterns)
+                if not hit:
+                    continue
+                blob = _TABLE_BLOB_RE.match(cell.id)
+                components.found[component_id] = Component(
+                    id=component_id,
+                    block_id=blob.group(0) if blob else cell.id,
+                    text=cell.text.strip(),
+                    value=value,
+                )
+                missing.remove(component_id)
+
+    if "trich_yeu" not in components.found:
+        if (found := _trich_yeu_duoi_ten_loai(structure, components)) is not None:
+            components.found["trich_yeu"] = found
 
     return components
 

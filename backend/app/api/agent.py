@@ -8,21 +8,29 @@ agent tự chọn nghiệp vụ.
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
+from collections.abc import AsyncIterator
 from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
+from app.agents import progress
+from app.services import errors
 from app.agents.graph import run_agent
 from app.schemas.agent import (
     AgentRequest,
     AgentResponse,
     Artifact,
+    PlanModel,
     RoutingInfo,
+    StepResultModel,
     ToolInfo,
     UploadResponse,
 )
+from app.api.files import output_file_response
 from app.services import storage
 from app.tools.registry import catalog
 
@@ -30,11 +38,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
-MEDIA_TYPES = {
-    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    ".pdf": "application/pdf",
-}
 
 
 @router.post("/chat", response_model=AgentResponse, summary="Hỏi hoặc giao việc cho agent")
@@ -51,7 +54,15 @@ async def chat(request: AgentRequest) -> AgentResponse:
         ma_don_vi=request.ma_don_vi,
         inputs=request.inputs,
     )
+    return _response(result, request.include_trace)
 
+
+def _response(result: dict, include_trace: bool) -> AgentResponse:
+    """Dựng phản hồi từ kết quả thô. Dùng chung cho `/chat` và `/chat/stream`.
+
+    Hai đường phải trả về ĐÚNG một hình dạng: client chỉ có một hàm dựng giao
+    diện, và nó không nên biết mình đang xem kết quả streaming hay không.
+    """
     artifacts = [
         Artifact(
             **item,
@@ -64,13 +75,79 @@ async def chat(request: AgentRequest) -> AgentResponse:
         conversation_id=result["conversation_id"],
         intent=result.get("intent", ""),
         routing=RoutingInfo(**result.get("routing", {})),
+        plan=PlanModel(**result.get("plan", {})),
+        steps=[StepResultModel(**step) for step in result.get("steps", [])],
         citations=result.get("citations", []),
         refs=result.get("refs", []),
         artifacts=artifacts,
         missing_input=result.get("missing_input", []),
         result=result.get("result", {}),
-        trace=result.get("trace") if request.include_trace else None,
+        trace=result.get("trace") if include_trace else None,
         error=result.get("error", ""),
+    )
+
+
+def _sse(event: str, payload: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+@router.post("/chat/stream", summary="Như /chat nhưng phát tiến trình theo thời gian thực (SSE)")
+async def chat_stream(request: AgentRequest) -> StreamingResponse:
+    """Phát từng bước agent đang chạy, rồi mới tới câu trả lời cuối.
+
+    Một yêu cầu nhiều bước mất 8-30 giây. Không có kênh này thì suốt thời gian đó
+    giao diện chỉ có một vòng xoay, và người dùng không phân biệt được "đang tổng
+    hợp số liệu" với "đã treo".
+
+    Sự kiện: `plan` → (`step_start` | `thinking` | `step_retry` | `step_done`)* →
+    `done`. Payload của `done` chính là `AgentResponse` của `POST /chat`, nên phía
+    client dùng lại đúng một hàm dựng giao diện cho cả hai đường.
+
+    KHÔNG có sự kiện nào mang kết quả công cụ: số liệu thô chưa qua van đối chiếu
+    `check_numbers`, đẩy lên màn hình là mời người đọc tin vào con số mà chính hệ
+    thống chưa xác nhận.
+    """
+    channel = progress.Channel()
+
+    async def run() -> None:
+        try:
+            with progress.collecting(channel.put):
+                result = await run_agent(
+                    request=request.request,
+                    conversation_id=request.conversation_id,
+                    file_id=request.file_id,
+                    ma_don_vi=request.ma_don_vi,
+                    inputs=request.inputs,
+                )
+            channel.put("done", _response(result, request.include_trace).model_dump())
+        except Exception as exc:  # noqa: BLE001 - lỗi phải tới được client, không chỉ vào log
+            # `str(exc)` ở đây là nguyên văn ngoại lệ - với lỗi CSDL thì đó là cả
+            # câu SQL kèm tên bảng. Client nhận câu đã dịch; chi tiết vào log.
+            channel.put("error", {"detail": errors.as_error(exc, "chạy agent")})
+        finally:
+            channel.close()
+
+    async def event_stream() -> AsyncIterator[str]:
+        task = asyncio.create_task(run())
+        try:
+            while True:
+                item = await channel.queue.get()
+                if item is None:
+                    break
+                event, data = item
+                yield _sse(event, data)
+        finally:
+            # Client đóng tab giữa chừng: dừng luôn agent thay vì để nó chạy nốt
+            # một vòng lặp công cụ mà không ai đọc kết quả.
+            if not task.done():
+                task.cancel()
+        if channel.dropped:
+            logger.info("Đã bỏ %d sự kiện tiến trình do client đọc chậm", channel.dropped)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
@@ -93,13 +170,4 @@ async def tools() -> list[ToolInfo]:
 
 @router.get("/download/{filename}", summary="Tải file agent vừa tạo")
 async def download(filename: str) -> FileResponse:
-    try:
-        ref = storage.resolve(filename, kinds=("output",))
-    except storage.StorageError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-
-    return FileResponse(
-        ref.path,
-        media_type=MEDIA_TYPES.get(ref.suffix, "application/octet-stream"),
-        filename=ref.name,
-    )
+    return output_file_response(filename)

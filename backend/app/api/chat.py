@@ -11,7 +11,13 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from app.agents.graph import build_initial_state, prepare_context, run_qa
-from app.agents.nodes.qa import build_generation_messages, extract_used_citations
+from app.agents.nodes.qa import (
+    NO_CONTEXT_LLM_ARGS,
+    build_generation_messages,
+    build_no_context_messages,
+    extract_used_citations,
+)
+from app.agents.prompts import NO_CONTEXT_ANSWER
 from app.core.config import get_settings
 from app.rag.retrieval import get_retriever
 from app.rag.vectorstore import build_filter
@@ -72,11 +78,12 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
         top_n=request.top_n,
         use_rerank=request.use_rerank,
     )
-    prepared = await prepare_context(state)
+    prepared = await prepare_context(state, defer_generation=True)
 
     async def event_stream() -> AsyncIterator[str]:
         conversation_id = prepared["conversation_id"]
-        citations = prepared.get("citations", [])
+        has_context = bool(prepared.get("context"))
+        citations = prepared.get("citations", []) if has_context else []
         yield _sse(
             "meta",
             {
@@ -88,17 +95,25 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
             },
         )
 
-        # Không có ngữ cảnh -> đã có sẵn câu trả lời an toàn từ node no_context.
-        if not prepared.get("context"):
-            answer = prepared.get("answer", "")
+        # Truy hồi HỎNG: node no_context đã dựng sẵn câu nói đúng sự thật về sự
+        # cố, không có gì để sinh thêm.
+        if not has_context and prepared.get("answer"):
+            answer = prepared["answer"]
             yield _sse("delta", {"text": answer})
             yield _sse("done", {"citations": [], "conversation_id": conversation_id})
             await _save_turn(conversation_id, request.question, answer)
             return
 
+        # Truy hồi không ra gì: vẫn đối đáp bình thường (chào hỏi, hỏi hệ thống
+        # làm được gì), nhưng không nguồn nào nên cũng không trích dẫn gì.
+        if has_context:
+            messages, extra = build_generation_messages(prepared), {}
+        else:
+            messages, extra = build_no_context_messages(prepared), NO_CONTEXT_LLM_ARGS
+
         collected: list[str] = []
         try:
-            async for piece in get_llm().stream_chat(build_generation_messages(prepared)):
+            async for piece in get_llm().stream_chat(messages, **extra):
                 collected.append(piece)
                 yield _sse("delta", {"text": piece})
         except LLMError as exc:
@@ -106,8 +121,13 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
             yield _sse("error", {"detail": str(exc)})
             return
 
-        answer = "".join(collected)
-        used = extract_used_citations(answer, citations)
+        answer = "".join(collected).strip()
+        if not answer:
+            # Model im lặng: vẫn phải trả về một câu, không để khung chat trống trơn.
+            answer = NO_CONTEXT_ANSWER
+            yield _sse("delta", {"text": answer})
+
+        used = extract_used_citations(answer, citations) if citations else []
         yield _sse("done", {"citations": used, "conversation_id": conversation_id})
         await _save_turn(conversation_id, request.question, answer)
 
@@ -159,6 +179,7 @@ async def search(request: SearchRequest) -> SearchResponse:
                 page=chunk.payload.get("page"),
                 rrf_score=round(chunk.rrf_score, 6),
                 rerank_score=round(chunk.rerank_score, 6),
+                matched_by=chunk.matched_by,
                 branch_ranks=chunk.branch_ranks,
             )
             for chunk in result.chunks

@@ -10,6 +10,21 @@
 meta:
   name: "Nghị định 30/2020/NĐ-CP"
   version: "2020-03-05"
+  # Tên hiển thị khi người dùng chọn bộ tiêu chí trong giao diện.
+  label: "Nghị định 30/2020/NĐ-CP (văn bản hành chính)"
+
+# Bộ tiêu chí này chỉ áp cho VĂN BẢN HÀNH CHÍNH. Đem thước đo công văn soi một
+# bản ghi chú kỹ thuật thì ra vài chục lỗi đúng về mặt máy móc mà vô nghĩa với
+# người đọc, nên trước khi soát phải hỏi: tệp này có phải văn bản hành chính không?
+#
+# Đủ `min_matches` dấu hiệu thì áp; không đủ thì trả status=skipped kèm lý do.
+applies_when:
+  markers: [quoc_hieu, tieu_ngu, so_ky_hieu, ten_loai, kinh_gui, noi_nhan]
+  min_matches: 2
+  message: >-
+    Tệp không mang dấu hiệu của văn bản hành chính (thiếu cả quốc hiệu, tiêu ngữ,
+    số ký hiệu lẫn tên loại), nên không áp bộ tiêu chí thể thức này. Nếu đây đúng
+    là văn bản hành chính, hãy kiểm tra lại phần đầu văn bản.
 
 format:
   font:
@@ -82,6 +97,25 @@ component_format:
     alignment: CENTER
     severity: warning
 
+# Chức danh người ký. Doanh nghiệp ký "TỔNG GIÁM ĐỐC", đơn vị quân đội ký "CHỈ
+# HUY TRƯỞNG", trường học ký "HIỆU TRƯỞNG" - liệt kê ở đây chứ không chôn trong
+# code. Các dạng "TRƯỞNG ..." và ký thay/ký thừa lệnh (TM./KT./TL./Q.) đã được
+# nhận sẵn, không cần khai lại.
+chuc_danh_ky:
+  - GIÁM ĐỐC
+  - TỔNG GIÁM ĐỐC
+  - PHÓ GIÁM ĐỐC
+  - PHÓ TỔNG GIÁM ĐỐC
+  - CHÁNH VĂN PHÒNG
+  - PHÓ CHÁNH VĂN PHÒNG
+  - CHỈ HUY TRƯỞNG
+  - CHÍNH TRỊ VIÊN
+  - HIỆU TRƯỞNG
+  - CHỦ TỊCH
+  - CHỦ NHIỆM
+
+# Danh sách CHUNG cho mọi loại văn bản hành chính. Từng loại ở `document_types`
+# bên dưới chỉ ghi đè phần khác biệt của mình.
 required_components:
   - id: quoc_hieu
     label: "Quốc hiệu"
@@ -109,3 +143,84 @@ required_components:
   - id: chu_ky
     label: "Quyền hạn, chức vụ người ký"
     severity: error
+
+# --------------------------------------------------------------------------- #
+# Tiêu chí riêng theo loại văn bản
+#
+# Không phải văn bản nào cũng là công văn: quyết định không có dòng "V/v", biên
+# bản thường không đánh số ký hiệu, còn công văn là loại DUY NHẤT không ghi tên
+# loại - đòi đủ mọi thành phần cho mọi loại thì loại nào cũng sai vài chỗ.
+#
+# `match`: cách nhận ra loại, hoàn toàn tất định (đọc từ chính văn bản, không hỏi
+#   LLM). `ten_loai` khớp theo dòng tên loại; `absent`/`present` xét sự có mặt của
+#   thành phần. Loại nào khớp trước trong danh sách này thì lấy loại đó.
+# `drop`: bỏ khỏi danh sách bắt buộc (loại này không có thành phần đó).
+# `require`: thêm vào danh sách bắt buộc, kèm nhãn và mức độ.
+#
+# CẢNH BÁO: giống các con số ở trên, phần này cần đối chiếu lại với Nghị định 30
+# trước khi dùng chính thức. Để ở YAML chính là để sửa mà không phải đụng code.
+# --------------------------------------------------------------------------- #
+document_types:
+  - id: quyet_dinh
+    label: "Quyết định"
+    match: {ten_loai: ["QUYẾT ĐỊNH"]}
+    # Quyết định ghi "Về việc ..." ngay dưới tên loại thay vì dạng "V/v" của công
+    # văn - phần dò thành phần đã hiểu cả hai, nên ở đây không phải bỏ qua gì.
+
+  - id: bao_cao
+    label: "Báo cáo"
+    match: {ten_loai: ["BÁO CÁO"]}
+
+  - id: to_trinh
+    label: "Tờ trình"
+    match: {ten_loai: ["TỜ TRÌNH"]}
+    require:
+      - id: kinh_gui
+        label: "Kính gửi"
+        severity: error
+
+  - id: thong_bao
+    label: "Thông báo"
+    match: {ten_loai: ["THÔNG BÁO"]}
+
+  - id: ke_hoach
+    label: "Kế hoạch"
+    match: {ten_loai: ["KẾ HOẠCH"]}
+
+  - id: chi_thi
+    label: "Chỉ thị"
+    match: {ten_loai: ["CHỈ THỊ"]}
+
+  - id: nghi_quyet
+    label: "Nghị quyết"
+    match: {ten_loai: ["NGHỊ QUYẾT"]}
+
+  - id: bien_ban
+    label: "Biên bản"
+    match: {ten_loai: ["BIÊN BẢN"]}
+    # Biên bản lập tại chỗ thường không vào sổ nên không có số ký hiệu, và người
+    # ký là các bên tham gia chứ không phải một chức danh ban hành.
+    drop: [so_ky_hieu, noi_nhan]
+
+  - id: giay_moi
+    label: "Giấy mời"
+    match: {ten_loai: ["GIẤY MỜI"]}
+    drop: [noi_nhan]
+    require:
+      - id: kinh_gui
+        label: "Kính gửi"
+        severity: error
+
+  - id: cong_van
+    label: "Công văn"
+    # Đặt cuối cùng vì đây là loại "còn lại". Theo NĐ 30 công văn KHÔNG ghi tên
+    # loại, nên chuỗi rỗng ở dưới nghĩa là "không có dòng tên loại"; thực tế vẫn
+    # gặp bản ghi hẳn chữ "CÔNG VĂN" nên nhận cả hai.
+    match:
+      ten_loai: ["CÔNG VĂN", ""]
+      any_of: [kinh_gui, trich_yeu]
+    drop: [ten_loai]
+    require:
+      - id: kinh_gui
+        label: "Kính gửi"
+        severity: error

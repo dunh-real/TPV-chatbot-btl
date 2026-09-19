@@ -47,6 +47,16 @@ class FakeLLM:
             raise LLMError("vLLM không phản hồi")
         return self.answer
 
+    async def stream_chat(self, messages, **kwargs):
+        """`generate_node` sinh chữ theo mảnh; cắt đôi để lộ lỗi nối mảnh nếu có."""
+        self.calls.append(messages)
+        if self.fail:
+            raise LLMError("vLLM không phản hồi")
+        giua = max(1, len(self.answer) // 2)
+        for mieng in (self.answer[:giua], self.answer[giua:]):
+            if mieng:
+                yield mieng
+
 
 # ------------------------------------------------------------ rewrite ----- #
 async def test_rewrite_giai_dai_tu_va_sinh_bien_the(monkeypatch):
@@ -156,3 +166,59 @@ async def test_llm_hong_thi_bao_loi_co_kiem_soat(monkeypatch):
 def test_dinh_tuyen_sang_no_context_khi_khong_co_chunk():
     assert graph_mod.route_after_retrieve({"chunks": []}) == "no_context"
     assert graph_mod.route_after_retrieve({"chunks": [chunk("p1", "x")]}) == "build_context"
+
+
+# --------------------------------------------------------- no_context ----- #
+# Không truy hồi được gì phần lớn là chào hỏi chứ không phải tra cứu hụt, nên
+# nhánh này được đối đáp bình thường - nhưng đúng một bước nữa là bịa, nên ranh
+# giới "không có nguồn thì không có nội dung nghiệp vụ" phải giữ bằng test.
+async def test_no_context_doi_dap_binh_thuong_thay_vi_cau_cung(monkeypatch):
+    llm = FakeLLM(answer="Chào bạn, tôi có thể giúp gì?")
+    monkeypatch.setattr(qa_mod, "get_llm", lambda: llm)
+
+    out = await qa_mod.no_context_node({"question": "Xin chào", "history": []})
+
+    assert out["answer"] == "Chào bạn, tôi có thể giúp gì?"
+    assert out["citations"] == [] and out["used_citations"] == []
+
+
+async def test_no_context_khong_kem_nguon_va_nhac_model_dung_bia(monkeypatch):
+    llm = FakeLLM(answer="ok")
+    monkeypatch.setattr(qa_mod, "get_llm", lambda: llm)
+
+    await qa_mod.no_context_node({"question": "Thuế suất VAT bao nhiêu?", "history": []})
+
+    system = llm.calls[0][0]["content"]
+    assert "không trả lời nội dung nghiệp vụ bằng kiến thức sẵn có" in system.lower()
+
+
+async def test_no_context_giu_mach_hoi_thoai():
+    messages = qa_mod.build_no_context_messages({
+        "question": "Bạn còn nhớ tên tôi không?",
+        "history": [{"role": "user", "content": "Tôi là Tiến Anh"},
+                    {"role": "assistant", "content": "Chào Tiến Anh"}],
+    })
+
+    assert [m["role"] for m in messages] == ["system", "user", "assistant", "user"]
+    assert messages[-1]["content"] == "Bạn còn nhớ tên tôi không?"
+
+
+async def test_no_context_llm_hong_thi_lui_ve_cau_an_toan(monkeypatch):
+    monkeypatch.setattr(qa_mod, "get_llm", lambda: FakeLLM(fail=True))
+    out = await qa_mod.no_context_node({"question": "Xin chào", "history": []})
+    assert out["answer"] == NO_CONTEXT_ANSWER
+
+
+async def test_no_context_truy_hoi_hong_thi_noi_that_khong_tan_gau(monkeypatch):
+    """Qdrant chết mà vẫn chào hỏi vui vẻ là giấu sự cố: người dùng tưởng kho rỗng."""
+    llm = FakeLLM(answer="Chào bạn!")
+    monkeypatch.setattr(qa_mod, "get_llm", lambda: llm)
+
+    out = await qa_mod.no_context_node({
+        "question": "Xin chào", "history": [],
+        "error": "Không truy vấn được kho tài liệu: connection refused",
+    })
+
+    assert "connection refused" in out["answer"]
+    assert llm.calls == []
+    assert out["trace"]["retrieval_failed"] is True

@@ -116,6 +116,10 @@ class Chunker:
         self._count = token_counter or _default_token_counter()
 
     # ---------------------------------------------------------------- API -- #
+    def count_tokens(self, text: str) -> int:
+        """Số token theo đúng tokenizer của embedding model."""
+        return self._count(text)
+
     def split(self, text: str, base_metadata: dict[str, object] | None = None) -> list[Chunk]:
         text = isolate_tables(self._normalize(text))
         if not text:

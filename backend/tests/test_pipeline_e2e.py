@@ -183,9 +183,11 @@ async def test_workflow_day_du_tra_loi_kem_trich_dan(retriever, monkeypatch):
             return {"standalone_query": "Hoá đơn điện tử có bắt buộc chữ ký số không?",
                     "variants": ["quy định chữ ký số trên hoá đơn điện tử"]}
 
-        async def chat(self, messages, **kwargs):
+        async def stream_chat(self, messages, **kwargs):
+            """`generate_node` sinh theo mảnh - câu trả lời phải ghép lại đúng."""
             assert "NGỮ CẢNH" in messages[-1]["content"]
-            return "Có. Hoá đơn điện tử phải có chữ ký số của người bán [1]."
+            for mieng in ("Có. Hoá đơn điện tử phải có ", "chữ ký số của người bán [1]."):
+                yield mieng
 
     cache = CacheService()
     cache._degraded = True
@@ -209,12 +211,22 @@ async def test_workflow_day_du_tra_loi_kem_trich_dan(retriever, monkeypatch):
 
 
 async def test_workflow_tra_loi_an_toan_khi_ngoai_pham_vi(retriever, monkeypatch):
+    """Ngoài phạm vi kho tài liệu -> vẫn đối đáp, nhưng KHÔNG có ngữ cảnh để bịa.
+
+    Nhánh này có gọi LLM (câu xã giao và câu hỏi về khả năng hệ thống cũng rơi
+    vào đây), nên điều phải giữ không phải là "đừng gọi model" mà là "đừng đưa
+    cho model đoạn tài liệu nào" - không ngữ cảnh thì không có gì để trích dẫn
+    sai, và câu trả lời không được mang trích dẫn nào.
+    """
+    da_goi: list[list[dict]] = []
+
     class FakeLLM:
         async def chat_json(self, messages, **kwargs):
             return {"standalone_query": "Giá vàng SJC hôm nay?", "variants": []}
 
         async def chat(self, messages, **kwargs):
-            raise AssertionError("Không được gọi LLM khi không có ngữ cảnh")
+            da_goi.append(messages)
+            return "Tôi không tìm thấy thông tin này trong kho tài liệu."
 
     cache = CacheService()
     cache._degraded = True
@@ -229,6 +241,9 @@ async def test_workflow_tra_loi_an_toan_khi_ngoai_pham_vi(retriever, monkeypatch
         "conversation_id": "test2", "history": [], "trace": {},
     })
 
+    assert da_goi, "Nhánh no_context phải đối đáp được, không im lặng"
+    assert all("NGỮ CẢNH" not in m["content"] for m in da_goi[0]), \
+        "Không có ngữ cảnh thì không được đưa đoạn tài liệu nào cho model"
     assert "không tìm thấy thông tin" in result["answer"].lower()
     assert result["used_citations"] == []
     assert result["trace"]["no_context"] is True

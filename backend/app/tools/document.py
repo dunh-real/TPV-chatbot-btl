@@ -23,8 +23,8 @@ from app.documents.docx_builder import (
     RenderedTable,
     build_docx,
 )
-from app.db.repository import PhongBanRepository
-from app.db.session import session_scope
+from app.db.erp_repository import ErpDonViRepository
+from app.db.erp_session import erp_session_scope
 from app.services import storage
 from app.tools.base import ToolError
 from app.tools.templates import get_template
@@ -62,8 +62,8 @@ async def analyze_document(file_id: str, noi_gui: str = "") -> dict[str, Any]:
     # chứ không làm hỏng cả việc soát văn bản.
     departments: list[dict[str, str]] = []
     try:
-        async with session_scope() as session:
-            departments = await PhongBanRepository(session).catalog()
+        async with erp_session_scope() as session:
+            departments = await ErpDonViRepository(session).catalog()
     except Exception as exc:  # noqa: BLE001
         logger.warning("Không đọc được danh mục phòng ban: %s", exc)
 

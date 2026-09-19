@@ -41,11 +41,54 @@ class RoutingInfo(BaseModel):
     source: str = Field(default="", description="llm | keyword | rule")
 
 
+class PlanStepModel(BaseModel):
+    """Một bước trong kế hoạch, trước khi chạy."""
+
+    id: str = ""
+    intent: str = Field(default="", description="qa | document | draft | report | presentation | agent")
+    request: str = Field(default="", description="Yêu cầu con, tự đứng một mình được")
+    depends_on: list[str] = Field(
+        default_factory=list,
+        description="Id các bước phải xong trước; rỗng nghĩa là chạy được song song",
+    )
+    reason: str = ""
+
+
+class PlanModel(BaseModel):
+    steps: list[PlanStepModel] = Field(default_factory=list)
+    confidence: float = 0.0
+    clarify: str = ""
+    reason: str = ""
+    source: str = Field(default="", description="llm | router | rule")
+
+
+class StepResultModel(BaseModel):
+    """Một bước sau khi chạy - đủ để giao diện hiện tiến trình và lý do thử lại."""
+
+    id: str = ""
+    intent: str = Field(default="", description="Nghiệp vụ đã thật sự chạy")
+    planned_intent: str = Field(default="", description="Nghiệp vụ kế hoạch định chạy")
+    request: str = ""
+    answer: str = ""
+    attempts: int = 1
+    retried_as: str = Field(
+        default="", description="Nghiệp vụ dùng cho lần thử lại; rỗng nếu chạy một lần là xong"
+    )
+    empty: bool = Field(default=False, description="Chạy xong nhưng không ra kết quả dùng được")
+    error: str = ""
+
+
 class AgentResponse(BaseModel):
     answer: str
     conversation_id: str
-    intent: str = ""
+    intent: str = Field(default="", description="Nghiệp vụ của bước chính (bước cuối)")
     routing: RoutingInfo = Field(default_factory=RoutingInfo)
+    plan: PlanModel = Field(
+        default_factory=PlanModel, description="Kế hoạch agent đã lập cho yêu cầu này"
+    )
+    steps: list[StepResultModel] = Field(
+        default_factory=list, description="Kết quả từng bước, theo thứ tự của kế hoạch"
+    )
     citations: list[CitationModel] = Field(
         default_factory=list, description="Nguồn trích dẫn của nhánh hỏi đáp"
     )

@@ -14,8 +14,11 @@ import re
 import time
 from typing import Any
 
+from app.agents import progress
+from app.services import errors
 from app.agents.prompts import (
     NO_CONTEXT_ANSWER,
+    NO_CONTEXT_SYSTEM,
     QA_SYSTEM,
     QA_USER,
     QUERY_REWRITE_SYSTEM,
@@ -116,7 +119,7 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
         )
     except Exception as exc:  # noqa: BLE001 - Qdrant chết thì trả lời có kiểm soát
         logger.exception("Truy hồi thất bại")
-        return {"chunks": [], "error": f"Không truy vấn được kho tài liệu: {exc}"}
+        return {"chunks": [], "error": errors.friendly(exc)}
 
     trace = {
         "queries": result.queries,
@@ -168,6 +171,7 @@ def build_context(chunks: list[RetrievedChunk], max_chars: int) -> tuple[str, li
                 page=chunk.payload.get("page"),
                 snippet=_snippet(text),
                 score=round(chunk.rerank_score, 4),
+                matched_by=getattr(chunk, "matched_by", "rerank"),
             )
         )
 
@@ -227,11 +231,18 @@ async def generate_node(state: QAState) -> dict[str, Any]:
 
     started = time.perf_counter()
     try:
-        answer = await get_llm().chat(build_generation_messages(state))
+        # Stream để agent tổng đẩy được từng mảnh ra màn hình. Không ai nghe thì
+        # `progress.emit` là lệnh rỗng và vòng lặp này chỉ gom chuỗi - đúng bằng
+        # công một lời gọi `chat()` như trước.
+        pieces: list[str] = []
+        async for piece in get_llm().stream_chat(build_generation_messages(state)):
+            pieces.append(piece)
+            progress.emit("answer_delta", text=piece)
+        answer = "".join(pieces).strip()
     except LLMError as exc:
         logger.exception("Sinh câu trả lời thất bại")
         return {"answer": "Hệ thống chưa kết nối được mô hình ngôn ngữ, vui lòng thử lại.",
-                "used_citations": [], "error": str(exc)}
+                "used_citations": [], "error": errors.friendly(exc)}
 
     citations = state.get("citations", [])
     return {
@@ -241,10 +252,51 @@ async def generate_node(state: QAState) -> dict[str, Any]:
     }
 
 
+# Câu xã giao thì không cần suy luận, bật lên chỉ tốn vài giây chờ vô ích.
+NO_CONTEXT_LLM_ARGS: dict[str, Any] = {"max_tokens": 400, "thinking": False}
+
+
+def build_no_context_messages(state: QAState) -> list[dict[str, str]]:
+    """Messages cho nhánh không có ngữ cảnh; dùng chung thường và streaming."""
+    messages: list[dict[str, str]] = [{"role": "system", "content": NO_CONTEXT_SYSTEM}]
+    for turn in state.get("history", [])[-4:]:
+        role = turn.get("role")
+        if role in ("user", "assistant") and turn.get("content"):
+            messages.append({"role": role, "content": turn["content"]})
+    messages.append({"role": "user", "content": state["question"]})
+    return messages
+
+
 async def no_context_node(state: QAState) -> dict[str, Any]:
-    """Nhánh khi không truy hồi được gì: trả lời an toàn thay vì để LLM bịa."""
+    """Nhánh khi không truy hồi được gì.
+
+    Vẫn không cho LLM bịa nội dung nghiệp vụ, nhưng để nó đối đáp bình thường:
+    chào hỏi và câu hỏi về khả năng hệ thống cũng rơi vào đây, mà đáp lại bằng
+    "không tìm thấy trong tài liệu" thì người dùng tưởng hệ thống hỏng.
+
+    Suy luận tắt: đây là câu xã giao, bật lên chỉ tốn vài giây chờ.
+    """
+    # Truy hồi HỎNG khác hẳn truy hồi KHÔNG RA GÌ: để model đối đáp vui vẻ lúc
+    # Qdrant chết là giấu mất sự cố, người dùng tưởng kho rỗng.
+    if (failure := state.get("error")):
+        return {
+            "answer": f"Tôi chưa tra cứu được vì kho tài liệu đang không truy vấn được ({failure}). "
+                      "Vui lòng thử lại sau hoặc báo quản trị hệ thống.",
+            "citations": [],
+            "used_citations": [],
+            "trace": {**state.get("trace", {}), "no_context": True, "retrieval_failed": True},
+        }
+
+    answer = ""
+    try:
+        answer = (await get_llm().chat(
+            build_no_context_messages(state), **NO_CONTEXT_LLM_ARGS)).strip()
+    except LLMError as exc:
+        logger.warning("Không sinh được câu đáp cho nhánh no_context: %s", exc)
+
+    # Model hỏng hoặc trả rỗng thì vẫn phải có câu trả lời an toàn.
     return {
-        "answer": NO_CONTEXT_ANSWER,
+        "answer": answer or NO_CONTEXT_ANSWER,
         "citations": [],
         "used_citations": [],
         "trace": {**state.get("trace", {}), "no_context": True},

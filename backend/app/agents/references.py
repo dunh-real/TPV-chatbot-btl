@@ -166,6 +166,23 @@ def renumber(texts: list[str], refs: list[Reference]) -> tuple[list[str], list[R
             [{**by_id[cu], "id": moi} for cu, moi in anh_xa.items()])
 
 
+def shift(texts: list[str], refs: list[Reference], offset: int) -> tuple[list[str], list[Reference]]:
+    """Dời cả marker lẫn id đi `offset` để ghép nhiều nguồn vào một câu trả lời.
+
+    Mỗi bước của kế hoạch tự đánh số nguồn từ [1]; nối hai bước lại thì người đọc
+    thấy hai cái [1] trỏ hai chỗ khác nhau. Dời dãy số của bước sau ra sau bước
+    trước là cách rẻ nhất để một câu trả lời ghép vẫn có đúng một dãy nguồn.
+    """
+    if offset <= 0 or not refs:
+        return list(texts), list(refs)
+
+    def _doi(match: re.Match[str]) -> str:
+        return f"[{int(match.group(1)) + offset}]"
+
+    return ([MARKER_RE.sub(_doi, text or "") for text in texts],
+            [{**ref, "id": ref["id"] + offset} for ref in refs if "id" in ref])
+
+
 def strip_markers(text: str) -> str:
     """Bỏ marker khỏi câu chữ sẽ đổ vào DOCX/PPTX - văn bản hành chính không có "[1]"."""
     return re.sub(r"\s*\[\d{1,2}\]", "", text or "").strip()

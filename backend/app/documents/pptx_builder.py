@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import io
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from pptx import Presentation
@@ -202,10 +202,7 @@ def _render_table(presentation, spec: SlideSpec, width_in: float):
     if spec.table is None:
         return slide
 
-    # Nhiều dòng quá thì cắt bớt và nói rõ, đừng để bảng tràn ra ngoài slide.
-    max_rows = 8
-    rows = spec.table.rows[:max_rows]
-    truncated = len(spec.table.rows) - len(rows)
+    rows = spec.table.rows
 
     shape = slide.shapes.add_table(
         len(rows) + 1, len(spec.table.columns),
@@ -220,12 +217,64 @@ def _render_table(presentation, spec: SlideSpec, width_in: float):
         for column_index, value in enumerate(row[: len(spec.table.columns)]):
             _set_text(table.cell(row_index, column_index).text_frame, str(value), size=12)
 
-    if truncated > 0:
-        box = slide.shapes.add_textbox(Inches(0.8), Inches(6.4),
+    if spec.caption:
+        box = slide.shapes.add_textbox(Inches(0.8), Inches(6.6),
                                        Inches(width_in - 1.6), Inches(0.4))
-        _set_text(box.text_frame, f"(còn {truncated} dòng, xem chi tiết trong báo cáo)",
-                  size=11, color=COLOR_MUTED)
+        _set_text(box.text_frame, spec.caption, size=11, color=COLOR_MUTED)
     return slide
+
+
+# Số dòng dữ liệu vừa một slide. Bảng bắt đầu ở 1.7", mỗi dòng 0.4", chừa chỗ cho
+# dòng chú thích ở 6.6" => (6.6 - 1.7) / 0.4 ≈ 12 dòng kể cả tiêu đề cột.
+MAX_TABLE_ROWS = 11
+
+
+def _paginate_tables(specs: list[SlideSpec]) -> list[SlideSpec]:
+    """Bảng dài thành nhiều slide thay vì bị cắt cụt.
+
+    Trước đây dôi ra bao nhiêu dòng thì bỏ bấy nhiêu, kèm một câu "xem chi tiết
+    trong báo cáo". Câu đó sai ở hai mặt: người xem slide không có bản báo cáo
+    trong tay, và một bộ slide tạo riêng lẻ thì không có bản báo cáo nào cả - 25
+    trong 33 trang bị biến mất mà chỗ duy nhất nhắc tới chúng lại trỏ vào hư không.
+
+    Bảng số liệu là thứ phải ĐỦ: thiếu một dòng là người đọc cộng ra số khác với
+    tổng ghi ở slide trước đó.
+    """
+    result: list[SlideSpec] = []
+    for spec in specs:
+        if spec.kind != "table" or spec.table is None:
+            result.append(spec)
+            continue
+
+        rows = spec.table.rows
+        pages = [rows[i:i + MAX_TABLE_ROWS] for i in range(0, len(rows), MAX_TABLE_ROWS)] or [[]]
+        for index, page in enumerate(pages, start=1):
+            # Đánh số trang ngay trên tiêu đề: người xem biết còn slide nữa, và
+            # biết mình đang ở đâu trong bảng.
+            title = spec.title if len(pages) == 1 else f"{spec.title} ({index}/{len(pages)})"
+            result.append(replace(
+                spec,
+                title=title,
+                table=SlideTable(columns=spec.table.columns, rows=page),
+                # Ghi chú người trình bày chỉ gắn vào slide đầu, không lặp lại.
+                notes=spec.notes if index == 1 else "",
+                caption=spec.caption if len(pages) == 1 else
+                        f"{spec.caption + ' - ' if spec.caption else ''}"
+                        f"dòng {(index - 1) * MAX_TABLE_ROWS + 1}-"
+                        f"{(index - 1) * MAX_TABLE_ROWS + len(page)}/{len(rows)}",
+            ))
+    return result
+
+
+def count_slides(specs: list[SlideSpec]) -> int:
+    """Số slide mà `build_pptx` sẽ thật sự dựng ra từ danh sách này.
+
+    Không bằng `len(specs)`: một bảng dài nở ra nhiều slide ở bước phân trang. Ai
+    muốn báo con số cho người dùng thì phải hỏi qua đây, nếu không giao diện sẽ
+    ghi "5 slide" trên một file 7 slide - và người dùng tin vào cái nhãn chứ không
+    mở file ra đếm.
+    """
+    return len([spec for spec in _paginate_tables(specs) if spec.kind in RENDERERS])
 
 
 RENDERERS = {
@@ -256,7 +305,7 @@ def build_pptx(deck: DeckSpec, output_path: str | Path,
 
     width_in = Emu(presentation.slide_width).inches
 
-    for spec in deck.slides:
+    for spec in _paginate_tables(deck.slides):
         renderer = RENDERERS.get(spec.kind)
         if renderer is None:
             logger.warning("Bỏ qua slide kiểu lạ: %r", spec.kind)

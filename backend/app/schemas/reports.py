@@ -46,7 +46,11 @@ class ValidationIssue(BaseModel):
 
 
 class ValidationModel(BaseModel):
-    status: str = Field(description="passed | warning | failed | skipped")
+    # Có mặc định vì workflow dừng sớm (thiếu đầu vào, lỗi tra cứu) trả về
+    # `validation: {}` - chưa chạy bước đối chiếu nào thì đúng là "skipped".
+    # Để trường này bắt buộc thì chính đường "thiếu đầu vào" lại nổ ra HTTP 500,
+    # và người dùng không bao giờ đọc được câu nhắc bổ sung thông tin.
+    status: str = Field(default="skipped", description="passed | warning | failed | skipped")
     issues: list[ValidationIssue] = Field(default_factory=list)
     checked_numbers: int = 0
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -133,60 +132,44 @@ def test_noi_dung_va_bang_vao_dung_cho(payload, tmp_path):
 
 
 # ------------------------------------------------ dữ liệu theo kỳ --------- #
-@pytest.fixture
-async def session_factory(tmp_path):
-    from app.db.models import Base, DonVi, KiemKeTrangBi, KyKiemKe
+async def test_moi_ky_ra_so_lieu_khac_nhau(erp_session):
+    """Cùng một đơn vị, hai kỳ khác nhau phải ra hai con số khác nhau."""
+    from app.db.erp_repository import ErpTaiNguyenRepository
 
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+    repo = ErpTaiNguyenRepository(erp_session)
+    thang_7 = await repo.get_tai_nguyen("00002", "2026-07")
+    thang_8 = await repo.get_tai_nguyen("00002", "2026-08")
 
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    async with factory() as session:
-        session.add(DonVi(ma_don_vi="DV02", ten_don_vi="Đơn vị 2", quan_so=65,
-                          quan_so_kiem_ke=date(2026, 9, 26)))
-        await session.flush()
-        for ky, quan_so, so_luong in [("2026-07", 64, 58), ("2026-08", 65, 60)]:
-            kiem_ke = KyKiemKe(ma_don_vi="DV02", ky=ky, quan_so=quan_so,
-                               ngay_kiem_ke=date(int(ky[:4]), int(ky[5:]), 28))
-            session.add(kiem_ke)
-            await session.flush()
-            session.add(KiemKeTrangBi(kiem_ke_id=kiem_ke.id, ten_trang_bi="Máy tính trạm",
-                                      so_luong=so_luong, tinh_trang="Tốt"))
-        await session.commit()
-    yield factory
-    await engine.dispose()
+    # Tháng 8 có thêm một người vào làm và một chiếc xe công vụ mới mua.
+    assert (thang_7.quan_so, thang_7.tong_trang_bi) == (2, 6)
+    assert (thang_8.quan_so, thang_8.tong_trang_bi) == (3, 8)
 
 
-async def test_moi_ky_ra_so_lieu_khac_nhau(session_factory):
-    from app.db.repository import KiemKeRepository
+async def test_ky_truoc_khi_co_du_lieu_ra_so_khong(erp_session):
+    """ERP suy số theo mốc thời gian nên kỳ quá khứ xa ra 0, không phải lỗi."""
+    from app.db.erp_repository import ErpTaiNguyenRepository
 
-    async with session_factory() as session:
-        repo = KiemKeRepository(session)
-        thang_7 = await repo.get_tai_nguyen_theo_ky("DV02", "2026-07")
-        thang_8 = await repo.get_tai_nguyen_theo_ky("DV02", "2026-08")
-
-    assert (thang_7.quan_so, thang_7.tong_trang_bi) == (64, 58)
-    assert (thang_8.quan_so, thang_8.tong_trang_bi) == (65, 60)
+    tai_nguyen = await ErpTaiNguyenRepository(erp_session).get_tai_nguyen("00002", "2025-01")
+    assert tai_nguyen.quan_so == 0
+    assert tai_nguyen.tong_trang_bi == 0
 
 
-async def test_ky_chua_kiem_ke_thi_lui_ve_ky_gan_nhat(session_factory):
-    from app.db.repository import KiemKeRepository
+async def test_ky_tuong_lai_lay_hien_trang(erp_session):
+    """Không còn cơ chế "lùi về kỳ gần nhất": mốc sau hiện tại chỉ là hiện trạng."""
+    from app.db.erp_repository import ErpTaiNguyenRepository
 
-    async with session_factory() as session:
-        repo = KiemKeRepository(session)
-        assert await repo.get_tai_nguyen_theo_ky("DV02", "2026-12") is None
-        assert await repo.get_ky_gan_nhat("DV02", "2026-12") == "2026-08"
+    repo = ErpTaiNguyenRepository(erp_session)
+    assert (await repo.get_tai_nguyen("00002", "2027-12")).tong_trang_bi == 8
 
 
 # -------------------------------------------------- toàn bộ workflow 3 ---- #
 @pytest.fixture
-async def draft_env(tmp_path, monkeypatch):
-    """CSDL tạm có đủ đơn vị, kỳ kiểm kê và mẫu báo cáo."""
+async def draft_env(tmp_path, monkeypatch, erp_session):
+    """Hai nguồn tách rời: số liệu đọc từ ERP, mẫu báo cáo ghi ở CSDL app."""
     import json
     from contextlib import asynccontextmanager
 
-    from app.db.models import Base, DonVi, KiemKeTrangBi, KyKiemKe, TemplateBaoCao
+    from app.db.models import Base, TemplateBaoCao
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
@@ -207,22 +190,12 @@ async def draft_env(tmp_path, monkeypatch):
     }
 
     async with factory() as session:
-        session.add_all([
-            DonVi(ma_don_vi="DV02", ten_don_vi="Đơn vị 2", quan_so=65,
-                  quan_so_kiem_ke=date(2026, 9, 26)),
-            TemplateBaoCao(ma_template="BC_TAINGUYEN",
-                           ten_bao_cao="Báo cáo quân số và trang thiết bị",
-                           loai_bao_cao="bao_cao_dinh_ky", mo_ta="Dùng khi báo cáo trang bị",
-                           file_path="data/templates/bao_cao_tai_nguyen.docx",
-                           truong_du_lieu=json.dumps(fields, ensure_ascii=False)),
-        ])
-        await session.flush()
-        kiem_ke = KyKiemKe(ma_don_vi="DV02", ky="2026-08", quan_so=65,
-                           ngay_kiem_ke=date(2026, 8, 30))
-        session.add(kiem_ke)
-        await session.flush()
-        session.add(KiemKeTrangBi(kiem_ke_id=kiem_ke.id, ten_trang_bi="Máy chủ",
-                                  so_luong=6, tinh_trang="Tốt"))
+        session.add(TemplateBaoCao(
+            ma_template="BC_TAINGUYEN",
+            ten_bao_cao="Báo cáo quân số và trang thiết bị",
+            loai_bao_cao="bao_cao_dinh_ky", mo_ta="Dùng khi báo cáo trang bị",
+            file_path="data/templates/bao_cao_tai_nguyen.docx",
+            truong_du_lieu=json.dumps(fields, ensure_ascii=False)))
         await session.commit()
 
     @asynccontextmanager
@@ -231,7 +204,12 @@ async def draft_env(tmp_path, monkeypatch):
             yield session
             await session.commit()
 
+    @asynccontextmanager
+    async def _erp_scope():
+        yield erp_session
+
     monkeypatch.setattr(dr, "session_scope", _scope)
+    monkeypatch.setattr(dr, "erp_session_scope", _erp_scope)
     monkeypatch.setattr("app.core.config.settings.output_dir", str(tmp_path), raising=False)
     monkeypatch.setattr(dr, "get_settings", lambda: _Settings(str(tmp_path)))
     yield tmp_path
@@ -270,11 +248,11 @@ class ScriptedLLM:
 async def test_soan_bao_cao_hoan_chinh(draft_env, monkeypatch):
     from app.agents.graph import run_draft_workflow
 
-    llm = ScriptedLLM("Quân số đơn vị là 65 người, kiểm kê ngày 30/8/2026.")
+    llm = ScriptedLLM("Quân số đơn vị là 3 người, kiểm kê ngày 31/8/2026.")
     monkeypatch.setattr(dr, "get_llm", lambda: llm)
 
     result = await run_draft_workflow("Soạn báo cáo tình hình trang bị tháng 8",
-                                      ma_don_vi="DV02", inputs={"nguoi_ky": "Trần Văn B"})
+                                      ma_don_vi="00002", inputs={"nguoi_ky": "Trần Văn B"})
 
     assert result["params"]["ky"] == "2026-08"
     assert result["assumptions"] == ["Không nêu năm, hiểu là năm 2026"]
@@ -299,7 +277,7 @@ async def test_so_bia_thi_viet_lai_roi_tu_choi_xuat_file(draft_env, monkeypatch)
     llm = ScriptedLLM("Quân số đơn vị là 70 người. Đề nghị cấp 15.000.000 đồng.")
     monkeypatch.setattr(dr, "get_llm", lambda: llm)
 
-    result = await run_draft_workflow("Báo cáo trang bị tháng 8/2026", ma_don_vi="DV02")
+    result = await run_draft_workflow("Báo cáo trang bị tháng 8/2026", ma_don_vi="00002")
 
     assert result["validation"]["status"] == "failed"
     assert result["retry_count"] == 2                 # đã cho viết lại
@@ -308,25 +286,28 @@ async def test_so_bia_thi_viet_lai_roi_tu_choi_xuat_file(draft_env, monkeypatch)
     assert numbers == {"70", "15.000.000"}
 
 
-async def test_ky_chua_co_so_lieu_thi_noi_ro(draft_env, monkeypatch):
+async def test_so_lieu_theo_ky_phai_kem_canh_bao_suy_nguoc(draft_env, monkeypatch):
+    """ERP không chốt số theo kỳ nên số kỳ cũ là hiện trạng suy ngược.
+
+    Người ký cần thấy cảnh báo này trong văn bản, vì cùng một báo cáo đọc lại sau
+    vài tháng có thể ra con số khác mà không ai sửa gì.
+    """
     from app.agents.graph import run_draft_workflow
 
-    llm = ScriptedLLM("Quân số đơn vị là 65 người.")
-    monkeypatch.setattr(dr, "get_llm", lambda: llm)
+    monkeypatch.setattr(dr, "get_llm", lambda: ScriptedLLM("Quân số đơn vị là 3 người."))
+    result = await run_draft_workflow("Báo cáo trang bị tháng 8/2026", ma_don_vi="00002")
 
-    result = await run_draft_workflow("Báo cáo trang bị tháng 12/2026", ma_don_vi="DV02")
-
-    # Tháng 12 chưa kiểm kê -> lùi về kỳ gần nhất và phải ghi chú, không im lặng.
-    assert any("chưa có số liệu" in note for note in result["data_notes"])
+    assert any("suy ngược" in note or "không phải số đã chốt" in note
+               for note in result["data_notes"])
 
 
 async def test_file_sinh_ra_qua_duoc_rule_engine(draft_env, monkeypatch):
     from app.agents.graph import run_draft_workflow
 
-    llm = ScriptedLLM("Quân số đơn vị là 65 người, kiểm kê ngày 30/8/2026.")
+    llm = ScriptedLLM("Quân số đơn vị là 3 người, kiểm kê ngày 31/8/2026.")
     monkeypatch.setattr(dr, "get_llm", lambda: llm)
 
-    result = await run_draft_workflow("Báo cáo trang bị tháng 8/2026", ma_don_vi="DV02",
+    result = await run_draft_workflow("Báo cáo trang bị tháng 8/2026", ma_don_vi="00002",
                                       inputs={"nguoi_ky": "Trần Văn B",
                                               "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ",
                                               "so_ky_hieu": "42/BC-DV02"})
@@ -341,7 +322,7 @@ class LichSuLLM(ScriptedLLM):
     """Như ScriptedLLM nhưng giữ lại prompt trích tham số để soi."""
 
     def __init__(self) -> None:
-        super().__init__("Quân số đơn vị là 65 người, kiểm kê ngày 30/8/2026.")
+        super().__init__("Quân số đơn vị là 3 người, kiểm kê ngày 31/8/2026.")
         self.params_prompt = ""
 
     async def chat_json(self, messages, **kwargs):
@@ -358,7 +339,7 @@ async def test_trich_tham_so_nhin_thay_luot_truoc(draft_env, monkeypatch):
 
     await run_draft_workflow(
         "soạn tiếp báo cáo trang bị, vẫn đơn vị đó",
-        ma_don_vi="DV02",
+        ma_don_vi="00002",
         history=[{"role": "user", "content": "tổng hợp quân số DV02 tháng 8/2026"},
                  {"role": "assistant", "content": "Đã tổng hợp báo cáo kỳ 2026-08."}],
     )
@@ -373,6 +354,6 @@ async def test_khong_truyen_lich_su_thi_prompt_bao_chua_co(draft_env, monkeypatc
     llm = LichSuLLM()
     monkeypatch.setattr(dr, "get_llm", lambda: llm)
 
-    await run_draft_workflow("Soạn báo cáo trang bị tháng 8/2026", ma_don_vi="DV02")
+    await run_draft_workflow("Soạn báo cáo trang bị tháng 8/2026", ma_don_vi="00002")
 
     assert "(chưa có)" in llm.params_prompt

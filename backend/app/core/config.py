@@ -111,6 +111,18 @@ class Settings(BaseSettings):
     weight_lexical: float = 0.8
     weight_bm25: float = 0.7
 
+    # Reranker chấm cả chunk, nên một chunk dài nói về việc khác mà có đúng một
+    # dòng chứa thứ người dùng hỏi thì điểm rất thấp và bị ngưỡng loại - dù nhánh
+    # từ khoá đã khớp nguyên văn. Van cứu: chunk chứa ĐỦ các từ khoá của câu hỏi
+    # thì không bị ngưỡng vứt, chỉ dùng khi không còn chunk nào qua được.
+    lexical_rescue_enabled: bool = True
+    lexical_rescue_top_k: int = 2
+
+    # Thẻ thông tin văn bản: tách phần thể thức (số ký hiệu, ngày ban hành, trích
+    # yếu, kính gửi, nơi nhận, người ký) thành một chunk riêng khi ingest, để câu
+    # hỏi nhắm vào chi tiết đó không phải chấm điểm trên cả một văn bản dài.
+    doc_card_enabled: bool = True
+
     # ------------------------------------------------------ Query rewrite ---
     query_rewrite_enabled: bool = True
     query_rewrite_max_variants: int = 3
@@ -128,13 +140,41 @@ class Settings(BaseSettings):
     cache_ttl_seconds: int = 3600
     history_max_turns: int = 20
 
-    # ------------------------------------------- CSDL nghiệp vụ (SQL Server) ---
-    # SQL Server:
-    #   mssql+aioodbc://user:pass@host:1433/tpv?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
-    # Demo/dev không cần server:
-    #   sqlite+aiosqlite:///./data/demo.db
+    # ------------------------------------------------- CSDL app tự quản lý ---
+    # Sổ văn bản, mẫu báo cáo: những thứ hệ thống này TỰ SINH ra và phải ghi lại.
+    # Không nằm trên ERP vì ERP chỉ cho đọc.
     database_url: str = "sqlite+aiosqlite:///./data/demo.db"
     database_echo: bool = False
+
+    # ------------------------------------------------- CSDL ERP (CHỈ ĐỌC) ---
+    # Nguồn sự thật về phòng ban / trang bị / nhân sự. Quyền được cấp là chỉ đọc,
+    # và `app.db.erp_session` chặn mọi câu lệnh ghi ngay tại engine - đừng gỡ chốt
+    # đó ra kể cả khi login tình cờ có quyền ghi.
+    #   mssql+aioodbc://user:pass@host:1433/db?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+    # Bỏ trống => tắt hẳn phần đọc ERP, các tool số liệu báo "chưa cấu hình".
+    erp_database_url: str = ""
+    erp_echo: bool = False
+    # ERP dựng trên ABP, dữ liệu chia theo tenant. Bỏ qua giá trị này thì báo cáo
+    # sẽ cộng gộp số liệu của mọi đơn vị thuê bao trên cùng một máy chủ.
+    #
+    # Đây chỉ là MẶC ĐỊNH, dùng khi request không nói mình thuộc tenant nào (script,
+    # tác vụ nền, test). Tenant thật của một request nằm ở `app.core.context`.
+    erp_tenant_id: int | None = None
+
+    # Cho phép client tự khai tenant/user qua header X-Tenant-Id / X-User-Id.
+    #
+    # Bật = bất kỳ ai gọi được API cũng đọc được số liệu của tenant bất kỳ. Chấp
+    # nhận được khi chạy trong mạng nội bộ và chưa có đăng nhập; PHẢI tắt ngay khi
+    # giao diện có auth, lúc đó chỉ token mới nói được danh tính.
+    trust_identity_headers: bool = True
+
+    # `Asm_Assets.Status` là enum định nghĩa trong mã nguồn ERP, không có bảng tra
+    # trong CSDL. Chưa khai báo thì hệ thống KHÔNG đoán: nó bỏ hai chỉ tiêu
+    # "tình trạng tốt"/"cần xử lý" khỏi báo cáo thay vì bịa ra con số.
+    #   ERP_ASSET_STATUS_LABELS=0=Đang dùng,1=Hỏng,2=Chờ thanh lý
+    #   ERP_ASSET_STATUS_GOOD=0
+    erp_asset_status_labels: str = ""
+    erp_asset_status_good: str = ""
 
     # ------------------------------------------------------------ Storage ---
     minio_endpoint: str = "localhost:9000"
@@ -150,6 +190,11 @@ class Settings(BaseSettings):
     # CORS_ORIGINS viết dạng "a,b" chứ không phải JSON. Tách chuỗi ở validator dưới.
     cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["*"])
 
+    # Chốt cửa khi mở ra Internet (Cloudflare tunnel...). Rỗng = không chặn ai,
+    # đúng cho chạy trong mạng nội bộ. Đặt một chuỗi bất kỳ thì mọi request phải
+    # kèm token, kể cả /health - xem `scripts/serve_public.sh`.
+    public_access_token: str = ""
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
@@ -160,6 +205,23 @@ class Settings(BaseSettings):
     @property
     def utility_model(self) -> str:
         return self.llm_utility_model or self.llm_model
+
+    @property
+    def asset_status_labels(self) -> dict[int, str]:
+        """"0=Đang dùng,1=Hỏng" -> {0: "Đang dùng", 1: "Hỏng"}."""
+        labels: dict[int, str] = {}
+        for item in self.erp_asset_status_labels.split(","):
+            code, _, name = item.partition("=")
+            if name.strip() and code.strip().lstrip("-").isdigit():
+                labels[int(code)] = name.strip()
+        return labels
+
+    @property
+    def asset_status_good(self) -> set[int]:
+        return {
+            int(code) for code in self.erp_asset_status_good.split(",")
+            if code.strip().lstrip("-").isdigit()
+        }
 
 
 @lru_cache

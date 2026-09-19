@@ -57,6 +57,9 @@ class RuleCheckResult:
     passed: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     reason: str = ""
+    rule_set: str = ""
+    document_type: str = ""
+    document_type_label: str = ""
 
     @property
     def error_count(self) -> int:
@@ -76,6 +79,37 @@ def _no_format_reason(source_format: str) -> str:
             "Chỉ kiểm tra được các thành phần thể thức, không kiểm tra được trình bày.")
 
 
+RULES_DIR = DEFAULT_RULES.parent
+
+
+def rule_set_path(name: str) -> Path:
+    """Tên bộ tiêu chí -> đường dẫn file, chặn mọi thứ trỏ ra ngoài thư mục rules."""
+    clean = Path(name or "").name.removesuffix(".yaml").removesuffix(".yml")
+    if not clean:
+        return DEFAULT_RULES
+    candidate = RULES_DIR / f"{clean}.yaml"
+    if not candidate.is_file():
+        raise FileNotFoundError(f"Không có bộ tiêu chí {clean!r} trong {RULES_DIR}")
+    return candidate
+
+
+def available_rule_sets() -> list[dict[str, str]]:
+    """Danh mục bộ tiêu chí đang có - để giao diện cho chọn, không hard-code."""
+    items: list[dict[str, str]] = []
+    for path in sorted(RULES_DIR.glob("*.yaml")):
+        try:
+            meta = (load_rules(str(path)) or {}).get("meta", {})
+        except Exception as exc:  # noqa: BLE001 - một file hỏng không làm mất cả danh mục
+            logger.warning("Bỏ qua bộ tiêu chí hỏng %s: %s", path.name, exc)
+            continue
+        items.append({
+            "id": path.stem,
+            "label": str(meta.get("label") or meta.get("name") or path.stem),
+            "version": str(meta.get("version", "")),
+        })
+    return items
+
+
 @lru_cache
 def load_rules(path: str | None = None) -> dict[str, Any]:
     rules_path = Path(path) if path else DEFAULT_RULES
@@ -84,18 +118,88 @@ def load_rules(path: str | None = None) -> dict[str, Any]:
 
 
 class RuleEngine:
-    def __init__(self, rules: dict[str, Any] | None = None) -> None:
+    def __init__(self, rules: dict[str, Any] | None = None, name: str = "") -> None:
         self.rules = rules if rules is not None else load_rules()
+        self.name = name or DEFAULT_RULES.stem
+
+    @property
+    def chu_ky_titles(self) -> list[str]:
+        """Chức danh người ký mà bộ tiêu chí này công nhận."""
+        return [str(t) for t in (self.rules.get("chuc_danh_ky") or []) if str(t).strip()]
+
+    # ------------------------------------------------- loại văn bản ------ #
+    def detect_type(self, components: DocumentComponents) -> dict[str, Any] | None:
+        """Loại văn bản, đọc tất định từ chính văn bản.
+
+        Đo được thì không hỏi LLM: tên loại nằm ngay dòng đầu, còn công văn nhận
+        ra bằng chỗ TRỐNG ở dòng đó. Nhờ vậy bước này chạy trước và độc lập với
+        nhánh phân loại bằng LLM ở workflow 2 - hai bên kiểm chéo nhau được.
+        """
+        ten_loai = (components.value_of("ten_loai") or "").strip().upper()
+        for spec in self.rules.get("document_types", []):
+            match = spec.get("match") or {}
+            wanted = [str(v).strip().upper() for v in (match.get("ten_loai") or [])]
+            # Chuỗi rỗng trong danh sách nghĩa là "văn bản không ghi tên loại" -
+            # công văn vừa gặp dạng có ghi vừa gặp dạng không.
+            if wanted and not any((w in ten_loai) if w else not ten_loai for w in wanted):
+                continue
+            if any(components.has(cid) for cid in (match.get("absent") or [])):
+                continue
+            if not all(components.has(cid) for cid in (match.get("present") or [])):
+                continue
+            any_of = match.get("any_of") or []
+            if any_of and not any(components.has(cid) for cid in any_of):
+                continue
+            return spec
+        return None
+
+    def _required_components(self, spec: dict[str, Any] | None) -> list[dict[str, Any]]:
+        """Danh sách chung, đã trừ đi phần loại này không có và cộng phần riêng."""
+        base = list(self.rules.get("required_components", []))
+        if not spec:
+            return base
+        dropped = set(spec.get("drop") or [])
+        merged = [c for c in base if c.get("id") not in dropped]
+        known = {c.get("id") for c in merged}
+        merged += [c for c in (spec.get("require") or []) if c.get("id") not in known]
+        return merged
+
+    def _not_applicable(self, components: DocumentComponents) -> str:
+        """Lý do không áp bộ tiêu chí này, rỗng nghĩa là áp được."""
+        gate = self.rules.get("applies_when")
+        if not gate:
+            return ""
+        markers = gate.get("markers") or []
+        hits = sum(1 for cid in markers if components.has(cid))
+        if hits >= int(gate.get("min_matches", 1)):
+            return ""
+        return str(gate.get("message") or "Tệp không thuộc phạm vi bộ tiêu chí này.")
 
     def check(
-        self, structure: DocumentStructure, components: DocumentComponents
+        self,
+        structure: DocumentStructure,
+        components: DocumentComponents,
+        *,
+        enforce_scope: bool = True,
     ) -> RuleCheckResult:
+        """Soát thể thức.
+
+        `enforce_scope=False`: soát dù tệp không có dấu hiệu văn bản hành chính -
+        dùng khi người dùng biết rõ mình đang làm gì (hoặc khi test đúng một luật).
+        """
         findings: list[RuleFinding] = []
         passed: list[str] = []
         skipped: list[str] = []
 
+        # Không phải văn bản hành chính thì dừng ngay: báo vài chục lỗi thể thức
+        # trên một bản ghi chú kỹ thuật vừa vô nghĩa vừa che mất lỗi thật.
+        if enforce_scope and (reason := self._not_applicable(components)):
+            return RuleCheckResult(status="skipped", reason=reason, rule_set=self.name)
+
+        type_spec = self.detect_type(components)
+
         # Thành phần bắt buộc chỉ cần text -> kiểm tra được với mọi nguồn, kể cả scan.
-        findings += self._check_components(components, passed)
+        findings += self._check_components(components, passed, type_spec)
 
         if not structure.has_format_info:
             return RuleCheckResult(
@@ -104,6 +208,9 @@ class RuleEngine:
                 passed=passed,
                 skipped=["format.font", "format.size_pt", "format.page_mm", "format.margin_mm"],
                 reason=_no_format_reason(structure.source_format),
+                rule_set=self.name,
+                document_type=str((type_spec or {}).get("id", "")),
+                document_type_label=str((type_spec or {}).get("label", "")),
             )
 
         format_rules = self.rules.get("format", {})
@@ -122,6 +229,9 @@ class RuleEngine:
         return RuleCheckResult(
             status="done" if not skipped else "partial",
             findings=findings, passed=passed, skipped=skipped,
+            rule_set=self.name,
+            document_type=str((type_spec or {}).get("id", "")),
+            document_type_label=str((type_spec or {}).get("label", "")),
         )
 
     # ------------------------------------------------------------- font --- #
@@ -399,9 +509,10 @@ class RuleEngine:
         return findings
 
     # ------------------------------------------- thành phần bắt buộc ------ #
-    def _check_components(self, components: DocumentComponents, passed) -> list[RuleFinding]:
+    def _check_components(self, components: DocumentComponents, passed,
+                          type_spec: dict[str, Any] | None = None) -> list[RuleFinding]:
         findings: list[RuleFinding] = []
-        for spec in self.rules.get("required_components", []):
+        for spec in self._required_components(type_spec):
             component_id = spec["id"]
             label = spec.get("label", component_id)
             severity = spec.get("severity", "warning")
@@ -444,11 +555,16 @@ class RuleEngine:
         return None
 
 
-_engine: RuleEngine | None = None
+_engines: dict[str, RuleEngine] = {}
 
 
-def get_rule_engine() -> RuleEngine:
-    global _engine
-    if _engine is None:
-        _engine = RuleEngine()
-    return _engine
+def get_rule_engine(rule_set: str = "") -> RuleEngine:
+    """Engine theo tên bộ tiêu chí; rỗng = bộ mặc định.
+
+    Giữ một engine cho mỗi bộ vì `load_rules` đã cache, dựng lại chỉ tốn công.
+    """
+    key = rule_set or DEFAULT_RULES.stem
+    if key not in _engines:
+        path = rule_set_path(rule_set)
+        _engines[key] = RuleEngine(rules=load_rules(str(path)), name=path.stem)
+    return _engines[key]

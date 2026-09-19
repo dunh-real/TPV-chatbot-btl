@@ -45,7 +45,12 @@ def cong_van(tmp_path):
 
 @pytest.fixture
 def docx_sai_the_thuc(tmp_path):
-    """DOCX cố tình sai: phông Arial, cỡ 11, thiếu hầu hết thành phần thể thức."""
+    """DOCX cố tình sai: phông Arial, cỡ 11, thiếu hầu hết thành phần thể thức.
+
+    Vẫn giữ quốc hiệu + tiêu ngữ vì đây phải là một văn bản hành chính THIẾU SÓT.
+    Không có dấu hiệu nào thì rule engine coi tệp nằm ngoài phạm vi và bỏ qua -
+    đúng chủ ý, nhưng không phải thứ test này muốn đo.
+    """
     docx = pytest.importorskip("docx")
     from docx.shared import Pt
 
@@ -54,6 +59,9 @@ def docx_sai_the_thuc(tmp_path):
     p1 = document.add_paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")
     p1.runs[0].font.name = "Times New Roman"
     p1.runs[0].font.size = Pt(13)
+    p_tieu_ngu = document.add_paragraph("Độc lập - Tự do - Hạnh phúc")
+    p_tieu_ngu.runs[0].font.name = "Times New Roman"
+    p_tieu_ngu.runs[0].font.size = Pt(13)
     p2 = document.add_paragraph("Đoạn nội dung đặt sai phông và cỡ chữ.")
     p2.runs[0].font.name = "Arial"
     p2.runs[0].font.size = Pt(11)
@@ -67,8 +75,9 @@ def test_parse_docx_lay_duoc_phong_co_chu_va_le(docx_sai_the_thuc):
 
     assert structure.source_format == "docx"
     assert structure.has_format_info is True
-    assert structure.blocks[1].font == "Arial"
-    assert structure.blocks[1].size_pt == 11.0
+    # blocks[0] quốc hiệu, [1] tiêu ngữ, [2] đoạn nội dung đặt sai
+    assert structure.blocks[2].font == "Arial"
+    assert structure.blocks[2].size_pt == 11.0
     assert structure.geometry is not None and structure.geometry.measured is False
 
 
@@ -120,7 +129,7 @@ def test_bat_dung_loi_phong_va_co_chu(docx_sai_the_thuc):
 
     font_findings = [f for f in result.findings if f.rule == "format.font"]
     assert len(font_findings) == 1
-    assert font_findings[0].actual == "Arial" and font_findings[0].block_id == "P01"
+    assert font_findings[0].actual == "Arial" and font_findings[0].block_id == "P02"
 
     size_findings = [f for f in result.findings if f.rule == "format.size_pt"]
     assert any(f.actual == "11pt" for f in size_findings)
@@ -141,7 +150,7 @@ def test_van_ban_scan_thi_bo_qua_the_thuc_chu_khong_bao_dat():
         blocks=[Block(id="P00", text="CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")],
         source_format="pdf_scan",
     )
-    result = RuleEngine().check(scan, detect_components(scan))
+    result = RuleEngine().check(scan, detect_components(scan), enforce_scope=False)
 
     assert result.status == "partial"            # KHÔNG phải "done"
     assert "format.font" in result.skipped
@@ -156,7 +165,7 @@ def test_le_pdf_chi_kiem_tra_phia_dang_tin():
                               left_mm=32, right_mm=90, measured=True),
         source_format="pdf_digital",
     )
-    result = RuleEngine().check(structure, detect_components(structure))
+    result = RuleEngine().check(structure, detect_components(structure), enforce_scope=False)
     margin_rules = {f.rule for f in result.findings if "margin" in f.rule}
 
     assert margin_rules == set()                              # top/left đều hợp lệ
@@ -168,7 +177,7 @@ def test_so_ky_hieu_sai_dang_bi_bao(tmp_path):
     path = tmp_path / "vb.md"
     path.write_text("Số: 105\n\nNội dung.", encoding="utf-8")
     structure = parse_document(path)
-    result = RuleEngine().check(structure, detect_components(structure))
+    result = RuleEngine().check(structure, detect_components(structure), enforce_scope=False)
 
     assert any(f.rule == "required.so_ky_hieu.format" for f in result.findings)
 
@@ -423,7 +432,7 @@ def _docx(tmp_path, name="the_thuc.docx", *, align=None, line=1.15,
 
 def _check(path):
     structure = parse_document(path)
-    return structure, RuleEngine().check(structure, detect_components(structure))
+    return structure, RuleEngine().check(structure, detect_components(structure), enforce_scope=False)
 
 
 def test_noi_dung_canh_deu_thi_dat(tmp_path):
@@ -534,7 +543,7 @@ def test_le_lech_vai_phan_nghin_mm_khong_bi_bao(tmp_path):
         source_format="docx",
     )
 
-    result = RuleEngine().check(structure, detect_components(structure))
+    result = RuleEngine().check(structure, detect_components(structure), enforce_scope=False)
 
     assert not [f for f in result.findings if f.rule.startswith("format.margin_mm")]
     assert "format.margin_mm" in result.passed
@@ -549,7 +558,106 @@ def test_le_sai_that_van_bi_bao(tmp_path):
         source_format="docx",
     )
 
-    result = RuleEngine().check(structure, detect_components(structure))
+    result = RuleEngine().check(structure, detect_components(structure), enforce_scope=False)
     sai = [f for f in result.findings if f.rule == "format.margin_mm.right"]
 
     assert sai and sai[0].actual == "10.0mm"
+
+
+# ---------------------------------------- phạm vi & loại văn bản ---------- #
+# Bộ tiêu chí NĐ 30 chỉ đúng với văn bản hành chính. Đem nó soi một tài liệu kỹ
+# thuật thì ra vài chục lỗi đúng về máy móc mà vô nghĩa với người đọc - tệ hơn là
+# lỗi thật chìm nghỉm trong đống đó.
+def _md(tmp_path, text: str, name: str = "vb.md"):
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    structure = parse_document(path)
+    return structure, detect_components(structure)
+
+
+def test_tep_khong_phai_van_ban_hanh_chinh_thi_khong_ap_bo_tieu_chi(tmp_path):
+    structure, comps = _md(tmp_path, "# Tài liệu đặc tả\n\nHệ thống gồm ba thành phần.\n")
+    result = RuleEngine().check(structure, comps)
+
+    assert result.status == "skipped"
+    assert result.findings == []
+    assert "văn bản hành chính" in result.reason
+
+
+def test_van_ban_hanh_chinh_thieu_sot_thi_van_soat(tmp_path):
+    """Đủ dấu hiệu là văn bản hành chính thì thiếu gì báo nấy, không bỏ qua."""
+    structure, comps = _md(tmp_path, CONG_VAN)
+    result = RuleEngine().check(structure, comps)
+
+    assert result.status != "skipped"
+    assert result.document_type == "cong_van"
+
+
+def test_ep_soat_khi_nguoi_dung_biet_minh_lam_gi(tmp_path):
+    structure, comps = _md(tmp_path, "# Tài liệu đặc tả\n\nNội dung.\n")
+    result = RuleEngine().check(structure, comps, enforce_scope=False)
+
+    assert result.status != "skipped"
+    assert any(f.rule.startswith("required.") for f in result.findings)
+
+
+def test_cong_van_khong_bi_doi_ten_loai(tmp_path):
+    """Công văn là loại DUY NHẤT không ghi tên loại - đòi nó là báo lỗi oan."""
+    structure, comps = _md(tmp_path, CONG_VAN)
+    result = RuleEngine().check(structure, comps)
+
+    assert "required.ten_loai" not in {f.rule for f in result.findings}
+
+
+def test_bao_cao_duoc_doi_ten_loai_va_nhan_trich_yeu_khong_co_vv(tmp_path):
+    bao_cao = CONG_VAN.replace("CÔNG VĂN\nV/v tổng hợp, báo cáo tình trạng trang thiết bị",
+                               "BÁO CÁO\nVề tình hình trang thiết bị quý III")
+    structure, comps = _md(tmp_path, bao_cao)
+    result = RuleEngine().check(structure, comps)
+
+    assert result.document_type == "bao_cao"
+    # Trích yếu của văn bản có tên loại nằm ngay dưới tên loại, mở đầu bằng "Về".
+    assert comps.has("trich_yeu")
+    assert "required.trich_yeu" not in {f.rule for f in result.findings}
+
+
+def test_bien_ban_khong_bi_doi_so_ky_hieu(tmp_path):
+    bien_ban = (CONG_VAN.replace("Số: 105/CV-BGĐ\n\n", "")
+                        .replace("CÔNG VĂN\nV/v tổng hợp, báo cáo tình trạng trang thiết bị",
+                                 "BIÊN BẢN\nVề việc bàn giao trang thiết bị"))
+    structure, comps = _md(tmp_path, bien_ban)
+    result = RuleEngine().check(structure, comps)
+
+    assert result.document_type == "bien_ban"
+    assert "required.so_ky_hieu" not in {f.rule for f in result.findings}
+
+
+def test_chuc_danh_ky_lay_tu_cau_hinh_chu_khong_chon_trong_code(tmp_path):
+    """Cơ quan ký bằng chức danh lạ thì thêm vào YAML, không phải sửa regex."""
+    vb = CONG_VAN.replace("GIÁM ĐỐC", "TRƯỞNG BAN QUẢN LÝ DỰ ÁN SỐ 7")
+    path = tmp_path / "vb.md"
+    path.write_text(vb, encoding="utf-8")
+    structure = parse_document(path)
+
+    mac_dinh = detect_components(structure)
+    khai_them = detect_components(structure, chu_ky_titles=["TRƯỞNG BAN QUẢN LÝ DỰ ÁN SỐ 7"])
+
+    assert not mac_dinh.has("chu_ky")     # danh sách mặc định không có chức danh này
+    assert khai_them.has("chu_ky")
+
+
+def test_chu_ky_nam_trong_o_bang_van_do_duoc(tmp_path):
+    """Bố cục hai cột "Nơi nhận | chức danh" rất phổ biến; khối bảng gộp mọi ô
+    bằng " | " nên mẫu neo đầu dòng trượt hết nếu không quét từng ô."""
+    docx = pytest.importorskip("docx")
+    document = docx.Document()
+    document.add_paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")
+    document.add_paragraph("Số: 09/BC-KT")
+    table = document.add_table(rows=1, cols=2)
+    table.cell(0, 0).paragraphs[0].add_run("Nơi nhận:\n- Lưu: VT.")
+    table.cell(0, 1).paragraphs[0].add_run("TỔNG GIÁM ĐỐC")
+    path = tmp_path / "co_bang.docx"
+    document.save(path)
+
+    comps = detect_components(parse_document(path))
+    assert comps.has("chu_ky")

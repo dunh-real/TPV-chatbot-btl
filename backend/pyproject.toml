@@ -61,6 +61,10 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Lần chạy mặc định phải khép kín: không GPU, không CSDL ERP, không LLM.
+# Tầng live chạy riêng bằng `pytest -m live`.
+addopts = "-m 'not live'"
 markers = [
     "slow: cần nạp model lên GPU (embedding + reranker)",
+    "live: gọi LLM và CSDL ERP thật; chạy bằng `pytest -m live`",
 ]

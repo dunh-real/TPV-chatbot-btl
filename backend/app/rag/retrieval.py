@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Sequence
@@ -34,6 +35,28 @@ from app.rag.vectorstore import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Từ để hỏi và từ nối: có mặt trong mọi văn bản nên không nói lên điều gì về việc
+# chunk có chứa thứ người dùng cần hay không.
+_STOPWORDS = frozenset("""
+ai là gì nào của có không bao nhiêu thế vậy cho tôi được các những và hay hoặc
+một này đó về với trong khi ở tại thì mà bị do bởi đã sẽ đang hãy xin vui lòng
+như thế_nào đâu ra vào lên xuống rồi cũng còn nữa hơn rất quá
+gồm biết xem nêu kể hỏi giúp ạ nhé
+""".split())
+
+_WORD_RE = re.compile(r"[0-9A-Za-zÀ-ỹ][0-9A-Za-zÀ-ỹ./-]*")
+
+
+def content_terms(query: str) -> list[str]:
+    """Từ mang nội dung trong câu hỏi - bỏ từ để hỏi, giữ mã hiệu như 18/CV-BP."""
+    return [w for w in _WORD_RE.findall(query.lower())
+            if w not in _STOPWORDS and len(w) > 1]
+
+
+def _matches_all_terms(text: str, terms: Sequence[str]) -> bool:
+    lowered = text.lower()
+    return all(term in lowered for term in terms)
 
 
 @dataclass(slots=True)
@@ -68,6 +91,7 @@ class RetrievedChunk:
     rrf_score: float
     payload: dict[str, Any]
     branch_ranks: dict[str, int] = field(default_factory=dict)
+    matched_by: str = "rerank"   # rerank | keyword (được van cứu từ khoá giữ lại)
 
     @property
     def doc_id(self) -> str:
@@ -252,10 +276,16 @@ class HybridRetriever:
 
         documents = [h.rerank_text for h in fused]
         t0 = time.perf_counter()
-        ranked = await anyio.to_thread.run_sync(
-            lambda: get_reranker().rerank(query, documents, top_n=top_n or cfg.rerank_top_n)
+        # Lấy điểm của MỌI ứng viên rồi tự cắt ngưỡng ở đây: van cứu bên dưới cần
+        # biết điểm thật của chunk bị loại, chứ hiện 0.0 là nói dối người đọc.
+        scored = await anyio.to_thread.run_sync(
+            lambda: get_reranker().rerank(query, documents, top_n=len(documents),
+                                          score_threshold=0.0)
         )
         timings["rerank"] = (time.perf_counter() - t0) * 1000
+
+        limit = top_n or cfg.rerank_top_n
+        ranked = [r for r in scored if r.score >= cfg.rerank_score_threshold][:limit]
 
         chunks = [
             RetrievedChunk(
@@ -268,6 +298,29 @@ class HybridRetriever:
             )
             for r in ranked
         ]
+
+        # Chunk chứa NGUYÊN VĂN mọi từ khoá của câu hỏi mà vẫn bị ngưỡng loại:
+        # reranker chấm cả chunk, nên một đoạn dài nói việc khác mà chỉ có một
+        # dòng đúng ý thì luôn điểm thấp. Bỏ nó đi là nói "không có trong tài
+        # liệu" về một thứ có thật trong tài liệu.
+        #
+        # Lấp vào CHỖ CÒN TRỐNG chứ không chỉ cứu khi rỗng: chỉ cần một chunk
+        # yếu lọt qua ngưỡng là chunk khớp nguyên văn hết cửa, dù còn thừa chỗ.
+        if cfg.lexical_rescue_enabled and len(chunks) < limit:
+            taken = {c.point_id for c in chunks}
+            rescued = [
+                c for c in self._lexical_rescue(
+                    query, fused, cfg.lexical_rescue_top_k,
+                    scores={r.index: r.score for r in scored},
+                )
+                if c.point_id not in taken
+            ][: limit - len(chunks)]
+            if rescued:
+                chunks += rescued
+                timings["lexical_rescue"] = float(len(rescued))
+                logger.info("Van cứu từ khoá: thêm %d chunk khớp nguyên văn %r (đã có %d)",
+                            len(rescued), query, len(chunks) - len(rescued))
+
         logger.info(
             "Retrieval: %d biến thể, nhánh=%s, fused=%d, giữ lại=%d, %s",
             len(queries), branch_hits, len(fused), len(chunks),
@@ -275,6 +328,32 @@ class HybridRetriever:
         )
         return RetrievalResult(chunks=chunks, queries=queries, branch_hits=branch_hits,
                                fused_count=len(fused), timings_ms=timings)
+
+
+    @staticmethod
+    def _lexical_rescue(query: str, fused: list[FusedHit], limit: int,
+                        scores: dict[int, float] | None = None) -> list[RetrievedChunk]:
+        """Chunk chứa đủ mọi từ khoá của câu hỏi thì không để ngưỡng vứt đi.
+
+        Đòi ĐỦ mọi từ (không phải một vài từ) và ít nhất hai từ: một từ chung như
+        "báo cáo" mà cũng cứu thì chunk nào cũng lọt, van này thành vô dụng. Câu
+        hỏi về thứ thật sự không có trong kho vẫn trả về rỗng như cũ.
+        """
+        terms = content_terms(query)
+        if len(terms) < 2:
+            return []
+        scores = scores or {}
+        hits = [(i, h) for i, h in enumerate(fused) if _matches_all_terms(h.text, terms)]
+        # Còn lại vẫn xếp theo điểm reranker: nó thấp nhưng không phải vô nghĩa.
+        hits.sort(key=lambda pair: scores.get(pair[0], 0.0), reverse=True)
+        return [
+            RetrievedChunk(
+                point_id=h.point_id, text=h.text, rerank_score=scores.get(i, 0.0),
+                rrf_score=h.rrf_score, payload=h.payload,
+                branch_ranks=h.branch_ranks, matched_by="keyword",
+            )
+            for i, h in hits[:limit]
+        ]
 
 
 _retriever: HybridRetriever | None = None

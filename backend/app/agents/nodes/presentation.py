@@ -29,7 +29,7 @@ from app.agents.prompts import (
     PPT_OUTLINE_SYSTEM,
     PPT_OUTLINE_USER,
 )
-from app.agents.nodes.report import METRIC_LABELS
+from app.agents.nodes.report import METRIC_LABELS, _period_numbers
 from app.core.config import get_settings
 from app.documents.pptx_builder import (
     SLIDE_KINDS,
@@ -38,14 +38,42 @@ from app.documents.pptx_builder import (
     SlideSpec,
     SlideTable,
     build_pptx,
+    count_slides,
 )
 from app.documents.verify import check_numbers, collect_known_numbers
+from app.services import storage
 from app.services.llm import LLMError, get_llm
 
 logger = logging.getLogger(__name__)
 
 MAX_SLIDES = 8
 MAX_BULLETS = 4
+
+# `focus` quyết định slide được đọc phần số liệu nào, nên nó là ENUM chứ không
+# phải chú thích tự do. Model từng trả về cả câu ("Tổng quan nhanh về quân số,
+# trang thiết bị..."), và vì không chuỗi nào trong đó khớp, slide rơi về nhánh
+# mặc định: ô chỉ tiêu hiện quân số dưới tiêu đề nói về trang bị, còn slide kiến
+# nghị thì không nhìn thấy trang bị lẫn tình hình gửi báo cáo.
+FOCUS_KINDS = ("quan_so", "trang_bi", "bao_cao", "tong_hop")
+
+# Slide biểu đồ/bảng đã tự khai nói về cái gì qua khoá dữ liệu; suy ra `focus` từ
+# đó chắc chắn hơn là tin vào chữ model viết.
+FOCUS_BY_KEY = {
+    "personnel": "quan_so", "personnel_breakdown": "quan_so",
+    "equipment": "trang_bi", "equipment_breakdown": "trang_bi",
+}
+
+
+def _normalize_focus(raw: str, chart_key: Any, data_key: Any) -> str:
+    """Ép `focus` về đúng một giá trị dùng được. Không đoán được thì lấy "tong_hop".
+
+    "tong_hop" là mặc định an toàn vì nó mở ra TOÀN BỘ số liệu sẵn có: thà slide
+    được đọc thừa còn hơn bị giấu mất phần dữ liệu mà tiêu đề của nó đang nói tới.
+    """
+    focus = (raw or "").strip().lower()
+    if focus in FOCUS_KINDS:
+        return focus
+    return FOCUS_BY_KEY.get(chart_key or data_key or "", "tong_hop")
 
 
 def _period_label(params: dict[str, Any]) -> str:
@@ -58,16 +86,22 @@ def _available_data(data: dict[str, Any]) -> tuple[str, list[str], list[str]]:
     charts: list[str] = []
     tables: list[str] = []
 
+    # Chỉ chào bảng khi bảng đó CÓ DÒNG. Kỳ 7/2026 chẳng hạn: ERP chưa có trang bị
+    # nào nên breakdown rỗng - chào lên thì bộ slide mọc một slide bảng chỉ có mỗi
+    # dòng tiêu đề cột, không nói gì với ai. Chỉ tiêu "0 trang bị" thì vẫn giữ, đó
+    # là một kết luận thật về kỳ đó.
     if (personnel := data.get("personnel")):
         metrics = ", ".join(METRIC_LABELS.get(k, k) for k in personnel["metrics"])
         lines.append(f"- Quân số: {metrics} (có so sánh với kỳ trước)")
         charts.append("personnel")
-        tables.append("personnel_breakdown")
+        if personnel.get("breakdown"):
+            tables.append("personnel_breakdown")
     if (equipment := data.get("equipment")):
         metrics = ", ".join(METRIC_LABELS.get(k, k) for k in equipment["metrics"])
         lines.append(f"- Trang thiết bị: {metrics}")
         charts.append("equipment")
-        tables.append("equipment_breakdown")
+        if equipment.get("breakdown"):
+            tables.append("equipment_breakdown")
     if (reporting := data.get("reporting")):
         lines.append(f"- Tình hình gửi báo cáo: {reporting['units_reported']}"
                      f"/{reporting['units_total']} đơn vị đã gửi")
@@ -97,6 +131,57 @@ def _fallback_outline(data: dict[str, Any], params: dict[str, Any]) -> dict[str,
                        "chart_key": "equipment", "focus": "trang_bi"})
     slides.append({"kind": "bullet", "title": "Đánh giá, kiến nghị", "focus": "tong_hop"})
     return {"title": f"Báo cáo {period}", "subtitle": "", "slides": slides}
+
+
+# Tiêu đề cho slide bảng mà code tự thêm vào khi dàn ý bỏ quên.
+TABLE_TITLES = {
+    "personnel_breakdown": "Chi tiết quân số theo đơn vị",
+    "equipment_breakdown": "Chi tiết trang thiết bị",
+}
+
+
+def _covered_topics(slides: list[dict[str, Any]]) -> set[str]:
+    """Bộ slide này đang nói về những mảng số liệu nào."""
+    topics = set()
+    for slide in slides:
+        if slide["focus"] in ("quan_so", "trang_bi"):
+            topics.add(slide["focus"])
+        if (topic := FOCUS_BY_KEY.get(slide.get("chart_key") or "")):
+            topics.add(topic)
+        if (topic := FOCUS_BY_KEY.get(slide.get("data_key") or "")):
+            topics.add(topic)
+    # Dàn ý toàn "tong_hop" (không slide nào khoanh vùng) thì coi như nói về tất cả.
+    return topics or {"quan_so", "trang_bi"}
+
+
+def _ensure_detail_tables(slides: list[dict[str, Any]], tables: list[str]) -> list[dict[str, Any]]:
+    """Mảng số liệu nào đã được nhắc tới thì phải có bảng chi tiết kèm theo.
+
+    Bảng chi tiết là phần DUY NHẤT trong bộ slide cho phép người nghe đối chiếu
+    con số tổng về từng đơn vị. Để model tự quyết có đưa hay không thì cùng một
+    yêu cầu, lúc có lúc không: hỏi "báo cáo trang thiết bị" thì nó thêm bảng, hỏi
+    "báo cáo thông tin nhân viên" thì nó bỏ - ba lần chạy đều bỏ.
+
+    Nên chỗ này không hỏi model nữa. Đã vẽ biểu đồ quân số thì có bảng quân số.
+    """
+    topics = _covered_topics(slides)
+    da_co = {slide.get("data_key") for slide in slides}
+    thieu = [key for key in tables
+             if key not in da_co and FOCUS_BY_KEY.get(key) in topics]
+    if not thieu:
+        return slides
+
+    # Chèn trước cụm slide nhận xét ở cuối: số liệu phải đến trước kết luận.
+    vi_tri = len(slides)
+    while vi_tri > 0 and slides[vi_tri - 1]["kind"] == "bullet":
+        vi_tri -= 1
+
+    them = [{"kind": "table", "title": TABLE_TITLES.get(key, "Chi tiết"),
+             "focus": FOCUS_BY_KEY.get(key, "tong_hop"),
+             "chart_key": None, "data_key": key}
+            for key in thieu]
+    logger.info("Dàn ý thiếu bảng chi tiết, tự thêm: %s", ", ".join(thieu))
+    return slides[:vi_tri] + them + slides[vi_tri:]
 
 
 async def outline_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -144,14 +229,17 @@ async def outline_node(state: dict[str, Any]) -> dict[str, Any]:
         slides.append({
             "kind": kind,
             "title": str(raw.get("title") or "").strip(),
-            "focus": str(raw.get("focus") or "").strip(),
+            "focus": _normalize_focus(str(raw.get("focus") or ""),
+                                      raw.get("chart_key"), raw.get("data_key")),
             "chart_key": raw.get("chart_key"),
             "data_key": raw.get("data_key"),
         })
 
     if not any(s["kind"] == "title" for s in slides):
         slides.insert(0, {"kind": "title", "title": f"Báo cáo {_period_label(params)}",
-                          "focus": "", "chart_key": None, "data_key": None})
+                          "focus": "tong_hop", "chart_key": None, "data_key": None})
+
+    slides = _ensure_detail_tables(slides, tables)
 
     return {"outline": {
         "title": str(outline.get("title") or f"Báo cáo {_period_label(params)}"),
@@ -181,24 +269,39 @@ def _slide_payload(focus: str, data: dict[str, Any]) -> dict[str, Any]:
     return payload or {"quan_so": data.get("personnel", {}).get("metrics", {})}
 
 
+# Slide "chỉ tiêu chính" của một bộ slide chỉ nói về trang bị mà lại đi lấy quân
+# số thì nó ra rỗng - đúng cái slide trắng trong bộ slide đang dùng. Nên nguồn số
+# liệu bám theo `focus`, và "tong_hop" thì lấy cả hai.
+_BOXES_BY_FOCUS: dict[str, tuple[str, ...]] = {
+    "quan_so": ("personnel",),
+    "trang_bi": ("equipment",),
+    "bao_cao": ("personnel", "equipment"),
+    "tong_hop": ("personnel", "equipment"),
+}
+
+MAX_METRIC_BOXES = 4
+
+
 def _metric_boxes(data: dict[str, Any], focus: str) -> list[MetricBox]:
     """Ô chỉ tiêu do CODE dựng thẳng từ số liệu, không qua LLM."""
-    source = data.get("personnel") if focus != "trang_bi" else data.get("equipment")
-    if not source:
-        return []
-
     boxes: list[MetricBox] = []
-    for key, metric in list(source["metrics"].items())[:4]:
-        note = ""
-        if metric.get("delta") is not None:
-            sign = "+" if metric["delta"] > 0 else ""
-            note = f"{sign}{metric['delta']:g}"
-            if metric.get("delta_pct") is not None:
-                note += f" ({metric['delta_pct']:g}%)"
-        elif metric.get("share_pct") is not None:
-            note = f"{metric['share_pct']:g}%"
-        boxes.append(MetricBox(label=METRIC_LABELS.get(key, key),
-                               value=f"{metric['value']:g}", note=note))
+    for source_key in _BOXES_BY_FOCUS.get(focus, ("personnel", "equipment")):
+        source = data.get(source_key)
+        if not source:
+            continue
+        for key, metric in source["metrics"].items():
+            if len(boxes) >= MAX_METRIC_BOXES:
+                return boxes
+            note = ""
+            if metric.get("delta") is not None:
+                sign = "+" if metric["delta"] > 0 else ""
+                note = f"{sign}{metric['delta']:g}"
+                if metric.get("delta_pct") is not None:
+                    note += f" ({metric['delta_pct']:g}%)"
+            elif metric.get("share_pct") is not None:
+                note = f"{metric['share_pct']:g}%"
+            boxes.append(MetricBox(label=METRIC_LABELS.get(key, key),
+                                   value=f"{metric['value']:g}", note=note))
     return boxes
 
 
@@ -269,7 +372,8 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"validation": {"status": "skipped", "issues": []}}
 
     params = state.get("params", {})
-    period_numbers = {str(v) for v in (params.get("thang"), params.get("nam")) if v}
+    # Cùng lý do như workflow 4: kỳ đối chiếu cũng là số hợp lệ.
+    period_numbers = _period_numbers(params)
 
     issues: list[dict[str, Any]] = []
     for index, slide in enumerate(state.get("slides", [])):
@@ -294,8 +398,9 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
 def _slide_table(data_key: str | None, data: dict[str, Any]) -> SlideTable | None:
     if data_key == "personnel_breakdown" and data.get("personnel"):
         return SlideTable(
-            columns=["Đơn vị", "Quân số", "Có mặt", "Vắng"],
-            rows=[[r["ten_don_vi"], str(r["quan_so"]), str(r["co_mat"]), str(r["vang"])]
+            columns=["Đơn vị", "Quân số", "Kỳ trước", "Tuyển mới", "Nghỉ việc"],
+            rows=[[r["ten_don_vi"], str(r["quan_so"]), str(r["quan_so_ky_truoc"]),
+                   str(r["tuyen_moi"]), str(r["nghi_viec"])]
                   for r in data["personnel"]["breakdown"]],
         )
     if data_key == "equipment_breakdown" and data.get("equipment"):
@@ -345,9 +450,10 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
                     subtitle=state["outline"].get("subtitle") or period,
                     slides=specs)
 
-    stem = re.sub(r"[^A-Za-z0-9_.-]", "_", f"SLIDE_{params['ky']}")
+    stem = storage.tenant_stem(re.sub(r"[^A-Za-z0-9_.-]", "_", f"SLIDE_{params['ky']}"))
     output_path = Path(cfg.output_dir) / f"{stem}.pptx"
     path = await anyio.to_thread.run_sync(lambda: build_pptx(deck, output_path))
 
     return {"output_path": str(path), "removed_bullets": removed,
-            "slide_count": len(specs)}
+            # Bảng dài nở ra nhiều slide khi dựng file, nên đếm qua chính bước đó.
+            "slide_count": count_slides(specs)}
