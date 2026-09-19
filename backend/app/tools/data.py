@@ -291,6 +291,12 @@ async def get_personnel_statistics(
         scope["units_with_data"] = sum(1 for code in ids if current.get(ids[code]))
         scope["units_missing"] = sorted(code for code in units
                                         if not current.get(ids.get(code, -1)))
+        # ĐẾM cũng là một con số sẽ xuất hiện trong câu văn: "8 đơn vị có số liệu,
+        # 1 đơn vị chưa cung cấp". Chỉ có danh sách thì con số 1 ấy không truy về
+        # đâu được, van chắn số kết luận là bịa và chặn cả báo cáo - đúng một câu
+        # đúng sự thật làm hỏng cả file. Nguyên tắc ở đầu tệp này: mọi con số sẽ
+        # được nhắc tới đều phải tính sẵn ở đây.
+        scope["units_missing_count"] = len(scope["units_missing"])
 
     return AggregateResult(
         period=ky, compare_to=compare_to if prev_quan_so else None,
@@ -432,6 +438,8 @@ async def get_equipment_statistics(
             {dept_id for dept_id, _, _ in current if dept_id is not None})
         scope["units_missing"] = sorted(
             set(units) - {by_id.get(d, "") for d, _, _ in current})
+        # Xem ghi chú cùng chỗ này ở tool quân số.
+        scope["units_missing_count"] = len(scope["units_missing"])
     if not good_codes:
         scope["khong_co_chi_tieu"] = [
             "tình trạng tốt", "cần xử lý",
