@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 import time
 
 from src.core.config import settings
-from src.api import chat, health, upload
+from src.api import chat, health, presentation, upload
 
 # pre-load tất cả AI models (reranker, embedding, qdrant, redis) ngay khi start
 # để request đầu tiên không phải chờ load model
@@ -73,6 +73,7 @@ api_prefix = f"/api/{settings.api_version}"
 app.include_router(health.router, prefix = api_prefix, tags = ["Health"])
 app.include_router(upload.router, prefix = api_prefix, tags = ["Upload"])
 app.include_router(chat.router, prefix = api_prefix, tags = ["Chat"])
+app.include_router(presentation.router, prefix = api_prefix)
 
 if __name__ == "__main__":
     import uvicorn

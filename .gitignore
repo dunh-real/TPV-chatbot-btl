@@ -5,6 +5,15 @@ build/
 dist/
 wheels/
 *.egg-info
+.cache/
+node_modules/
+
+tests/
+infra/
+e2e_output/
+doc/
+data/
 
 # Virtual environments
 .venv
+.env
