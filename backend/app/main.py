@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import agent, chat, documents, presentations, reports
+from app.api import agent, chat, documents, presenton_proxy, presentations, reports
 from app.api.identity import IdentityMiddleware
 from app.core.config import get_settings
 from app.core.context import current_principal
@@ -76,6 +76,7 @@ async def lifespan(app: FastAPI):
 
     await store.close()
     await conversations.close()
+    await presenton_proxy.close_client()
     await get_llm().close()
     await get_cache().close()
     await dispose_engine()
@@ -237,3 +238,9 @@ async def root():
     if FRONTEND_DIR.is_dir():
         return RedirectResponse(url="/ui/")
     return {"service": settings.app_name, "docs": "/docs", "health": "/health"}
+
+
+# PHẢI đăng ký sau cùng. Proxy có một tuyến bắt ảnh ở gốc (`/{asset}`), xếp trước
+# thì nó đứng chắn `/health`, `/docs`, `/openapi.json` - Starlette khớp tuyến theo
+# đúng thứ tự khai báo.
+app.include_router(presenton_proxy.router)
