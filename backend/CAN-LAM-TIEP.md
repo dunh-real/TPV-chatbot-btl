@@ -422,6 +422,33 @@ là việc của workflow 4.
 
 ---
 
+## 6d. Presenton tự sửa tiêu đề slide — đã chặn 20/09
+
+Sáu slide của cùng một bảng bị cắt trang mang **bốn cách đặt tên khác nhau**, dù
+code viết tiêu đề giống hệt nhau. Presenton tự rút gọn cho vừa layout:
+
+```
+(1/6) Trang thiết bị theo đơn vị          <- đủ chữ
+(2/6) Thiết bị theo đơn vị                <- mất "Trang"
+(3/6) Chi tiết trang thiết bị             <- mất "theo đơn vị"
+ 4/6  Chi tiết trang thiết bị theo đơn vị <- mất cả dấu ngoặc
+```
+
+Không sai số liệu, nhưng chiếu lên màn hình là thấy ngay máy viết.
+
+Chữa bằng hai việc cùng lúc: **rút ngắn tiêu đề code sinh** (bỏ chữ "Chi tiết",
+42 → 31 ký tự, bớt cớ để nó sửa) và thêm **quy tắc 7** vào `INSTRUCTIONS` cấm
+đổi tiêu đề. Đo lại bằng một lần chạy thật: cả 6 slide ra
+`Trang thiết bị theo đơn vị (n/6)` giống hệt nhau, chỉ khác số trang.
+
+**Khi đọc bộ slide bằng python-docx/pptx, đừng dùng `shape.has_table`.**
+Presenton dựng bảng bằng **các text box ghép lại**, không phải đối tượng table
+của pptx — `has_table` trả về `False` trên mọi slide và nhìn như bộ slide rỗng.
+Cách kiểm đúng: gom toàn bộ text của các shape rồi dò từng dòng của CSDL. Đo
+20/09: 33/33 dòng có mặt, không dòng nào rơi.
+
+---
+
 ## 7. Điều đáng lo nhất
 
 Vẫn như phiên trước, và phiên này lặp lại y hệt: **mỗi lần chạy thật một câu hỏi
