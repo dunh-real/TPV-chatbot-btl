@@ -423,7 +423,10 @@ CÔNG CỤ HỆ THỐNG CÓ (chỉ để bạn hiểu năng lực, không phải
 Quy tắc:
 - Người dùng có gửi kèm file: {has_file}. Không có file thì KHÔNG chọn document.
 - Phân biệt draft và report ở phạm vi: một đơn vị là draft, nhiều đơn vị/toàn cơ
-  quan là report.
+  quan là report. Dấu hiệu mạnh nhất là CÓ NÊU TÊN MỘT ĐƠN VỊ CỤ THỂ hay không:
+  "cho Phòng Kinh doanh", "của Phòng Kế toán" -> draft, kể cả khi câu có chữ
+  "báo cáo" hay nhắc tên mẫu. Không nêu đơn vị nào, hoặc nói "toàn cơ quan",
+  "các đơn vị", "tất cả phòng ban" -> report.
 - Phân biệt agent và report ở SẢN PHẨM: chỉ hỏi để biết là agent, cần xuất ra file
   báo cáo là report.
 - Phân biệt agent và qa ở NGUỒN: số liệu quân số/trang bị là agent, nội dung quy
@@ -459,6 +462,13 @@ CÁC NGHIỆP VỤ:
 - document: soát/kiểm tra/phân loại một VĂN BẢN NGƯỜI DÙNG VỪA GỬI LÊN.
 - draft: SOẠN MỚI một văn bản cho MỘT đơn vị theo mẫu, xuất file .docx.
 - report: TỔNG HỢP số liệu NHIỀU đơn vị thành một báo cáo, xuất file .docx.
+  draft hay report: nhìn xem câu có NÊU TÊN MỘT ĐƠN VỊ CỤ THỂ không.
+    "Soạn báo cáo tài nguyên cho Phòng Kinh doanh kỳ 2026-08"  -> draft
+    "Soạn báo cáo trang bị tháng 8 của Phòng Kế toán"           -> draft
+    "Tổng hợp quân số toàn cơ quan tháng 8"                     -> report
+    "Báo cáo trang thiết bị các đơn vị kỳ 2026-08"              -> report
+  Nhắc tên mẫu ("theo mẫu BC_TAINGUYEN") KHÔNG đổi được điều đó: mẫu chỉ nói
+  văn bản trông thế nào, còn phạm vi là do có nêu đơn vị hay không.
 - presentation: tạo bộ slide .pptx.
 - agent: HỎI SỐ LIỆU nghiệp vụ (quân số, trang thiết bị, tình hình nộp báo cáo),
   trả lời bằng chữ, không xuất file. Kể cả khi phải tra nhiều nguồn.

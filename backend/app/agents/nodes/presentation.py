@@ -189,7 +189,12 @@ def _slide_bang(source: dict[str, Any], mac_dinh: str, ten_mang: str,
     for index, dong in enumerate(trang, start=1):
         so_trang = f" ({index}/{len(trang)})" if len(trang) > 1 else ""
         than = "\n".join("| " + " | ".join(o) + " |" for o in dong)
-        slides.append(f"## Chi tiết {ten_mang} theo {str(nhan).lower()}{so_trang}\n\n"
+        # Tiêu đề ngắn gọn có chủ đích. Bản cũ dài hơn ("Chi tiết trang thiết bị
+        # theo đơn vị (1/6)", 42 ký tự) và Presenton tự rút gọn mỗi trang một
+        # kiểu: "(1/6)" giữ nguyên, "(2/6)" mất chữ "Chi tiết", "4/6" mất cả
+        # ngoặc. Sáu slide liền nhau bốn cách đặt tên - chiếu lên là thấy ngay
+        # máy viết. Ngắn sẵn thì nó không có cớ sửa.
+        slides.append(f"## {ten_mang.capitalize()} theo {str(nhan).lower()}{so_trang}\n\n"
                       f"{dau_bang}\n{than}")
 
     # Số trang do CODE viết ra, không phải model bịa - bước đối chiếu số phải
@@ -269,7 +274,11 @@ INSTRUCTIONS = (
     "thành câu chữ. Giữ ĐỦ số dòng và số cột của bảng.\n"
     "6. Với layout chỉ tiêu: phần mô tả của mỗi ô PHẢI mở đầu bằng tên chỉ tiêu "
     '(ví dụ "Tổng quân số: kỳ trước 27..."). Ô chỉ có con số mà không có tên '
-    "chỉ tiêu thì người xem không biết nó là gì."
+    "chỉ tiêu thì người xem không biết nó là gì.\n"
+    "7. Tiêu đề slide GIỮ NGUYÊN TỪNG CHỮ, kể cả phần đánh số trang dạng "
+    '"(2/6)". Không rút gọn, không diễn đạt lại, không bỏ dấu ngoặc. Các slide '
+    "cùng một bảng bị cắt trang phải mang tiêu đề giống hệt nhau, chỉ khác số "
+    "trang - mỗi trang một cách gọi thì người xem tưởng là sáu bảng khác nhau."
 )
 
 # Chỉ dặn nêu mục cảnh báo KHI CÓ cảnh báo. Dặn cứng thì kỳ nào số liệu sạch, bộ

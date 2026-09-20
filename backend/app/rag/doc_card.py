@@ -50,6 +50,30 @@ _TABLE_SEP = re.compile(r"^\|?[\s:|-]*-[\s:|-]*\|?$")
 _INTRA_CELL = re.compile(r"\s{2,}")
 _TRICH_YEU_VE = re.compile(r"^(?:Về|V/v)\b\s*:?\s*(.+)", re.I)
 
+# Mã loại trong số ký hiệu -> tên loại. Trong thể thức văn bản hành chính Việt
+# Nam, mã này CHÍNH LÀ loại văn bản, không phải phỏng đoán. Chỉ khai những mã
+# không lẫn được; mã lạ thì bỏ trống, thà thiếu còn hơn ghi sai loại.
+_MA_LOAI: dict[str, str] = {
+    "CV": "Công văn", "BC": "Báo cáo", "QĐ": "Quyết định", "QD": "Quyết định",
+    "TB": "Thông báo", "TTr": "Tờ trình", "KH": "Kế hoạch", "BB": "Biên bản",
+    "GM": "Giấy mời", "CT": "Chỉ thị", "NQ": "Nghị quyết", "TT": "Thông tư",
+    "NĐ": "Nghị định", "ND": "Nghị định", "HD": "Hướng dẫn", "HĐ": "Hợp đồng",
+}
+
+
+def _ten_loai_tu_ky_hieu(so_ky_hieu: str) -> str:
+    """"18/CV-BP" -> "Công văn". Mã lạ hoặc sai dạng -> chuỗi rỗng."""
+    phan = [p for p in so_ky_hieu.split("/") if p.strip()]
+    if len(phan) < 2:
+        return ""
+    ma = phan[-1].split("-", 1)[0].strip()
+    # So khớp không phân biệt hoa thường nhưng GIỮ dấu: "QĐ" khác "QD" ở bảng
+    # trên chỉ vì nguồn có thể gõ thiếu dấu, không phải vì chúng là hai loại.
+    for khoa, ten in _MA_LOAI.items():
+        if ma.upper() == khoa.upper():
+            return ten
+    return ""
+
 
 @dataclass(slots=True)
 class DocumentCard:
@@ -198,6 +222,22 @@ def build_card(text: str, doc_title: str = "") -> DocumentCard | None:
 
     if len(fields) < MIN_FIELDS:
         return None
+
+    # Suy tên loại từ mã trong số ký hiệu khi văn bản không tự in tên loại ra.
+    # CÔNG VĂN là cả một họ văn bản như vậy: thể thức của nó KHÔNG có dòng tên
+    # loại (khác báo cáo, quyết định, thông báo - những thứ in tên loại to giữa
+    # trang). Thiếu trường này thì hỏi "ai ký CÔNG VĂN chỉ thị kiểm kê" ra thẻ
+    # không tự khai mình là công văn, cạnh một thẻ ghi rõ "Loại văn bản: BÁO
+    # CÁO" - model không dám khẳng định và trả lời "không tìm thấy", dù người ký
+    # nằm ngay trong thẻ.
+    #
+    # Đặt SAU ngưỡng MIN_FIELDS, cố ý: mã loại chỉ là cách đọc lại một trường đã
+    # có, không phải bằng chứng thứ hai cho thấy tệp là văn bản hành chính. Tính
+    # nó vào ngưỡng thì một tệp chỉ tình cờ có chuỗi giống số ký hiệu cũng đủ
+    # điểm để sinh thẻ.
+    if "ten_loai" not in fields and (so := fields.get("so_ky_hieu")):
+        if (ten := _ten_loai_tu_ky_hieu(so)):
+            fields["ten_loai"] = ten
 
     head = f"{doc_title}. Thông tin thể thức văn bản:" if doc_title else "Thông tin thể thức văn bản:"
     body = [f"- {LABELS[cid]}: {fields[cid]}" for cid in LABELS if cid in fields]
