@@ -167,3 +167,29 @@ class PromptBuilder:
         ]
         
         return messages
+
+    def build_doc_generation_messages(self, template_fields: List[str], user_chat: str, template_summary: str = "") -> List[Any]:
+        """Build system + human messages for generating document content based on template fields.
+        The LLM is asked to return a single JSON object (plain JSON text) with keys:
+          - fields: { field_name: extracted_value }
+          - generated_paragraphs: { section_name: paragraph_text }
+        The returned JSON MUST be the only content in the assistant output (no extra commentary).
+        """
+        # Build a compact system instruction for doc generation
+        system_parts = [self.intro_template, self.rules_template]
+        system_parts.append("\nHƯỚNG DẪN CHUYÊN DỤNG: Bạn được giao nhiệm vụ phân tích template văn bản và nội dung người dùng để ánh xạ các trường và sinh nội dung phù hợp cho từng trường.\n")
+        system_parts.append("- Không tự tạo trường ngoài danh sách; nếu thông tin thiếu, để giá trị là chuỗi rỗng.\n")
+        system_parts.append("- Trả về DUY NHẤT một JSON hợp lệ, không kèm bình luận. Cấu trúc JSON mong muốn:\n{\n  \"fields\": { \"field1\": \"value\", ... },\n  \"generated_paragraphs\": { \"intro\": \"...\", \"body\": \"...\" }\n}\n")
+
+        full_system = "\n".join(system_parts)
+
+        # Human prompt contains template fields and user-provided chat
+        human = (
+            f"Template fields (danh sách tên trường): {template_fields}\n"
+            f"Tóm tắt nhanh template: {template_summary}\n"
+            f"Nội dung người dùng/ câu chat: {user_chat}\n\n"
+            "Yêu cầu: 1) Trích xuất/ánh xạ các giá trị phù hợp từ nội dung người dùng cho từng field; 2) Nếu trường cần câu văn đầy đủ, hãy sinh câu văn phù hợp để điền vào phần đó; 3) Trả về JSON đúng định dạng như yêu cầu." 
+        )
+
+        messages = [SystemMessage(content=full_system), HumanMessage(content=human)]
+        return messages

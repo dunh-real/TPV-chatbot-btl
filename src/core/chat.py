@@ -15,6 +15,7 @@ from src.services.prompt_service import PromptBuilder
 from src.services.qdrant_service import VectorStoreService
 from src.services.mssql_retrieval_service import MSSQLRetrievalService
 from src.services.memory_service import RedisChatMemory
+from src.services.report_service import is_report_request, generate_department_report
 
 """
 Hệ thống trò chuyện:
@@ -78,6 +79,42 @@ class ChatSession():
         except Exception as e:
             logger.warning(f"[CHAT] Step 1: Redis save error: {e}. Skipping.")
         
+        # Decide if this is a department report request (personnel/assets)
+        if is_report_request(query):
+            logger.info("[CHAT] Detected department report request. Generating report via MSSQL data...")
+            try:
+                # generate report (both personnel and assets by default)
+                summary_text, report_path = generate_department_report(tenant_id, employee_id, report_types=['personnel','assets'])
+
+                # prepare answer: include short summary and path to generated file
+                final_answer = summary_text + "\n\nBáo cáo chi tiết đã được tạo và lưu tại: " + report_path
+                citation = 'mssql_database_result'
+
+                # save assistant message to memory
+                try:
+                    memory_client.add_message(tenant_id, employee_id, 'assistant', final_answer)
+                except Exception as e:
+                    logger.warning(f"[CHAT] Redis save error (report): {e}. Skipping.")
+
+                result = {
+                    "tenant_id": tenant_id,
+                    "employee_id": employee_id,
+                    "employee_db_id": employee_db_id,
+                    "is_manager": is_manager,
+                    "department_ids": department_ids,
+                    "query": query,
+                    "answer": final_answer,
+                    "citation": citation,
+                    "report_file": report_path
+                }
+
+                end_time = time.time() - first_time
+                return result, end_time
+
+            except Exception as e:
+                logger.error(f"[CHAT] Error generating department report: {e}")
+                # fall back to normal pipeline
+
         # 2. hybrid search
         logger.info("[CHAT] Step 2: Hybrid search in Qdrant...")
         search_results = db_client.search_hybrid(query, tenant_id, access_role, k = 20)

@@ -58,4 +58,43 @@ class OllamaChatLLM:
         
         except Exception as e:
             return AIMessage(content = f"Connection Error: Ollama - {str(e)}"), ""
+
+    def invoke_raw(self, messages: List[BaseMessage]):
+        """Invoke the Ollama model and return raw textual content (no JSON parsing).
+        Returns: (text_result (str) | None, error_message (str) )
+        """
+        if ollama is None:
+            return None, "Ollama package chưa được cài đặt. Vui lòng cài dependency trước khi sử dụng chatbot."
+
+        payload = []
+        for m in messages:
+            role = 'user'
+            if isinstance(m, SystemMessage):
+                role = 'system'
+            elif isinstance(m, AIMessage):
+                role = 'assistant'
+
+            payload.append({
+                "role": role,
+                "content": m.content
+            })
+
+        try:
+            # request plain text so caller can parse custom JSON structures
+            response = ollama.chat(
+                model=self.model_name,
+                messages=payload,
+                format='text',
+                options=self.options
+            )
+
+            text_result = response['message']['content']
+            return text_result, ""
+        except Exception as e:
+            return None, f"Connection Error: Ollama - {str(e)}"
+
+
+def get_ollama_llm(model_name: str = NAME_LLM_MODEL) -> OllamaChatLLM:
+    """Convenience factory to get an OllamaChatLLM instance."""
+    return OllamaChatLLM(model_name)
     
