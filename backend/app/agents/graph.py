@@ -198,6 +198,15 @@ def route_after_template(state: DraftState) -> Literal["fetch_data", "__end__"]:
     return "__end__" if (state.get("missing_input") or state.get("error")) else "fetch_data"
 
 
+def route_after_document(state: DraftState) -> Literal["outline", "__end__"]:
+    """Không mở được tài liệu thì dừng hẳn - không có gì để soạn báo cáo từ đó.
+
+    Xét cả `error` chứ không chỉ `missing_input`: file hỏng, sai định dạng hay
+    rỗng đều cho `error`, và đi tiếp thì chỉ ra một báo cáo trống.
+    """
+    return "__end__" if (state.get("missing_input") or state.get("error")) else "outline"
+
+
 def route_after_validate(state: DraftState) -> Literal["render_sections", "export"]:
     """Số liệu không truy được về CSDL thì cho viết lại, tối đa vài lần.
 
@@ -248,21 +257,75 @@ def get_draft_graph():
     return build_draft_graph()
 
 
+def build_draft_doc_graph():
+    """Soạn báo cáo từ MỘT tài liệu tải lên.
+
+    Ngắn hơn nhánh CSDL vì bỏ được ba bước không còn nghĩa: không tra ERP,
+    không chọn mẫu (dàn ý dựng từ chính tài liệu), không tra quy định làm căn cứ.
+    Ba bước cuối - `validate`, `export`, `register` - dùng LẠI của nhánh CSDL,
+    nên van chắn số, cách cấp số ký hiệu và cách ghi sổ văn bản giống hệt nhau.
+    """
+    from app.agents.nodes.drafting_doc import outline_node, read_document_node
+    from app.agents.nodes.drafting_doc import render_node as doc_render_node
+
+    graph = StateGraph(DraftState)
+    graph.add_node("read_document", read_document_node)
+    graph.add_node("outline", outline_node)
+    graph.add_node("render_sections", doc_render_node)
+    graph.add_node("count_retry", _count_retry)
+    graph.add_node("validate", validate_node)
+    graph.add_node("export", export_node)
+    graph.add_node("register", register_node)
+
+    graph.set_entry_point("read_document")
+    graph.add_conditional_edges("read_document", route_after_document,
+                                {"outline": "outline", "__end__": END})
+    graph.add_edge("outline", "render_sections")
+    graph.add_edge("render_sections", "validate")
+    # Giữ nguyên vòng viết lại của nhánh CSDL: số không truy được về tài liệu thì
+    # cho model viết lại, vẫn sai thì không xuất file.
+    graph.add_conditional_edges("validate", route_after_validate,
+                                {"render_sections": "count_retry", "export": "export"})
+    graph.add_edge("count_retry", "render_sections")
+    graph.add_edge("export", "register")
+    graph.add_edge("register", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_draft_doc_graph():
+    return build_draft_doc_graph()
+
+
 async def run_draft_workflow(
     request: str,
     ma_don_vi: str | None = None,
     inputs: dict[str, Any] | None = None,
     history: list[dict[str, str]] | None = None,
+    nguon: str = "csdl",
+    file_id: str = "",
 ) -> dict[str, Any]:
+    nguon = (nguon or "csdl").strip().lower()
+    tu_tai_lieu = nguon in ("tai_lieu", "file", "document")
     state: DraftState = {
         "request": request,
         "ma_don_vi": ma_don_vi or "",
         "history": history or [],
         "inputs": inputs or {},
+        "nguon": "tai_lieu" if tu_tai_lieu else "csdl",
+        "file_id": file_id or "",
+        # `params` phải có sẵn kể cả nhánh tài liệu (không có bước trích tham số):
+        # `export_node` và `register_node` đọc `params["ky"]` để đặt tên file và
+        # ghi sổ, thiếu là KeyError ngay trước lúc xuất file.
+        "params": {} if not tu_tai_lieu else {"loai_bao_cao": request, "thang": None,
+                                              "nam": None, "ky": None, "ghi_chu": ""},
         "retry_count": 0,
     }
-    result = await get_draft_graph().ainvoke(state)
+    graph = get_draft_doc_graph() if tu_tai_lieu else get_draft_graph()
+    result = await graph.ainvoke(state)
     return {
+        "nguon": state["nguon"],
+        "source_document": result.get("source_document", {}),
         "request": request,
         "params": result.get("params", {}),
         "ma_don_vi": result.get("ma_don_vi", ""),

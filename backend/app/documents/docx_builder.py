@@ -292,7 +292,11 @@ def build_from_scratch(payload: DocumentPayload, output_path: Path) -> Path:
          italic=True, align=WD_ALIGN_PARAGRAPH.RIGHT)
     para("BÁO CÁO", bold=True, size=TITLE_SIZE_PT, align=WD_ALIGN_PARAGRAPH.CENTER)
     para(meta.get("trich_yeu", ""), bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-    para(f"Kính gửi: {meta.get('noi_nhan', '')}", bold=True)
+    # Không có nơi nhận thì BỎ HẲN dòng này. In "Kính gửi:" rồi để trống là một
+    # chỗ khuyết ngay đầu văn bản trình ký - người đọc không biết là hệ thống
+    # thiếu dữ liệu hay là ai đó quên điền.
+    if str(meta.get("noi_nhan", "")).strip():
+        para(f"Kính gửi: {meta['noi_nhan']}", bold=True)
     if meta.get("can_cu"):
         para(meta["can_cu"], italic=True)
 

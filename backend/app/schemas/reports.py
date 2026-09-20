@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,15 @@ class DraftRequest(BaseModel):
         default_factory=dict,
         description="Các trường người dùng phải nhập: nguoi_ky, chuc_vu_ky, so_ky_hieu...",
         examples=[{"nguoi_ky": "Trần Văn B", "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ"}],
+    )
+    nguon: Literal["csdl", "tai_lieu"] = Field(
+        default="csdl",
+        description="csdl = lấy số liệu ERP theo mẫu; tai_lieu = soạn từ một file đã tải lên",
+    )
+    file_id: str = Field(
+        default="",
+        description="Bắt buộc khi nguon=tai_lieu. Lấy từ POST /api/agent/upload",
+        examples=["upload:bao_cao_don_vi.docx"],
     )
 
 
@@ -63,6 +72,11 @@ class RegulationRef(BaseModel):
 
 
 class DraftResponse(BaseModel):
+    nguon: str = Field(default="csdl", description="Nguồn số liệu đã dùng")
+    source_document: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Chỉ nhánh tài liệu: file nào, có đọc được bảng số liệu không",
+    )
     request: str
     params: dict[str, Any] = Field(default_factory=dict)
     ma_don_vi: str = ""

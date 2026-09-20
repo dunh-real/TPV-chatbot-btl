@@ -87,6 +87,11 @@ class DraftState(TypedDict, total=False):
     ma_don_vi: str
     history: list[dict[str, str]]   # để hiểu "vẫn đơn vị đó", "cũng kỳ đó"
     inputs: dict[str, Any]          # người ký, chức vụ, số ký hiệu... do người dùng nhập
+    # Nguồn số liệu: "csdl" (mặc định, lấy từ ERP theo mẫu) hoặc "tai_lieu"
+    # (đọc một file người dùng tải lên). Hai nhánh đi hai đồ thị khác nhau vì
+    # bảo đảm về con số của chúng khác nhau - xem `nodes/drafting_doc.py`.
+    nguon: str
+    file_id: str
 
     # --- trung gian ---
     params: dict[str, Any]
@@ -94,6 +99,7 @@ class DraftState(TypedDict, total=False):
     template_choice: dict[str, Any]
     data: dict[str, Any]            # số liệu từ SQL - nguồn sự thật duy nhất
     data_notes: list[str]
+    source_document: dict[str, Any]  # chỉ nhánh tài liệu: file nào, đọc được gì
     regulations: list[dict[str, Any]]
     sections: list[dict[str, Any]]
     validation: dict[str, Any]

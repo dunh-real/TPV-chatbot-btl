@@ -500,12 +500,16 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     ma_don_vi = state.get("ma_don_vi", "")
     try:
         async with session_scope() as session:
+            # Không có đơn vị (nhánh soạn từ tài liệu) thì ký hiệu là "BC" trần.
+            # Ghép thẳng thành "BC-" cho ra số cụt đuôi kiểu "01/BC-" ngay dòng
+            # đầu văn bản trình ký.
+            ky_hieu = f"BC-{ma_don_vi}" if ma_don_vi else "BC"
             so_ky_hieu = inputs.get("so_ky_hieu") or await next_so_ky_hieu(
-                session, state["params"].get("nam") or date.today().year,
-                f"BC-{ma_don_vi}")
+                session, state["params"].get("nam") or date.today().year, ky_hieu)
     except Exception as exc:  # noqa: BLE001 - sổ hỏng không được chặn việc xuất file
         logger.warning("Không cấp được số ký hiệu từ sổ văn bản: %s", exc)
-        so_ky_hieu = inputs.get("so_ky_hieu") or f"01/BC-{ma_don_vi}"
+        so_ky_hieu = inputs.get("so_ky_hieu") or (
+            f"01/BC-{ma_don_vi}" if ma_don_vi else "01/BC")
     state = {**state, "so_ky_hieu": so_ky_hieu}
 
     payload = DocumentPayload(

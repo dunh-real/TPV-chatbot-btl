@@ -34,13 +34,21 @@ async def list_templates() -> list[TemplateSummary]:
 
 @router.post("/draft", response_model=DraftResponse, summary="Soạn báo cáo theo mẫu")
 async def draft(request: DraftRequest) -> DraftResponse:
-    """Số liệu lấy từ CSDL, LLM chỉ viết văn quanh số liệu đó.
+    """Soạn một báo cáo từ MỘT nguồn. `nguon` chọn nguồn đó là gì.
 
-    Con số nào trong phần LLM viết mà không truy được về dữ liệu gốc thì hệ thống
-    cho viết lại; vẫn sai thì không xuất file và trả về `validation.status=failed`.
+    - `csdl` (mặc định): số liệu lấy từ ERP theo mẫu báo cáo trong CSDL. Mọi con
+      số phải truy được về một trường dữ liệu.
+    - `tai_lieu`: đọc một file đã tải lên (`file_id`) rồi soạn báo cáo từ chính
+      nội dung đó. Bảo đảm yếu hơn - chỉ chặn được số KHÔNG có trong tài liệu,
+      không chặn được số có thật nhưng dùng sai chỗ.
+
+    Cả hai nhánh: con số nào trong phần LLM viết mà không truy được về nguồn thì
+    hệ thống cho viết lại; vẫn sai thì không xuất file và trả
+    `validation.status=failed`.
     """
     result = await run_draft_workflow(
         request=request.request, ma_don_vi=request.ma_don_vi, inputs=request.inputs,
+        nguon=request.nguon, file_id=request.file_id,
     )
 
     if result.get("output_path"):

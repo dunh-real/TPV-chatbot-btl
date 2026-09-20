@@ -532,3 +532,58 @@ KHÔNG CÓ SỐ LIỆU khác với SỐ LIỆU BẰNG 0:
 - Hai nguồn lệch nhau thì nêu cả hai kèm nguồn, không tự chọn bên nào đúng.
 
 Hôm nay là {today}."""
+
+
+# --------------------------------------------------------------------------- #
+# Workflow 3 - nguồn TÀI LIỆU TẢI LÊN
+#
+# Khác nhánh CSDL ở một điểm quyết định: số liệu không đến từ bảng đã chuẩn hoá
+# mà nằm rải trong văn xuôi. Van chắn số vì thế chỉ còn bảo đảm được "con số này
+# CÓ trong tài liệu", không bảo đảm "con số này dùng đúng chỗ" - nên prompt phải
+# gánh phần còn lại: cấm cộng trừ, cấm suy diễn, bắt bám nguyên văn.
+# --------------------------------------------------------------------------- #
+
+DRAFT_DOC_OUTLINE_SYSTEM = """Bạn lập dàn ý cho một báo cáo hành chính tiếng Việt,
+dựa trên MỘT tài liệu người dùng vừa gửi lên.
+
+Nhiệm vụ: đọc tài liệu rồi đề xuất các mục của báo cáo tổng hợp lại nội dung đó.
+
+Nguyên tắc:
+- Mục phải bám nội dung THẬT của tài liệu. Tài liệu không nói về vấn đề gì thì
+  không được dựng mục cho vấn đề đó.
+- 3 đến 5 mục. Tiêu đề đánh số La Mã: "I. ...", "II. ...".
+- Mục cuối là nhận xét/kiến nghị nếu tài liệu có đủ căn cứ; không đủ thì bỏ.
+- `huong_dan` nói rõ mục đó phải trình bày gì, để bước viết bám theo.
+- Không bịa thêm mục cho đẹp bố cục.
+
+Chỉ trả về JSON đúng dạng:
+{{"tieu_de": "...", "muc": [{{"id": "m1", "tieu_de": "I. ...", "huong_dan": "..."}}]}}"""
+
+DRAFT_DOC_OUTLINE_USER = """Tên tài liệu: {ten_tai_lieu}
+
+Nội dung tài liệu:
+{noi_dung}"""
+
+DRAFT_DOC_SECTION_SYSTEM = """Bạn viết một mục của báo cáo hành chính tiếng Việt,
+dựa DUY NHẤT trên tài liệu được trích bên dưới.
+
+QUY TẮC TUYỆT ĐỐI:
+- Chỉ dùng những con số XUẤT HIỆN NGUYÊN VĂN trong tài liệu. Không cộng, không
+  trừ, không tính tỷ lệ, không làm tròn, không quy đổi đơn vị. Cần một con số mà
+  tài liệu không có thì không nhắc tới nó.
+- Không suy ra điều tài liệu không nói. Không đoán nguyên nhân, không dự báo,
+  không nhận định về chất lượng hay mức độ nghiêm trọng nếu tài liệu không nêu.
+- Tài liệu mâu thuẫn với chính nó thì nêu cả hai số kèm chỗ lấy, không tự chọn.
+- Giá trị dạng mã chưa diễn giải (ví dụ "Trạng thái 0") thì để nguyên, không
+  diễn giải thành tốt/xấu.
+- Văn phong hành chính, khách quan, 2-4 câu. Không markdown, không lặp tiêu đề.
+
+Chỉ trả về JSON đúng dạng:
+{{"paragraphs": ["...", "..."]}}"""
+
+DRAFT_DOC_SECTION_USER = """Báo cáo: {report_title}
+Mục cần viết: {section_title}
+Hướng dẫn: {narrative}
+
+Trích tài liệu nguồn:
+{noi_dung}"""

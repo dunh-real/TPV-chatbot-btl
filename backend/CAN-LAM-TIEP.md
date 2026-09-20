@@ -366,6 +366,44 @@ câu hỏi QA là ~9,3s nên phần tăng ~6%. Kho lớn hơn (`rrf_top_k=20`) t
 
 ---
 
+## 6c. Workflow 3 có hai nguồn (thêm 20/09)
+
+`nguon=csdl` (như cũ) hoặc `nguon=tai_lieu` (mới) - xem `README` §"Workflow 3".
+
+**Điều quan trọng nhất phải nhớ:** hai nhánh cho ra hai văn bản trông giống hệt
+nhau, nhưng bảo đảm về con số khác hẳn.
+
+| | bảo đảm |
+|---|---|
+| `csdl` | mỗi con số truy được về **một trường dữ liệu** của ERP |
+| `tai_lieu` | con số **có xuất hiện nguyên văn** trong tài liệu nguồn |
+
+Nhánh `tai_lieu` chặn được model bịa số mới; **không** chặn được model lấy một số
+có thật rồi đặt sai chỗ. Đã ghi rõ ở docstring `drafting_doc.py`, ở docstring
+endpoint, và hiện thành một thẻ cảnh báo trên giao diện. Đừng gỡ mấy chỗ đó đi
+cho gọn - người ký cần biết mình đang cầm loại nào.
+
+Giới hạn đã biết, có test ghi lại: `79 - 72 = 7` mà "7" tình cờ có trong tài liệu
+thì van không bắt được. Đó là lý do prompt cấm mọi phép tính.
+
+**Chạy thật 20/09, ba ca đều ra file:**
+
+| Tài liệu | Kết quả |
+|---|---|
+| `Bao_cao_kiem_ke_Phong_Ky_Thuat.docx` (có bảng) | 9,1s · passed · 30 số · 3 mục |
+| `CV-105-BGD.md` (thuần chữ, không bảng) | passed · 11 số · 3 mục · `co_bang_so_lieu: false` kèm lý do |
+| thiếu `file_id` | `missing_input: ['file_id']`, không soạn bừa |
+
+**Hai lỗi thể thức tìm được khi đọc file xuất ra** (đã sửa) - cả hai chỉ lộ khi
+mở file lên xem, test không bắt:
+- `Số: 01/BC-` cụt đuôi, vì nhánh này không có mã đơn vị để ghép
+- `Kính gửi:` in ra rồi để trống khi không có nơi nhận; nay bỏ hẳn dòng đó
+
+**Chưa làm:** nhánh `tai_lieu` mới nhận **một** file. Muốn gộp nhiều nguồn thì đó
+là việc của workflow 4.
+
+---
+
 ## 7. Điều đáng lo nhất
 
 Vẫn như phiên trước, và phiên này lặp lại y hệt: **mỗi lần chạy thật một câu hỏi

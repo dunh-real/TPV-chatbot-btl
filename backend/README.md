@@ -539,7 +539,42 @@ Còn *cứng* thật là cách **nhận diện** thành phần: regex trong
 [app/documents/structure.py](app/documents/structure.py). Thêm một loại văn bản
 ngoài danh sách, hay một dạng số ký hiệu khác, là phải sửa code.
 
-## Workflow 3 — Soạn văn bản theo mẫu
+## Workflow 3 — Soạn báo cáo từ MỘT nguồn
+
+Hai nhánh, chọn bằng `nguon`. Chúng cho ra hai văn bản trông giống hệt nhau
+nhưng **bảo đảm về con số khác hẳn**, nên đừng trộn lẫn trong đầu:
+
+| `nguon` | Số liệu từ đâu | Van chắn số bảo đảm gì |
+|---|---|---|
+| `csdl` *(mặc định)* | ERP, theo mẫu báo cáo khai trong CSDL | mỗi con số truy được về **một trường dữ liệu** |
+| `tai_lieu` | một file đã tải lên (`file_id`) | con số **có xuất hiện nguyên văn** trong tài liệu |
+
+Nhánh `tai_lieu` yếu hơn, và cố ý nói thẳng ra như vậy ở cả API lẫn giao diện:
+nó chặn được model bịa số mới, **không** chặn được model lấy một số có thật rồi
+đặt sai chỗ. Vì thế prompt của nhánh đó cấm cộng/trừ/tính tỷ lệ - mọi phép tính
+đều đẻ ra số không có trong tài liệu, và đó chính là thứ van bắt được.
+
+### Nhánh `tai_lieu`
+
+```
+file tải lên
+  └─> đọc thành Markdown        không mở được -> DỪNG, không soạn báo cáo trống
+      └─> lập dàn ý từ chính nội dung file   (hỏng -> dàn ý mặc định 2 mục)
+          └─> viết từng mục, chỉ được dùng nguyên văn tài liệu
+              └─> đối chiếu số  ->  giống hệt nhánh csdl từ đây trở đi
+                  (viết lại tối đa 2 lần -> xuất DOCX -> ghi sổ văn bản)
+```
+
+Ba bước cuối dùng LẠI node của nhánh CSDL ([drafting.py](app/agents/nodes/drafting.py)),
+nên cách cấp số ký hiệu, cách ghi sổ và van chắn số giống nhau - không có bản sao
+thứ hai để quên đồng bộ. Dàn ý được nhét vào đúng chỗ `template` mà các node đó
+vốn đã đọc. Xem [drafting_doc.py](app/agents/nodes/drafting_doc.py).
+
+Tài liệu dài hơn `MAX_DOC_CHARS` (24.000 ký tự) bị **cắt**, không tóm tắt: tóm tắt
+là chèn thêm một lượt LLM vào giữa nguồn và van chắn, từ đó không con số nào còn
+truy về nguyên văn được nữa. Phần bị cắt được ghi rõ trong `data_notes`.
+
+### Nhánh `csdl`
 
 ```
 "Soạn báo cáo tình hình trang bị tháng 8"
@@ -565,9 +600,18 @@ chưa có file thì dựng bằng code với style NĐ 30.
 
 ```bash
 uv run python scripts/make_template_docx.py    # tạo file mẫu
+# nhánh tài liệu: tải file lên trước để lấy file_id
+curl -X POST localhost:8080/api/agent/upload -F 'file=@bao_cao_don_vi.docx'
 curl -X POST localhost:8080/api/reports/draft -H 'Content-Type: application/json' -d '{
-  "request": "Soạn báo cáo tình hình trang bị tháng 8",
-  "ma_don_vi": "DV02",
+  "request": "Soạn báo cáo tổng hợp từ tài liệu này",
+  "nguon": "tai_lieu",
+  "file_id": "upload:bao_cao_don_vi.docx",
+  "inputs": {"nguoi_ky": "Trần Văn B", "noi_nhan": "Ban Giám đốc"}
+}'
+
+# nhánh CSDL: không cần khai ma_don_vi nếu câu yêu cầu đã nói rõ đơn vị
+curl -X POST localhost:8080/api/reports/draft -H 'Content-Type: application/json' -d '{
+  "request": "Soạn báo cáo tình hình trang bị tháng 8 cho Phòng Kinh doanh",
   "inputs": {"nguoi_ky": "Trần Văn B", "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ"}
 }'
 ```

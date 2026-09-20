@@ -249,6 +249,24 @@
             <span>Yêu cầu</span>
             <textarea id="draftRequest" rows="3" placeholder="Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh">Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh</textarea>
           </label>
+          <label class="field">
+            <span>Nguồn nội dung</span>
+            <select id="draftSource">
+              <option value="csdl">CSDL nghiệp vụ — soạn theo mẫu báo cáo có sẵn</option>
+              <option value="tai_lieu">Một tài liệu tải lên — soạn từ chính nội dung file</option>
+            </select>
+            <em id="draftSourceHint">Số liệu lấy từ ERP; mọi con số phải truy về được một trường dữ liệu.</em>
+          </label>
+          <div class="field" id="draftFileField" hidden>
+            <span>Tài liệu nguồn <em>(đọc toàn bộ nội dung file này)</em></span>
+            <div class="dropzone" id="draftDrop">
+              <input type="file" id="draftFile" accept=".docx,.pdf,.md,.txt" hidden />
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <b>Chọn tài liệu</b>
+              <small>một file .docx, .pdf, .md hoặc .txt</small>
+            </div>
+            <div class="attach-row" id="draftAttachments" hidden></div>
+          </div>
           <div class="field">
             <span>Thông tin bắt buộc (inputs)</span>
             <div class="kv-list" id="draftInputs"></div>

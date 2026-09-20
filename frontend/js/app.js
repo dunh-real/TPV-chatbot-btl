@@ -1351,10 +1351,28 @@
 
     var meta = '<span class="pill accent">' + esc(data.template_name || data.template || '—') + '</span>' +
       (data.ma_don_vi ? '<span class="pill">' + esc(data.ma_don_vi) + '</span>' : '') +
+      (data.nguon === 'tai_lieu'
+        ? '<span class="pill info">nguồn: ' + esc((data.source_document || {}).ten_tai_lieu || 'tài liệu') + '</span>'
+        : '') +
       validationPill(data.validation) +
       (data.registered_as ? '<span class="pill info">sổ VB: ' + esc(data.registered_as) + '</span>' : '') +
       (data.retry_count ? '<span class="pill warn">viết lại ' + data.retry_count + ' lần</span>' : '');
     box.appendChild(downloadCard('Bản thảo', data.download_url, (data.output_path || '').split('/').pop(), meta));
+
+    /* Nói thẳng mức bảo đảm của nhánh tài liệu. Hai nhánh cho ra hai văn bản
+       trông giống hệt nhau, nhưng thứ đứng sau con số thì khác hẳn - người ký
+       cần biết mình đang cầm loại nào. */
+    if (data.nguon === 'tai_lieu') {
+      var sd = data.source_document || {};
+      box.appendChild(el('div', { class: 'card' },
+        '<div class="card-head"><h3>Nguồn là tài liệu tải lên</h3>' +
+        (sd.co_bang_so_lieu ? '<span class="pill">có bảng số liệu</span>'
+                            : '<span class="pill warn">không có bảng số liệu</span>') + '</div>' +
+        '<div class="card-sub">Số trong báo cáo được kiểm là <b>có xuất hiện nguyên văn</b> trong ' +
+        esc(sd.ten_tai_lieu || 'tài liệu') +
+        '. Mức này chặn được số bịa, nhưng <b>không</b> chặn được số có thật mà dùng sai chỗ — ' +
+        'khác với nhánh CSDL, nơi mỗi con số truy về được một trường dữ liệu.</div>'));
+    }
 
     var v = validationNode(data.validation);
     if (v) box.appendChild(el('div', { class: 'card' })).appendChild(v);
@@ -1382,13 +1400,68 @@
       block('JSON đầy đủ', null, '<pre class="json">' + prettyJSON(data) + '</pre>', false));
   }
 
+  /* --- nguồn nội dung: CSDL theo mẫu, hay một tài liệu tải lên --- */
+  var draftFile = null;   // {file_id, name, size, pending} - CHỈ một file
+
+  function renderDraftFile() {
+    var row = $('#draftAttachments');
+    row.innerHTML = '';
+    row.hidden = !draftFile;
+    if (!draftFile) return;
+    var node = el('span', { class: 'attach' + (draftFile.pending ? ' loading' : '') },
+      '📎 ' + esc(draftFile.name) +
+      (draftFile.size ? ' <span class="muted">' + fmtBytes(draftFile.size) + '</span>' : ''));
+    var x = el('button', { class: 'icon-btn', title: 'Bỏ file' },
+      '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>');
+    x.addEventListener('click', function () { draftFile = null; renderDraftFile(); });
+    node.appendChild(x);
+    row.appendChild(node);
+  }
+
+  /* Một tài liệu, không phải nhiều: nhánh này soạn báo cáo TỪ nội dung một file.
+     Muốn gộp nhiều nguồn thì đó là màn Tổng hợp. Chọn file mới thì thay file cũ
+     thay vì xếp hàng - đỡ phải giải thích "file nào đang được dùng". */
+  wireDropzone('#draftDrop', '#draftFile', async function (file) {
+    var entry = { name: file.name, size: file.size, pending: true };
+    draftFile = entry;
+    renderDraftFile();
+    try {
+      var res = await API.agentUpload(file, 'upload');
+      entry.file_id = res.file_id;
+      entry.pending = false;
+      renderDraftFile();
+      toast('Đã tải lên: ' + res.file_id, 'ok', 2000);
+    } catch (e) {
+      if (draftFile === entry) draftFile = null;
+      renderDraftFile();
+      toast('Tải file thất bại: ' + errText(e), 'err');
+    }
+  });
+
+  $('#draftSource').addEventListener('change', function () {
+    var tuTaiLieu = this.value === 'tai_lieu';
+    $('#draftFileField').hidden = !tuTaiLieu;
+    $('#draftSourceHint').textContent = tuTaiLieu
+      ? 'Đọc toàn bộ nội dung file. Số trong báo cáo phải có nguyên văn trong tài liệu — yếu hơn nhánh CSDL: chặn được số bịa, không chặn được số có thật nhưng dùng sai chỗ.'
+      : 'Số liệu lấy từ ERP; mọi con số phải truy về được một trường dữ liệu.';
+  });
+
   $('#draftRun').addEventListener('click', function () {
     var request = $('#draftRequest').value.trim();
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
+    var tuTaiLieu = $('#draftSource').value === 'tai_lieu';
+    // Chặn ngay ở giao diện: backend cũng trả `missing_input` đúng như vậy,
+    // nhưng bắt người dùng đợi một vòng gọi API chỉ để nghe "thiếu file" thì vô ích.
+    if (tuTaiLieu && !(draftFile && draftFile.file_id)) {
+      toast(draftFile ? 'File đang tải lên, đợi một chút…' : 'Chọn tài liệu nguồn trước đã', 'err');
+      return;
+    }
     runWorkflow({
       button: this,
       box: $('#draftResult'),
-      label: 'Đang chọn mẫu, truy vấn CSDL, dựng từng mục và đối chiếu số…',
+      label: tuTaiLieu
+        ? 'Đang đọc tài liệu, lập dàn ý và viết từng mục…'
+        : 'Đang chọn mẫu, truy vấn CSDL, dựng từng mục và đối chiếu số…',
       hint: { text: 'thường 20-40 giây', slowAfter: 45 },
       call: function (signal) {
         // Không gửi `ma_don_vi`: backend tự nhận đơn vị từ chính câu yêu cầu
@@ -1397,6 +1470,8 @@
         // ô nhập mà ai cũng phải điền dù câu hỏi đã nói rõ đơn vị.
         return API.draft({
           request: request,
+          nguon: $('#draftSource').value,
+          file_id: (draftFile && draftFile.file_id) || '',
           inputs: Object.assign({}, prefs.inputs, collectInputs('draftInputs')),
         }, signal);
       },
