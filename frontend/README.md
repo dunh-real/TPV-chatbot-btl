@@ -6,7 +6,7 @@ giờ trình bày thì không có gì để chiếu.
 
 ```
 frontend/
-├── index.html        khung 9 màn hình
+├── index.html        khung 8 màn hình
 ├── styles.css        theme sáng/tối, responsive tới ~400px
 └── js/
     ├── markdown.js   render Markdown (bảng + marker trích dẫn), escape mọi thứ LLM sinh
@@ -34,8 +34,7 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
 
 | Màn hình | Gọi | Hiển thị đặc thù |
 |---|---|---|
-| Agent tổng | `POST /api/agent/chat`, `POST /api/agent/upload` | nhãn định tuyến (ý định · độ tin · nguồn quyết định), file sinh ra, `missing_input` bấm được |
-| Hỏi đáp tài liệu | `POST /api/chat/qa/stream` (hoặc `/qa`) | chữ chảy theo SSE, marker `[n]` bấm ra nguyên văn đoạn nguồn |
+| Agent tổng | `POST /api/agent/chat`, `POST /api/agent/upload` | nhãn định tuyến, file sinh ra, `missing_input` bấm được — và **hỏi đáp tài liệu** (SSE, marker `[n]` bấm ra nguyên văn đoạn nguồn) |
 | Soát văn bản | `POST /api/documents/review`, `GET /rule-sets` | chọn bộ tiêu chí, loại văn bản hệ thống tự nhận, lỗi thể thức tách khỏi lỗi chữ nghĩa |
 | Soạn báo cáo | `POST /api/reports/draft` (`nguon=tai_lieu`), `POST /api/agent/upload` | soạn từ MỘT tài liệu tải lên; từng mục kèm loại, kết quả kiểm chứng số, thẻ nói rõ mức bảo đảm |
 | Tổng hợp báo cáo | `POST /api/reports/aggregate` (`nguon_so_lieu=csdl`) | gộp nhiều đơn vị từ CSDL; số liệu gốc value/prev/delta/%, bảng theo đơn vị, đối chiếu file |
@@ -69,6 +68,16 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
   lúc cần, thay vì bắt điền trước mọi lần.
   `API.templates()` vẫn còn trong `api.js` dù không màn nào gọi: file đó là bản đồ
   đầy đủ của API, endpoint bên backend vẫn sống.
+- **Hỏi đáp tài liệu nằm trong Agent tổng, không có màn riêng.** Agent vốn đã có
+  ý định `qa` chạy đúng đường RAG đó và `renderAgentResult` đã dựng "Nguồn trích
+  dẫn" kèm marker bấm được, nên một màn riêng chỉ là ô nhập thứ hai cho cùng một
+  việc. Hai công tắc *Streaming* và *Rerank* cũng bỏ theo: chúng luôn bật, phơi ra
+  chỉ mời người dùng tắt đi rồi thắc mắc sao chậm và kém chính xác hơn.
+  **Đánh đổi phải biết:** câu vừa tra được CSDL vừa tra được tài liệu thì agent
+  ưu tiên CSDL. "Phòng Kỹ thuật kiểm kê bao nhiêu trang thiết bị" ra **2** (ERP),
+  thêm "theo tài liệu trong kho" mới ra **79** (tài liệu) kèm trích dẫn. Câu gợi ý
+  trên màn trống dùng đúng cách nói đó để người dùng thấy ngay.
+  Hội thoại cũ kiểu `qa` vẫn mở lại được - chúng rơi về màn Agent tổng.
 - **Mỗi màn một nguồn, không bắt người dùng chọn.** Soạn báo cáo = từ MỘT tài
   liệu tải lên; Tổng hợp = từ CSDL nhiều đơn vị. Hai ô chọn nguồn trước đây bị bỏ
   vì chúng bắt người dùng hiểu sự khác nhau giữa hai workflow trước khi làm được

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20260920b" />
+<link rel="stylesheet" href="styles.css?v=20260920c" />
 </head>
 <body>
 <div class="app" id="app">
@@ -36,10 +36,6 @@
       <button class="nav-item is-active" data-view="chat">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12Z"/></svg>
         <span>Agent tổng</span><em class="nav-hint">tự định tuyến</em>
-      </button>
-      <button class="nav-item" data-view="qa">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <span>Hỏi đáp tài liệu</span><em class="nav-hint">WF1</em>
       </button>
 
       <div class="nav-label">Nghiệp vụ văn bản</div>
@@ -132,12 +128,12 @@
             <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
           </div>
           <h2>Hôm nay cần xử lý việc gì?</h2>
-          <p>Gõ yêu cầu bằng tiếng Việt — agent tự chọn một trong năm workflow. Đính kèm file khi muốn soát thể thức văn bản.</p>
+          <p>Gõ yêu cầu bằng tiếng Việt — agent tự chọn workflow, kể cả <b>hỏi đáp trên kho tài liệu</b> (trả lời kèm trích dẫn bấm được). Câu vừa hỏi được CSDL vừa hỏi được tài liệu thì nói rõ <i>“theo tài liệu trong kho”</i>, không thì agent ưu tiên CSDL. Đính kèm file khi muốn soát thể thức văn bản.</p>
           <div class="chips" id="chatSuggest">
-            <button class="chip" data-prompt="Tổng hợp tình hình quân số toàn cơ quan tháng 8/2026">📊 Tổng hợp quân số tháng 8/2026</button>
-            <button class="chip" data-prompt="Soạn báo cáo tình hình trang bị tháng 8 cho đơn vị DV02">📝 Soạn báo cáo trang bị DV02</button>
-            <button class="chip" data-prompt="Tạo slide báo cáo quân số tháng 8">📽️ Tạo slide quân số</button>
-            <button class="chip" data-prompt="Quy định về thể thức văn bản hành chính gồm những thành phần nào?">🔎 Tra cứu quy định thể thức</button>
+            <button class="chip" data-prompt="Quân số toàn cơ quan kỳ 2026-08 là bao nhiêu, chia theo phòng ban?">📊 Quân số theo phòng ban</button>
+            <button class="chip" data-prompt="Theo tài liệu trong kho, Phòng Kỹ thuật kiểm kê được bao nhiêu trang thiết bị?">🔎 Hỏi đáp trên kho tài liệu</button>
+            <button class="chip" data-prompt="Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh">📝 Soạn báo cáo từ CSDL</button>
+            <button class="chip" data-prompt="Tổng hợp báo cáo quân số và trang thiết bị tháng 8/2026">📑 Tổng hợp toàn cơ quan</button>
           </div>
         </div>
         <div id="chatMessages" class="messages"></div>
@@ -165,47 +161,6 @@
     </section>
 
     <!-- ========== VIEW: QA (workflow 1) ========== -->
-    <section class="view" id="view-qa">
-      <div class="thread" id="qaThread">
-        <div class="empty" id="qaEmpty">
-          <div class="empty-mark">
-            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          </div>
-          <h2>Hỏi đáp trên kho tài liệu</h2>
-          <p>Hybrid 3 nhánh (dense · lexical · BM25) → RRF → rerank. Câu trả lời luôn kèm trích dẫn bấm được.</p>
-          <div class="chips">
-            <button class="chip" data-prompt="Hoá đơn điện tử có bắt buộc chữ ký số không?">Hoá đơn điện tử &amp; chữ ký số</button>
-            <button class="chip" data-prompt="Nội dung chính của công văn chỉ thị kiểm kê là gì?">Nội dung công văn kiểm kê</button>
-            <button class="chip" data-prompt="Thời hạn gửi báo cáo kiểm kê là khi nào?">Thời hạn gửi báo cáo</button>
-          </div>
-        </div>
-        <div id="qaMessages" class="messages"></div>
-      </div>
-      <div class="composer-wrap">
-        <div class="composer">
-          <textarea id="qaInput" class="composer-input" rows="1" placeholder="Câu hỏi về tài liệu trong kho…"></textarea>
-          <div class="composer-bar">
-            <div class="composer-left">
-              <label class="switch sm" title="Phát câu trả lời theo từng mảnh (SSE)">
-                <input type="checkbox" id="qaStream" checked />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-                <span class="switch-label">Streaming</span>
-              </label>
-              <label class="switch sm" title="Bật cross-encoder rerank">
-                <input type="checkbox" id="qaRerank" checked />
-                <span class="switch-track"><span class="switch-thumb"></span></span>
-                <span class="switch-label">Rerank</span>
-              </label>
-              <span class="composer-meta" id="qaMeta"></span>
-            </div>
-            <button class="send-btn" id="qaSend" title="Gửi (Enter)">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-            </button>
-          </div>
-        </div>
-        <p class="composer-foot">Không tìm thấy trong kho thì hệ thống trả lời “không có thông tin” thay vì tự suy diễn.</p>
-      </div>
-    </section>
 
     <!-- ========== VIEW: REVIEW (workflow 2) ========== -->
     <section class="view view-split" id="view-review">
@@ -407,8 +362,8 @@
 <!-- citation popover -->
 <div class="popover" id="popover" hidden></div>
 
-<script src="js/markdown.js?v=20260920b"></script>
-<script src="js/api.js?v=20260920b"></script>
-<script src="js/app.js?v=20260920b"></script>
+<script src="js/markdown.js?v=20260920c"></script>
+<script src="js/api.js?v=20260920c"></script>
+<script src="js/app.js?v=20260920c"></script>
 </body>
 </html>

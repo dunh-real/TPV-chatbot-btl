@@ -117,10 +117,9 @@
   $('#scrim').addEventListener('click', function () { app.classList.remove('nav-open'); });
 
   var VIEWS = {
-    chat: ['Agent tổng', 'Một câu yêu cầu — hệ thống tự chọn workflow'],
-    qa: ['Hỏi đáp tài liệu', 'Workflow 1 · hybrid 3 nhánh + rerank, trả lời kèm trích dẫn'],
+    chat: ['Agent tổng', 'Một câu yêu cầu — hệ thống tự chọn workflow, kể cả hỏi đáp tài liệu'],
     review: ['Soát văn bản', 'Workflow 2 · rule engine thể thức + soát chữ nghĩa + phân rã nhiệm vụ'],
-    draft: ['Soạn báo cáo', 'Workflow 3 · số liệu từ CSDL, kiểm chứng từng con số trước khi xuất file'],
+    draft: ['Soạn báo cáo', 'Workflow 3 · đọc một tài liệu tải lên, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
     slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
     corpus: ['Kho tri thức', 'Nạp tài liệu vào Qdrant và xem thống kê collection'],
@@ -390,7 +389,7 @@
     node.style.height = 'auto';
     node.style.height = Math.min(node.scrollHeight, 220) + 'px';
   }
-  [chatInput, $('#qaInput')].forEach(function (n) {
+  [chatInput].forEach(function (n) {
     n.addEventListener('input', function () { autoGrow(n); });
   });
 
@@ -725,7 +724,7 @@
       return;
     }
     convos.slice(0, 40).forEach(function (c) {
-      var active = c.id === chat.conversationId || c.id === qa.conversationId;
+      var active = c.id === chat.conversationId;
       var row = el('div', { class: 'convo' + (active ? ' is-active' : ''), title: c.id });
       var open = el('button', { class: 'convo-open' },
         '<span class="convo-title">' + esc(c.title || c.id) + '</span>' +
@@ -739,7 +738,6 @@
         convos = convos.filter(function (x) { return x.id !== c.id; });
         saveConvos();
         if (chat.conversationId === c.id) { chat.conversationId = null; chatMessages.innerHTML = ''; chatEmpty.hidden = false; }
-        if (qa.conversationId === c.id) { qa.conversationId = null; $('#qaMessages').innerHTML = ''; $('#qaEmpty').hidden = false; }
         renderConvos();
         toast('Đã xoá hội thoại', 'ok', 2000);
       });
@@ -750,13 +748,13 @@
   }
 
   async function loadConversation(c) {
-    showView(c.kind === 'qa' ? 'qa' : 'chat');
-    var isQA = c.kind === 'qa';
-    var container = isQA ? $('#qaMessages') : chatMessages;
-    var empty = isQA ? $('#qaEmpty') : chatEmpty;
+    // Hội thoại cũ kiểu `qa` (từ thời còn màn Hỏi đáp riêng) cũng mở ở đây:
+    // agent tổng trả lời được câu hỏi tài liệu, nên không có gì để mất.
+    showView('chat');
+    var container = chatMessages;
     container.innerHTML = '';
-    empty.hidden = true;
-    if (isQA) qa.conversationId = c.id; else chat.conversationId = c.id;
+    chatEmpty.hidden = true;
+    chat.conversationId = c.id;
     renderConvos();
 
     var holder = el('div', { class: 'loader' }, '<span class="spinner"></span><span>Đang tải lịch sử…</span>');
@@ -771,12 +769,12 @@
       data.turns.forEach(function (t) {
         if (t.role === 'user') userMessage(container, t.content);
         else {
-          var shell = botShell(container, isQA ? 'Hỏi đáp' : 'Trợ lý');
+          var shell = botShell(container, 'Trợ lý');
           shell.prose.innerHTML = MD.render(t.content || '');
           addCopyAction(shell, function () { return t.content; });
         }
       });
-      scrollThread(isQA ? $('#qaThread') : chatThread);
+      scrollThread(chatThread);
     } catch (e) {
       container.innerHTML = '';
       toast('Không tải được lịch sử: ' + errText(e), 'err');
@@ -867,7 +865,7 @@
   /** Khi đang chạy, nút gửi đổi thành nút dừng - yêu cầu dài vài chục giây,
    *  không có đường thoát thì người dùng chỉ còn cách tải lại trang. */
   function setBusy(view, busy) {
-    var btn = view === 'chat' ? $('#chatSend') : $('#qaSend');
+    var btn = $('#chatSend');
     btn.disabled = false;
     btn.classList.toggle('stop', busy);
     btn.innerHTML = busy ? STOP_ICON : SEND_ICON;
@@ -952,155 +950,6 @@
   });
   chatInput.addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); sendChat(); }
-  });
-
-  /* ══════════════════════════════════════════════════════════════════════
-     VIEW: HỎI ĐÁP (workflow 1)
-     ══════════════════════════════════════════════════════════════════ */
-  var qa = { conversationId: null, busy: false, controller: null };
-  var qaInput = $('#qaInput');
-  var qaMessages = $('#qaMessages');
-  var qaThread = $('#qaThread');
-
-  function splitList(value) {
-    return (value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-  }
-
-  function qaFilters() {
-    return {
-      doc_ids: splitList(prefs.docIds),
-      sources: splitList(prefs.sources),
-      doc_types: splitList(prefs.docTypes),
-    };
-  }
-
-  function renderQaMeta(shell, payload) {
-    var n = (payload.query_variants || []).length;
-    var tip = [payload.standalone_query].concat(payload.query_variants || []).filter(Boolean).join(' · ');
-    shell.badges.innerHTML = (payload.citations || []).length
-      ? '<span class="pill accent">' + payload.citations.length + ' nguồn</span>' : '';
-    if (n) {
-      shell.badges.innerHTML += ' <span class="pill info" title="' + esc(tip) + '">viết lại truy vấn · ' + n + ' biến thể</span>';
-    }
-  }
-
-  function renderQaExtras(shell, payload) {
-    shell.extra.innerHTML = '';
-    var wrap = el('div', { style: 'margin-top:12px' });
-    var cb = sourcesBlock('Nguồn trích dẫn', payload.citations);
-    if (cb) wrap.appendChild(cb);
-    if (payload.standalone_query || (payload.query_variants || []).length) {
-      wrap.appendChild(block('Truy vấn đã dùng', (payload.query_variants || []).length || 1,
-        (payload.standalone_query ? '<div class="card-sub">Câu hỏi sau khi giải đại từ</div><div class="quote">' + esc(payload.standalone_query) + '</div>' : '') +
-        ((payload.query_variants || []).length
-          ? '<div class="card-sub" style="margin-top:8px">Biến thể gửi vào 3 nhánh truy hồi</div><div class="tag-row">' +
-            payload.query_variants.map(function (v) { return '<span class="pill">' + esc(v) + '</span>'; }).join('') + '</div>'
-          : ''), false));
-    }
-    if (payload.trace && Object.keys(payload.trace).length) {
-      wrap.appendChild(block('Trace pipeline', null, '<pre class="json">' + prettyJSON(payload.trace) + '</pre>', false));
-    }
-    if (wrap.children.length) shell.extra.appendChild(wrap);
-  }
-
-  async function sendQa() {
-    if (qa.busy) return;
-    var text = qaInput.value.trim();
-    if (!text) return;
-
-    qa.busy = true;
-    setBusy('qa', true);
-    $('#qaEmpty').hidden = true;
-    qaInput.value = '';
-    autoGrow(qaInput);
-
-    userMessage(qaMessages, text);
-    var shell = botShell(qaMessages, 'Hỏi đáp');
-    scrollThread(qaThread);
-
-    qa.controller = new AbortController();
-    var body = {
-      question: text,
-      conversation_id: qa.conversationId,
-      filters: qaFilters(),
-      top_n: prefs.topN ? Number(prefs.topN) : null,
-      use_rerank: $('#qaRerank').checked,
-      include_trace: $('#traceToggle').checked,
-    };
-
-    try {
-      if ($('#qaStream').checked) {
-        var buf = '';
-        var citations = [];
-        var meta = {};
-        shell.prose.innerHTML = '<span class="caret"></span>';
-        await API.qaStream(body, {
-          meta: function (payload) {
-            meta = payload;
-            qa.conversationId = payload.conversation_id;
-            citations = payload.citations || [];
-            sourceRegistry.set(shell.mid, citations);
-            renderQaMeta(shell, payload);
-            renderQaExtras(shell, payload);
-            scrollThread(qaThread);
-          },
-          delta: function (payload) {
-            buf += payload.text || '';
-            shell.prose.innerHTML = MD.render(buf) + '<span class="caret"></span>';
-            scrollThread(qaThread);
-          },
-          done: function (payload) {
-            shell.prose.innerHTML = MD.render(buf);
-            var used = (payload.citations && payload.citations.length) ? payload.citations : citations;
-            sourceRegistry.set(shell.mid, used);
-            renderQaExtras(shell, Object.assign({}, meta, { citations: used }));
-            renderQaMeta(shell, Object.assign({}, meta, { citations: used }));
-            addCopyAction(shell, function () { return buf; });
-          },
-          error: function (payload) {
-            shell.prose.innerHTML += '<p style="color:var(--err)">' + esc(payload.detail || 'Lỗi streaming') + '</p>';
-          },
-        }, qa.controller.signal);
-        rememberConvo(qa.conversationId, text.slice(0, 56), 'qa');
-      } else {
-        var data = await API.qa(body, qa.controller.signal);
-        qa.conversationId = data.conversation_id;
-        sourceRegistry.set(shell.mid, data.citations || []);
-        renderQaMeta(shell, data);
-        shell.prose.innerHTML = MD.render(data.answer || '');
-        renderQaExtras(shell, data);
-        addCopyAction(shell, function () { return data.answer || ''; });
-        rememberConvo(data.conversation_id, text.slice(0, 56), 'qa');
-      }
-    } catch (e) {
-      var stopped = e && e.name === 'AbortError';
-      if (stopped) {
-        var caret = shell.prose.querySelector('.caret');
-        if (caret) caret.remove();
-        if (!shell.prose.textContent.trim()) shell.prose.innerHTML = '<p class="muted">Đã dừng theo yêu cầu.</p>';
-        shell.badges.innerHTML += ' <span class="pill">đã dừng</span>';
-      } else {
-        shell.badges.innerHTML = '<span class="pill err">lỗi</span>';
-        shell.prose.innerHTML = '<p style="color:var(--err)">' + esc(errText(e)) + '</p>';
-        toast(errText(e), 'err');
-      }
-    } finally {
-      qa.busy = false;
-      qa.controller = null;
-      setBusy('qa', false);
-      scrollThread(qaThread);
-    }
-  }
-
-  $('#qaSend').addEventListener('click', function () {
-    if (qa.busy) { if (qa.controller) qa.controller.abort(); return; }
-    sendQa();
-  });
-  qaInput.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); sendQa(); }
-  });
-  $$('#view-qa .chip').forEach(function (c) {
-    c.addEventListener('click', function () { qaInput.value = c.dataset.prompt; autoGrow(qaInput); sendQa(); });
   });
 
   /* ══════════════════════════════════════════════════════════════════════
