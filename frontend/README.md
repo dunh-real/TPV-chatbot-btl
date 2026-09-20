@@ -37,7 +37,7 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
 | Agent tổng | `POST /api/agent/chat`, `POST /api/agent/upload` | nhãn định tuyến (ý định · độ tin · nguồn quyết định), file sinh ra, `missing_input` bấm được |
 | Hỏi đáp tài liệu | `POST /api/chat/qa/stream` (hoặc `/qa`) | chữ chảy theo SSE, marker `[n]` bấm ra nguyên văn đoạn nguồn |
 | Soát văn bản | `POST /api/documents/review`, `GET /rule-sets` | chọn bộ tiêu chí, loại văn bản hệ thống tự nhận, lỗi thể thức tách khỏi lỗi chữ nghĩa |
-| Soạn báo cáo | `GET /api/reports/templates`, `POST /api/reports/draft` | từng mục kèm loại (`data`/`table`/`llm`), kết quả kiểm chứng số |
+| Soạn báo cáo | `POST /api/reports/draft` | từng mục kèm loại (`data`/`table`/`llm`), kết quả kiểm chứng số, `missing_input` bấm được |
 | Tổng hợp báo cáo | `POST /api/reports/aggregate` | chọn nguồn số liệu (CSDL hay đọc thẳng bảng trong báo cáo đơn vị), số liệu gốc value/prev/delta/%, bảng theo đơn vị, đối chiếu file |
 | Tạo slide | `POST /api/presentations/create` | xem trước từng slide + JSON trung gian đã lọc |
 | Kho tri thức | `POST /api/documents/upload`, `/ingest-text`, `GET /stats`, `DELETE /{doc_id}` | số point, tên các vector |
@@ -62,5 +62,12 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
 - **Thứ backend từ chối làm thì giao diện cũng không che.** `missing_input`,
   `validation.status = failed`, `rule_check.status = partial` đều hiện rõ thay
   vì hiển thị như đã xong.
+- **Không bắt nhập lại thứ câu yêu cầu đã nói.** Màn soạn báo cáo bỏ ô *Mã đơn
+  vị* và danh sách *Mẫu có sẵn*: `extract_params_node` đã tự nhận đơn vị từ chính
+  câu yêu cầu (đối chiếu danh mục đơn vị trong ERP) và tự chọn mẫu. Không nêu đơn
+  vị thì backend trả `missing_input` và giao diện hiện ra để bổ sung - hỏi đúng
+  lúc cần, thay vì bắt điền trước mọi lần.
+  `API.templates()` vẫn còn trong `api.js` dù không màn nào gọi: file đó là bản đồ
+  đầy đủ của API, endpoint bên backend vẫn sống.
 - **JSON thô luôn có một chỗ xem.** Mỗi màn hình workflow giữ một khối *JSON đầy
   đủ* để đối chiếu khi con số trên màn hình trông đáng ngờ.

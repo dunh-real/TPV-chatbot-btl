@@ -306,14 +306,6 @@ em { font-style: normal; }
 .kv-row input:focus { border-color: var(--accent); }
 .kv-row .icon-btn { width: 28px; height: 28px; flex: 0 0 auto; }
 
-.template-list { display: flex; flex-direction: column; gap: 5px; max-height: 190px; overflow-y: auto; }
-.template-item {
-  text-align: left; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px;
-  background: var(--surface); cursor: pointer; font-size: 12.7px; transition: border-color .14s, background .14s;
-}
-.template-item:hover { border-color: var(--accent); background: var(--accent-soft); }
-.template-item b { display: block; font-size: 13px; }
-.template-item small { color: var(--muted); }
 
 /* ====================================================================== */
 /* THREAD / MESSAGES                                                       */

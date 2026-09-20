@@ -140,7 +140,6 @@
     location.hash = name;
     if (name === 'tools') loadToolsPage();
     if (name === 'corpus') loadStats();
-    if (name === 'draft' && !templatesLoaded) loadTemplates();
     if (name === 'review' && !ruleSetsLoaded) loadRuleSets();
   }
   $$('.nav-item').forEach(function (b) {
@@ -1310,30 +1309,6 @@
   /* ══════════════════════════════════════════════════════════════════════
      VIEW: SOẠN BÁO CÁO (workflow 3)
      ══════════════════════════════════════════════════════════════════ */
-  var templatesLoaded = false;
-  async function loadTemplates() {
-    var box = $('#templateList');
-    try {
-      var items = await API.templates();
-      templatesLoaded = true;
-      box.innerHTML = '';
-      if (!items.length) { box.innerHTML = '<small class="muted">Chưa có mẫu nào trong CSDL.</small>'; return; }
-      items.forEach(function (t) {
-        var btn = el('button', { class: 'template-item', type: 'button' },
-          '<b>' + esc(t.ten_bao_cao) + '</b><small>' + esc(t.ma_template) +
-          (t.loai_bao_cao ? ' · ' + esc(t.loai_bao_cao) : '') + '</small>' +
-          (t.mo_ta ? '<small>' + esc(t.mo_ta) + '</small>' : ''));
-        btn.addEventListener('click', function () {
-          $('#draftRequest').value = 'Soạn ' + t.ten_bao_cao;
-          toast('Đã điền yêu cầu theo mẫu ' + t.ma_template, 'ok', 2000);
-        });
-        box.appendChild(btn);
-      });
-    } catch (e) {
-      box.innerHTML = '<small class="muted">Không tải được danh sách mẫu: ' + esc(errText(e)) + '</small>';
-    }
-  }
-
   function renderSections(container, sections, midPrefix) {
     (sections || []).forEach(function (s, i) {
       var mid = midPrefix + i;
@@ -1416,9 +1391,12 @@
       label: 'Đang chọn mẫu, truy vấn CSDL, dựng từng mục và đối chiếu số…',
       hint: { text: 'thường 20-40 giây', slowAfter: 45 },
       call: function (signal) {
+        // Không gửi `ma_don_vi`: backend tự nhận đơn vị từ chính câu yêu cầu
+        // (đối chiếu với danh mục đơn vị trong ERP). Không nêu thì nó trả
+        // `missing_input` và ô kết quả hiện ra để người dùng bổ sung - đỡ một
+        // ô nhập mà ai cũng phải điền dù câu hỏi đã nói rõ đơn vị.
         return API.draft({
           request: request,
-          ma_don_vi: $('#draftUnit').value.trim() || null,
           inputs: Object.assign({}, prefs.inputs, collectInputs('draftInputs')),
         }, signal);
       },

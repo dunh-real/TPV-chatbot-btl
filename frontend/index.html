@@ -244,19 +244,11 @@
       <div class="panel">
         <div class="panel-inner">
           <h2 class="panel-title">Soạn văn bản theo mẫu</h2>
-          <p class="panel-sub">Số liệu do SQL lấy, LLM chỉ viết văn quanh số liệu. Số nào không truy về được CSDL thì không xuất file.</p>
+          <p class="panel-sub">Nêu luôn đơn vị và kỳ ngay trong yêu cầu — hệ thống tự nhận, thiếu thì nó hỏi lại. Số liệu do SQL lấy, LLM chỉ viết văn quanh số liệu. Số nào không truy về được CSDL thì không xuất file.</p>
           <label class="field">
             <span>Yêu cầu</span>
-            <textarea id="draftRequest" rows="3" placeholder="Soạn báo cáo tình hình trang bị tháng 8">Soạn báo cáo tình hình trang bị tháng 8</textarea>
+            <textarea id="draftRequest" rows="3" placeholder="Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh">Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh</textarea>
           </label>
-          <label class="field">
-            <span>Mã đơn vị</span>
-            <input type="text" id="draftUnit" placeholder="VD: DV02" value="DV02" />
-          </label>
-          <div class="field">
-            <span>Mẫu có sẵn</span>
-            <div class="template-list" id="templateList"><small class="muted">Đang tải…</small></div>
-          </div>
           <div class="field">
             <span>Thông tin bắt buộc (inputs)</span>
             <div class="kv-list" id="draftInputs"></div>
