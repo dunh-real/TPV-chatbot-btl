@@ -6,12 +6,14 @@ import logging
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import APIRouter
+from fastapi import Depends, APIRouter
 from fastapi.responses import FileResponse
 
 from app.agents.graph import run_presentation_workflow
 from app.api.files import output_file_response
 from app.schemas.presentations import PresentationRequest, PresentationResponse
+
+from app.agents import quyen
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,8 @@ router = APIRouter(prefix="/api/presentations", tags=["presentations"])
 
 
 
-@router.post("/create", response_model=PresentationResponse, summary="Tạo bộ slide báo cáo")
+@router.post("/create", response_model=PresentationResponse, summary="Tạo bộ slide báo cáo",
+             dependencies=[Depends(quyen.can_quyen("Ai.Slide.Create", "tạo slide"))])
 async def create(request: PresentationRequest) -> PresentationResponse:
     """Presenton dựng slide từ bản tóm tắt số liệu do hệ thống chốt sẵn.
 

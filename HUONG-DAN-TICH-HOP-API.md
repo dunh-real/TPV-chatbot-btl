@@ -63,7 +63,7 @@ Những trường còn lại là để hiện tiến trình cho đẹp.
 
 ---
 
-## 2. Ba thứ chặn bạn trước khi viết dòng code đầu tiên
+## 2. Bốn thứ chặn bạn trước khi viết dòng code đầu tiên
 
 ### 2.1. CORS — gần như chắc chắn bạn sẽ vướng
 
@@ -98,13 +98,22 @@ Cookie:      tpv_access=<token>
 Thiếu hoặc sai token → `401 {"detail": "Thiếu hoặc sai token truy cập"}`.
 Hãy viết code sẵn nhánh này, đừng đợi lúc bật mới sửa.
 
-### 2.3. Danh tính và tenant — **đọc kỹ, đây là chỗ sai âm thầm nhất**
+### 2.3. Danh tính — **quyết định cả QUYỀN lẫn TENANT**
 
-Backend lọc số liệu theo tenant. Thứ tự lấy danh tính:
+Gửi `X-User-Id` là thứ quan trọng nhất trong tích hợp này. Từ nó backend tra ra
+**quyền** của tài khoản (mục 2.4) và **tenant** của tài khoản đó.
+
+Thứ tự lấy danh tính:
 
 1. Tài khoản đăng nhập — **chưa dựng**, là điểm cắm sẵn cho sau này.
-2. Header `X-Tenant-Id` (số nguyên) và `X-User-Id` (chuỗi).
-3. `ERP_TENANT_ID` trong cấu hình server — dùng khi client không khai gì.
+2. Header `X-User-Id` — UserId trong ERP, ví dụ `414`. Backend tra quyền và
+   **lấy luôn tenant của tài khoản này**, đè lên `X-Tenant-Id` nếu có.
+3. Header `X-Tenant-Id` — chỉ còn tác dụng khi không gửi `X-User-Id`.
+4. `ERP_TENANT_ID` trong cấu hình server — dùng khi client không khai gì.
+
+> Tenant đi theo TÀI KHOẢN chứ không theo header, và đó là cố ý: gửi user của
+> công ty A kèm tenant của công ty B mà hệ thống nghe theo header thì bạn vừa
+> đọc số liệu của công ty B dưới danh nghĩa người của công ty A.
 
 Hiện `TRUST_IDENTITY_HEADERS=true`, tức **client tự khai tenant nào cũng được**.
 Đây là lỗ hổng có chủ ý cho giai đoạn chạy thử trong mạng nội bộ. Khi hệ thống
@@ -117,8 +126,8 @@ số trong báo cáo là lạ. Vì vậy hãy tự kiểm bằng:
 
 ```bash
 curl https://chatbot-demo.tpvtech.vn/whoami \
-  -H "X-Tenant-Id: 64"
-# {"tenant_id":64,"user_id":null,"source":"header","trust_identity_headers":true}
+  -H "X-User-Id: 414"
+# {"tenant_id":94,"user_id":"414","source":"header","trust_identity_headers":true}
 ```
 
 `source` nói backend đọc danh tính từ đâu: `token` | `header` | `default`.
@@ -127,6 +136,64 @@ curl https://chatbot-demo.tpvtech.vn/whoami \
 
 `X-Tenant-Id` sai định dạng (không phải số) bị chặn bằng `400` kèm câu nói rõ,
 chứ không âm thầm rơi về tenant mặc định — đó là cố ý.
+
+### 2.4. Phân quyền — quyền lấy từ ERP, không đặt trong hệ thống này
+
+**Không gửi `X-User-Id` thì không có phân quyền**: backend không có căn cứ để
+chặn ai, nên cho qua tất. Gửi vào thì mọi lời gọi bị soi theo đúng quyền mà quản
+trị ERP đã cấp cho tài khoản đó.
+
+Luồng: `X-User-Id` → `AbpUsers` → `AbpUserRoles` → `AbpRoles` → `AbpPermissions`.
+Cache 60 giây, nên **đổi quyền bên ERP thì hệ thống này thấy trong vòng một phút**
+— không sửa code, không khởi động lại.
+
+Vai trò `Admin` tĩnh của ABP được toàn quyền, kể cả khi bảng `AbpPermissions`
+không có dòng nào cho nó (đó là cách ABP hoạt động).
+
+#### Quyền cần cho từng việc
+
+| Việc | Quyền ERP |
+|---|---|
+| Hỏi đáp, tra số liệu, soát tài liệu | `Ai.AiChatbot` |
+| Soạn văn bản, tổng hợp báo cáo | `Ai.ReportSummary.Create` |
+| Tạo slide | `Ai.Slide.Create` |
+| Đọc số liệu **nhân sự** | `Hrm.EmployeeProfile.View` |
+| Đọc số liệu **thiết bị** | `Asm.Asset.View` |
+| Nạp tài liệu vào kho | `Ai.ReportSummary.Create` |
+| **Xoá tài liệu khỏi kho** | **chỉ vai trò Admin** |
+
+Hai quyền số liệu tách riêng với quyền dùng chatbot: một người được dùng trợ lý
+không đương nhiên được xem hồ sơ nhân sự cả công ty. Thiếu quyền mảng nào thì
+mảng đó bị cắt khỏi báo cáo **trước khi truy vấn chạy**.
+
+#### Thiếu quyền thì nhận gì
+
+Endpoint chuyên biệt trả **HTTP 403**:
+
+```json
+{"detail": "Tài khoản của bạn không có quyền soạn văn bản. Quyền cần có: `Ai.ReportSummary.Create`. Vai trò hiện tại: Nhân viên DEV. Liên hệ quản trị hệ thống ERP để được cấp."}
+```
+
+Qua `/api/agent/chat` thì **vẫn là HTTP 200**, câu từ chối nằm trong `answer` —
+vì một yêu cầu nhiều bước có thể có bước được phép và bước không. Hiện `answer`
+như câu trả lời bình thường; nó đã nêu rõ thiếu quyền nào và đi hỏi ai.
+
+Câu từ chối đã viết sẵn cho người dùng cuối, **hiện thẳng được**, không cần dịch.
+
+#### Lấy danh sách tài khoản (chỉ để demo)
+
+`GET /api/agent/accounts` trả về tài khoản của tenant hiện tại kèm vai trò và số
+quyền — đủ để dựng ô "đăng nhập bằng" khi chưa có đăng nhập thật:
+
+```json
+{"tenant_id": 94, "current_user_id": "414",
+ "accounts": [{"user_id": 407, "user_name": "BQP1", "display_name": "BQP1",
+               "roles": ["Admin"], "is_admin": true, "permission_count": 7}]}
+```
+
+> ⚠️ Endpoint này bày danh sách nhân sự cho bất kỳ ai gọi được API. **Tắt nó khi
+> lên thật**, lúc đó danh tính phải đến từ phiên đăng nhập chứ không phải từ một
+> ô chọn.
 
 ---
 
@@ -564,6 +631,7 @@ Khuyến nghị:
 |---|---|---|
 | `400` | `X-Tenant-Id` sai định dạng | `{"detail": "x-tenant-id phải là số nguyên, nhận được 'abc'"}` |
 | `401` | Sai/thiếu token (khi đã bật) | `{"detail": "Thiếu hoặc sai token truy cập"}` |
+| `403` | Tài khoản thiếu quyền (mục 2.4) | `{"detail": "Tài khoản của bạn không có quyền ..."}` |
 | `404` | Tải file không tồn tại | `{"detail": "Không tìm thấy file 'x.docx'"}` |
 | `422` | Body sai schema | `{"detail": [{"type":"missing","loc":["body","request"],...}]}` chuẩn FastAPI |
 | `500` | Sự cố phía server | `{"detail": "<câu tiếng Việt>"}` |
@@ -585,21 +653,21 @@ gửi ra ngoài.
 Nếu website của bạn muốn màn riêng cho từng nghiệp vụ thay vì một ô chat, các
 endpoint dưới đây gọi thẳng workflow, bỏ qua bước định tuyến:
 
-| Endpoint | Việc |
-|---|---|
-| `POST /api/chat/qa` | Hỏi đáp trên kho tài liệu |
-| `POST /api/chat/qa/stream` | Như trên, dạng SSE |
-| `POST /api/chat/search` | Tìm kiếm thuần, không sinh câu trả lời |
-| `POST /api/documents/review` | Soát tài liệu (multipart) |
-| `GET /api/documents/rule-sets` | Danh sách bộ tiêu chí soát |
-| `GET /api/documents/stats` | Thống kê kho tri thức |
-| `POST /api/documents/upload` | Nạp file tài liệu vào kho (multipart) |
-| `POST /api/documents/ingest-text` | Nạp tài liệu dạng văn bản thuần |
-| `DELETE /api/documents/{doc_id}` | Xoá tài liệu khỏi kho |
-| `POST /api/reports/draft` | Soạn văn bản cho một đơn vị |
-| `POST /api/reports/aggregate` | Tổng hợp nhiều đơn vị |
-| `GET /api/reports/templates` | Danh sách mẫu báo cáo |
-| `POST /api/presentations/create` | Tạo slide |
+| Endpoint | Việc | Quyền cần có |
+|---|---|---|
+| `POST /api/chat/qa` | Hỏi đáp trên kho tài liệu | `Ai.AiChatbot` |
+| `POST /api/chat/qa/stream` | Như trên, dạng SSE | `Ai.AiChatbot` |
+| `POST /api/chat/search` | Tìm kiếm thuần, không sinh câu trả lời | `Ai.AiChatbot` |
+| `POST /api/documents/review` | Soát tài liệu (multipart) | `Ai.AiChatbot` |
+| `GET /api/documents/rule-sets` | Danh sách bộ tiêu chí soát | — |
+| `GET /api/documents/stats` | Thống kê kho tri thức | `Ai.AiChatbot` |
+| `POST /api/documents/upload` | Nạp file tài liệu vào kho (multipart) | `Ai.ReportSummary.Create` |
+| `POST /api/documents/ingest-text` | Nạp tài liệu dạng văn bản thuần | `Ai.ReportSummary.Create` |
+| `DELETE /api/documents/{doc_id}` | Xoá tài liệu khỏi kho | **chỉ Admin** |
+| `POST /api/reports/draft` | Soạn văn bản cho một đơn vị | `Ai.ReportSummary.Create` |
+| `POST /api/reports/aggregate` | Tổng hợp nhiều đơn vị | `Ai.ReportSummary.Create` |
+| `GET /api/reports/templates` | Danh sách mẫu báo cáo | — |
+| `POST /api/presentations/create` | Tạo slide | `Ai.Slide.Create` |
 | `GET /api/reports/download/{filename}` | Tải file do `draft` / `aggregate` sinh ra |
 | `GET /api/presentations/download/{filename}` | Tải file .pptx do `create` sinh ra |
 | `GET /api/agent/tools` | Danh sách công cụ agent có, kèm mô tả và tham số |
@@ -704,9 +772,9 @@ slide do Presenton dựng hay do đường lùi nội bộ dựng.
 > nhu cầu nghiệp vụ — hiện có `BC_NHANSU`, `BC_THIETBI`, `BC_TAINGUYEN`,
 > `BC_TONGHOP`, nhưng danh sách này sẽ đổi.
 
-> ⚠️ `DELETE /api/documents/{doc_id}` xoá thật khỏi kho tri thức. Khi API còn mở
-> (chưa bật token), **bất kỳ ai biết URL đều gọi được**. Đừng để lộ endpoint này
-> ra giao diện công khai.
+> ⚠️ `DELETE /api/documents/{doc_id}` xoá thật khỏi kho tri thức, không lấy lại
+> được. Giờ chỉ vai trò `Admin` gọi được — nhưng **chỉ khi bạn gửi `X-User-Id`**.
+> Không gửi danh tính thì không có gì chặn, vì backend không biết bạn là ai.
 
 ---
 
@@ -758,8 +826,8 @@ thêm:
 
 Chạy hết danh sách này trước khi bàn giao:
 
-- [ ] `GET /whoami` trả `"source":"header"` khi có gửi `X-Tenant-Id` — không
-      phải `"default"`
+- [ ] `GET /whoami` trả `"source":"header"` khi có gửi `X-User-Id` — không
+      phải `"default"`, và `tenant_id` là tenant CỦA TÀI KHOẢN đó
 - [ ] Gửi `conversation_id` từ lượt thứ hai, và câu *“vẫn kỳ đó”* hiểu đúng
 - [ ] `answer` render được **bảng Markdown**
 - [ ] `[1]` trong câu trả lời bấm được, hiện `snippet`
@@ -777,6 +845,10 @@ Chạy hết danh sách này trước khi bàn giao:
 - [ ] Bắt được `524` mà không vỡ (thân phản hồi là HTML)
 - [ ] `error` khác rỗng nhưng HTTP `200` vẫn hiện được `answer`
 - [ ] Không hardcode danh sách mẫu báo cáo, cũng không hardcode `rule_set`
+- [ ] **Gửi `X-User-Id` ở MỌI lời gọi** — thiếu là mất sạch phân quyền
+- [ ] Bắt được `403` và hiện `detail` thẳng cho người dùng (đã viết sẵn tiếng Việt)
+- [ ] Qua `/api/agent/chat`, từ chối quyền về dưới dạng `200` + `answer`, **không phải** `403`
+- [ ] Thử một tài khoản không có quyền: mọi đường đều bị chặn, kể cả gọi thẳng endpoint
 - [ ] Nếu có gọi thẳng workflow: dùng đúng tên trường (`question` cho
       `/api/chat/qa`, `query` cho `/api/chat/search`, `request` cho phần còn lại)
 - [ ] Nếu có gọi thẳng workflow: dùng `download_url` của **chính phản hồi đó**,
@@ -809,6 +881,14 @@ gian nhất là lúc chưa nhận ra điều này.
 
 **Không gửi `file_id` thì nhánh `document` không bao giờ được chọn**, dù câu chữ
 rõ đến đâu. Đây là ràng buộc cứng phía backend, không phải model đoán sai.
+
+**Quên `X-User-Id` là mất sạch phân quyền, mà không báo gì.** Backend không có
+căn cứ để chặn ai nên cho qua tất — giao diện chạy mượt, và bạn chỉ phát hiện
+lúc có người xem được thứ họ không được xem. Kiểm bằng `GET /whoami`.
+
+**403 đến từ hai chỗ khác nhau.** Endpoint chuyên biệt trả `403` thật. Còn
+`/api/agent/chat` trả `200` kèm câu từ chối trong `answer` — đừng bắt lỗi theo mã
+HTTP ở đường agent.
 
 **Tên trường câu hỏi đổi theo endpoint.** `/api/agent/chat` nhận `request`,
 nhưng `/api/chat/qa` nhận `question` và `/api/chat/search` nhận `query`. Gửi sai

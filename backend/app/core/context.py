@@ -29,6 +29,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -60,10 +61,33 @@ class Principal:
     # "token" | "header" | "default" - đi vào log để khi số liệu lệch còn truy được
     # request đó đã lấy tenant từ đâu.
     source: str = "default"
+    # Quyền đọc từ ERP. `None` nghĩa là CHƯA TRA ĐƯỢC, khác hẳn "tra rồi và rỗng":
+    # chưa tra được thì không có căn cứ để chặn ai, còn tra rồi mà rỗng thì đúng
+    # là người này không có quyền gì. Hai trường hợp xử lý khác nhau ở `can()`.
+    access: Any | None = None
+
+    @property
+    def is_admin(self) -> bool:
+        return bool(self.access and self.access.is_static_admin)
+
+    def can(self, permission: str) -> bool:
+        """Được làm việc này không.
+
+        Chưa tra được quyền (`access is None`) thì trả True - hệ thống chạy như
+        trước khi có phân quyền. Chặn người dùng chỉ vì ERP tạm thời không tra
+        được là đổi một sự cố hạ tầng thành một sự cố nghiệp vụ.
+        """
+        if self.access is None:
+            return True
+        return self.access.has(permission)
 
     def describe(self) -> str:
+        vai = ""
+        if self.access is not None:
+            vai = (" · toàn quyền" if self.access.is_static_admin
+                   else f" · {len(self.access.permissions)} quyền")
         return (f"tenant={self.tenant_id} user={self.user_id or '-'} "
-                f"(nguồn: {self.source})")
+                f"(nguồn: {self.source}){vai}")
 
 
 _current: ContextVar[Principal | None] = ContextVar("principal", default=None)

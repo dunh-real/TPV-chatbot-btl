@@ -36,6 +36,8 @@ from app.tools.registry import catalog
 
 logger = logging.getLogger(__name__)
 
+from app.core.context import current_principal
+
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
@@ -161,6 +163,27 @@ async def upload(file: UploadFile = File(...), kind: str = Form(default="upload"
     finally:
         await file.close()
     return UploadResponse(**ref.as_dict())
+
+
+@router.get("/accounts", summary="Tài khoản ERP để giao diện demo chọn danh tính")
+async def accounts() -> dict:
+    """Danh sách tài khoản của tenant hiện tại, kèm vai trò và số quyền.
+
+    Chỉ phục vụ DEMO, khi hệ thống chưa có đăng nhập thật: giao diện cho chọn một
+    người rồi gửi `X-User-Id`. Có đăng nhập rồi thì endpoint này nên tắt - nó bày
+    ra danh sách nhân sự cho bất kỳ ai gọi được API.
+
+    Không trả về email của người khác ngoài thứ cần để nhận diện, và không bao giờ
+    trả về bất cứ thứ gì liên quan tới mật khẩu.
+    """
+    from app.services.access import list_demo_accounts
+
+    principal = current_principal()
+    return {
+        "tenant_id": principal.tenant_id,
+        "current_user_id": principal.user_id,
+        "accounts": await list_demo_accounts(principal.tenant_id),
+    }
 
 
 @router.get("/tools", response_model=list[ToolInfo], summary="Những việc agent làm được")

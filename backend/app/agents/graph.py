@@ -56,6 +56,8 @@ from app.agents.nodes.presentation import (
     verify_node as ppt_verify_node,
 )
 from app.agents import progress, references
+from app.agents import quyen
+from app.core.context import current_principal
 from app.agents.planner import Plan, PlanStep, make_plan
 from app.agents.router import MIN_CONFIDENCE
 from app.agents.state import (
@@ -647,6 +649,11 @@ def _step_is_empty(intent: str, out: dict[str, Any]) -> bool:
     """
     if out.get("missing_input"):
         return False
+    # Từ chối vì thiếu quyền KHÔNG phải là rỗng. Coi nó là rỗng thì hệ thống chạy
+    # lại bằng nghiệp vụ khác - tức tự đi tìm đường vòng qua chính cái chốt vừa
+    # chặn, và người dùng nhận về một câu trả lời thay vì lời từ chối.
+    if out.get("tu_choi_quyen"):
+        return False
     # Không có lấy một chữ để đưa cho người dùng thì rỗng, bất kể nghiệp vụ nào.
     if not (out.get("answer") or "").strip():
         return True
@@ -702,6 +709,14 @@ async def _call_branch(intent: str, state: AgentState, request: str) -> dict[str
     hoạch: bước 2 không chạy, người dùng không nhận được gì ngoài traceback. Bọc
     ở đây thì bước đó báo hỏng, những bước độc lập với nó vẫn xong.
     """
+    # Chốt quyền đặt ở ĐÂY chứ không ở từng endpoint: mọi nhánh đều đi qua hàm
+    # này, cả `/chat` lẫn `/chat/stream`, cả bước chính lẫn bước chạy lại. Gắn ở
+    # endpoint thì thêm một nghiệp vụ mới là thêm một chỗ có thể quên.
+    if not quyen.duoc_chay(intent):
+        tu_choi = quyen.cau_tu_choi(intent)
+        logger.info("Từ chối nhánh %s: %s", intent, current_principal().describe())
+        return {"answer": tu_choi, "result": {}, "error": "", "tu_choi_quyen": True}
+
     try:
         return await BRANCHES[intent](state, request)
     except Exception as exc:  # noqa: BLE001 - một nhánh hỏng không phải cả agent hỏng

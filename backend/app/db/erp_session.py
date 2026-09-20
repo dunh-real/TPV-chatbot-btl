@@ -37,6 +37,8 @@ class ReadOnlyViolation(RuntimeError):
 # kể cả khi login có quyền đọc cả CSDL.
 ALLOWED_TABLES = frozenset({
     "AbpRoles", "AbpUserRoles",
+    "AbpUsers",  # mở thêm 2026-09-20: cần map email/username -> UserId cho phân quyền
+    "AbpPermissions",  # mở thêm 2026-09-20: quyền thật của từng vai trò
     "AI_ChatConversations", "AI_ChatMessages",
     "Asm_AssetAssignment", "Asm_AssetAssignmentDetail",
     "Asm_AssetCategories", "Asm_Assets",

@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import agent, chat, documents, presenton_proxy, presentations, reports
 from app.api.identity import IdentityMiddleware
 from app.core.config import get_settings
+from app.agents.quyen import ThieuQuyen
 from app.core.context import current_principal
 from app.db.erp_session import dispose_erp_engine
 from app.db.session import dispose_engine, healthcheck
@@ -212,6 +213,17 @@ async def health() -> HealthResponse:
                  "conversation_collection": conversations.collection,
                  "conversation_turns": str(conversation_turns)},
     )
+
+
+@app.exception_handler(ThieuQuyen)
+async def _thieu_quyen(request: Request, exc: ThieuQuyen) -> JSONResponse:
+    """Thiếu quyền là 403, không phải 500.
+
+    Trả về cùng hình dạng `{"detail": ...}` như mọi lỗi khác, và câu chữ đã nêu
+    rõ thiếu quyền nào - giao diện hiện thẳng được, không phải dịch lại.
+    """
+    logger.info("403 %s - %s", request.url.path, current_principal().describe())
+    return JSONResponse(status_code=403, content={"detail": exc.message})
 
 
 @app.get("/whoami", tags=["system"], summary="Backend đang thấy request này là ai")

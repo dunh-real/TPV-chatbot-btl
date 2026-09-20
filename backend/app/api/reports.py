@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
 from app.agents.graph import run_aggregate_workflow, run_draft_workflow
@@ -21,6 +21,8 @@ from app.schemas.reports import (
     TemplateSummary,
 )
 
+from app.agents import quyen
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
@@ -32,7 +34,8 @@ async def list_templates() -> list[TemplateSummary]:
         return [TemplateSummary(**item) for item in await TemplateRepository(session).catalog()]
 
 
-@router.post("/draft", response_model=DraftResponse, summary="Soạn báo cáo theo mẫu")
+@router.post("/draft", response_model=DraftResponse, summary="Soạn báo cáo theo mẫu",
+             dependencies=[Depends(quyen.can_quyen("Ai.ReportSummary.Create", "soạn văn bản"))])
 async def draft(request: DraftRequest) -> DraftResponse:
     """Soạn một báo cáo từ MỘT nguồn. `nguon` chọn nguồn đó là gì.
 
@@ -57,7 +60,8 @@ async def draft(request: DraftRequest) -> DraftResponse:
 
 
 @router.post("/aggregate", response_model=AggregateResponse,
-             summary="Tổng hợp báo cáo nhiều đơn vị (workflow 4)")
+             summary="Tổng hợp báo cáo nhiều đơn vị (workflow 4)",
+             dependencies=[Depends(quyen.can_quyen("Ai.ReportSummary.Create", "tổng hợp báo cáo"))])
 async def aggregate(request: AggregateRequest) -> AggregateResponse:
     """Số liệu do data tool truy vấn, biểu đồ do code vẽ, LLM chỉ viết nhận xét.
 

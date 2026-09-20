@@ -39,6 +39,8 @@ from app.db.erp_repository import (
 from app.db.models import VanBan
 from app.tools.base import ToolError, ToolSpec
 
+from app.core.context import current_principal
+
 logger = logging.getLogger(__name__)
 
 KY_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
@@ -638,12 +640,32 @@ def resolve_aliases(spec: ToolSpec, kwargs: dict[str, Any]) -> dict[str, Any]:
     return resolved
 
 
+# Quyền ERP cần có để gọi từng công cụ số liệu. Chốt nghiệp vụ ở `_call_branch`
+# mới chỉ nói "được dùng chatbot"; còn ĐƯỢC ĐỌC MẢNG SỐ LIỆU NÀO thì phải hỏi
+# riêng - ERP tách hai thứ đó thành hai quyền khác nhau, và một người được dùng
+# chatbot không đương nhiên được xem hồ sơ nhân sự của cả công ty.
+QUYEN_CUA_TOOL: dict[str, str] = {
+    "get_personnel_statistics": "Hrm.EmployeeProfile.View",
+    "get_equipment_statistics": "Asm.Asset.View",
+}
+
+
 async def call_tool(session: AsyncSession, name: str, **kwargs) -> Any:
-    """Gọi tool theo tên; tên lạ hoặc tham số sai đều bị chặn tại đây."""
+    """Gọi tool theo tên; tên lạ, thiếu quyền hay tham số sai đều bị chặn tại đây."""
     spec = TOOLS.get(name)
     if spec is None:
         raise ToolError(f"Không có công cụ tên {name!r}. "
                         f"Chỉ dùng được: {', '.join(TOOLS)}")
+
+    # `ToolError` chứ không phải ngoại lệ khác: vòng lặp công cụ đọc câu này rồi
+    # nói lại cho người dùng, thay vì im lặng bỏ qua hoặc làm hỏng cả lượt.
+    quyen_can = QUYEN_CUA_TOOL.get(name)
+    if quyen_can and not current_principal().can(quyen_can):
+        raise ToolError(
+            f"Tài khoản của bạn không có quyền đọc dữ liệu này (cần `{quyen_can}`). "
+            f"Hãy trả lời người dùng rằng họ cần liên hệ quản trị ERP để được cấp, "
+            f"và KHÔNG thử công cụ khác để lấy cùng số liệu đó."
+        )
     kwargs = resolve_aliases(spec, kwargs)
     allowed = set(spec.parameters)
     unknown = set(kwargs) - allowed

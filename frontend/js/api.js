@@ -7,6 +7,7 @@
 
   var LS_KEY = 'tpv.apiBase';
   var LS_TENANT = 'tpv.tenantId';
+  var LS_USER = 'tpv.userId';
 
   function defaultBase() {
     // Mở qua chính backend (uvicorn mount /ui) -> gọi cùng origin.
@@ -37,10 +38,23 @@
     return tenant;
   }
 
+  /* Người đang "đăng nhập" khi demo. Backend đọc `X-User-Id`, tra quyền trong
+     AbpUsers/AbpUserRoles/AbpPermissions, rồi tự lấy luôn tenant CỦA TÀI KHOẢN -
+     nên không cần điền tenant bằng tay khi đã chọn người. */
+  var userId = localStorage.getItem(LS_USER) || '';
+
+  function getUser() { return userId; }
+  function setUser(value) {
+    userId = String(value == null ? '' : value).trim();
+    localStorage.setItem(LS_USER, userId);
+    return userId;
+  }
+
   /** Gắn định danh vào mọi lời gọi - một chỗ duy nhất, để không sót endpoint. */
   function withIdentity(headers) {
     var out = Object.assign({}, headers || {});
     if (tenant) out['X-Tenant-Id'] = tenant;
+    if (userId) out['X-User-Id'] = userId;
     return out;
   }
 
@@ -145,6 +159,10 @@
     setBase: setBase,
     getTenant: getTenant,
     setTenant: setTenant,
+    getUser: getUser,
+    setUser: setUser,
+    accounts: function () { return request('/api/agent/accounts'); },
+    whoami: function () { return request('/whoami'); },
     url: url,
 
     // hệ thống

@@ -14,7 +14,10 @@ import logging
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+import dataclasses
+
 from app.core.context import IdentityError, resolve_principal, use_principal
+from app.services.access import resolve_access
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +38,7 @@ class IdentityMiddleware:
             for key, value in scope.get("headers", [])
         }
         try:
-            principal = resolve_principal(headers)
+            principal = await _kem_quyen(resolve_principal(headers))
         except IdentityError as exc:
             await JSONResponse(status_code=400, content={"detail": str(exc)})(
                 scope, receive, send
@@ -46,3 +49,23 @@ class IdentityMiddleware:
             logger.debug("%s %s - %s", scope.get("method"), scope.get("path"),
                          principal.describe())
             await self.app(scope, receive, send)
+
+
+async def _kem_quyen(principal):
+    """Gắn quyền đọc từ ERP vào danh tính, và lấy luôn tenant của tài khoản.
+
+    Tenant phải theo TÀI KHOẢN chứ không theo header: người demo chọn một tài
+    khoản thuộc tenant khác với `ERP_TENANT_ID` mặc định thì số liệu họ thấy phải
+    là của tenant tài khoản đó. Để lệch hai thứ này là cách chắc chắn nhất để
+    người dùng đọc số liệu của công ty khác mà không ai nhận ra.
+    """
+    if not principal.user_id:
+        return principal
+    access = await resolve_access(principal.user_id)
+    if access is None:
+        return principal
+    return dataclasses.replace(
+        principal,
+        access=access,
+        tenant_id=access.tenant_id if access.tenant_id is not None else principal.tenant_id,
+    )

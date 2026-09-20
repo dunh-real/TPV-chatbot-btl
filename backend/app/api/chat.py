@@ -7,7 +7,7 @@ import logging
 import uuid
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from app.agents.graph import build_initial_state, prepare_context, run_qa
@@ -34,6 +34,8 @@ from app.schemas.chat import (
 from app.services.conversation import get_memory
 from app.services.llm import LLMError, get_llm
 
+from app.agents import quyen
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -43,7 +45,8 @@ def _sse(event: str, payload: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
-@router.post("/qa", response_model=ChatResponse, summary="Hỏi đáp trên kho tài liệu")
+@router.post("/qa", response_model=ChatResponse, summary="Hỏi đáp trên kho tài liệu",
+             dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "tra cứu tài liệu"))])
 async def ask(request: ChatRequest) -> ChatResponse:
     state = await build_initial_state(
         question=request.question,
@@ -66,7 +69,8 @@ async def ask(request: ChatRequest) -> ChatResponse:
     )
 
 
-@router.post("/qa/stream", summary="Hỏi đáp dạng streaming (SSE)")
+@router.post("/qa/stream", summary="Hỏi đáp dạng streaming (SSE)",
+             dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "tra cứu tài liệu"))])
 async def ask_stream(request: ChatRequest) -> StreamingResponse:
     """Phát câu trả lời theo từng mảnh; trích dẫn được gửi trước ở event `meta`."""
     state = await build_initial_state(
@@ -143,7 +147,8 @@ async def _save_turn(conversation_id: str, question: str, answer: str) -> None:
         conversation_id, [("user", question), ("assistant", answer)])
 
 
-@router.post("/search", response_model=SearchResponse, summary="Chỉ chạy truy hồi (debug hybrid)")
+@router.post("/search", response_model=SearchResponse, summary="Chỉ chạy truy hồi (debug hybrid)",
+             dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "tìm kiếm trong kho"))])
 async def search(request: SearchRequest) -> SearchResponse:
     """Trả về kết quả hybrid + RRF + rerank kèm hạng của từng nhánh."""
     query_variants: list[str] = []

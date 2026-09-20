@@ -7,7 +7,7 @@ import shutil
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import Depends, APIRouter, File, Form, HTTPException, UploadFile, status
 
 from app.core.config import get_settings
 from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline
@@ -24,12 +24,15 @@ from app.schemas.documents import (
     RuleSetInfo,
 )
 
+from app.agents import quyen
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
-@router.post("/upload", response_model=IngestResponse, summary="Tải file lên và nạp vào kho")
+@router.post("/upload", response_model=IngestResponse, summary="Tải file lên và nạp vào kho",
+             dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_GHI, "nạp tài liệu vào kho"))])
 async def upload_document(
     file: UploadFile = File(...),
     doc_type: str = Form(default=""),
@@ -62,7 +65,8 @@ async def upload_document(
     return IngestResponse(**asdict(result))
 
 
-@router.post("/ingest-text", response_model=IngestResponse, summary="Nạp văn bản thô")
+@router.post("/ingest-text", response_model=IngestResponse, summary="Nạp văn bản thô",
+             dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_GHI, "nạp tài liệu vào kho"))])
 async def ingest_text(request: IngestTextRequest) -> IngestResponse:
     try:
         result = await get_ingestion_pipeline().ingest_text(
@@ -90,7 +94,8 @@ async def rule_sets() -> list[RuleSetInfo]:
     return [RuleSetInfo(**item) for item in available_rule_sets()]
 
 
-@router.post("/review", response_model=ReviewResponse, summary="Soát tài liệu (workflow 2)")
+@router.post("/review", response_model=ReviewResponse, summary="Soát tài liệu (workflow 2)",
+             dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "soát tài liệu"))])
 async def review_document(
     file: UploadFile = File(...),
     noi_gui: str = Form(default=""),
@@ -137,12 +142,14 @@ async def review_document(
     return ReviewResponse(**result)
 
 
-@router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Xoá tài liệu khỏi kho")
+@router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Xoá tài liệu khỏi kho",
+               dependencies=[Depends(quyen.can_admin("xoá tài liệu khỏi kho"))])
 async def delete_document(doc_id: str) -> None:
     await get_vector_store().delete_document(doc_id)
 
 
-@router.get("/stats", response_model=CollectionStats, summary="Thống kê collection")
+@router.get("/stats", response_model=CollectionStats, summary="Thống kê collection",
+             dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xem thống kê kho"))])
 async def stats() -> CollectionStats:
     store = get_vector_store()
     try:

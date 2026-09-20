@@ -24,6 +24,7 @@ import anyio
 
 from app.agents.history import format_history
 from app.agents import references
+from app.agents import quyen
 from app.agents.prompts import (
     AGG_NARRATIVE_SYSTEM,
     AGG_NARRATIVE_USER,
@@ -275,6 +276,14 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
     noi_dung = [c for c in (params.get("noi_dung") or []) if c in ("nhan_su", "thiet_bi")]
     noi_dung = scope_from_request(state.get("request", ""),
                                   noi_dung or ["nhan_su", "thiet_bi"])
+    # Bỏ mảng người này không được xem. Cắt ở đây chứ không để truy vấn chạy rồi
+    # mới lọc kết quả: số liệu không được phép đọc thì đừng đọc, chứ không phải
+    # đọc xong rồi giấu đi.
+    duoc_xem = quyen.loc_mang_duoc_xem(noi_dung)
+    if duoc_xem != noi_dung:
+        logger.info("Bỏ mảng %s khỏi báo cáo: thiếu quyền",
+                    [m for m in noi_dung if m not in duoc_xem])
+    noi_dung = duoc_xem
     ky = f"{nam:04d}-{thang:02d}"
     compare_to = _compare_period(ky, nam, params, assumptions)
 

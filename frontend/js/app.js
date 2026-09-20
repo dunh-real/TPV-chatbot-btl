@@ -1882,6 +1882,42 @@
     pollHealth();
     toast('Đã đổi API base: ' + v, 'ok');
   });
+  /* Chọn tài khoản = đổi danh tính demo. Backend tra quyền từ ERP theo
+     `X-User-Id`, nên đổi người là đổi cả quyền LẪN tenant - phải nạp lại mọi thứ
+     đang hiển thị, y như đổi thuê bao. */
+  function moTaTaiKhoan(a) {
+    var quyen = a.is_admin ? 'toàn quyền' : a.permission_count + ' quyền';
+    return a.display_name + ' — ' + (a.roles.join(', ') || 'không vai trò') + ' (' + quyen + ')';
+  }
+
+  async function napDanhSachTaiKhoan() {
+    var sel = $('#userPicker');
+    if (!sel) return;
+    try {
+      var d = await API.accounts();
+      var dang = API.getUser();
+      d.accounts.forEach(function (a) {
+        var o = el('option', { value: String(a.user_id) }, moTaTaiKhoan(a));
+        if (String(a.user_id) === dang) o.selected = true;
+        sel.appendChild(o);
+      });
+      $('#userPickerNote').textContent =
+        'Tenant ' + d.tenant_id + ' · ' + d.accounts.length + ' tài khoản. '
+        + 'Quyền đọc từ ERP, không đặt trong ứng dụng này.';
+    } catch (e) {
+      $('#userPickerNote').textContent = 'Không lấy được danh sách tài khoản: ' + (e.message || e);
+    }
+  }
+
+  $('#userPicker') && $('#userPicker').addEventListener('change', function () {
+    var v = API.setUser(this.value);
+    toolsCache = null;
+    pollHealth();
+    var nhan = this.options[this.selectedIndex].textContent;
+    toast(v ? 'Đang dùng danh tính: ' + nhan : 'Bỏ chọn tài khoản, dùng mặc định backend', 'ok');
+  });
+  napDanhSachTaiKhoan();
+
   /* Đổi thuê bao là đổi toàn bộ số liệu đang xem, nên xoá cache tool và hỏi lại
      sức khoẻ backend giống hệt lúc đổi API base. */
   $('#tenantId').value = API.getTenant();

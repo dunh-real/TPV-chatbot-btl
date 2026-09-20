@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20260920e" />
+<link rel="stylesheet" href="styles.css?v=20260920f" />
 </head>
 <body>
 <div class="app" id="app">
@@ -333,6 +333,9 @@
   </div>
   <div class="drawer-body">
     <label class="field"><span>API base URL</span><input type="text" id="apiBase" placeholder="http://localhost:8080" /></label>
+    <label class="field"><span>Đăng nhập với tài khoản (demo)</span>
+      <select id="userPicker"><option value="">— không chọn (dùng mặc định backend) —</option></select>
+      <em id="userPickerNote">Quyền đọc từ ERP: AbpUsers → AbpUserRoles → AbpPermissions. Chọn người nào thì hệ thống dùng đúng tenant và quyền của người đó.</em></label>
     <label class="field"><span>Thuê bao (X-Tenant-Id)</span><input type="text" id="tenantId" inputmode="numeric" placeholder="bỏ trống = mặc định của backend" />
       <em>Số liệu ERP luôn bị giới hạn trong đúng một thuê bao. Bỏ trống thì backend dùng ERP_TENANT_ID trong .env.</em></label>
     <label class="field"><span>Mã đơn vị mặc định</span><input type="text" id="prefUnit" placeholder="VD: DV01" /></label>
@@ -357,8 +360,8 @@
 <!-- citation popover -->
 <div class="popover" id="popover" hidden></div>
 
-<script src="js/markdown.js?v=20260920e"></script>
-<script src="js/api.js?v=20260920e"></script>
-<script src="js/app.js?v=20260920e"></script>
+<script src="js/markdown.js?v=20260920f"></script>
+<script src="js/api.js?v=20260920f"></script>
+<script src="js/app.js?v=20260920f"></script>
 </body>
 </html>
