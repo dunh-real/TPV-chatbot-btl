@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
@@ -58,7 +59,7 @@ async def upload_document(
         logger.exception("Nạp tài liệu thất bại")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
-    return IngestResponse(**result.__dict__)
+    return IngestResponse(**asdict(result))
 
 
 @router.post("/ingest-text", response_model=IngestResponse, summary="Nạp văn bản thô")
@@ -75,7 +76,7 @@ async def ingest_text(request: IngestTextRequest) -> IngestResponse:
     except Exception as exc:  # noqa: BLE001
         logger.exception("Nạp văn bản thất bại")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
-    return IngestResponse(**result.__dict__)
+    return IngestResponse(**asdict(result))
 
 
 @router.get("/rule-sets", response_model=list[RuleSetInfo],
