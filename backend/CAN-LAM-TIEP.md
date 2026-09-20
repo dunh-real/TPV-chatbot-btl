@@ -399,6 +399,24 @@ mở file lên xem, test không bắt:
 - `Số: 01/BC-` cụt đuôi, vì nhánh này không có mã đơn vị để ghép
 - `Kính gửi:` in ra rồi để trống khi không có nơi nhận; nay bỏ hẳn dòng đó
 
+**Giao diện chỉ phơi một nguồn cho mỗi màn** (chốt chiều 20/09):
+
+| Màn | Gọi | Nguồn |
+|---|---|---|
+| Soạn báo cáo | `/draft` với `nguon=tai_lieu` | MỘT tài liệu tải lên |
+| Tổng hợp báo cáo | `/aggregate` với `nguon_so_lieu=csdl` | CSDL, nhiều đơn vị |
+
+Hai ô chọn nguồn đã bỏ khỏi giao diện. **Backend vẫn giữ đủ cả bốn nhánh** -
+`/draft` còn `nguon=csdl` và `/aggregate` còn `nguon_so_lieu=tai_lieu`, có test
+phủ, gọi thẳng API vẫn chạy. Đừng xoá chúng: **agent tổng dùng nhánh `csdl` của
+`/draft`** qua ý định `draft` (`graph.py:draft_branch` gọi `run_draft_workflow`
+không truyền `nguon`, tức mặc định `csdl`). Xoá là agent mất khả năng soạn báo
+cáo một đơn vị từ ERP.
+
+**Hệ quả cần biết:** không còn đường nào TRÊN GIAO DIỆN để soạn báo cáo một đơn
+vị theo mẫu từ ERP. Muốn dùng thì qua màn Agent tổng, hoặc gọi thẳng
+`/api/reports/draft` với `nguon=csdl`.
+
 **Chưa làm:** nhánh `tai_lieu` mới nhận **một** file. Muốn gộp nhiều nguồn thì đó
 là việc của workflow 4.
 

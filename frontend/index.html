@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20260920a" />
+<link rel="stylesheet" href="styles.css?v=20260920b" />
 </head>
 <body>
 <div class="app" id="app">
@@ -243,21 +243,13 @@
     <section class="view view-split" id="view-draft">
       <div class="panel">
         <div class="panel-inner">
-          <h2 class="panel-title">Soạn văn bản theo mẫu</h2>
-          <p class="panel-sub">Nêu luôn đơn vị và kỳ ngay trong yêu cầu — hệ thống tự nhận, thiếu thì nó hỏi lại. Số liệu do SQL lấy, LLM chỉ viết văn quanh số liệu. Số nào không truy về được CSDL thì không xuất file.</p>
+          <h2 class="panel-title">Soạn báo cáo từ tài liệu</h2>
+          <p class="panel-sub">Đọc toàn bộ nội dung một tài liệu rồi soạn thành báo cáo. Số trong báo cáo phải có nguyên văn trong tài liệu, không thì không xuất file. Muốn lấy số từ CSDL thì dùng màn <b>Tổng hợp báo cáo</b>.</p>
           <label class="field">
             <span>Yêu cầu</span>
-            <textarea id="draftRequest" rows="3" placeholder="Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh">Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh</textarea>
+            <textarea id="draftRequest" rows="3" placeholder="Soạn báo cáo tổng hợp từ tài liệu này">Soạn báo cáo tổng hợp từ tài liệu này</textarea>
           </label>
-          <label class="field">
-            <span>Nguồn nội dung</span>
-            <select id="draftSource">
-              <option value="csdl">CSDL nghiệp vụ — soạn theo mẫu báo cáo có sẵn</option>
-              <option value="tai_lieu">Một tài liệu tải lên — soạn từ chính nội dung file</option>
-            </select>
-            <em id="draftSourceHint">Số liệu lấy từ ERP; mọi con số phải truy về được một trường dữ liệu.</em>
-          </label>
-          <div class="field" id="draftFileField" hidden>
+          <div class="field" id="draftFileField">
             <span>Tài liệu nguồn <em>(đọc toàn bộ nội dung file này)</em></span>
             <div class="dropzone" id="draftDrop">
               <input type="file" id="draftFile" accept=".docx,.pdf,.md,.txt" hidden />
@@ -288,24 +280,6 @@
             <span>Yêu cầu</span>
             <textarea id="aggRequest" rows="3">Tổng hợp báo cáo quân số và trang thiết bị tháng 8</textarea>
           </label>
-          <label class="field">
-            <span>Nguồn số liệu</span>
-            <select id="aggSource">
-              <option value="csdl">CSDL kiểm kê — có so sánh kỳ trước</option>
-              <option value="tai_lieu">Báo cáo đơn vị gửi lên — đọc thẳng bảng trong file</option>
-            </select>
-            <em id="aggSourceHint">Số liệu lấy từ CSDL; file đơn vị gửi chỉ dùng để đối chiếu.</em>
-          </label>
-          <div class="field" id="aggFilesField" hidden>
-            <span>Báo cáo đơn vị <em>(đọc bảng kiểm kê trong các file này)</em></span>
-            <div class="dropzone" id="aggDrop">
-              <input type="file" id="aggFile" accept=".docx,.pdf,.md,.txt" hidden />
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-              <b>Thêm báo cáo đơn vị</b>
-              <small>ngoài các báo cáo đã vào sổ văn bản</small>
-            </div>
-            <div class="attach-row" id="aggAttachments" hidden></div>
-          </div>
           <div class="field">
             <span>Thông tin bổ sung (inputs)</span>
             <div class="kv-list" id="aggInputs"></div>
@@ -433,8 +407,8 @@
 <!-- citation popover -->
 <div class="popover" id="popover" hidden></div>
 
-<script src="js/markdown.js?v=20260920a"></script>
-<script src="js/api.js?v=20260920a"></script>
-<script src="js/app.js?v=20260920a"></script>
+<script src="js/markdown.js?v=20260920b"></script>
+<script src="js/api.js?v=20260920b"></script>
+<script src="js/app.js?v=20260920b"></script>
 </body>
 </html>

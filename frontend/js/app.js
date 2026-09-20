@@ -1438,40 +1438,28 @@
     }
   });
 
-  $('#draftSource').addEventListener('change', function () {
-    var tuTaiLieu = this.value === 'tai_lieu';
-    $('#draftFileField').hidden = !tuTaiLieu;
-    $('#draftSourceHint').textContent = tuTaiLieu
-      ? 'Đọc toàn bộ nội dung file. Số trong báo cáo phải có nguyên văn trong tài liệu — yếu hơn nhánh CSDL: chặn được số bịa, không chặn được số có thật nhưng dùng sai chỗ.'
-      : 'Số liệu lấy từ ERP; mọi con số phải truy về được một trường dữ liệu.';
-  });
-
   $('#draftRun').addEventListener('click', function () {
     var request = $('#draftRequest').value.trim();
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
-    var tuTaiLieu = $('#draftSource').value === 'tai_lieu';
     // Chặn ngay ở giao diện: backend cũng trả `missing_input` đúng như vậy,
     // nhưng bắt người dùng đợi một vòng gọi API chỉ để nghe "thiếu file" thì vô ích.
-    if (tuTaiLieu && !(draftFile && draftFile.file_id)) {
+    if (!(draftFile && draftFile.file_id)) {
       toast(draftFile ? 'File đang tải lên, đợi một chút…' : 'Chọn tài liệu nguồn trước đã', 'err');
       return;
     }
     runWorkflow({
       button: this,
       box: $('#draftResult'),
-      label: tuTaiLieu
-        ? 'Đang đọc tài liệu, lập dàn ý và viết từng mục…'
-        : 'Đang chọn mẫu, truy vấn CSDL, dựng từng mục và đối chiếu số…',
+      label: 'Đang đọc tài liệu, lập dàn ý và viết từng mục…',
       hint: { text: 'thường 20-40 giây', slowAfter: 45 },
       call: function (signal) {
-        // Không gửi `ma_don_vi`: backend tự nhận đơn vị từ chính câu yêu cầu
-        // (đối chiếu với danh mục đơn vị trong ERP). Không nêu thì nó trả
-        // `missing_input` và ô kết quả hiện ra để người dùng bổ sung - đỡ một
-        // ô nhập mà ai cũng phải điền dù câu hỏi đã nói rõ đơn vị.
+        // Màn này CHỈ soạn từ tài liệu. Nhánh CSDL của cùng endpoint vẫn còn và
+        // agent tổng vẫn dùng (ý định `draft`), nhưng không phơi ra đây nữa:
+        // lấy số từ CSDL là việc của màn Tổng hợp.
         return API.draft({
           request: request,
-          nguon: $('#draftSource').value,
-          file_id: (draftFile && draftFile.file_id) || '',
+          nguon: 'tai_lieu',
+          file_id: draftFile.file_id,
           inputs: Object.assign({}, prefs.inputs, collectInputs('draftInputs')),
         }, signal);
       },
@@ -1667,65 +1655,22 @@
       block('JSON đầy đủ', null, '<pre class="json">' + prettyJSON(data) + '</pre>', false));
   }
 
-  /* --- nguồn số liệu: CSDL hay đọc thẳng báo cáo đơn vị --- */
-  var aggFiles = [];   // {file_id, name, size, pending}
-
-  function renderAggFiles() {
-    var row = $('#aggAttachments');
-    row.innerHTML = '';
-    row.hidden = aggFiles.length === 0;
-    aggFiles.forEach(function (f, idx) {
-      var node = el('span', { class: 'attach' + (f.pending ? ' loading' : '') },
-        '📎 ' + esc(f.name) + (f.size ? ' <span class="muted">' + fmtBytes(f.size) + '</span>' : ''));
-      var x = el('button', { class: 'icon-btn', title: 'Bỏ file' },
-        '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>');
-      x.addEventListener('click', function () { aggFiles.splice(idx, 1); renderAggFiles(); });
-      node.appendChild(x);
-      row.appendChild(node);
-    });
-  }
-
-  wireDropzone('#aggDrop', '#aggFile', async function (file) {
-    var entry = { name: file.name, size: file.size, pending: true };
-    aggFiles.push(entry);
-    renderAggFiles();
-    try {
-      var res = await API.agentUpload(file, 'upload');
-      entry.file_id = res.file_id;
-      entry.pending = false;
-      renderAggFiles();
-      toast('Đã tải lên: ' + res.file_id, 'ok', 2000);
-    } catch (e) {
-      aggFiles = aggFiles.filter(function (f) { return f !== entry; });
-      renderAggFiles();
-      toast('Tải file thất bại: ' + errText(e), 'err');
-    }
-  });
-
-  $('#aggSource').addEventListener('change', function () {
-    var tuTaiLieu = this.value === 'tai_lieu';
-    $('#aggFilesField').hidden = !tuTaiLieu;
-    $('#aggSourceHint').textContent = tuTaiLieu
-      ? 'Đọc thẳng bảng kiểm kê trong báo cáo đơn vị. Không có kỳ trước nên không so sánh tăng/giảm.'
-      : 'Số liệu lấy từ CSDL; file đơn vị gửi chỉ dùng để đối chiếu.';
-  });
-
   $('#aggRun').addEventListener('click', function () {
     var request = $('#aggRequest').value.trim();
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
     runWorkflow({
       button: this,
       box: $('#aggResult'),
-      label: 'Đang gộp số liệu nhiều đơn vị, vẽ biểu đồ và đối chiếu file đã gửi…',
+      label: 'Đang gộp số liệu nhiều đơn vị từ CSDL, vẽ biểu đồ và đối chiếu file đã gửi…',
       hint: { text: 'thường 20-40 giây', slowAfter: 45 },
       call: function (signal) {
+        // Màn này CHỈ lấy số từ CSDL - chỉ CSDL mới có kỳ trước để so tăng/giảm.
+        // Nhánh đọc bảng trong báo cáo đơn vị (`nguon_so_lieu=tai_lieu`) vẫn còn
+        // ở backend cho ai gọi thẳng API; soạn từ tài liệu là việc của màn Soạn
+        // báo cáo.
         var inputs = Object.assign({}, prefs.inputs, collectInputs('aggInputs'), {
-          nguon_so_lieu: $('#aggSource').value,
+          nguon_so_lieu: 'csdl',
         });
-        if ($('#aggSource').value === 'tai_lieu') {
-          inputs.files = aggFiles.filter(function (f) { return f.file_id; })
-            .map(function (f) { return f.file_id; }).join(',');
-        }
         return API.aggregate({ request: request, inputs: inputs }, signal);
       },
       render: renderAggregate,

@@ -37,8 +37,8 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
 | Agent tổng | `POST /api/agent/chat`, `POST /api/agent/upload` | nhãn định tuyến (ý định · độ tin · nguồn quyết định), file sinh ra, `missing_input` bấm được |
 | Hỏi đáp tài liệu | `POST /api/chat/qa/stream` (hoặc `/qa`) | chữ chảy theo SSE, marker `[n]` bấm ra nguyên văn đoạn nguồn |
 | Soát văn bản | `POST /api/documents/review`, `GET /rule-sets` | chọn bộ tiêu chí, loại văn bản hệ thống tự nhận, lỗi thể thức tách khỏi lỗi chữ nghĩa |
-| Soạn báo cáo | `POST /api/reports/draft`, `POST /api/agent/upload` | chọn nguồn (CSDL theo mẫu / một tài liệu tải lên), từng mục kèm loại, kết quả kiểm chứng số, `missing_input` bấm được |
-| Tổng hợp báo cáo | `POST /api/reports/aggregate` | chọn nguồn số liệu (CSDL hay đọc thẳng bảng trong báo cáo đơn vị), số liệu gốc value/prev/delta/%, bảng theo đơn vị, đối chiếu file |
+| Soạn báo cáo | `POST /api/reports/draft` (`nguon=tai_lieu`), `POST /api/agent/upload` | soạn từ MỘT tài liệu tải lên; từng mục kèm loại, kết quả kiểm chứng số, thẻ nói rõ mức bảo đảm |
+| Tổng hợp báo cáo | `POST /api/reports/aggregate` (`nguon_so_lieu=csdl`) | gộp nhiều đơn vị từ CSDL; số liệu gốc value/prev/delta/%, bảng theo đơn vị, đối chiếu file |
 | Tạo slide | `POST /api/presentations/create` | xem trước từng slide + JSON trung gian đã lọc |
 | Kho tri thức | `POST /api/documents/upload`, `/ingest-text`, `GET /stats`, `DELETE /{doc_id}` | số point, tên các vector |
 | Truy hồi (debug) | `POST /api/chat/search` | hạng từng nhánh dense/lexical/bm25, điểm RRF, điểm rerank, thời gian |
@@ -69,6 +69,11 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
   lúc cần, thay vì bắt điền trước mọi lần.
   `API.templates()` vẫn còn trong `api.js` dù không màn nào gọi: file đó là bản đồ
   đầy đủ của API, endpoint bên backend vẫn sống.
+- **Mỗi màn một nguồn, không bắt người dùng chọn.** Soạn báo cáo = từ MỘT tài
+  liệu tải lên; Tổng hợp = từ CSDL nhiều đơn vị. Hai ô chọn nguồn trước đây bị bỏ
+  vì chúng bắt người dùng hiểu sự khác nhau giữa hai workflow trước khi làm được
+  việc. Backend vẫn giữ cả hai nhánh ở mỗi endpoint - agent tổng dùng nhánh CSDL
+  của `/draft` qua ý định `draft` - chỉ là không phơi ra giao diện nữa.
 - **Nguồn nào thì nói rõ nguồn đó.** Màn soạn báo cáo có hai nguồn cho ra hai
   văn bản trông giống hệt nhau, nhưng nhánh tài liệu chỉ bảo đảm được "số này có
   nguyên văn trong file", còn nhánh CSDL bảo đảm "số này truy về được một trường
