@@ -543,6 +543,15 @@ pre.json {
 
 /* loader ---------------------------------------------------------------- */
 .loader { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13.2px; padding: 26px 0; justify-content: center; }
+.loader-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.loader-note { font-size: 11.8px; opacity: .78; }
+/* tabular-nums: số giây nhảy mà bề rộng không đổi, nhãn bên cạnh không giật */
+.loader-time { font-variant-numeric: tabular-nums; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px;
+  min-width: 46px; text-align: center; }
+.loader.is-slow .loader-time,
+.loader.is-slow .loader-note { color: var(--warn); opacity: 1; }
+.loader.is-slow .loader-time { border-color: var(--warn); }
 .spinner { width: 16px; height: 16px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg) } }
 .skeleton { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite; }

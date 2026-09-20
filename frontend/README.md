@@ -52,6 +52,13 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
 - **Yêu cầu dài thì phải dừng được.** Soạn báo cáo mất vài chục giây; nút gửi
   đổi thành nút dừng, các màn hình workflow có nút *Huỷ* ngay trong ô chờ —
   không thì người dùng chỉ còn cách tải lại trang.
+- **Ô chờ đếm giây thật, không vẽ thanh tiến trình giả.** Tạo slide mất 76-90
+  giây và endpoint trả về một cục (không phát sự kiện), nên `loaderNode` nhận
+  `hint = {text, slowAfter}` rồi đếm thời gian đã trôi. Quá `slowAfter` thì đổi
+  chữ thành "lâu hơn thường lệ — vẫn đang chạy". Thanh tiến trình đoán trước sẽ
+  chạy tới 100% rồi đứng im, tức là nói dối đúng lúc người dùng cần tin nhất.
+  Node trả về có `.stop()`; `runWorkflow` gọi nó ở cả nhánh xong lẫn nhánh lỗi,
+  nếu không `setInterval` sống tiếp sau khi ô chờ bị gỡ khỏi DOM.
 - **Thứ backend từ chối làm thì giao diện cũng không che.** `missing_input`,
   `validation.status = failed`, `rule_check.status = partial` đều hiện rõ thay
   vì hiển thị như đã xong.

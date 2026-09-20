@@ -278,9 +278,40 @@
       }).join('') + '</div>', false);
   }
 
-  function loaderNode(label, onCancel) {
-    var node = el('div', { class: 'loader' },
-      '<span class="spinner"></span><span>' + esc(label || 'Đang xử lý…') + '</span>');
+  /* Ô chờ của các workflow dài. `hint` = {text, slowAfter} bật thêm đồng hồ đếm
+     giây - cùng lý do với đồng hồ trong `liveTimeline`: mấy endpoint này trả về
+     MỘT lần, không phát sự kiện tiến trình, nên con số nhích đều là bằng chứng
+     rẻ nhất rằng hệ thống còn sống. Chỉ đếm thời gian THẬT; không vẽ thanh tiến
+     trình giả theo mốc đoán trước, vì quá mốc là nó đứng im và nói dối.
+     Node trả về có `.stop()` - phải gọi, nếu không `setInterval` sống tiếp sau
+     khi ô chờ bị gỡ khỏi DOM. */
+  function loaderNode(label, onCancel, hint) {
+    var node = el('div', { class: 'loader' }, '<span class="spinner"></span>');
+    var text = el('div', { class: 'loader-text' },
+      '<span class="loader-label"></span><span class="loader-note"></span>');
+    $('.loader-label', text).textContent = label || 'Đang xử lý…';
+    node.appendChild(text);
+    node.stop = function () {};
+
+    if (hint) {
+      var note = $('.loader-note', text);
+      var clock = el('span', { class: 'loader-time' }, '0s');
+      node.appendChild(clock);
+      note.textContent = hint.text || '';
+      var t0 = Date.now();
+      var timer = setInterval(function () {
+        var giay = Math.round((Date.now() - t0) / 1000);
+        clock.textContent = giay + 's';
+        /* Quá lâu thì nói thẳng là lâu, đừng để nguyên câu "thường 60-90 giây"
+           trong khi đồng hồ đã 140s - người xem sẽ tin là đã treo. */
+        if (hint.slowAfter && giay > hint.slowAfter) {
+          node.classList.add('is-slow');
+          note.textContent = 'lâu hơn thường lệ — vẫn đang chạy, bấm Huỷ nếu muốn dừng';
+        }
+      }, 1000);
+      node.stop = function () { clearInterval(timer); };
+    }
+
     if (onCancel) {
       var btn = el('button', { class: 'ghost-btn sm' }, 'Huỷ');
       btn.addEventListener('click', onCancel);
@@ -295,12 +326,15 @@
     var ctrl = new AbortController();
     btn.disabled = true;
     box.innerHTML = '';
-    box.appendChild(loaderNode(opts.label, function () { ctrl.abort(); }));
+    var loader = loaderNode(opts.label, function () { ctrl.abort(); }, opts.hint);
+    box.appendChild(loader);
     try {
       var data = await opts.call(ctrl.signal);
+      loader.stop();
       box.innerHTML = '';
       opts.render(data);
     } catch (e) {
+      loader.stop();
       box.innerHTML = '';
       if (e && e.name === 'AbortError') {
         box.appendChild(el('div', { class: 'result-empty' }, 'Đã huỷ yêu cầu.'));
@@ -1261,6 +1295,7 @@
       button: this,
       box: $('#reviewResult'),
       label: 'Đang parse file, chạy rule engine và soát chữ nghĩa theo lô…',
+      hint: { text: 'thường 10-30 giây, tuỳ độ dài văn bản', slowAfter: 40 },
       call: function (signal) {
         return API.review(reviewFile, {
           noiGui: $('#reviewNoiGui').value,
@@ -1379,6 +1414,7 @@
       button: this,
       box: $('#draftResult'),
       label: 'Đang chọn mẫu, truy vấn CSDL, dựng từng mục và đối chiếu số…',
+      hint: { text: 'thường 20-40 giây', slowAfter: 45 },
       call: function (signal) {
         return API.draft({
           request: request,
@@ -1628,6 +1664,7 @@
       button: this,
       box: $('#aggResult'),
       label: 'Đang gộp số liệu nhiều đơn vị, vẽ biểu đồ và đối chiếu file đã gửi…',
+      hint: { text: 'thường 20-40 giây', slowAfter: 45 },
       call: function (signal) {
         var inputs = Object.assign({}, prefs.inputs, collectInputs('aggInputs'), {
           nguon_so_lieu: $('#aggSource').value,
@@ -1689,7 +1726,8 @@
     runWorkflow({
       button: this,
       box: $('#slideResult'),
-      label: 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render (60-90 giây)…',
+      label: 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render…',
+      hint: { text: 'thường 45-90 giây — Presenton render xong mới trả về', slowAfter: 90 },
       call: function (signal) {
         return API.presentation({
           request: request,
