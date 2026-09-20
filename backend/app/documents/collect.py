@@ -139,7 +139,7 @@ def aggregate_reports(reports: list[UnitReport], period: str) -> dict[str, Any]:
             breakdown.append({
                 "ma_don_vi": report.ma_don_vi,
                 "ten_don_vi": report.ten_don_vi or Path(report.file_path).stem,
-                "ten_trang_bi": row.get("ten", ""),
+                "ten_thiet_bi": row.get("ten", ""),
                 "so_luong": row.get("tong", 0),
                 "tinh_trang": row.get("tinh_trang", ""),
                 "hoat_dong_tot": row.get("tot"),
@@ -174,7 +174,7 @@ def aggregate_reports(reports: list[UnitReport], period: str) -> dict[str, Any]:
     if totals["tong"] and totals["tot"] + totals["can_xu_ly"] != totals["tong"]:
         consistency.append({
             "ma_don_vi": "",
-            "message": f"Tổng trang bị {totals['tong']} nhưng tốt {totals['tot']} + cần xử lý "
+            "message": f"Tổng thiết bị {totals['tong']} nhưng tốt {totals['tot']} + cần xử lý "
                        f"{totals['can_xu_ly']} = {totals['tot'] + totals['can_xu_ly']}.",
         })
 

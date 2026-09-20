@@ -47,12 +47,12 @@ from app.services.llm import LLMError, get_llm
 logger = logging.getLogger(__name__)
 
 COLUMN_LABELS = {
-    "ten_trang_bi": "Tên trang bị",
+    "ten_thiet_bi": "Tên thiết bị",
     "so_luong": "Số lượng",
     "tinh_trang": "Tình trạng",
     "cap_nhat_cuoi": "Cập nhật gần nhất (ERP)",
-    "quan_so": "Quân số",
-    "quan_so_kiem_ke": "Ngày kiểm kê",
+    "nhan_su": "Nhân sự",
+    "nhan_su_kiem_ke": "Ngày kiểm kê",
 }
 MONTHS_VI = "tháng"
 
@@ -270,8 +270,8 @@ def _build_table(section_spec: dict[str, Any], data: dict[str, Any]) -> Rendered
 IDENTITY_FIELDS = {"ma_don_vi", "ten_don_vi", "ky", "ghi_chu"}
 
 # Trường tóm tắt: con số duy nhất về toàn bộ tài nguyên đơn vị, dùng được ở mọi
-# mục. Danh sách chi tiết (`trang_bi`) thì KHÔNG - xem `_section_data`.
-SUMMARY_FIELDS = {"quan_so", "quan_so_kiem_ke", "tong_so_trang_bi", "so_loai_trang_bi",
+# mục. Danh sách chi tiết (`thiet_bi`) thì KHÔNG - xem `_section_data`.
+SUMMARY_FIELDS = {"nhan_su", "nhan_su_kiem_ke", "tong_so_thiet_bi", "so_loai_thiet_bi",
                   "so_loai_can_bao_duong"}
 
 

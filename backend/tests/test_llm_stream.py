@@ -51,30 +51,30 @@ async def test_suy_luan_tach_rieng_thi_van_phat_du_cau_tra_loi():
     bao giờ tắt và client nhận về chuỗi rỗng."""
     client = _client([
         {"role": "assistant", "content": ""},
-        {"reasoning": "người dùng hỏi về quân số"},
+        {"reasoning": "người dùng hỏi về nhân sự"},
         {"reasoning": ", cần tra bảng kiểm kê"},
-        {"content": "Quân số tháng 8 là "},
+        {"content": "Nhân sự tháng 8 là "},
         {"content": "144 người."},
     ])
-    assert await _collect(client) == "Quân số tháng 8 là 144 người."
+    assert await _collect(client) == "Nhân sự tháng 8 là 144 người."
 
 
 @pytest.mark.asyncio
 async def test_suy_luan_nam_lan_trong_content_thi_bi_cat_den_het_the_dong():
     client = _client([
         {"content": "cần đọc mục I "},
-        {"content": "rồi đối chiếu</think>Quân số là "},
+        {"content": "rồi đối chiếu</think>Nhân sự là "},
         {"content": "144 người."},
     ])
-    assert await _collect(client) == "Quân số là 144 người."
+    assert await _collect(client) == "Nhân sự là 144 người."
 
 
 @pytest.mark.asyncio
 async def test_model_tra_loi_thang_khong_suy_luan_thi_khong_mat_chu():
     """Bật suy luận nhưng model không sinh khối nào: phần giữ lại chính là câu
     trả lời, không được im lặng bỏ đi."""
-    client = _client([{"content": "Quân số là "}, {"content": "144 người."}])
-    assert await _collect(client) == "Quân số là 144 người."
+    client = _client([{"content": "Nhân sự là "}, {"content": "144 người."}])
+    assert await _collect(client) == "Nhân sự là 144 người."
 
 
 @pytest.mark.asyncio

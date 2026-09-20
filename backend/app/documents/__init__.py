@@ -1,1 +1,1 @@
-"""Xử lý văn bản hành chính: parse có định dạng, dò thành phần, kiểm tra thể thức."""
+"""Xử lý tài liệu: parse có định dạng, dựng dàn ý, kiểm tra cấu trúc và trình bày."""

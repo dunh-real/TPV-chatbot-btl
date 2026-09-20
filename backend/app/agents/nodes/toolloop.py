@@ -8,7 +8,7 @@
 Khác năm workflow tất định ở chỗ: ở đó CODE chọn tool, ở đây MODEL chọn. Đổi lại
 tính tiên đoán lấy khả năng ghép nhiều tool cho câu hỏi không có sẵn quy trình.
 
-Model phát nhiều lời gọi trong một lượt thì chúng được chạy CÙNG LÚC: quân số của
+Model phát nhiều lời gọi trong một lượt thì chúng được chạy CÙNG LÚC: nhân sự của
 ba đơn vị là ba truy vấn độc lập, không có lý do gì phải nối đuôi nhau. Chỉ tool
 có tác dụng phụ (sinh file) là bị tách riêng - chạy song song một việc ghi với
 một việc đọc thì không còn nói được thứ tự nào đã xảy ra.
@@ -167,8 +167,14 @@ async def run_tool_loop(
                 _phat.append(piece)
                 progress.emit("answer_delta", text=piece)
 
+            # thinking=False: lượt của vòng lặp là "chọn công cụ nào, tham số gì" -
+            # một quyết định ngắn. Bật suy luận thì model được cấp thêm 8192 token
+            # và thỉnh thoảng tiêu hết chỗ đó để lý luận, hết hạn mức mà chưa phát
+            # lời gọi nào: đo trên chính câu hỏi nhân sự Phòng Kỹ thuật, một lượt
+            # mất 125 giây rồi trả về TAY KHÔNG, trong khi tắt suy luận mất 0,6
+            # giây và chọn đúng cả hai công cụ.
             turn: AssistantTurn = await get_llm().stream_chat_with_tools(
-                messages, schemas, on_delta=_delta)
+                messages, schemas, on_delta=_delta, thinking=False)
         except LLMError as exc:
             logger.warning("Vòng lặp agent dừng vì LLM lỗi: %s", exc)
             return _result(answer="Hệ thống chưa gọi được mô hình ngôn ngữ, vui lòng thử lại.",

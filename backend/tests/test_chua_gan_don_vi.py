@@ -2,10 +2,10 @@
 
 `WHERE WorkDepartmentId IN (...)` không bao giờ khớp `NULL`, nên trước đây trang
 bị thiếu phòng ban bị loại khỏi mọi thống kê - im lặng, không lỗi. Trên CSDL thật
-90/98 trang bị rơi vào đúng trường hợp này: báo cáo "toàn cơ quan" đếm được 8 dòng
+90/98 thiết bị rơi vào đúng trường hợp này: báo cáo "toàn công ty" đếm được 8 dòng
 trên tổng số 98.
 
-Ranh giới cần giữ, và đây là lý do bài test này tồn tại: hỏi TOÀN CƠ QUAN thì cộng
+Ranh giới cần giữ, và đây là lý do bài test này tồn tại: hỏi TOÀN CÔNG TY thì cộng
 vào, hỏi MỘT SỐ ĐƠN VỊ thì không - không ai biết chúng thuộc đơn vị nào.
 """
 
@@ -25,7 +25,7 @@ DAU_KY = datetime(2026, 1, 1)
 
 @pytest.fixture
 async def erp_thieu_phong_ban():
-    """Hai đơn vị có trang bị, cộng thêm trang bị và nhân sự không thuộc đơn vị nào."""
+    """Hai đơn vị có thiết bị, cộng thêm thiết bị và nhân sự không thuộc đơn vị nào."""
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.db.erp_models import Asset, AssetCategory, EmployeeProfile, ErpBase, WorkDepartment
@@ -70,9 +70,9 @@ async def erp_thieu_phong_ban():
 
 
 # --------------------------------------------------------------------------- #
-# Trang bị
+# Thiết bị
 # --------------------------------------------------------------------------- #
-async def test_toan_co_quan_dem_ca_trang_bi_chua_gan(erp_thieu_phong_ban):
+async def test_toan_cong_ty_dem_ca_thiet_bi_chua_gan(erp_thieu_phong_ban):
     """Trước bản vá: 15. Đúng: 115."""
     result = await get_equipment_statistics(erp_thieu_phong_ban, "2026-09")
 
@@ -115,19 +115,19 @@ async def test_units_with_data_khong_dem_nham_dong_vo_chu(erp_thieu_phong_ban):
 
 
 # --------------------------------------------------------------------------- #
-# Quân số - cùng một lỗi, cùng một ranh giới
+# Nhân sự - cùng một lỗi, cùng một ranh giới
 # --------------------------------------------------------------------------- #
-async def test_quan_so_toan_co_quan_dem_ca_nguoi_chua_gan(erp_thieu_phong_ban):
-    """Nhánh "(chưa gán phòng ban)" của bảng quân số trước đây không chạy được:
+async def test_nhan_su_toan_cong_ty_dem_ca_nguoi_chua_gan(erp_thieu_phong_ban):
+    """Nhánh "(chưa gán phòng ban)" của bảng nhân sự trước đây không chạy được:
     bộ lọc `IN (...)` đã loại sạch dòng `NULL` trước khi tới đó."""
     result = await get_personnel_statistics(erp_thieu_phong_ban, "2026-09")
 
     assert result.metrics["total_personnel"].value == 3
     assert result.breakdown[-1]["ten_don_vi"] == "(chưa gán phòng ban)"
-    assert result.breakdown[-1]["quan_so"] == 1
+    assert result.breakdown[-1]["nhan_su"] == 1
 
 
-async def test_quan_so_mot_don_vi_khong_cong_nguoi_vo_chu(erp_thieu_phong_ban):
+async def test_nhan_su_mot_don_vi_khong_cong_nguoi_vo_chu(erp_thieu_phong_ban):
     result = await get_personnel_statistics(erp_thieu_phong_ban, "2026-09",
                                             ma_don_vi="00001")
 

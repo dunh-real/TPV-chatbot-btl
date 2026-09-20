@@ -107,8 +107,8 @@ async def test_dan_y_bam_tai_lieu(monkeypatch):
     class LLMGia:
         async def chat_json(self, *a, **k):
             return {"tieu_de": "Báo cáo kiểm kê",
-                    "muc": [{"id": "m1", "tieu_de": "I. NHÂN SỰ", "huong_dan": "Nêu quân số"},
-                            {"id": "m2", "tieu_de": "II. TRANG BỊ", "huong_dan": "Nêu số lượng"}]}
+                    "muc": [{"id": "m1", "tieu_de": "I. NHÂN SỰ", "huong_dan": "Nêu nhân sự"},
+                            {"id": "m2", "tieu_de": "II. THIẾT BỊ", "huong_dan": "Nêu số lượng"}]}
 
     monkeypatch.setattr(dd, "get_llm", lambda: LLMGia())
     ket_qua = await dd.outline_node(
@@ -116,7 +116,7 @@ async def test_dan_y_bam_tai_lieu(monkeypatch):
 
     assert ket_qua["template"]["ten_bao_cao"] == "Báo cáo kiểm kê"
     assert [m["title"] for m in ket_qua["template"]["fields"]["sections"]] == [
-        "I. NHÂN SỰ", "II. TRANG BỊ"]
+        "I. NHÂN SỰ", "II. THIẾT BỊ"]
     # Không có file mẫu -> `build_docx` phải tự dựng bằng code.
     assert ket_qua["template"]["file_path"] == ""
 

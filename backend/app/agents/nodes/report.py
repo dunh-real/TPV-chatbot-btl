@@ -52,14 +52,14 @@ from app.tools.data import ToolError, call_tool, previous_ky
 logger = logging.getLogger(__name__)
 
 METRIC_LABELS = {
-    "total_personnel": "Tổng quân số", "new_hires": "Tuyển mới", "resignations": "Nghỉ việc",
-    "total_equipment": "Tổng trang bị", "good": "Tình trạng tốt",
+    "total_personnel": "Tổng nhân sự", "new_hires": "Tuyển mới", "resignations": "Nghỉ việc",
+    "total_equipment": "Tổng thiết bị", "good": "Tình trạng tốt",
     "needs_attention": "Cần xử lý",
-    # "Số loại trang bị" = số TÊN trang bị khác nhau (33 trên dữ liệu thật), khác
+    # "Số loại thiết bị" = số TÊN thiết bị khác nhau (33 trên dữ liệu thật), khác
     # hẳn "chủng loại" của ERP (`Asm_AssetCategories`, 8 nhóm). Nhãn cũ là "Số
     # chủng loại" nên báo cáo gộp theo chủng loại in ra "Số chủng loại: 33" ngay
     # phía trên một cái bảng chủng loại có 8 dòng.
-    "equipment_types": "Số loại trang bị",
+    "equipment_types": "Số loại thiết bị",
 }
 
 
@@ -94,12 +94,12 @@ def _ngay_tieng_viet(value: date) -> str:
 # liệu, dữ liệu đã lưu từ phiên trước).
 _COT_MAC_DINH = {
     "personnel": [{"key": "ten_don_vi", "label": "Đơn vị"},
-                  {"key": "quan_so", "label": "Quân số"},
-                  {"key": "quan_so_ky_truoc", "label": "Kỳ trước"},
+                  {"key": "nhan_su", "label": "Nhân sự"},
+                  {"key": "nhan_su_ky_truoc", "label": "Kỳ trước"},
                   {"key": "tuyen_moi", "label": "Tuyển mới"},
                   {"key": "nghi_viec", "label": "Nghỉ việc"}],
     "equipment": [{"key": "ten_don_vi", "label": "Đơn vị"},
-                  {"key": "ten_trang_bi", "label": "Trang bị"},
+                  {"key": "ten_thiet_bi", "label": "Thiết bị"},
                   {"key": "so_luong", "label": "Số lượng"},
                   {"key": "tinh_trang", "label": "Tình trạng"}],
 }
@@ -148,7 +148,7 @@ def _compare_period(ky: str, nam: int, params: dict[str, Any],
 
     Trước đây năm của kỳ đối chiếu bị gán cứng bằng năm của kỳ báo cáo, nên
     "tháng 8/2026 so với tháng 8 năm 2025" ra `compare_to = 2026-08` - so kỳ với
-    CHÍNH NÓ. Slide in "biến động 0 (0%)" và người đọc hiểu là quân số không đổi
+    CHÍNH NÓ. Slide in "biến động 0 (0%)" và người đọc hiểu là nhân sự không đổi
     suốt một năm. Một kết luận sai mà không con số nào trong đó là số bịa, nên
     không van chắn nào bắt được: phải chặn ngay từ chỗ dựng tham số.
     """
@@ -192,26 +192,26 @@ def _compare_period(ky: str, nam: int, params: dict[str, Any],
 #
 # `noi_dung` do LLM trích ra, và nó đọc hụt: "báo cáo trang thiết bị" thì đúng,
 # nhưng "báo cáo thông tin nhân viên" lại trả về CẢ HAI mảng - bộ slide xin về
-# nhân sự mọc thêm biểu đồ trang bị. Người dùng hỏi một mảng thì phải nhận đúng
+# nhân sự mọc thêm biểu đồ thiết bị. Người dùng hỏi một mảng thì phải nhận đúng
 # mảng đó, nên chỗ này không để LLM quyết một mình.
 #
 # Chỉ đè khi yêu cầu nhắc tới ĐÚNG MỘT mảng: nhắc cả hai, hoặc không nhắc mảng
 # nào ("báo cáo tổng hợp"), thì giữ nguyên kết quả của LLM.
 NOI_DUNG_KEYWORDS: dict[str, tuple[str, ...]] = {
-    "quan_so": ("quân số", "nhân sự", "nhân viên", "cán bộ", "biên chế",
+    "nhan_su": ("nhân sự", "nhân viên", "cán bộ", "biên chế",
                 "người lao động", "lao động", "tuyển mới", "nghỉ việc"),
-    "trang_bi": ("trang bị", "trang thiết bị", "thiết bị", "tài sản", "vật tư",
-                 "khí tài", "phương tiện"),
+    "thiet_bi": ("thiết bị", "trang thiết bị", "tài sản", "vật tư",
+                 "phương tiện", "máy móc"),
 }
 
 
-# Chiều gộp cũng khoanh bằng từ khoá trước, y như `noi_dung`: câu "quân số theo
+# Chiều gộp cũng khoanh bằng từ khoá trước, y như `noi_dung`: câu "nhân sự theo
 # chức vụ" nói rõ ràng tới mức không cần hỏi model, và model thì lúc trả lúc
 # không. Chỉ đè khi câu chữ nêu ĐÚNG MỘT chiều.
 NHOM_THEO_KEYWORDS: dict[str, tuple[str, ...]] = {
     "chuc_vu": ("theo chức vụ", "theo từng chức vụ", "theo chức danh", "theo vị trí"),
-    "chung_loai": ("theo chủng loại", "theo từng chủng loại", "theo loại trang bị",
-                   "theo nhóm trang bị", "theo danh mục"),
+    "chung_loai": ("theo chủng loại", "theo từng chủng loại", "theo loại thiết bị",
+                   "theo nhóm thiết bị", "theo danh mục"),
 }
 
 
@@ -272,9 +272,9 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
     valid_codes = {u["ma_don_vi"] for u in units}
     requested = [c for c in (params.get("ma_don_vi") or []) if c in valid_codes]
 
-    noi_dung = [c for c in (params.get("noi_dung") or []) if c in ("quan_so", "trang_bi")]
+    noi_dung = [c for c in (params.get("noi_dung") or []) if c in ("nhan_su", "thiet_bi")]
     noi_dung = scope_from_request(state.get("request", ""),
-                                  noi_dung or ["quan_so", "trang_bi"])
+                                  noi_dung or ["nhan_su", "thiet_bi"])
     ky = f"{nam:04d}-{thang:02d}"
     compare_to = _compare_period(ky, nam, params, assumptions)
 
@@ -337,7 +337,7 @@ async def _gather_from_documents(state: dict[str, Any], session) -> dict[str, An
         lambda: [read_unit_report(path, code, name) for code, name, path in targets]
     )
     equipment = aggregate_reports(reports, params["ky"])
-    logger.info("Tổng hợp từ tài liệu: %d/%d báo cáo đọc được, tổng trang bị %s",
+    logger.info("Tổng hợp từ tài liệu: %d/%d báo cáo đọc được, tổng thiết bị %s",
                 len(equipment["sources"]), len(targets),
                 equipment["metrics"]["total_equipment"]["value"])
     return {
@@ -387,10 +387,10 @@ async def _gather_from_database(state, params, scope, data) -> dict[str, Any]:
             data["reporting"] = status
 
             # Hai chiều gộp có tên khác nhau nên không cần hỏi "của mảng nào":
-            # "chuc_vu" chỉ quân số hiểu, "chung_loai" chỉ trang bị hiểu.
+            # "chuc_vu" chỉ nhân sự hiểu, "chung_loai" chỉ thiết bị hiểu.
             nhom_theo = params.get("nhom_theo")
 
-            if "quan_so" in params["noi_dung"]:
+            if "nhan_su" in params["noi_dung"]:
                 result = await call_tool(
                     session, "get_personnel_statistics",
                     ky=params["ky"], ma_don_vi=scope, compare_to=params["compare_to"],
@@ -398,7 +398,7 @@ async def _gather_from_database(state, params, scope, data) -> dict[str, Any]:
                 data["personnel"] = result.as_dict()
                 data["personnel_consistent"] = result.is_consistent
 
-            if "trang_bi" in params["noi_dung"]:
+            if "thiet_bi" in params["noi_dung"]:
                 result = await call_tool(
                     session, "get_equipment_statistics",
                     ky=params["ky"], ma_don_vi=scope, compare_to=params["compare_to"],
@@ -450,8 +450,8 @@ async def reconcile_node(state: dict[str, Any]) -> dict[str, Any]:
         # có mặt/vắng, nhưng ERP không có dữ liệu chấm công nên không có gì để so;
         # đối chiếu một chiều sẽ báo lệch giả, tệ hơn là không đối chiếu.
         db_values = {
-            **{k: v for k, v in personnel.get(code, {}).items() if k == "quan_so"},
-            **({"tong_so_trang_bi": equipment_totals[code]} if code in equipment_totals else {}),
+            **{k: v for k, v in personnel.get(code, {}).items() if k == "nhan_su"},
+            **({"tong_so_thiet_bi": equipment_totals[code]} if code in equipment_totals else {}),
         }
         result = await anyio.to_thread.run_sync(
             lambda c=code, f=item.get("file_path"), d=db_values: reconcile_file(c, f, d)
@@ -474,7 +474,7 @@ def _build_charts(data: dict[str, Any], params: dict[str, Any]) -> dict[str, byt
         metrics = personnel["metrics"]
         labels = [METRIC_LABELS[k] for k in metrics]
         charts["personnel"] = compare_bar_chart(
-            f"Quân số {period_label} so với {compare_label}",
+            f"Nhân sự {period_label} so với {compare_label}",
             labels,
             [m["value"] for m in metrics.values()],
             [m["prev"] or 0 for m in metrics.values()] if personnel.get("compare_to") else None,
@@ -484,7 +484,7 @@ def _build_charts(data: dict[str, Any], params: dict[str, Any]) -> dict[str, byt
     if (equipment := data.get("equipment")):
         by_status: dict[str, int] = {}
         for row in equipment["breakdown"]:
-            # Breakdown của CSDL có một dòng cho mỗi (trang bị, tình trạng); của
+            # Breakdown của CSDL có một dòng cho mỗi (thiết bị, tình trạng); của
             # tài liệu thì mỗi dòng là một chủng loại, tình trạng nằm ở các cột.
             if (status := row.get("tinh_trang")):
                 by_status[status] = by_status.get(status, 0) + (row.get("so_luong") or 0)
@@ -528,7 +528,7 @@ def _metric_sentence(metrics: dict[str, Any]) -> str:
 def _metric_refs(payload: dict[str, Any]) -> list[references.Reference]:
     """Mỗi chỉ tiêu là một nguồn trích dẫn được.
 
-    Mức này là mức người đọc quan tâm: "tổng quân số" chứ không phải "ô 113".
+    Mức này là mức người đọc quan tâm: "tổng nhân sự" chứ không phải "ô 113".
     """
     refs = [
         references.make("du_lieu", METRIC_LABELS.get(key, key),
@@ -618,7 +618,7 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
         # Các mục khác lưu bảng dạng dict vì bước export dựng lại bằng
         # RenderedTable(**...); giữ đúng quy ước đó.
         table = {
-            "columns": ["Đơn vị", "Tệp báo cáo", "Số ký hiệu", "Số dòng bảng", "Tổng trang bị"],
+            "columns": ["Đơn vị", "Tệp báo cáo", "Số ký hiệu", "Số dòng bảng", "Tổng thiết bị"],
             "rows": [[src.get("ten_don_vi") or src.get("ma_don_vi") or "—", src["file"],
                       src.get("so_ky_hieu") or "—", str(src.get("so_dong_bang", 0)),
                       str(src.get("figures", {}).get("tong", 0))] for src in sources],
@@ -628,23 +628,23 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
                          "image_caption": "", "llm_written": []})
         index += 1
 
-    # --- II. Quân số ---
+    # --- II. Nhân sự ---
     if (personnel := data.get("personnel")):
-        title = f"{so_la_ma(index)}. TÌNH HÌNH QUÂN SỐ"
+        title = f"{so_la_ma(index)}. TÌNH HÌNH NHÂN SỰ"
         facts = _metric_sentence(personnel["metrics"])
         payload = {"metrics": personnel["metrics"], "scope": personnel["scope"]}
         written, written_cited, refs = await _narrative(
             title,
-            "Nhận xét về quân số: nêu mức tăng/giảm so với kỳ trước và biến động tuyển "
+            "Nhận xét về nhân sự: nêu mức tăng/giảm so với kỳ trước và biến động tuyển "
             "mới/nghỉ việc. Dùng đúng các giá trị delta, delta_pct, share_pct đã cho.",
             payload, params,
         )
         table = bang_chi_tiet(personnel, "personnel")
         sections.append({
-            "id": "quan_so", "title": title, "paragraphs": [facts, *written],
+            "id": "nhan_su", "title": title, "paragraphs": [facts, *written],
             "table": {"columns": table.columns, "rows": table.rows} if table else None,
             "image": charts.get("personnel"),
-            "image_caption": f"Biểu đồ: Quân số {period_label} so với kỳ trước",
+            "image_caption": f"Biểu đồ: Nhân sự {period_label} so với kỳ trước",
             # `llm_written` là bản sạch đi vào file; `_cited` giữ marker cho UI.
             "llm_written": written, "llm_written_cited": written_cited,
             "refs": refs, "source_data": payload,
@@ -664,13 +664,13 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
             payload, params,
         )
         # Bảng chi tiết là chỗ DUY NHẤT người đọc đối chiếu được con số tổng về
-        # từng đơn vị. Mục quân số có bảng, mục trang bị thì trước đây để cứng
-        # `"table": None` - báo cáo ghi "tổng 194 trang bị" mà không một dòng nào
+        # từng đơn vị. Mục nhân sự có bảng, mục thiết bị thì trước đây để cứng
+        # `"table": None` - báo cáo ghi "tổng 194 thiết bị" mà không một dòng nào
         # nói 194 đó nằm ở đâu.
         table = bang_chi_tiet(equipment, "equipment")
 
         sections.append({
-            "id": "trang_bi", "title": title, "paragraphs": [facts, *written],
+            "id": "thiet_bi", "title": title, "paragraphs": [facts, *written],
             "table": {"columns": table.columns, "rows": table.rows} if table else None,
             "image": charts.get("equipment"),
             "image_caption": f"Biểu đồ: Tình trạng trang thiết bị {period_label}",
@@ -697,7 +697,7 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
         index += 1
 
     # --- V. Cảnh báo số liệu không nhất quán ---
-    # Gộp cả quân số lẫn trang bị: mục này tên là "số liệu cần kiểm tra lại", bỏ
+    # Gộp cả nhân sự lẫn thiết bị: mục này tên là "số liệu cần kiểm tra lại", bỏ
     # sót nguồn nào thì chính chỗ đáng ngờ nhất lại là chỗ im lặng.
     inconsistent = [
         *data.get("personnel", {}).get("consistency", []),
@@ -751,9 +751,9 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
                                "quote": paragraph[:160]})
 
     if not state.get("data", {}).get("personnel_consistent", True):
-        issues.append({"type": "inconsistent_source", "section": "quan_so",
+        issues.append({"type": "inconsistent_source", "section": "nhan_su",
                        "numbers": [], "severity": "warning",
-                       "quote": "Số liệu nguồn không thoả ràng buộc quân số"})
+                       "quote": "Số liệu nguồn không thoả ràng buộc nhân sự"})
 
     blocking = [i for i in issues if i["severity"] == "error"]
     return {"validation": {
@@ -789,7 +789,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
             "dia_danh": inputs.get("dia_danh", "Hà Nội"),
             "ngay_bao_cao": _ngay_tieng_viet(date.today()),
             "trich_yeu": inputs.get(
-                "trich_yeu", f"V/v tổng hợp tình hình quân số và trang thiết bị {period_label}"),
+                "trich_yeu", f"V/v tổng hợp tình hình nhân sự và trang thiết bị {period_label}"),
             "chuc_vu_ky": inputs.get("chuc_vu_ky", "TRƯỞNG PHÒNG"),
             "nguoi_ky": inputs.get("nguoi_ky", ""),
             "can_cu": inputs.get("can_cu", ""),
@@ -825,7 +825,7 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
         async with session_scope() as session:
             await VanBanRepository(session).upsert(VanBan(
                 ma_van_ban=ma_van_ban,
-                ten_van_ban=f"Báo cáo tổng hợp quân số và trang thiết bị "
+                ten_van_ban=f"Báo cáo tổng hợp nhân sự và trang thiết bị "
                             f"tháng {params['thang']}/{params['nam']}",
                 loai_van_ban="bao_cao_tong_hop",
                 # Báo cáo tổng hợp là của cơ quan, không của đơn vị nào - để

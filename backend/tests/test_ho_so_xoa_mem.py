@@ -1,12 +1,12 @@
 """Hồ sơ bị sửa nhiều lần trong kỳ không được đếm thành nhiều lần tuyển mới.
 
 ERP không sửa đè lên hồ sơ cũ: mỗi lần nhập lại, bản cũ ở lại bảng với
-`IsDeleted=1` còn bản mới được thêm vào. `headcount_by_dept` lọc đúng nên quân số
+`IsDeleted=1` còn bản mới được thêm vào. `headcount_by_dept` lọc đúng nên nhân sự
 không sao, nhưng `movement` trước đây đếm thẳng theo `HireDate` mà không lọc, nên
 một người được nhập lại hai lần thành ba lần tuyển mới.
 
 Trên CSDL thật (tenant 64, kỳ 2026-09) lỗi này ra 4 người tuyển mới trong khi chỉ
-có 2, và làm gãy phép kiểm "quân số tăng = tuyển mới - nghỉ việc".
+có 2, và làm gãy phép kiểm "nhân sự tăng = tuyển mới - nghỉ việc".
 """
 
 from __future__ import annotations
@@ -80,14 +80,14 @@ async def test_ban_ghi_xoa_mem_khong_thanh_mot_luot_tuyen_moi(erp_ho_so_nhap_lai
     assert result.metrics["new_hires"].value == 2
 
 
-async def test_quan_so_van_khop_voi_bien_dong(erp_ho_so_nhap_lai):
+async def test_nhan_su_van_khop_voi_bien_dong(erp_ho_so_nhap_lai):
     """Phép kiểm của chính tool: tăng bao nhiêu phải bằng tuyển mới trừ nghỉ việc."""
     result = await get_personnel_statistics(erp_ho_so_nhap_lai, "2026-09")
 
-    quan_so = result.metrics["total_personnel"]
-    assert quan_so.value == 3
-    assert quan_so.prev == 1
-    assert quan_so.value - quan_so.prev == (result.metrics["new_hires"].value
+    nhan_su = result.metrics["total_personnel"]
+    assert nhan_su.value == 3
+    assert nhan_su.prev == 1
+    assert nhan_su.value - nhan_su.prev == (result.metrics["new_hires"].value
                                             - result.metrics["resignations"].value)
     assert result.is_consistent
 
@@ -98,4 +98,4 @@ async def test_bang_chi_tiet_cung_khong_dem_trung(erp_ho_so_nhap_lai):
 
     dong = next(r for r in result.breakdown if r["ma_don_vi"] == "00001")
     assert dong["tuyen_moi"] == 2
-    assert dong["quan_so"] == 3
+    assert dong["nhan_su"] == 3

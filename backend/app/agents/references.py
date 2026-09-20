@@ -90,7 +90,7 @@ def from_data(data: dict[str, Any], prefix: str = "") -> list[Reference]:
     """Cây số liệu SQL -> mỗi nhánh lá một tham chiếu.
 
     Chỉ đi xuống một mức có nghĩa nghiệp vụ (personnel.metrics, equipment.metrics)
-    chứ không bung tới từng con số: model trích dẫn "bảng quân số", không trích
+    chứ không bung tới từng con số: model trích dẫn "bảng nhân sự", không trích
     dẫn "ô 113".
     """
     refs: list[Reference] = []

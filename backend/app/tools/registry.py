@@ -54,7 +54,7 @@ TOOLS: dict[str, ToolSpec] = {
     # --- xử lý và sinh văn bản (workflow 2, 3) ---
     "analyze_document": ToolSpec(
         name="analyze_document",
-        description="Soát một văn bản đã tải lên: thể thức, chữ nghĩa, phân loại, "
+        description="Soát một tài liệu đã tải lên: cấu trúc, chữ nghĩa, phân loại, "
                     "đề xuất phòng ban xử lý và phân rã nhiệm vụ",
         parameters={"file_id": "định danh file đã tải lên, bắt buộc",
                     "noi_gui": "nơi gửi văn bản, giúp bước định tuyến chính xác hơn"},

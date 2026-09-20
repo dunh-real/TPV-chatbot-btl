@@ -71,7 +71,7 @@ def compare_bar_chart(
 
 
 def status_bar_chart(title: str, labels: Sequence[str], values: Sequence[float]) -> bytes:
-    """Cột ngang cho tình trạng trang bị: tốt (xanh) -> cần xử lý (đỏ)."""
+    """Cột ngang cho tình trạng thiết bị: tốt (xanh) -> cần xử lý (đỏ)."""
     fig, axes = plt.subplots(figsize=(7.2, max(2.2, 0.5 * len(labels) + 1.2)))
     colors = [PALETTE["good"] if "tốt" in str(label).lower() else
               PALETTE["bad"] if "hỏng" in str(label).lower() else PALETTE["warn"]

@@ -75,7 +75,7 @@ def get_erp_engine(settings: Settings | None = None) -> AsyncEngine:
         if not cfg.erp_database_url:
             raise ErpNotConfigured(
                 "Chưa đặt ERP_DATABASE_URL nên không đọc được số liệu phòng ban / "
-                "trang bị / nhân sự."
+                "thiết bị / nhân sự."
             )
         _engine = create_async_engine(
             cfg.erp_database_url,

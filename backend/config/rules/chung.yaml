@@ -1,0 +1,120 @@
+# Bộ tiêu chí CẤU TRÚC tài liệu - áp cho mọi loại tệp.
+#
+# Rule engine chỉ trả lời những câu đo được từ chính tệp: tài liệu có tiêu đề
+# không, các mục có nhảy cấp không, đánh số có đứt quãng không, cách trình bày có
+# nhất quán không. Chuyện chữ nghĩa (chính tả, ngữ pháp, diễn đạt, logic) là việc
+# của LLM ở nhánh bên cạnh - hỏi rule engine về nó là sai chỗ, mà hỏi LLM về phông
+# chữ cũng vậy: LLM không nhìn thấy định dạng.
+#
+# Ở đây cố tình KHÔNG có tiêu chí kiểu "phông phải là Times New Roman" hay "phải
+# có quốc hiệu": đó là quy định riêng của một loại văn bản, đem soi tài liệu kỹ
+# thuật hay hợp đồng thì ra vài chục lỗi đúng về mặt máy móc mà vô nghĩa với người
+# đọc. Thứ đo được cho mọi tài liệu là sự NHẤT QUÁN với chính nó.
+#
+# severity: error   -> hỏng cấu trúc, phải sửa
+#           warning -> nên xem lại
+#           info    -> chỉ ghi nhận
+# Mặc định không tiêu chí nào để mức error: với một tài liệu bất kỳ, không có quy
+# định nào để mà "sai luật". Nơi nào có quy định riêng thì nâng mức ở đây.
+
+meta:
+  name: "Cấu trúc tài liệu"
+  version: "2026-09-20"
+  # Tên hiển thị khi người dùng chọn bộ tiêu chí trong giao diện.
+  label: "Cấu trúc & trình bày (mọi loại tài liệu)"
+
+# --------------------------------------------------------------------------- #
+# Phần 1: tổ chức nội dung.
+# Chỉ cần text nên chạy được với cả .txt/.md lẫn PDF scan.
+# --------------------------------------------------------------------------- #
+structure:
+  # Dòng dài hơn mức này thì là một đoạn nội dung có đánh số, không phải tên mục.
+  heading_max_chars: 100
+
+  title:
+    severity: warning
+    message: "Tài liệu không mở đầu bằng một tiêu đề"
+    max_chars: 150
+
+  heading_levels:
+    severity: warning
+    message: "Nhảy cấp tiêu đề"
+
+  empty_section:
+    severity: warning
+    message: "Mục không có nội dung"
+
+  duplicate_heading:
+    severity: info
+    message: "Hai mục trùng tên"
+
+  numbering:
+    severity: warning
+    message: "Đánh số mục không liên tục"
+
+  paragraph_length:
+    max_chars: 1500
+    severity: info
+    message: "Đoạn quá dài, nên tách thành nhiều đoạn"
+
+# --------------------------------------------------------------------------- #
+# Phần 2: trình bày. Cần đọc được định dạng (docx, pdf digital).
+#
+# Cách đo: lấy cách trình bày của số đông làm chuẩn rồi chỉ ra chỗ lệch. Tiêu đề
+# và bảng được loại ra trước - tiêu đề in đậm cỡ lớn hơn phần thân là đúng.
+# --------------------------------------------------------------------------- #
+consistency:
+  min_chars: 40          # dòng ngắn hơn thế là dòng đặc biệt, không phải văn xuôi
+  min_blocks: 4          # ít hơn thì không đủ cơ sở để nói về "số đông"
+  min_dominance: 0.6     # chuẩn chung phải chiếm ít nhất chừng này, không thì chỉ báo chung
+  max_findings: 5        # lệch nhiều hơn -> gộp một dòng, đừng đổ ra bức tường chữ
+
+  # Phông và cỡ chữ xét cả dòng ngắn: một dòng lạc phông vẫn là lạc phông.
+  font:
+    min_chars: 0
+    severity: warning
+    message: "Phông chữ không nhất quán với phần còn lại"
+
+  size_pt:
+    min_chars: 0
+    severity: warning
+    message: "Cỡ chữ không nhất quán với phần còn lại"
+    tolerance_pt: 0.5
+
+  alignment:
+    severity: info
+    message: "Canh lề đoạn không nhất quán"
+
+  line_spacing:
+    severity: info
+    message: "Giãn dòng không nhất quán"
+    tolerance: 0.05
+
+  # Đo khoảng hở SAU mỗi đoạn: khoảng hở giữa hai đoạn là tổng của sau-đoạn-trên
+  # và trước-đoạn-dưới, xét cả hai thì mỗi chỗ lệch bị đếm hai lần.
+  paragraph_spacing_pt:
+    severity: info
+    message: "Khoảng cách giữa các đoạn không nhất quán"
+    tolerance_pt: 0.5
+
+page:
+  size_mm:
+    severity: info
+    message: "Khổ giấy không phải khổ chuẩn"
+    tolerance_mm: 3
+    known:
+      A4: [210, 297]
+      A5: [148, 210]
+      Letter: [216, 279]
+      Legal: [216, 356]
+
+  margin_mm:
+    # Không đòi lề theo quy định nào, chỉ chặn hai đầu vô lý: chữ sát mép giấy
+    # hoặc lề rộng đến mức mất nửa trang.
+    min: 10
+    max: 50
+    severity: warning
+    message: "Lề trang bất thường"
+    tolerance_mm: 0.5
+    # Với PDF, lề chỉ đo được từ vùng chữ thực tế nên lề dưới/phải không đáng tin.
+    measured_only: [top, left]

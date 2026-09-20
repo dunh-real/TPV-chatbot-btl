@@ -55,15 +55,13 @@ class DocumentState(TypedDict, total=False):
     # --- đầu vào ---
     file_path: str
     file_name: str
-    document_type: str
     noi_gui: str
     departments: list[dict[str, str]]     # danh mục lấy từ CSDL, không để LLM tự nghĩ
     rule_set: str                         # tên file trong config/rules, rỗng = mặc định
-    force_rules: bool                     # soát cả khi tệp không giống văn bản hành chính
 
     # --- trung gian ---
     structure: Any                        # app.documents.parser.DocumentStructure
-    components: Any                       # app.documents.structure.DocumentComponents
+    outline: Any                          # app.documents.outline.Outline
     rule_result: Any                      # app.documents.rules.RuleCheckResult
     llm_findings: list[dict[str, Any]]
     classification: dict[str, Any] | None

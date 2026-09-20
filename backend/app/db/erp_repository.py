@@ -6,7 +6,7 @@ bằng truy vấn "as-of": lấy những dòng đã tồn tại trước thời 
 bị xoá tính tới thời điểm đó.
 
 Hệ quả cần biết khi đọc báo cáo: đây là hiện trạng suy ngược, không phải con số
-đã chốt tại kỳ. Một trang bị bị sửa số lượng sau kỳ sẽ làm số của kỳ cũ đổi theo.
+đã chốt tại kỳ. Một thiết bị bị sửa số lượng sau kỳ sẽ làm số của kỳ cũ đổi theo.
 Mọi hàm ở đây vì thế trả kèm `ghi_chu` nói rõ điều đó, và `assumptions` của
 workflow sẽ nhắc lại trong văn bản cuối.
 """
@@ -67,10 +67,10 @@ def _thuoc_don_vi(model: Any, dept_ids: list[int], *, gom_chua_gan: bool) -> Any
 
     `IN (...)` không bao giờ khớp `NULL`. Bản ghi ERP thiếu `WorkDepartmentId` vì
     thế biến mất hoàn toàn khỏi mọi phép cộng - im lặng, không lỗi, không cảnh báo.
-    Trên dữ liệu thật đó không phải trường hợp hiếm: 90/98 trang bị chưa gán phòng
-    ban, tức báo cáo "toàn cơ quan" từng chỉ đếm được 8 dòng.
+    Trên dữ liệu thật đó không phải trường hợp hiếm: 90/98 thiết bị chưa gán phòng
+    ban, tức báo cáo "toàn công ty" từng chỉ đếm được 8 dòng.
 
-    Hỏi toàn cơ quan thì những dòng ấy vẫn là tài sản của cơ quan, phải cộng vào.
+    Hỏi toàn công ty thì những dòng ấy vẫn là tài sản của cơ quan, phải cộng vào.
     Hỏi vài đơn vị cụ thể thì không: không ai biết chúng thuộc đơn vị nào, cộng
     vào là gán bừa.
     """
@@ -131,7 +131,7 @@ class ErpDonViRepository:
         return {dv.ma_don_vi: dv.display_name for dv in await self.list_all(moment)}
 
     async def id_map(self, moment: datetime | None = None) -> dict[str, int]:
-        """Mã hiển thị -> khoá chính, để nối sang trang bị / nhân sự."""
+        """Mã hiển thị -> khoá chính, để nối sang thiết bị / nhân sự."""
         return {dv.ma_don_vi: dv.id for dv in await self.list_all(moment)}
 
     async def get(self, ma_don_vi: str) -> WorkDepartment | None:
@@ -155,7 +155,7 @@ class ErpDonViRepository:
 
 
 class ErpChucVuRepository:
-    """`Dms_WorkPosition` - danh mục chức vụ, chiều gộp thứ hai của quân số.
+    """`Dms_WorkPosition` - danh mục chức vụ, chiều gộp thứ hai của nhân sự.
 
     Cùng lối cache như danh mục phòng ban: một phiên hỏi lại nhiều lần cho cùng
     một câu hỏi, và cache phải khoá theo thuê bao.
@@ -197,9 +197,9 @@ class ErpTrangBiRepository:
         *,
         gom_chua_gan: bool = False,
     ) -> list[tuple[int | None, Asset, str | None]]:
-        """(mã phòng ban dạng khoá, trang bị, tên chủng loại) tại thời điểm `moment`.
+        """(mã phòng ban dạng khoá, thiết bị, tên chủng loại) tại thời điểm `moment`.
 
-        `gom_chua_gan=True` lấy thêm trang bị chưa gán phòng ban - xem `_thuoc_don_vi`.
+        `gom_chua_gan=True` lấy thêm thiết bị chưa gán phòng ban - xem `_thuoc_don_vi`.
         """
         stmt = (
             select(Asset, AssetCategory.name)
@@ -221,7 +221,7 @@ class ErpNhanSuRepository:
         """Đang trong biên chế tại `moment`.
 
         `HireDate` trống thì lấy `CreationTime` thay: hồ sơ nhập thiếu ngày vào làm
-        vẫn phải được đếm, bỏ qua thì quân số hụt mà không ai biết vì sao.
+        vẫn phải được đếm, bỏ qua thì nhân sự hụt mà không ai biết vì sao.
         """
         hired = func.coalesce(EmployeeProfile.hire_date, EmployeeProfile.creation_time)
         return (
@@ -241,13 +241,13 @@ class ErpNhanSuRepository:
         gom_chua_gan: bool = False,
         cot_nhom: Any | None = None,
     ) -> dict[int | None, int]:
-        """Đếm quân số tại `moment`, gộp theo `cot_nhom` (mặc định: phòng ban).
+        """Đếm nhân sự tại `moment`, gộp theo `cot_nhom` (mặc định: phòng ban).
 
         Cột gộp là tham số chứ không phải chuỗi ghép vào SQL: nơi gọi chỉ chọn
         được trong danh sách đã khai ở `app.tools.data`, nên không có đường nào
         để một chiều gộp lạ đi tới đây.
 
-        Phạm vi lọc VẪN theo phòng ban kể cả khi gộp theo chức vụ - "quân số
+        Phạm vi lọc VẪN theo phòng ban kể cả khi gộp theo chức vụ - "nhân sự
         Phòng Kế toán theo chức vụ" là lọc một đằng, gộp một nẻo.
         """
         nhom = EmployeeProfile.work_department_id if cot_nhom is None else cot_nhom
@@ -276,7 +276,7 @@ class ErpNhanSuRepository:
         Bản ghi đã xoá mềm tính tới `end` bị loại, cùng mốc với `headcount_by_dept`
         chốt kỳ. Thiếu bộ lọc này thì một hồ sơ được sửa vài lần trong tháng - ERP
         giữ lại từng bản cũ với `IsDeleted=1` - được đếm thành bấy nhiêu lần tuyển
-        mới: tháng 9/2026 ra 4 người tuyển mới trong khi chỉ có 2, và quân số tăng
+        mới: tháng 9/2026 ra 4 người tuyển mới trong khi chỉ có 2, và nhân sự tăng
         2 không còn khớp với tuyển mới trừ nghỉ việc.
         """
         nhom = EmployeeProfile.work_department_id if cot_nhom is None else cot_nhom
@@ -301,12 +301,12 @@ class ErpNhanSuRepository:
 
 
 class ErpTaiNguyenRepository:
-    """Ghép phòng ban + trang bị + quân số thành `TaiNguyenDonVi` mà workflow 3 dùng."""
+    """Ghép phòng ban + thiết bị + nhân sự thành `TaiNguyenDonVi` mà workflow 3 dùng."""
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.don_vi = ErpDonViRepository(session)
-        self.trang_bi = ErpTrangBiRepository(session)
+        self.thiet_bi = ErpTrangBiRepository(session)
         self.nhan_su = ErpNhanSuRepository(session)
 
     async def list_don_vi(self) -> list[dict[str, str]]:
@@ -324,12 +324,12 @@ class ErpTaiNguyenRepository:
         if don_vi is None:
             return None
 
-        rows = await self.trang_bi.list_as_of(moment, [don_vi.id])
+        rows = await self.thiet_bi.list_as_of(moment, [don_vi.id])
         settings = get_settings()
         labels, good_codes = settings.asset_status_labels, settings.asset_status_good
-        trang_bi = [
+        thiet_bi = [
             {
-                "ten_trang_bi": asset.name,
+                "ten_thiet_bi": asset.name,
                 "so_luong": asset.so_luong,
                 # Chưa khai báo enum thì hiện mã thô - đọc là biết chưa cấu hình,
                 # còn hơn gán đại một nhãn rồi người đọc tin là thật.
@@ -342,7 +342,7 @@ class ErpTaiNguyenRepository:
                 # lịch bảo trì không tồn tại, suy ra từ một cái nhãn đặt sai.
                 "cap_nhat_cuoi": asset.last_modification_time.date().isoformat()
                 if asset.last_modification_time else None,
-                "ma_trang_bi": asset.code,
+                "ma_thiet_bi": asset.code,
                 "chung_loai": category or "",
                 "vi_tri": asset.current_location or "",
             }
@@ -353,9 +353,9 @@ class ErpTaiNguyenRepository:
         return TaiNguyenDonVi(
             ma_don_vi=don_vi.ma_don_vi,
             ten_don_vi=don_vi.display_name,
-            quan_so=headcount.get(don_vi.id, 0),
-            quan_so_kiem_ke=_as_date(moment),
-            trang_bi=trang_bi,
+            nhan_su=headcount.get(don_vi.id, 0),
+            nhan_su_kiem_ke=_as_date(moment),
+            thiet_bi=thiet_bi,
             ky=ky,
             ghi_chu=AS_OF_NOTE,
         )

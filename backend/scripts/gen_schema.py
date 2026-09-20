@@ -22,8 +22,8 @@ HEADER = """-- Schema CSDL nghiệp vụ TPV cho SQL Server 2016+.
 -- KHÔNG sửa tay: sinh từ app/db/models.py bằng
 --     uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql
 --
--- Bảng tài nguyên được tách làm hai (don_vi / trang_bi) thay vì gộp một bảng:
--- gộp lại thì quân số bị lặp theo từng dòng trang bị, sửa sót một dòng là báo
+-- Bảng tài nguyên được tách làm hai (don_vi / thiet_bi) thay vì gộp một bảng:
+-- gộp lại thì nhân sự bị lặp theo từng dòng thiết bị, sửa sót một dòng là báo
 -- cáo ra số sai.
 --
 -- Cột truong_du_lieu của template_bao_cao là JSON lưu dạng NVARCHAR(MAX)

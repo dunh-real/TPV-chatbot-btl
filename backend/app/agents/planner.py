@@ -1,7 +1,7 @@
 """Lập kế hoạch: một yêu cầu tiếng Việt -> một hoặc vài bước có thứ tự.
 
 Định tuyến (`app.agents.router`) trả lời câu hỏi "yêu cầu này thuộc nghiệp vụ
-nào". Nó chỉ chọn được MỘT nghiệp vụ, nên "tổng hợp quân số tháng 8 rồi làm
+nào". Nó chỉ chọn được MỘT nghiệp vụ, nên "tổng hợp nhân sự tháng 8 rồi làm
 slide" luôn mất một nửa. Tầng này trả lời câu hỏi rộng hơn: "để làm xong việc
 này thì phải chạy những gì, theo thứ tự nào, cái nào chạy song song được".
 
@@ -41,9 +41,20 @@ logger = logging.getLogger(__name__)
 # hơn thì đằng nào người dùng cũng phải xem lại từng bước một.
 MAX_STEPS = 3
 
-# Những ý định KHÔNG bao giờ nên xuất hiện hai lần trong một kế hoạch: chúng sinh
-# ra file, chạy hai lần là hai file gần giống nhau.
-SINGLE_USE: frozenset[str] = frozenset({"draft", "report", "presentation", "document"})
+# Những ý định KHÔNG bao giờ nên xuất hiện hai lần trong một kế hoạch.
+#
+# Bốn cái đầu vì chúng sinh ra file: chạy hai lần là hai file gần giống nhau.
+# `agent` thì khác lý do: vòng lặp công cụ gọi được nhiều tool trong MỘT lượt,
+# nên câu hỏi nhiều vế vẫn là một bước. Tách đôi chỉ làm câu trả lời bị ghép
+# thành "1. Tra số liệu — ... 2. Tra số liệu — ...", và bước thừa bị bỏ ở đây
+# thì `_validate` rơi về kế hoạch một bước, tức là lấy lại nguyên câu người dùng
+# hỏi - vế thứ hai không mất đi đâu cả.
+SINGLE_USE: frozenset[str] = frozenset({"draft", "report", "presentation",
+                                        "document", "agent"})
+
+# Nghiệp vụ tự tra lấy số liệu của mình. Một bước `agent` chạy trước chúng chỉ để
+# "lấy số liệu" là thừa.
+TU_TRA_SO_LIEU: frozenset[str] = frozenset({"draft", "report", "presentation"})
 
 
 @dataclass(slots=True)
@@ -159,7 +170,40 @@ def _validate(raw_steps: Any, request: str, has_file: bool) -> list[PlanStep]:
         depends = [d for d in _as_ids(item.get("depends_on"), index) if d in known]
         steps.append(PlanStep(id=step_id, intent=intent, request=sub_request,  # type: ignore[arg-type]
                               depends_on=depends, reason=str(item.get("reason") or "")))
+
+    steps = _bo_buoc_lay_so_lieu_thua(steps)
+
+    # Kế hoạch chỉ có một bước thì câu của người dùng ĐÃ tự đứng một mình được -
+    # không cần model viết lại, và mỗi lần viết lại là một dịp rụng chữ. Đã có ca
+    # thật: "nhân sự và trang thiết bị" bị rút còn "nhân sự", và báo cáo xuất ra
+    # thiếu hẳn mục thiết bị vì bước khoanh vùng nội dung đọc chính câu này.
+    # Phần diễn giải ngữ cảnh ("vẫn kỳ đó") không mất: mỗi workflow đều tự trích
+    # tham số kèm `history`.
+    if len(steps) == 1 and request.strip():
+        steps[0].request = request.strip()
     return steps
+
+
+def _bo_buoc_lay_so_lieu_thua(steps: list[PlanStep]) -> list[PlanStep]:
+    """Bỏ bước `agent` chỉ dựng ra để mớm số liệu cho một bước sinh file.
+
+    Chỉ bỏ khi có bước khác PHỤ THUỘC vào nó: người dùng vừa muốn xem số vừa muốn
+    có file thì hai bước đó độc lập, `depends_on` rỗng, và cả hai được giữ.
+    """
+    dua_vao_agent = {
+        dep
+        for s in steps if s.intent in TU_TRA_SO_LIEU
+        for dep in s.depends_on
+    }
+    thua = {s.id for s in steps if s.intent == "agent" and s.id in dua_vao_agent}
+    if not thua:
+        return steps
+    logger.info("Bỏ %d bước 'agent' thừa: nghiệp vụ sinh file tự tra số liệu", len(thua))
+    return [
+        PlanStep(id=s.id, intent=s.intent, request=s.request,
+                 depends_on=[d for d in s.depends_on if d not in thua], reason=s.reason)
+        for s in steps if s.id not in thua
+    ]
 
 
 def _as_ids(value: Any, index: int) -> list[str]:
@@ -175,6 +219,26 @@ def _as_ids(value: Any, index: int) -> list[str]:
         ids.append(text if text.startswith("s") else f"s{text}")
     # Bước đầu tiên không thể phụ thuộc vào gì.
     return [] if index == 0 else ids
+
+
+# Model hay kèm "vui lòng tải file lên" cho nhánh soát tài liệu, kể cả khi file đã
+# nằm sẵn trong yêu cầu. Nhắc trong prompt không dứt được.
+#
+# Giao diện hiện tại chưa in `clarify` ra nên chưa ai thấy, nhưng nó nằm trong
+# hợp đồng API (`RoutingInfo.clarify`, `PlanModel.clarify`) - client nào dựng sau
+# cũng có quyền hiển thị, và lúc đó người vừa đính kèm xong lại bị đòi file lần
+# nữa. Trả về dữ liệu tự mâu thuẫn với chính `has_file` là sai từ gốc, cắt thẳng.
+_DOI_FILE = ("tải lên", "tải file", "đính kèm", "upload", "gửi file", "cung cấp file")
+
+
+def _bo_clarify_doi_file(clarify: str, has_file: bool) -> str:
+    if not (has_file and clarify):
+        return clarify
+    thap = clarify.lower()
+    if any(cum in thap for cum in _DOI_FILE):
+        logger.info("Bỏ clarify đòi file: yêu cầu đã có file đính kèm")
+        return ""
+    return clarify
 
 
 async def make_plan(
@@ -215,7 +279,7 @@ async def make_plan(
         return await _fallback(request, has_file, history)
 
     confidence = float(data.get("confidence") or 0.0)
-    clarify = str(data.get("clarify") or "")
+    clarify = _bo_clarify_doi_file(str(data.get("clarify") or ""), has_file)
     plan = Plan(steps=steps, confidence=confidence, clarify=clarify,
                 reason=str(data.get("reason") or ""), source="llm")
 

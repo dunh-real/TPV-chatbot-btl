@@ -16,7 +16,7 @@ from app.services.cache import CacheService
 from app.services.conversation import ConversationMemory, ConversationStore
 
 # Vài "chủ đề" cho vector giả: cùng chủ đề thì gần nhau, khác thì vuông góc.
-CHU_DE = {"quân số": 0, "trang bị": 1, "nghỉ phép": 2}
+CHU_DE = {"nhân sự": 0, "thiết bị": 1, "nghỉ phép": 2}
 
 
 def _dense(text: str, size: int) -> list[float]:
@@ -51,22 +51,22 @@ def env(monkeypatch):
 
 async def test_ghi_roi_doc_lai_dung_thu_tu(env):
     await env.store.ensure_collection()
-    await env.append_turns("ht-1", [("user", "quân số tháng 8?"),
+    await env.append_turns("ht-1", [("user", "nhân sự tháng 8?"),
                                     ("assistant", "113 người.")])
-    await env.append_turns("ht-1", [("user", "còn trang bị?"),
-                                    ("assistant", "16 đầu trang bị.")])
+    await env.append_turns("ht-1", [("user", "còn thiết bị?"),
+                                    ("assistant", "16 đầu thiết bị.")])
 
     history = await env.store.get_history("ht-1")
 
     assert [t["role"] for t in history] == ["user", "assistant", "user", "assistant"]
     assert [t["content"] for t in history] == [
-        "quân số tháng 8?", "113 người.", "còn trang bị?", "16 đầu trang bị."]
+        "nhân sự tháng 8?", "113 người.", "còn thiết bị?", "16 đầu thiết bị."]
 
 
 async def test_mat_cache_van_con_hoi_thoai(env):
     """Đây là lý do tồn tại của collection này."""
     await env.store.ensure_collection()
-    await env.append_turns("ht-1", [("user", "soạn báo cáo quân số DV01"),
+    await env.append_turns("ht-1", [("user", "soạn báo cáo nhân sự DV01"),
                                     ("assistant", "Đã soạn.")])
 
     # Mô phỏng restart: cache sạch trơn, Qdrant còn nguyên.
@@ -76,7 +76,7 @@ async def test_mat_cache_van_con_hoi_thoai(env):
 
     history = await env.get_history("ht-1")
 
-    assert [t["content"] for t in history] == ["soạn báo cáo quân số DV01", "Đã soạn."]
+    assert [t["content"] for t in history] == ["soạn báo cáo nhân sự DV01", "Đã soạn."]
 
 
 async def test_doc_lai_thi_ham_nong_cache(env):
@@ -121,13 +121,13 @@ async def test_bo_qua_luot_rong_va_vai_la(env):
 async def test_tim_lai_hoi_thoai_cu_theo_ngu_nghia(env):
     """Cái mà một bảng SQL không cho không: tìm theo ý, không theo id."""
     await env.store.ensure_collection()
-    await env.append_turns("ht-1", [("user", "báo cáo quân số tháng 8")])
-    await env.append_turns("ht-2", [("user", "kiểm kê trang bị quý III")])
+    await env.append_turns("ht-1", [("user", "báo cáo nhân sự tháng 8")])
+    await env.append_turns("ht-2", [("user", "kiểm kê thiết bị quý III")])
     await env.append_turns("ht-3", [("user", "chế độ nghỉ phép")])
 
-    hits = await env.store.search("trang bị hỏng", limit=1)
+    hits = await env.store.search("thiết bị hỏng", limit=1)
 
-    assert hits and hits[0]["content"] == "kiểm kê trang bị quý III"
+    assert hits and hits[0]["content"] == "kiểm kê thiết bị quý III"
     assert hits[0]["conversation_id"] == "ht-2"
 
 

@@ -222,7 +222,7 @@ def build_slides_markdown(
     slides: list[str] = [_slide_bia(data, params, inputs)]
     so_cua_code: set[str] = set()
 
-    for key, ten_mang, mac_dinh in (("personnel", "quân số", "personnel"),
+    for key, ten_mang, mac_dinh in (("personnel", "nhân sự", "personnel"),
                                     ("equipment", "trang thiết bị", "equipment")):
         if not (source := data.get(key)):
             continue
@@ -273,7 +273,7 @@ INSTRUCTIONS = (
     "layout biểu đồ, không chọn layout thẻ/gạch đầu dòng, không chuyển bảng "
     "thành câu chữ. Giữ ĐỦ số dòng và số cột của bảng.\n"
     "6. Với layout chỉ tiêu: phần mô tả của mỗi ô PHẢI mở đầu bằng tên chỉ tiêu "
-    '(ví dụ "Tổng quân số: kỳ trước 27..."). Ô chỉ có con số mà không có tên '
+    '(ví dụ "Tổng nhân sự: kỳ trước 27..."). Ô chỉ có con số mà không có tên '
     "chỉ tiêu thì người xem không biết nó là gì.\n"
     "7. Tiêu đề slide GIỮ NGUYÊN TỪNG CHỮ, kể cả phần đánh số trang dạng "
     '"(2/6)". Không rút gọn, không diễn đạt lại, không bỏ dấu ngoặc. Các slide '
@@ -331,7 +331,7 @@ def _fallback_deck(data: dict[str, Any], params: dict[str, Any]) -> DeckSpec:
                   subtitle="Số liệu trích xuất từ cơ sở dữ liệu nghiệp vụ")
     ]
 
-    for key, ten in (("personnel", "quân số"), ("equipment", "trang thiết bị")):
+    for key, ten in (("personnel", "nhân sự"), ("equipment", "trang thiết bị")):
         if not (source := data.get(key)):
             continue
         specs.append(SlideSpec(

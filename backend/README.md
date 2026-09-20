@@ -3,7 +3,7 @@
 Backend đa workflow (LangGraph + FastAPI). Đã hoàn thiện:
 
 - **Workflow 1** — hỏi đáp / tra cứu tài liệu (RAG hybrid 3 nhánh)
-- **Workflow 2** — xử lý văn bản tự động (rule engine thể thức + soát chữ nghĩa + định tuyến)
+- **Workflow 2** — soát tài liệu tự động (rule engine cấu trúc + soát chữ nghĩa + định tuyến)
 - **Workflow 3** — soạn văn bản theo mẫu (số liệu từ CSDL + mẫu DOCX + kiểm chứng số)
 - **Workflow 4** — tổng hợp báo cáo nhiều đơn vị (data tool + biểu đồ + đối chiếu file)
 - **Workflow 5** — tạo bộ slide PowerPoint (Presenton trong Docker + bảng do code ghép)
@@ -32,7 +32,7 @@ Mỗi bước gọi đúng một nghiệp vụ, và nghiệp vụ nào cũng gi�
 | Bước | Nguồn | Sản phẩm |
 |---|---|---|
 | `qa` | `search_documents` (RAG hybrid 3 nhánh) | câu trả lời + trích dẫn |
-| `document` | `analyze_document` (parser + rule engine) | lỗi thể thức + nhiệm vụ |
+| `document` | `analyze_document` (parser + rule engine) | lỗi cấu trúc + chữ nghĩa + nhiệm vụ |
 | `draft` | `get_template` + SQL Server + RAG (căn cứ) | `.docx` |
 | `report` | `get_*_statistics` (SQL Server) | `.docx` + biểu đồ |
 | `presentation` | `get_*_statistics` (SQL Server) | `.pptx` |
@@ -40,7 +40,7 @@ Mỗi bước gọi đúng một nghiệp vụ, và nghiệp vụ nào cũng gi�
 
 ### Ba thứ tầng này phải làm được
 
-**Phân rã.** "Tổng hợp quân số tháng 8 rồi làm slide" là hai sản phẩm, không phải một.
+**Phân rã.** "Tổng hợp nhân sự tháng 8 rồi làm slide" là hai sản phẩm, không phải một.
 Trước đây `intent_router` chỉ chọn được một nghiệp vụ nên một nửa yêu cầu rơi mất.
 [app/agents/planner.py](app/agents/planner.py) trả về danh sách bước kèm `depends_on`;
 mọi lỗi của nó — LLM chết, JSON hỏng, ý định lạ, phụ thuộc vòng — đều quy về gọi
@@ -127,9 +127,9 @@ thuần** nên mọi con số vào prompt đều đối chiếu ngược lại �
 |---|---|---|
 | `search_documents(query, document_type)` | tìm đoạn liên quan, kèm nguồn trích dẫn | [tools/rag.py](app/tools/rag.py) |
 | `get_document(document_id)` | đọc trọn một văn bản, không bỏ sót đoạn | [tools/rag.py](app/tools/rag.py) |
-| `analyze_document(file_id)` | soát thể thức + chữ nghĩa + phân rã nhiệm vụ | [tools/document.py](app/tools/document.py) |
+| `analyze_document(file_id)` | soát cấu trúc + chữ nghĩa + phân rã nhiệm vụ | [tools/document.py](app/tools/document.py) |
 | `get_template(template_type)` | tra mẫu, kèm `required_inputs` phải hỏi người dùng | [tools/templates.py](app/tools/templates.py) |
-| `get_personnel_statistics(ky, ma_don_vi, compare_to, group_by)` | quân số theo kỳ, đã tính sẵn delta/tỷ lệ | [tools/data.py](app/tools/data.py) |
+| `get_personnel_statistics(ky, ma_don_vi, compare_to, group_by)` | nhân sự theo kỳ, đã tính sẵn delta/tỷ lệ | [tools/data.py](app/tools/data.py) |
 | `get_equipment_statistics(ky, ma_don_vi, compare_to, group_by)` | trang thiết bị theo kỳ | [tools/data.py](app/tools/data.py) |
 | `get_reporting_status(...)` | đơn vị nào đã gửi / chưa gửi báo cáo | [tools/data.py](app/tools/data.py) |
 | `generate_docx(template_id, content)` | đổ nội dung đã chốt ra .docx | [tools/document.py](app/tools/document.py) |
@@ -150,8 +150,8 @@ Model **không sinh SQL**. Muốn một chiều cắt khác, nó chọn một kh
 
 | Tool | `group_by` | Bảng chi tiết |
 |---|---|---|
-| `get_personnel_statistics` | `phong_ban` (mặc định) / `chuc_vu` | quân số, kỳ trước, tuyển mới, nghỉ việc theo từng nhóm |
-| `get_equipment_statistics` | `phong_ban` (mặc định) / `chung_loai` | liệt kê từng đầu trang bị, hoặc cộng theo chủng loại |
+| `get_personnel_statistics` | `phong_ban` (mặc định) / `chuc_vu` | nhân sự, kỳ trước, tuyển mới, nghỉ việc theo từng nhóm |
+| `get_equipment_statistics` | `phong_ban` (mặc định) / `chung_loai` | liệt kê từng đầu thiết bị, hoặc cộng theo chủng loại |
 
 Ba lý do không mở text-to-SQL, không lý do nào là sợ lệnh phá hoại (phiên ERP đã chặn
 mọi câu ghi):
@@ -159,11 +159,11 @@ mọi câu ghi):
 1. Ngữ nghĩa "as-of" quá dễ viết sai mà vẫn ra một con số trông hợp lý — bỏ sót một vế
    `IsDeleted`/`DeletionTime` là số của kỳ cũ đổi luôn.
 2. `IN (...)` không khớp `NULL`, nên câu SQL "đúng theo trực giác" âm thầm bỏ 49/194
-   trang bị chưa gán phòng ban.
+   thiết bị chưa gán phòng ban.
 3. Van chắn số kiểm "con số này có trong kết quả tool không". Nếu chính câu truy vấn do
    model đặt ra thì mọi con số đều có trong kết quả — kể cả khi nó trả lời câu hỏi khác.
 
-`group_by` đổi CHIỀU GỘP chứ không đổi phạm vi lọc: "quân số Phòng Kế toán theo chức vụ"
+`group_by` đổi CHIỀU GỘP chứ không đổi phạm vi lọc: "nhân sự Phòng Kế toán theo chức vụ"
 vẫn chỉ đếm người của Phòng Kế toán. Hệ quả là phép kiểm rẻ nhất cho tính năng này —
 **chỉ tiêu tổng không được đổi theo chiều gộp**, và tổng các dòng phải bằng chỉ tiêu
 tổng. Cả hai đều có test, gồm một test `live` chạy trên ERP thật.
@@ -443,13 +443,13 @@ Ingest lại cùng `doc_id` sẽ ghi đè sạch bản cũ.
 ```bash
 # Agent tự định tuyến — không cần nói mình muốn workflow nào
 curl -X POST localhost:8080/api/agent/chat -H 'Content-Type: application/json' -d '{
-  "request": "tổng hợp tình hình quân số toàn cơ quan tháng 8/2026"
+  "request": "tổng hợp tình hình nhân sự toàn công ty tháng 8/2026"
 }'
 
-# Soát một văn bản: tải lên lấy file_id rồi đưa vào cùng câu yêu cầu
+# Soát một tài liệu: tải lên lấy file_id rồi đưa vào cùng câu yêu cầu
 FILE_ID=$(curl -sX POST localhost:8080/api/agent/upload -F file=@ban_thao.docx | jq -r .file_id)
 curl -X POST localhost:8080/api/agent/chat -H 'Content-Type: application/json' -d "{
-  \"request\": \"kiểm tra thể thức văn bản này\", \"file_id\": \"$FILE_ID\"
+  \"request\": \"soát giúp tài liệu này\", \"file_id\": \"$FILE_ID\"
 }"
 
 # Gọi thẳng một workflow khi client đã biết mình cần gì
@@ -462,22 +462,33 @@ curl -X POST localhost:8080/api/chat/qa -H 'Content-Type: application/json' -d '
 `include_trace: true` trả kèm số hit mỗi nhánh, thời gian từng bước và điểm rerank —
 dùng để chỉnh tham số khi chất lượng chưa như ý.
 
-## Workflow 2 — Xử lý văn bản tự động
+## Workflow 2 — Soát tài liệu tự động
 
 ```
-DOCX / PDF / MD
-   └─> parse (CÓ định dạng: font, cỡ, lề)   app/documents/parser.py
-       └─> dò thành phần thể thức           app/documents/structure.py
-           ├─> rule_check   tất định, KHÔNG LLM     app/documents/rules.py + config/rules/nd30.yaml
+DOCX / PDF / MD / TXT
+   └─> parse (CÓ định dạng: font, cỡ, lề)     app/documents/parser.py
+       └─> dựng dàn ý (tiêu đề, mục, đánh số) app/documents/outline.py
+           ├─> rule_check   tất định, KHÔNG LLM     app/documents/rules.py + config/rules/chung.yaml
            ├─> llm_review   soát chữ nghĩa theo lô, mọi lỗi phải trích dẫn được nguyên văn
            ├─> classify     định tuyến, chỉ chọn trong danh mục phòng ban lấy từ CSDL
            └─> tasks        tóm tắt + phân rã nhiệm vụ cho từng phòng
                └─> assemble -> JSON có địa chỉ lỗi (block_id)
 ```
 
-Nguyên tắc phân việc: **cái gì đo được thì không hỏi LLM**. Font sai, cỡ chữ sai,
-thiếu "Nơi nhận" đều do rule engine phát hiện từ chính file — LLM chỉ nhận text nên
-không thể biết những điều đó, hỏi nó là mời nó bịa.
+Nhận **mọi loại tài liệu**: công văn, hợp đồng, biên bản họp, tài liệu kỹ thuật,
+hướng dẫn. Không có bước nào hỏi "tệp này có đúng mẫu văn bản hành chính không".
+
+Nguyên tắc phân việc: **cái gì đo được thì không hỏi LLM**.
+
+| Ai | Soi cái gì |
+|---|---|
+| rule engine, chỉ cần text | dàn ý: có tiêu đề không, mục có nhảy cấp không, mục nào rỗng, hai mục trùng tên, đánh số có đứt quãng không, đoạn nào quá dài |
+| rule engine, cần định dạng | phông, cỡ chữ, canh lề, giãn dòng, cách đoạn có nhất quán không; khổ giấy và lề trang |
+| LLM | chính tả, ngữ pháp, diễn đạt, logic, chỗ hứa sẽ nêu rồi bỏ trống |
+
+LLM chỉ nhận text nên không nhìn thấy phông chữ — hỏi nó là mời nó bịa; prompt soát
+chữ nghĩa vì thế cấm tiệt việc nhận xét bố cục. Ngược lại rule engine không phán
+câu văn hay dở. Hai bên không nói chồng lên nhau.
 
 Ba van chặn ảo giác ở nhánh LLM:
 
@@ -485,59 +496,63 @@ Ba van chặn ảo giác ở nhánh LLM:
 |---|---|
 | Lỗi chữ nghĩa | mỗi phát hiện phải kèm `quote` trích nguyên văn; không khớp chuỗi thật trong đoạn thì bị loại |
 | Mã phòng ban | chỉ nhận mã có trong danh mục CSDL; mã lạ bị bỏ, không có danh mục thì không đề xuất |
-| Văn bản scan | `rule_check.status = "partial"` kèm lý do, **không bao giờ** báo "đạt" |
+| Tài liệu scan | `rule_check.status = "partial"` kèm lý do, **không bao giờ** báo "đạt" |
 
 Ngưỡng context: mỗi lô soát ~2400 ký tự chạy song song, phân loại chỉ đọc ~2500 ký
-tự đầu (văn bản hành chính đặt hết thông tin phân loại ở đầu). Không đưa cả file
-kèm câu hỏi chung chung.
+tự đầu. Không đưa cả file kèm câu hỏi chung chung.
 
 ```bash
-curl -X POST localhost:8080/api/documents/review -F "file=@cong_van.docx"
+curl -X POST localhost:8080/api/documents/review -F "file=@tai_lieu.docx"
 ```
 
-### Không phải văn bản nào cũng là công văn
+### Dàn ý dò từ đâu
 
-Trước khi soát, hệ thống hỏi hai câu — cả hai đều trả lời được từ chính văn bản,
-không cần LLM:
+Hai nguồn, xếp theo độ tin cậy ([app/documents/outline.py](app/documents/outline.py)):
 
-**1. Tệp này có phải văn bản hành chính không?** Không có lấy một dấu hiệu nào
-(quốc hiệu, tiêu ngữ, số ký hiệu, tên loại) thì `rule_check.status = "skipped"`
-kèm lý do, chứ không dội ra vài chục lỗi. Đem thước đo công văn soi một bản đặc
-tả kỹ thuật thì ra 74 lỗi đúng về máy móc mà vô nghĩa — tệ hơn là lỗi chữ nghĩa
-thật chìm nghỉm trong đống đó. Vẫn muốn soát thì `force_rules=true`.
+1. **style `Heading N` của DOCX, `###` của Markdown** — người soạn khai hẳn cấp mục.
+2. **dòng ngắn mở đầu bằng đánh số**: `I.`, `1.`, `1.2.`, `a)`, `Chương II`.
 
-**2. Là loại gì?** Tên loại nằm ngay dòng đầu; riêng công văn nhận ra bằng chỗ
-TRỐNG ở dòng đó — theo NĐ 30 nó là loại duy nhất không ghi tên loại. Mỗi loại có
-danh sách thành phần bắt buộc riêng:
+Nguồn 2 chỉ dùng khi tài liệu không khai bằng style. Cấp của mục đánh số tay **không
+suy từ kiểu đánh số** — `I.` không nghiễm nhiên là cấp 1, mỗi nơi một thói quen —
+mà cấp phát theo thứ tự xuất hiện: kiểu nào gặp trước thì nông hơn.
 
-| Loại | Khác biệt |
-|---|---|
-| Công văn | không có tên loại → không đòi; bắt buộc có "Kính gửi" |
-| Quyết định, báo cáo, thông báo… | có tên loại, trích yếu nằm ngay dưới dạng "Về …" chứ không phải "V/v" |
-| Biên bản | thường không vào sổ → không đòi số ký hiệu, nơi nhận |
-| Tờ trình, giấy mời | bắt buộc có "Kính gửi" |
+Hai lưới chắn báo nhầm: dòng đánh số phải NGẮN mới là tên mục (`1. Trong tháng 8,
+đơn vị đã hoàn thành...` là đoạn nội dung, không phải mục rỗng), và mỗi phần số tối
+đa hai chữ số nên `2026 là năm bản lề` hay `1.5 triệu đồng` không bị bắt thành mục.
+Không dò được nguồn nào thì tiêu chí liên quan vào mục `skipped` kèm lý do, chứ
+không đoán bừa rồi báo lỗi oan.
 
-Đòi đủ mọi thành phần cho mọi loại thì loại nào cũng bị báo sai vài chỗ, và người
-dùng học được đúng một điều: bỏ qua cảnh báo của máy.
+### Đo "nhất quán", không đo "đúng quy định"
+
+Không có tiêu chí nào kiểu "phông phải là Times New Roman": mỗi nơi một quy định,
+và một tài liệu kỹ thuật thì chẳng theo quy định nào cả. Thứ đo được cho mọi tài
+liệu là sự nhất quán với chính nó — lấy cách trình bày của số đông làm chuẩn rồi
+chỉ ra chỗ lệch:
+
+- lệch vài chỗ → chỉ đúng từng khối, kèm `block_id` và trích dẫn;
+- lệch quá `max_findings` chỗ → gộp một dòng kèm phân bố (`13pt: 12 đoạn; 11pt: 9 đoạn`);
+- không nhóm nào chiếm nổi `min_dominance` → nói thẳng là cả tài liệu không thống nhất.
+
+Tiêu đề và bảng được loại ra trước (tiêu đề in đậm cỡ lớn hơn phần thân là đúng).
+Canh lề, giãn dòng và cách đoạn chỉ xét đoạn văn xuôi từ `min_chars` ký tự trở lên:
+`Số: 42/BC-DV02` canh trái giữa một tài liệu canh đều là cố ý, không phải lỗi. Phông
+và cỡ chữ thì xét cả dòng ngắn — một dòng lạc phông vẫn là lạc phông.
 
 ### Tiêu chí nằm ở đâu
 
-[config/rules/nd30.yaml](config/rules/nd30.yaml) — lấy Nghị định 30/2020/NĐ-CP làm
-nền. Trong đó: ngưỡng phông/cỡ chữ/lề/khổ giấy, danh sách thành phần bắt buộc,
-phần riêng của từng loại, **danh sách chức danh người ký** (doanh nghiệp ký "TỔNG
-GIÁM ĐỐC", đơn vị quân đội ký "CHỈ HUY TRƯỞNG" — liệt kê ở đây chứ không chôn
-trong regex), và cả câu chữ thông báo lỗi. Xoá hẳn một khối là tắt luôn tiêu chí đó.
+[config/rules/chung.yaml](config/rules/chung.yaml) — ngưỡng của từng tiêu chí, mức
+độ (`error`/`warning`/`info`) và cả câu chữ thông báo lỗi. Xoá hẳn một khối là tắt
+luôn tiêu chí đó, không phải sửa code.
 
-Thả thêm một file `.yaml` vào `config/rules/` là có thêm một bộ tiêu chí, không
+Mặc định không tiêu chí nào để mức `error`: với một tài liệu bất kỳ, không có quy
+định nào để mà "sai luật". Nơi nào có quy định riêng thì nâng mức trong file của
+mình — thả thêm một `.yaml` vào `config/rules/` là có thêm một bộ tiêu chí, không
 sửa code và không khởi động lại: `GET /api/documents/rule-sets` liệt kê, còn
 `POST /api/documents/review -F rule_set=<tên file>` chọn bộ để áp.
 
-**Các con số trong đó cần đối chiếu lại với văn bản gốc** trước khi dùng chính
-thức — phần riêng theo loại văn bản cũng vậy.
-
-Còn *cứng* thật là cách **nhận diện** thành phần: regex trong
-[app/documents/structure.py](app/documents/structure.py). Thêm một loại văn bản
-ngoài danh sách, hay một dạng số ký hiệu khác, là phải sửa code.
+Phần thể thức văn bản hành chính (quốc hiệu, số ký hiệu, người ký) không còn ở đây.
+Nó chỉ còn phục vụ **thẻ thông tin văn bản** lúc nạp vào kho tri thức —
+[app/documents/structure.py](app/documents/structure.py), xem mục RAG ở trên.
 
 ## Workflow 3 — Soạn báo cáo từ MỘT nguồn
 
@@ -577,7 +592,7 @@ truy về nguyên văn được nữa. Phần bị cắt được ghi rõ trong 
 ### Nhánh `csdl`
 
 ```
-"Soạn báo cáo tình hình trang bị tháng 8"
+"Soạn báo cáo tình hình thiết bị tháng 8"
   └─> trích tham số (kỳ, đơn vị)      thiếu đơn vị -> HỎI LẠI, không đoán
       └─> chọn mẫu theo mô tả
           ├─> lấy số liệu: SQL theo đúng khai báo của mẫu (kỳ 2026-08)
@@ -594,9 +609,11 @@ qua model, và [verify.py](app/documents/verify.py) đối chiếu từng con s�
 với dữ liệu gốc — bịa "70 người" hay "15.000.000 đồng" là bị chặn, trong khi "quá hạn
 12 tháng" hay "nêu tại mục 2" vẫn được cho qua.
 
-File sinh ra phải **qua được rule engine của workflow 2** — hiện đạt 12/12 tiêu chí
-thể thức. Ưu tiên điền vào [mẫu .docx](data/templates/) đã đúng thể thức; mẫu nào
-chưa có file thì dựng bằng code với style NĐ 30.
+File sinh ra phải **qua được rule engine của workflow 2** — hiện 0 phát hiện, 9 tiêu
+chí đạt, phần còn lại được ghi rõ là chưa kiểm được. Ưu tiên điền vào
+[mẫu .docx](data/templates/) đã đúng thể thức; mẫu nào chưa có file thì dựng bằng
+code với style theo NĐ 30 (quy định cho văn bản hành chính, áp cho văn bản sinh ra
+chứ không phải cho bước soát).
 
 ```bash
 uv run python scripts/make_template_docx.py    # tạo file mẫu
@@ -611,7 +628,7 @@ curl -X POST localhost:8080/api/reports/draft -H 'Content-Type: application/json
 
 # nhánh CSDL: không cần khai ma_don_vi nếu câu yêu cầu đã nói rõ đơn vị
 curl -X POST localhost:8080/api/reports/draft -H 'Content-Type: application/json' -d '{
-  "request": "Soạn báo cáo tình hình trang bị tháng 8 cho Phòng Kinh doanh",
+  "request": "Soạn báo cáo tình hình thiết bị tháng 8 cho Phòng Kinh doanh",
   "inputs": {"nguoi_ky": "Trần Văn B", "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ"}
 }'
 ```
@@ -619,7 +636,7 @@ curl -X POST localhost:8080/api/reports/draft -H 'Content-Type: application/json
 ## Workflow 4 — Tổng hợp báo cáo
 
 ```
-"Tổng hợp báo cáo quân số và trang thiết bị tháng 8"
+"Tổng hợp báo cáo nhân sự và trang thiết bị tháng 8"
   └─> trích tham số (kỳ, phạm vi đơn vị, nội dung)
       └─> data tool: SQL gộp nhiều đơn vị, tính sẵn delta / % / tỷ trọng
           ├─> đối chiếu file báo cáo đơn vị đã gửi với số kiểm kê
@@ -640,7 +657,7 @@ chọn nguồn:
 
 | | `csdl` (mặc định) | `tai_lieu` |
 |---|---|---|
-| Số lấy từ | bảng `kiem_ke_trang_bi` | bảng kiểm kê trong file báo cáo |
+| Số lấy từ | bảng `kiem_ke_thiet_bi` | bảng kiểm kê trong file báo cáo |
 | So sánh kỳ trước | có (`delta`, `delta_pct`) | **không** - một báo cáo chỉ là ảnh chụp một thời điểm |
 | File đơn vị gửi dùng để | đối chiếu, phát hiện lệch | chính là nguồn |
 
@@ -683,11 +700,11 @@ Data tool tính sẵn **mọi con số sẽ xuất hiện trong câu văn** — 
 model phải làm một phép tính, dù chỉ là `60/1240`, thì data tool còn thiếu.
 
 Trước khi số liệu tới tay LLM, code kiểm ràng buộc nghiệp vụ (`có mặt + vắng =
-quân số`). Lệch thì báo ra thành một mục riêng trong báo cáo, không để model làm mượt.
+nhân sự`). Lệch thì báo ra thành một mục riêng trong báo cáo, không để model làm mượt.
 
 ```bash
 curl -X POST localhost:8080/api/reports/aggregate -H 'Content-Type: application/json' -d '{
-  "request": "Tổng hợp báo cáo quân số và trang thiết bị tháng 8",
+  "request": "Tổng hợp báo cáo nhân sự và trang thiết bị tháng 8",
   "inputs": {"nguoi_ky": "Lê Văn C"}
 }'
 ```
@@ -695,7 +712,7 @@ curl -X POST localhost:8080/api/reports/aggregate -H 'Content-Type: application/
 ## Workflow 5 — Tạo PowerPoint
 
 ```
-"Tạo slide báo cáo quân số tháng 8"
+"Tạo slide báo cáo nhân sự tháng 8"
   └─> lấy số liệu (SQL)                 tái dùng nguyên của workflow 4
       └─> soạn NỘI DUNG TỪNG SLIDE      code dựng, một markdown = một slide
           └─> Presenton chỉ render       (slides_markdown → bỏ bước dàn ý của nó)
@@ -752,14 +769,14 @@ Cấu hình trong `.env` (`PRESENTON_*`). Vài điểm đã trả giá mới bi�
 
 ```bash
 curl -X POST localhost:8080/api/presentations/create -H 'Content-Type: application/json' -d '{
-  "request": "Tạo slide báo cáo quân số tháng 8",
+  "request": "Tạo slide báo cáo nhân sự tháng 8",
   "inputs": {"nguoi_trinh_bay": "Nguyễn Tiến Anh"}
 }'
 ```
 
 ## CSDL nghiệp vụ
 
-Số liệu nghiệp vụ (quân số, trang thiết bị, phòng ban) nay đọc thẳng từ **ERP,
+Số liệu nghiệp vụ (nhân sự, trang thiết bị, phòng ban) nay đọc thẳng từ **ERP,
 chỉ đọc** — xem mục ERP bên dưới. CSDL của riêng ứng dụng chỉ còn hai bảng:
 
 | Bảng | Vai trò |
@@ -776,7 +793,7 @@ Bảng cũ thiếu cột thì `create_all()` tự thêm bằng một câu `ALTER
 
 ```bash
 # Nạp mẫu báo cáo + văn bản demo cho máy cài mới. Chỉ ghi hai bảng hệ thống này
-# sở hữu (`template_bao_cao`, `van_ban`); quân số/trang bị đọc từ ERP lúc chạy.
+# sở hữu (`template_bao_cao`, `van_ban`); nhân sự/thiết bị đọc từ ERP lúc chạy.
 uv run python scripts/seed_demo.py
 uv run python scripts/seed_demo.py --reset        # xoá ĐÚNG dòng nó tạo rồi nạp lại
 uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql   # DDL cho SQL Server

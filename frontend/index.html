@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20260920c" />
+<link rel="stylesheet" href="styles.css?v=20260920e" />
 </head>
 <body>
 <div class="app" id="app">
@@ -41,7 +41,7 @@
       <div class="nav-label">Nghiệp vụ văn bản</div>
       <button class="nav-item" data-view="review">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
-        <span>Soát văn bản</span><em class="nav-hint">WF2</em>
+        <span>Soát tài liệu</span><em class="nav-hint">WF2</em>
       </button>
       <button class="nav-item" data-view="draft">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -128,12 +128,12 @@
             <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
           </div>
           <h2>Hôm nay cần xử lý việc gì?</h2>
-          <p>Gõ yêu cầu bằng tiếng Việt — agent tự chọn workflow, kể cả <b>hỏi đáp trên kho tài liệu</b> (trả lời kèm trích dẫn bấm được). Câu vừa hỏi được CSDL vừa hỏi được tài liệu thì nói rõ <i>“theo tài liệu trong kho”</i>, không thì agent ưu tiên CSDL. Đính kèm file khi muốn soát thể thức văn bản.</p>
+          <p>Gõ yêu cầu bằng tiếng Việt — agent tự chọn workflow, kể cả <b>hỏi đáp trên kho tài liệu</b> (trả lời kèm trích dẫn bấm được). Câu vừa hỏi được CSDL vừa hỏi được tài liệu thì nói rõ <i>“theo tài liệu trong kho”</i>, không thì agent ưu tiên CSDL. Đính kèm file khi muốn soát một tài liệu.</p>
           <div class="chips" id="chatSuggest">
-            <button class="chip" data-prompt="Quân số toàn cơ quan kỳ 2026-08 là bao nhiêu, chia theo phòng ban?">📊 Quân số theo phòng ban</button>
+            <button class="chip" data-prompt="Nhân sự toàn công ty kỳ 2026-08 là bao nhiêu, chia theo phòng ban?">📊 Nhân sự theo phòng ban</button>
             <button class="chip" data-prompt="Theo tài liệu trong kho, Phòng Kỹ thuật kiểm kê được bao nhiêu trang thiết bị?">🔎 Hỏi đáp trên kho tài liệu</button>
-            <button class="chip" data-prompt="Soạn báo cáo tình hình trang bị tháng 8/2026 cho Phòng Kinh doanh">📝 Soạn báo cáo từ CSDL</button>
-            <button class="chip" data-prompt="Tổng hợp báo cáo quân số và trang thiết bị tháng 8/2026">📑 Tổng hợp toàn cơ quan</button>
+            <button class="chip" data-prompt="Soạn báo cáo tình hình thiết bị tháng 8/2026 cho Phòng Kinh doanh">📝 Soạn báo cáo từ CSDL</button>
+            <button class="chip" data-prompt="Tổng hợp báo cáo nhân sự và trang thiết bị tháng 8/2026">📑 Tổng hợp toàn công ty</button>
           </div>
         </div>
         <div id="chatMessages" class="messages"></div>
@@ -166,8 +166,8 @@
     <section class="view view-split" id="view-review">
       <div class="panel">
         <div class="panel-inner">
-          <h2 class="panel-title">Soát văn bản đến</h2>
-          <p class="panel-sub">Rule engine kiểm thể thức từ chính định dạng file (NĐ 30/2020), LLM chỉ soát chữ nghĩa và phân rã nhiệm vụ.</p>
+          <h2 class="panel-title">Soát tài liệu</h2>
+          <p class="panel-sub">Nhận mọi loại tài liệu. Rule engine đọc cách tổ chức và định dạng thật của file (dàn ý, đánh số, phông chữ, lề trang), LLM chỉ soát chữ nghĩa và phân rã nhiệm vụ.</p>
           <div class="dropzone" id="reviewDrop">
             <input type="file" id="reviewFile" accept=".docx,.pdf,.txt,.md" hidden />
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -181,14 +181,9 @@
           <label class="field">
             <span>Bộ tiêu chí</span>
             <select id="reviewRuleSet"><option value="">Đang tải…</option></select>
-            <em>Loại văn bản (công văn, quyết định, báo cáo…) hệ thống tự nhận từ chính văn bản.</em>
+            <em>Mỗi file YAML trong <code>config/rules</code> là một bộ; nơi nào có quy định riêng thì thêm bộ của mình.</em>
           </label>
-          <label class="switch" title="Áp bộ tiêu chí ngay cả khi tệp không giống văn bản hành chính">
-            <input type="checkbox" id="reviewForce" />
-            <span class="switch-track"><span class="switch-thumb"></span></span>
-            <span class="switch-label">Soát cả tệp không phải văn bản hành chính</span>
-          </label>
-          <button class="primary-btn" id="reviewRun">Soát văn bản</button>
+          <button class="primary-btn" id="reviewRun">Soát tài liệu</button>
         </div>
       </div>
       <div class="result" id="reviewResult"><div class="result-empty">Kết quả soát sẽ hiện ở đây.</div></div>
@@ -233,7 +228,7 @@
           <p class="panel-sub">Data tool tính sẵn mọi con số (value/prev/delta/%); biểu đồ do code vẽ; LLM chỉ viết nhận xét.</p>
           <label class="field">
             <span>Yêu cầu</span>
-            <textarea id="aggRequest" rows="3">Tổng hợp báo cáo quân số và trang thiết bị tháng 8</textarea>
+            <textarea id="aggRequest" rows="3">Tổng hợp báo cáo nhân sự và trang thiết bị tháng 8</textarea>
           </label>
           <div class="field">
             <span>Thông tin bổ sung (inputs)</span>
@@ -254,7 +249,7 @@
           <p class="panel-sub">Hệ thống soạn sẵn nội dung từng slide từ số liệu; Presenton chọn layout và render .pptx. Bảng chi tiết do code ghép vào cuối file.</p>
           <label class="field">
             <span>Yêu cầu</span>
-            <textarea id="slideRequest" rows="3">Tạo slide báo cáo quân số tháng 8</textarea>
+            <textarea id="slideRequest" rows="3">Tạo slide báo cáo nhân sự tháng 8</textarea>
           </label>
           <div class="field">
             <span>Thông tin bổ sung (inputs)</span>
@@ -362,8 +357,8 @@
 <!-- citation popover -->
 <div class="popover" id="popover" hidden></div>
 
-<script src="js/markdown.js?v=20260920c"></script>
-<script src="js/api.js?v=20260920c"></script>
-<script src="js/app.js?v=20260920c"></script>
+<script src="js/markdown.js?v=20260920e"></script>
+<script src="js/api.js?v=20260920e"></script>
+<script src="js/app.js?v=20260920e"></script>
 </body>
 </html>

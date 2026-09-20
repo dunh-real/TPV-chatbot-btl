@@ -517,6 +517,10 @@ pre.json {
 
 .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
+.outline { margin-top: 6px; border-left: 2px solid var(--border-strong); padding-left: 10px; }
+.outline-item { font-size: 12.6px; color: var(--text-soft); padding: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.outline-item b { color: var(--muted); font-weight: 600; margin-right: 6px; }
+
 .hit { border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; background: var(--surface); }
 .hit + .hit { margin-top: 10px; }
 .hit-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }

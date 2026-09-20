@@ -94,7 +94,7 @@ def test_metric_khong_co_ky_truoc():
 
 
 # ---------------------------------------------------------- data tool ----- #
-async def test_tong_hop_quan_so_nhieu_don_vi(session):
+async def test_tong_hop_nhan_su_nhieu_don_vi(session):
     result = await call_tool(session, "get_personnel_statistics", ky="2026-08")
     metrics = result.as_dict()["metrics"]
 
@@ -116,10 +116,10 @@ async def test_gioi_han_pham_vi_don_vi(session):
     assert result.scope["units_requested"] == 1
 
 
-async def test_bat_quan_so_lech_voi_bien_dong(session, erp_session):
-    """Chênh lệch quân số phải giải thích được bằng tuyển mới - nghỉ việc.
+async def test_bat_nhan_su_lech_voi_bien_dong(session, erp_session):
+    """Chênh lệch nhân sự phải giải thích được bằng tuyển mới - nghỉ việc.
 
-    Cho một người nghỉ việc mà không ghi ngày nghỉ: quân số tụt đi một nhưng
+    Cho một người nghỉ việc mà không ghi ngày nghỉ: nhân sự tụt đi một nhưng
     không có biến động nào giải thích, và điều đó phải được báo lên chứ không
     để LLM viết trơn tru qua.
     """
@@ -135,7 +135,7 @@ async def test_bat_quan_so_lech_voi_bien_dong(session, erp_session):
     assert "Chênh lệch" in result.consistency[0].message
 
 
-async def test_thong_ke_trang_bi(session):
+async def test_thong_ke_thiet_bi(session):
     result = await call_tool(session, "get_equipment_statistics", ky="2026-08")
     metrics = result.as_dict()["metrics"]
 
@@ -211,32 +211,32 @@ def test_mo_ta_tool_cho_prompt():
 
 # ------------------------------------------------------------ biểu đồ ----- #
 def test_ve_bieu_do_so_sanh():
-    png = compare_bar_chart("Quân số tháng 8", ["Tổng", "Có mặt", "Vắng"],
+    png = compare_bar_chart("Nhân sự tháng 8", ["Tổng", "Có mặt", "Vắng"],
                             [144, 133, 11], [140, 130, 10])
     assert png.startswith(b"\x89PNG") and len(png) > 5000
 
 
 def test_ve_bieu_do_tinh_trang():
-    png = status_bar_chart("Trang bị", ["Tốt", "Cần bảo dưỡng", "Hỏng"], [121, 22, 6])
+    png = status_bar_chart("Thiết bị", ["Tốt", "Cần bảo dưỡng", "Hỏng"], [121, 22, 6])
     assert png.startswith(b"\x89PNG")
 
 
 # ------------------------------------------------- đối chiếu file báo cáo - #
 def test_trich_so_tu_bao_cao():
-    text = ("I. QUÂN SỐ\nQuân số: 65; Ngày kiểm kê: 30/8/2026.\n"
-            "Trong đó có mặt 60, vắng 5.\nII. Đơn vị quản lý 80 đầu trang bị.")
+    text = ("I. NHÂN SỰ\nNhân sự: 65; Ngày kiểm kê: 30/8/2026.\n"
+            "Trong đó có mặt 60, vắng 5.\nII. Đơn vị quản lý 80 đầu thiết bị.")
     figures = extract_figures(text)
 
-    assert figures["quan_so"] == 65
+    assert figures["nhan_su"] == 65
     assert figures["co_mat"] == 60 and figures["vang"] == 5
-    assert figures["tong_so_trang_bi"] == 80
+    assert figures["tong_so_thiet_bi"] == 80
 
 
 def test_phat_hien_bao_cao_lech_so_lieu(tmp_path):
     path = tmp_path / "bc.md"
-    path.write_text("Quân số: 65 người, có mặt 60.", encoding="utf-8")
+    path.write_text("Nhân sự: 65 người, có mặt 60.", encoding="utf-8")
 
-    result = reconcile_file("DV02", path, {"quan_so": 66, "co_mat": 60})
+    result = reconcile_file("DV02", path, {"nhan_su": 66, "co_mat": 60})
 
     assert result.status == "mismatched"
     assert len(result.discrepancies) == 1
@@ -245,12 +245,12 @@ def test_phat_hien_bao_cao_lech_so_lieu(tmp_path):
 
 def test_bao_cao_khop_thi_khong_bao_lech(tmp_path):
     path = tmp_path / "bc.md"
-    path.write_text("Quân số: 65 người.", encoding="utf-8")
-    assert reconcile_file("DV02", path, {"quan_so": 65}).status == "matched"
+    path.write_text("Nhân sự: 65 người.", encoding="utf-8")
+    assert reconcile_file("DV02", path, {"nhan_su": 65}).status == "matched"
 
 
 def test_khong_co_file_thi_bo_qua():
-    assert reconcile_file("DV03", None, {"quan_so": 30}).status == "no_file"
+    assert reconcile_file("DV03", None, {"nhan_su": 30}).status == "no_file"
     assert reconcile_file("DV03", "/khong/ton/tai.docx", {}).status == "no_file"
 
 
@@ -286,14 +286,14 @@ class AggLLM:
     def __init__(self, narrative: str, equipment_narrative: str | None = None) -> None:
         self.narrative = narrative
         self.equipment_narrative = equipment_narrative or (
-            "Toàn cơ quan quản lý 16 đầu trang thiết bị."
+            "Toàn công ty quản lý 16 đầu trang thiết bị."
         )
         self.narrative_calls = 0
 
     async def chat_json(self, messages, **kwargs):
         if "trích tham số" in messages[0]["content"]:
             return {"thang": 8, "nam": 2026, "ma_don_vi": [], "so_sanh_thang": None,
-                    "noi_dung": ["quan_so", "trang_bi"]}
+                    "noi_dung": ["nhan_su", "thiet_bi"]}
         self.narrative_calls += 1
         user = messages[1]["content"]
         if "TRANG THIẾT BỊ" in user:
@@ -305,9 +305,9 @@ async def test_bao_cao_tong_hop_hoan_chinh(agg_env, monkeypatch):
     from app.agents.graph import run_aggregate_workflow
 
     monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng quân số toàn cơ quan là 5 người."))
+        "Tổng nhân sự toàn công ty là 5 người."))
 
-    result = await run_aggregate_workflow("Tổng hợp quân số và trang bị tháng 8/2026")
+    result = await run_aggregate_workflow("Tổng hợp nhân sự và thiết bị tháng 8/2026")
 
     assert result["params"]["ky"] == "2026-08"
     assert result["params"]["compare_to"] == "2026-07"
@@ -316,19 +316,19 @@ async def test_bao_cao_tong_hop_hoan_chinh(agg_env, monkeypatch):
 
     titles = [s["title"] for s in result["sections"]]
     assert any("GỬI BÁO CÁO" in t for t in titles)     # ai nộp, ai chưa
-    assert any("QUÂN SỐ" in t for t in titles)
+    assert any("NHÂN SỰ" in t for t in titles)
     assert any("TRANG THIẾT BỊ" in t for t in titles)
     assert any(s["has_chart"] for s in result["sections"])
 
 
 async def test_llm_tu_tinh_sai_thi_bi_chan(agg_env, monkeypatch):
-    """Quân số thật là 5; model viết "tăng 47 người" -> không truy được về số liệu."""
+    """Nhân sự thật là 5; model viết "tăng 47 người" -> không truy được về số liệu."""
     from app.agents.graph import run_aggregate_workflow
 
     monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng quân số là 5 người, tăng 47 người so với kỳ trước."))
+        "Tổng nhân sự là 5 người, tăng 47 người so với kỳ trước."))
 
-    result = await run_aggregate_workflow("Tổng hợp quân số tháng 8/2026")
+    result = await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
 
     assert result["validation"]["status"] == "failed"
     assert result["output_path"] == ""              # không xuất file khi số không truy được
@@ -339,7 +339,7 @@ async def test_llm_tu_tinh_sai_thi_bi_chan(agg_env, monkeypatch):
 async def test_gioi_han_da_biet_so_nho_trung_ngau_nhien_van_lot(agg_env, monkeypatch):
     """Ghi nhận giới hạn của cách đối chiếu theo tập số.
 
-    Quân số không đổi giữa hai kỳ, model viết "tăng 1 người" - sai, nhưng số 1
+    Nhân sự không đổi giữa hai kỳ, model viết "tăng 1 người" - sai, nhưng số 1
     lọt vì trùng với số tuyển mới cũng bằng 1. Van này bắt số bịa lạ (47) chứ
     không bắt được số nhỏ trùng ngẫu nhiên, nên vẫn cần người duyệt trước khi
     phát hành văn bản.
@@ -347,9 +347,9 @@ async def test_gioi_han_da_biet_so_nho_trung_ngau_nhien_van_lot(agg_env, monkeyp
     from app.agents.graph import run_aggregate_workflow
 
     monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng quân số là 5 người, tăng 1 người so với kỳ trước."))
+        "Tổng nhân sự là 5 người, tăng 1 người so với kỳ trước."))
 
-    result = await run_aggregate_workflow("Tổng hợp quân số tháng 8/2026")
+    result = await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
     assert result["validation"]["status"] == "passed"    # lọt - đây là giới hạn đã biết
 
 
@@ -358,30 +358,30 @@ async def test_ty_le_da_tinh_san_thi_llm_dung_lai_duoc(agg_env, monkeypatch):
     from app.agents.graph import run_aggregate_workflow
 
     monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng quân số 5 người, trong kỳ tuyển mới 1 và nghỉ việc 1."))
+        "Tổng nhân sự 5 người, trong kỳ tuyển mới 1 và nghỉ việc 1."))
 
-    result = await run_aggregate_workflow("Tổng hợp quân số tháng 8/2026")
+    result = await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
     assert result["validation"]["status"] == "passed"
 
 
 async def test_so_lieu_cua_muc_khac_cung_bi_coi_la_bia(agg_env, monkeypatch):
-    """Nhận xét quân số đặt ở mục trang thiết bị -> số không thuộc phạm vi mục đó."""
+    """Nhận xét nhân sự đặt ở mục trang thiết bị -> số không thuộc phạm vi mục đó."""
     from app.agents.graph import run_aggregate_workflow
 
     monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng quân số là 5 người.",
-        equipment_narrative="Tổng quân số là 5 người, giảm 1 người.",
+        "Tổng nhân sự là 5 người.",
+        equipment_narrative="Tổng nhân sự là 5 người, giảm 1 người.",
     ))
 
     result = await run_aggregate_workflow("Tổng hợp tháng 8/2026")
     sections_with_issue = {i["section"] for i in result["validation"]["issues"]}
-    assert "trang_bi" in sections_with_issue
+    assert "thiet_bi" in sections_with_issue
 
 
 async def test_don_vi_chua_nop_duoc_neu_ten(agg_env, monkeypatch):
     from app.agents.graph import run_aggregate_workflow
 
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM("Tổng quân số là 5 người."))
+    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM("Tổng nhân sự là 5 người."))
     result = await run_aggregate_workflow("Tổng hợp tháng 8/2026")
 
     section = next(s for s in result["sections"] if "GỬI BÁO CÁO" in s["title"])
@@ -409,7 +409,7 @@ class LichSuLLM(AggLLM):
     """Như AggLLM nhưng giữ lại prompt trích tham số để soi."""
 
     def __init__(self) -> None:
-        super().__init__("Tổng quân số toàn cơ quan là 113 người.")
+        super().__init__("Tổng nhân sự toàn công ty là 113 người.")
         self.params_prompt = ""
 
     async def chat_json(self, messages, **kwargs):
@@ -426,12 +426,12 @@ async def test_trich_tham_so_nhin_thay_luot_truoc(agg_env, monkeypatch):
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
 
     await run_aggregate_workflow(
-        "tổng hợp thêm trang bị, vẫn kỳ đó",
-        history=[{"role": "user", "content": "tổng hợp quân số tháng 8/2026"},
+        "tổng hợp thêm thiết bị, vẫn kỳ đó",
+        history=[{"role": "user", "content": "tổng hợp nhân sự tháng 8/2026"},
                  {"role": "assistant", "content": "Đã tổng hợp báo cáo kỳ 2026-08."}],
     )
 
-    assert "tổng hợp quân số tháng 8/2026" in llm.params_prompt
+    assert "tổng hợp nhân sự tháng 8/2026" in llm.params_prompt
     assert "vẫn kỳ đó" in llm.params_prompt
 
 
@@ -441,7 +441,7 @@ async def test_khong_truyen_lich_su_thi_prompt_bao_chua_co(agg_env, monkeypatch)
     llm = LichSuLLM()
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
 
-    await run_aggregate_workflow("Tổng hợp quân số tháng 8/2026")
+    await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
 
     assert "(chưa có)" in llm.params_prompt
 
@@ -453,17 +453,17 @@ import pytest
 
 from app.agents.nodes.report import scope_from_request
 
-CA_HAI = ["quan_so", "trang_bi"]
+CA_HAI = ["nhan_su", "thiet_bi"]
 
 
 @pytest.mark.parametrize("yeu_cau, mong_doi", [
     # LLM trích tham số từng trả về CẢ HAI cho câu này - bộ slide xin về nhân sự
-    # mọc thêm biểu đồ trang bị.
-    ("Tạo slide báo cáo thông tin nhân viên", ["quan_so"]),
-    ("Báo cáo quân số tháng 8/2026", ["quan_so"]),
-    ("Thống kê cán bộ, biên chế", ["quan_so"]),
-    ("Làm slide báo cáo trang thiết bị", ["trang_bi"]),
-    ("Tình hình tài sản, vật tư", ["trang_bi"]),
+    # mọc thêm biểu đồ thiết bị.
+    ("Tạo slide báo cáo thông tin nhân viên", ["nhan_su"]),
+    ("Báo cáo nhân sự tháng 8/2026", ["nhan_su"]),
+    ("Thống kê cán bộ, biên chế", ["nhan_su"]),
+    ("Làm slide báo cáo trang thiết bị", ["thiet_bi"]),
+    ("Tình hình tài sản, vật tư", ["thiet_bi"]),
 ])
 def test_yeu_cau_neu_ro_mot_mang_thi_de_len_lua_chon_cua_llm(yeu_cau, mong_doi):
     assert scope_from_request(yeu_cau, CA_HAI) == mong_doi
@@ -471,12 +471,12 @@ def test_yeu_cau_neu_ro_mot_mang_thi_de_len_lua_chon_cua_llm(yeu_cau, mong_doi):
 
 @pytest.mark.parametrize("yeu_cau", [
     "Báo cáo tổng hợp tháng 8/2026",       # không nhắc mảng nào
-    "Báo cáo quân số và trang thiết bị",   # nhắc cả hai
+    "Báo cáo nhân sự và trang thiết bị",   # nhắc cả hai
     "",
 ])
 def test_yeu_cau_khong_khoanh_vung_thi_giu_nguyen_lua_chon_cua_llm(yeu_cau):
     assert scope_from_request(yeu_cau, CA_HAI) == CA_HAI
-    assert scope_from_request(yeu_cau, ["trang_bi"]) == ["trang_bi"]
+    assert scope_from_request(yeu_cau, ["thiet_bi"]) == ["thiet_bi"]
 
 
 # --------------------------------------------------------------------------- #
@@ -583,8 +583,8 @@ def test_van_chan_so_van_chan_ky_doi_chieu_sai():
 
 
 def test_muc_trang_thiet_bi_co_bang_chi_tiet():
-    """Trước đây `"table": None` cứng: báo cáo ghi "tổng 194 trang bị" mà không
-    dòng nào nói 194 đó nằm ở đơn vị nào. Mục quân số thì luôn có bảng."""
+    """Trước đây `"table": None` cứng: báo cáo ghi "tổng 194 thiết bị" mà không
+    dòng nào nói 194 đó nằm ở đơn vị nào. Mục nhân sự thì luôn có bảng."""
     import asyncio
 
     from app.agents.nodes import report as rp
@@ -595,9 +595,9 @@ def test_muc_trang_thiet_bi_co_bang_chi_tiet():
                                             "delta_pct": None, "share_pct": None}},
             "scope": {"nguon": "Asm_Assets"},
             "breakdown": [
-                {"ten_don_vi": "Phòng IT", "ten_trang_bi": "Máy in",
+                {"ten_don_vi": "Phòng IT", "ten_thiet_bi": "Máy in",
                  "so_luong": 5, "tinh_trang": "Đang dùng"},
-                {"ten_don_vi": "Tạp vụ", "ten_trang_bi": "Tủ kính hồ sơ",
+                {"ten_don_vi": "Tạp vụ", "ten_thiet_bi": "Tủ kính hồ sơ",
                  "so_luong": 4, "tinh_trang": "Đang dùng"},
             ],
         },
@@ -614,9 +614,9 @@ def test_muc_trang_thiet_bi_co_bang_chi_tiet():
     finally:
         rp._narrative = goc  # type: ignore[assignment]
 
-    muc = next(s for s in ket_qua["sections"] if s["id"] == "trang_bi")
+    muc = next(s for s in ket_qua["sections"] if s["id"] == "thiet_bi")
     assert muc["table"] is not None, "mục trang thiết bị không có bảng chi tiết"
-    assert muc["table"]["columns"] == ["Đơn vị", "Trang bị", "Số lượng", "Tình trạng"]
+    assert muc["table"]["columns"] == ["Đơn vị", "Thiết bị", "Số lượng", "Tình trạng"]
     assert len(muc["table"]["rows"]) == 2
     assert muc["table"]["rows"][0][:2] == ["Phòng IT", "Máy in"]
 
@@ -624,31 +624,31 @@ def test_muc_trang_thiet_bi_co_bang_chi_tiet():
 # --------------------------------------------------------------------------- #
 # Đọc số từ file báo cáo: mốc thời gian không phải số liệu
 # --------------------------------------------------------------------------- #
-def test_trich_yeu_co_thang_khong_bi_doc_thanh_quan_so():
+def test_trich_yeu_co_thang_khong_bi_doc_thanh_nhan_su():
     """Chênh lệch giả đã lọt vào một bản tổng hợp thật.
 
-    Trích yếu "V/v báo cáo quân số và trang thiết bị tháng 8/2026" khớp mẫu quân
-    số và trả về 8. Đơn vị báo cáo quân số 3, kiểm kê cũng 3, nhưng bản tổng hợp
+    Trích yếu "V/v báo cáo nhân sự và trang thiết bị tháng 8/2026" khớp mẫu quân
+    số và trả về 8. Đơn vị báo cáo nhân sự 3, kiểm kê cũng 3, nhưng bản tổng hợp
     vẫn in mục "ĐỐI CHIẾU SỐ LIỆU: báo cáo ghi 8, kiểm kê 3".
     """
-    text = ("V/v báo cáo quân số và trang thiết bị tháng 8/2026\n"
-            "I. TÌNH HÌNH QUÂN SỐ\nQuân số: 3; Ngày kiểm kê: 31/8/2026.")
-    assert extract_figures(text)["quan_so"] == 3
+    text = ("V/v báo cáo nhân sự và trang thiết bị tháng 8/2026\n"
+            "I. TÌNH HÌNH NHÂN SỰ\nNhân sự: 3; Ngày kiểm kê: 31/8/2026.")
+    assert extract_figures(text)["nhan_su"] == 3
 
 
-def test_quan_so_viet_kieu_nao_cung_doc_duoc():
-    assert extract_figures("Tổng quân số là 28 người")["quan_so"] == 28
-    assert extract_figures("Quân số hiện có: 11")["quan_so"] == 11
+def test_nhan_su_viet_kieu_nao_cung_doc_duoc():
+    assert extract_figures("Tổng nhân sự là 28 người")["nhan_su"] == 28
+    assert extract_figures("Nhân sự hiện có: 11")["nhan_su"] == 11
 
 
 def test_khong_co_so_that_thi_bo_qua_chu_khong_doan():
-    assert "quan_so" not in extract_figures("Báo cáo quân số tháng 8/2026")
+    assert "nhan_su" not in extract_figures("Báo cáo nhân sự tháng 8/2026")
 
 
 # --------------------------------------------------------------------------- #
 # Chiều gộp: danh sách đóng, code dựng SQL, model chỉ chọn khoá
 # --------------------------------------------------------------------------- #
-async def test_gop_quan_so_theo_chuc_vu(session):
+async def test_gop_nhan_su_theo_chuc_vu(session):
     ket_qua = (await call_tool(session, "get_personnel_statistics",
                                ky="2026-08", group_by="chuc_vu")).as_dict()
 
@@ -658,9 +658,9 @@ async def test_gop_quan_so_theo_chuc_vu(session):
     theo_ten = {r["ten_nhom"]: r for r in ket_qua["breakdown"]}
     # Tháng 8: Trưởng phòng 2 người; Nhân viên còn 2 (một người nghỉ 15/8);
     # một hồ sơ chưa gán chức vụ, vào làm 10/8.
-    assert theo_ten["Trưởng phòng"]["quan_so"] == 2
-    assert theo_ten["Nhân viên"]["quan_so"] == 2
-    assert theo_ten["(chưa gán chức vụ)"]["quan_so"] == 1
+    assert theo_ten["Trưởng phòng"]["nhan_su"] == 2
+    assert theo_ten["Nhân viên"]["nhan_su"] == 2
+    assert theo_ten["(chưa gán chức vụ)"]["nhan_su"] == 1
     assert theo_ten["(chưa gán chức vụ)"]["tuyen_moi"] == 1
 
 
@@ -675,11 +675,11 @@ async def test_doi_chieu_gop_khong_doi_chi_tieu_tong(session):
                                    group_by="chuc_vu")
 
     assert theo_don_vi.as_dict()["metrics"] == theo_chuc_vu.as_dict()["metrics"]
-    assert (sum(r["quan_so"] for r in theo_chuc_vu.as_dict()["breakdown"])
+    assert (sum(r["nhan_su"] for r in theo_chuc_vu.as_dict()["breakdown"])
             == theo_don_vi.as_dict()["metrics"]["total_personnel"]["value"])
 
 
-async def test_gop_trang_bi_theo_chung_loai(session):
+async def test_gop_thiet_bi_theo_chung_loai(session):
     ket_qua = (await call_tool(session, "get_equipment_statistics",
                                ky="2026-08", group_by="chung_loai")).as_dict()
 
@@ -708,7 +708,7 @@ async def test_gop_theo_chieu_la_bi_chan(session):
 
 
 async def test_loc_theo_don_vi_van_giu_khi_gop_theo_chuc_vu(session):
-    """"Quân số Đơn vị 1 theo chức vụ" là lọc một đằng, gộp một nẻo."""
+    """"Nhân sự Đơn vị 1 theo chức vụ" là lọc một đằng, gộp một nẻo."""
     ket_qua = (await call_tool(session, "get_personnel_statistics", ky="2026-08",
                                ma_don_vi="00001", group_by="chuc_vu")).as_dict()
 
@@ -732,8 +732,8 @@ async def test_gop_chieu_khac_thi_bo_han_chi_tieu_theo_don_vi(session):
 
 def test_cau_chu_quyet_dinh_chieu_gop():
     """Câu đã nói rõ thì không hỏi model - cùng lối với `scope_from_request`."""
-    assert rp.dimension_from_request("báo cáo quân số theo chức vụ", None) == "chuc_vu"
-    assert rp.dimension_from_request("tổng hợp trang bị theo chủng loại", None) == "chung_loai"
+    assert rp.dimension_from_request("báo cáo nhân sự theo chức vụ", None) == "chuc_vu"
+    assert rp.dimension_from_request("tổng hợp thiết bị theo chủng loại", None) == "chung_loai"
     # Không nêu chiều nào thì giữ phán đoán của model, kể cả khi model im lặng.
     assert rp.dimension_from_request("báo cáo tháng 8", None) is None
     assert rp.dimension_from_request("báo cáo tháng 8", "chuc_vu") == "chuc_vu"

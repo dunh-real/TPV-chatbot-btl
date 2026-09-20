@@ -118,7 +118,7 @@
 
   var VIEWS = {
     chat: ['Agent tổng', 'Một câu yêu cầu — hệ thống tự chọn workflow, kể cả hỏi đáp tài liệu'],
-    review: ['Soát văn bản', 'Workflow 2 · rule engine thể thức + soát chữ nghĩa + phân rã nhiệm vụ'],
+    review: ['Soát tài liệu', 'Workflow 2 · rule engine cấu trúc + soát chữ nghĩa + phân rã nhiệm vụ'],
     draft: ['Soạn báo cáo', 'Workflow 3 · đọc một tài liệu tải lên, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
     slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
@@ -399,15 +399,20 @@
 
   var TOOL_LABEL = {
     search_documents: 'kho tài liệu', get_document: 'nguyên văn văn bản',
-    analyze_document: 'soát văn bản', get_template: 'mẫu báo cáo',
-    get_personnel_statistics: 'quân số', get_equipment_statistics: 'trang thiết bị',
+    analyze_document: 'soát tài liệu', get_template: 'mẫu báo cáo',
+    get_personnel_statistics: 'nhân sự', get_equipment_statistics: 'trang thiết bị',
     get_reporting_status: 'tình hình nộp báo cáo',
     generate_docx: 'dựng file .docx', generate_presentation: 'dựng file .pptx',
   };
 
+  /* Phải khớp `INTENT_VI` trong backend/app/agents/graph.py: backend gửi nhãn
+     kèm sự kiện tiến trình, còn bảng này dựng huy hiệu lúc chạy xong. Lệch nhau
+     thì một lượt chạy đổi tên nghiệp vụ giữa chừng - đã từng là "Tra số liệu"
+     lúc chạy rồi thành "Tool loop" lúc xong. */
   var INTENT_LABEL = {
-    qa: 'Hỏi đáp', document: 'Soát văn bản', draft: 'Soạn văn bản',
-    report: 'Tổng hợp', presentation: 'Tạo slide', agent: 'Tool loop', clarify: 'Hỏi lại',
+    qa: 'Tra cứu tài liệu', document: 'Soát tài liệu', draft: 'Soạn văn bản',
+    report: 'Tổng hợp báo cáo', presentation: 'Tạo slide', agent: 'Tra số liệu',
+    clarify: 'Hỏi lại',
   };
 
   function intentPill(routing, intent) {
@@ -1007,6 +1012,24 @@
 
   var SEVERITY = { error: 'err', warning: 'warn', info: 'info' };
 
+  // Tên tiếng Việt của từng tiêu chí; mã nào chưa có tên thì hiện nguyên mã.
+  var RULE_VI = {
+    'structure.title': 'có tiêu đề', 'structure.heading_levels': 'thứ bậc mục',
+    'structure.empty_section': 'mục nào cũng có nội dung',
+    'structure.duplicate_heading': 'không trùng tên mục',
+    'structure.numbering': 'đánh số liên tục', 'structure.paragraph_length': 'độ dài đoạn',
+    'consistency.font': 'phông chữ nhất quán', 'consistency.size_pt': 'cỡ chữ nhất quán',
+    'consistency.alignment': 'canh lề nhất quán', 'consistency.line_spacing': 'giãn dòng nhất quán',
+    'consistency.paragraph_spacing_pt': 'khoảng cách đoạn nhất quán',
+    'page.size_mm': 'khổ giấy', 'page.margin_mm': 'lề trang',
+  };
+
+  function ruleVi(item) {
+    var cut = item.indexOf(' (');
+    var id = cut === -1 ? item : item.slice(0, cut);
+    return (RULE_VI[id] || id) + (cut === -1 ? '' : item.slice(cut));
+  }
+
   function renderReview(data) {
     var box = $('#reviewResult');
     box.innerHTML = '';
@@ -1019,9 +1042,7 @@
     var doc = data.document || {};
     var totals = data.totals || {};
     var head = el('div', { class: 'card' });
-    head.innerHTML = '<div class="card-head"><h3>Tổng quan văn bản</h3>' +
-      ((data.rule_check || {}).document_type_label
-        ? '<span class="pill accent">' + esc(data.rule_check.document_type_label) + '</span>' : '') +
+    head.innerHTML = '<div class="card-head"><h3>Tổng quan tài liệu</h3>' +
       '<span class="pill">' + esc(doc.source_format || '?') + '</span>' +
       (doc.has_format_info ? '<span class="pill ok">có thông tin định dạng</span>' : '<span class="pill warn">không đọc được định dạng</span>') +
       '</div><div class="stat-grid">' +
@@ -1030,27 +1051,24 @@
       '<div class="stat ' + (totals.errors ? 'err' : 'ok') + '"><div class="stat-label">Lỗi</div><div class="stat-value">' + fmtNum(totals.errors || 0) + '</div></div>' +
       '<div class="stat ' + (totals.warnings ? 'warn' : '') + '"><div class="stat-label">Cảnh báo</div><div class="stat-value">' + fmtNum(totals.warnings || 0) + '</div></div>' +
       '</div>' +
-      (doc.components && doc.components.length
-        ? '<div class="card-sub" style="margin-top:10px">Thành phần thể thức dò được</div><div class="tag-row">' +
-          doc.components.map(function (c) { return '<span class="pill">' + esc(c) + '</span>'; }).join('') + '</div>'
-        : '');
+      (doc.title ? '<div class="card-sub" style="margin-top:10px">Tiêu đề</div><div class="sm">' + esc(doc.title) + '</div>' : '') +
+      (doc.outline && doc.outline.length
+        ? '<div class="card-sub" style="margin-top:10px">Dàn ý dò được (' + doc.outline.length + ' mục)</div>' +
+          '<div class="outline">' + doc.outline.map(function (h) {
+            return '<div class="outline-item" style="padding-left:' + ((h.level - 1) * 14) + 'px" title="' + esc(h.text) + '">' +
+              '<b>' + esc(h.block_id) + '</b>' + esc(h.text) + '</div>';
+          }).join('') + '</div>'
+        : '<div class="muted sm" style="margin-top:10px">Không dò được mục nào - tài liệu không chia mục hoặc không đánh số.</div>');
     box.appendChild(head);
 
     // rule check
     var rc = data.rule_check || {};
     var rcCard = el('div', { class: 'card' });
     var statusPill = rc.status === 'done' ? 'ok' : (rc.status === 'partial' ? 'warn' : '');
-    var rcHtml = '<div class="card-head"><h3>Thể thức (rule engine, không dùng LLM)</h3>' +
-      (rc.document_type_label
-        ? '<span class="pill accent">' + esc(rc.document_type_label) + '</span>'
-        : '<span class="pill">chưa nhận ra loại</span>') +
+    var rcHtml = '<div class="card-head"><h3>Cấu trúc &amp; trình bày (rule engine, không dùng LLM)</h3>' +
       (rc.rule_set ? '<span class="pill">' + esc(rc.rule_set) + '</span>' : '') +
       '<span class="pill ' + statusPill + '">' + esc(rc.status || '?') + '</span></div>';
     if (rc.reason) rcHtml += '<div class="card-sub">' + esc(rc.reason) + '</div>';
-    if (rc.status === 'skipped' && !(rc.findings || []).length) {
-      rcHtml += '<div class="muted sm" style="margin-top:6px">Bật <b>Soát cả tệp không phải ' +
-        'văn bản hành chính</b> ở khung bên trái nếu vẫn muốn áp bộ tiêu chí này.</div>';
-    }
     if ((rc.findings || []).length) {
       rcHtml += (rc.findings || []).map(function (f) {
         return '<div class="finding"><span class="finding-badge pill ' + (SEVERITY[f.severity] || '') + '">' + esc(f.severity) + '</span>' +
@@ -1062,16 +1080,16 @@
           (f.quote ? '<div class="quote">' + esc(f.quote) + '</div>' : '') + '</div></div>';
       }).join('');
     } else {
-      rcHtml += '<div class="muted sm">Không phát hiện lỗi thể thức.</div>';
+      rcHtml += '<div class="muted sm">Không phát hiện lỗi cấu trúc.</div>';
     }
     rcCard.innerHTML = rcHtml;
     if ((rc.passed || []).length) {
       rcCard.appendChild(block('Tiêu chí đạt', rc.passed.length,
-        '<div class="tag-row">' + rc.passed.map(function (p) { return '<span class="pill ok">' + esc(p) + '</span>'; }).join('') + '</div>', false));
+        '<div class="tag-row">' + rc.passed.map(function (p) { return '<span class="pill ok">' + esc(ruleVi(p)) + '</span>'; }).join('') + '</div>', false));
     }
     if ((rc.skipped || []).length) {
-      rcCard.appendChild(block('Tiêu chí bỏ qua', rc.skipped.length,
-        '<div class="tag-row">' + rc.skipped.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join('') + '</div>', false));
+      rcCard.appendChild(block('Chưa kiểm được', rc.skipped.length,
+        '<div class="tag-row">' + rc.skipped.map(function (p) { return '<span class="pill">' + esc(ruleVi(p)) + '</span>'; }).join('') + '</div>', false));
     }
     box.appendChild(rcCard);
 
@@ -1142,13 +1160,12 @@
     runWorkflow({
       button: this,
       box: $('#reviewResult'),
-      label: 'Đang parse file, chạy rule engine và soát chữ nghĩa theo lô…',
+      label: 'Đang parse file, dựng dàn ý, chạy rule engine và soát chữ nghĩa theo lô…',
       hint: { text: 'thường 10-30 giây, tuỳ độ dài văn bản', slowAfter: 40 },
       call: function (signal) {
         return API.review(reviewFile, {
           noiGui: $('#reviewNoiGui').value,
           ruleSet: $('#reviewRuleSet').value,
-          force: $('#reviewForce').checked,
         }, signal);
       },
       render: renderReview,
@@ -1323,26 +1340,26 @@
      chấm công (có mặt/vắng/đi học/nghỉ phép) đã bỏ hẳn từ đợt chuyển sang ERP -
      không còn nguồn số liệu - nên cũng không còn nhãn ở đây.
 
-     "Số loại trang bị" = số TÊN trang bị khác nhau, KHÁC "chủng loại" của ERP
+     "Số loại thiết bị" = số TÊN thiết bị khác nhau, KHÁC "chủng loại" của ERP
      (`Asm_AssetCategories`). Nhãn cũ là "Số chủng loại" nên bảng gộp theo chủng
      loại in "Số chủng loại: 33" ngay trên một cái bảng có 8 dòng. */
   var METRIC_LABELS = {
-    total_personnel: 'Tổng quân số', new_hires: 'Tuyển mới', resignations: 'Nghỉ việc',
-    total_equipment: 'Tổng trang bị', good: 'Tình trạng tốt',
-    needs_attention: 'Cần xử lý', equipment_types: 'Số loại trang bị',
+    total_personnel: 'Tổng nhân sự', new_hires: 'Tuyển mới', resignations: 'Nghỉ việc',
+    total_equipment: 'Tổng thiết bị', good: 'Tình trạng tốt',
+    needs_attention: 'Cần xử lý', equipment_types: 'Số loại thiết bị',
   };
   /* Chỉ là ĐƯỜNG LÙI cho những bảng API không khai cột (danh sách file đã đọc...).
      Bảng số liệu lấy cột từ `breakdown_columns` - xem `rowsTable`. */
   var COLUMN_LABELS = {
     ma_nhom: 'Mã', ten_nhom: 'Tên',
-    ma_don_vi: 'Mã đơn vị', ten_don_vi: 'Đơn vị', quan_so: 'Quân số',
-    quan_so_ky_truoc: 'Kỳ trước', tuyen_moi: 'Tuyển mới', nghi_viec: 'Nghỉ việc',
-    ten_trang_bi: 'Tên trang bị', so_luong: 'Số lượng', tinh_trang: 'Tình trạng',
+    ma_don_vi: 'Mã đơn vị', ten_don_vi: 'Đơn vị', nhan_su: 'Nhân sự',
+    nhan_su_ky_truoc: 'Kỳ trước', tuyen_moi: 'Tuyển mới', nghi_viec: 'Nghỉ việc',
+    ten_thiet_bi: 'Tên thiết bị', so_luong: 'Số lượng', tinh_trang: 'Tình trạng',
     chung_loai: 'Chủng loại', so_dau_muc: 'Số đầu mục',
     // `Asm_Assets.LastModificationTime`: giờ SỬA BẢN GHI, không phải ngày bảo dưỡng.
     cap_nhat_cuoi: 'Cập nhật gần nhất (ERP)',
     don_vi: 'Đơn vị', tep: 'Tệp báo cáo', so_ky_hieu: 'Số ký hiệu',
-    so_dong_bang: 'Số dòng bảng', tong_trang_bi: 'Tổng trang bị',
+    so_dong_bang: 'Số dòng bảng', tong_thiet_bi: 'Tổng thiết bị',
     hoat_dong_tot: 'Hoạt động tốt', can_xu_ly: 'Cần xử lý', nguon_file: 'Nguồn',
   };
 
@@ -1350,7 +1367,7 @@
 
      Tự suy cột từ khoá của bản ghi đầu tiên chỉ là đường lùi: bản ghi số liệu
      mang cả khoá nội bộ trùng nhau (`ma_nhom` ≡ `ma_don_vi`, `ten_nhom` ≡
-     `ten_don_vi`), nên bảng quân số từng ra 8 cột trong đó 4 cột là tên khoá thô.
+     `ten_don_vi`), nên bảng nhân sự từng ra 8 cột trong đó 4 cột là tên khoá thô.
      Chiều gộp nào có những cột nào là việc của tool, không phải của giao diện. */
   function rowsTable(rows, columns, limit) {
     if (!rows || !rows.length) return '';
@@ -1399,7 +1416,7 @@
             tep: s.file,
             so_ky_hieu: s.so_ky_hieu || '—',
             so_dong_bang: s.so_dong_bang,
-            tong_trang_bi: (s.figures || {}).tong,
+            tong_thiet_bi: (s.figures || {}).tong,
           };
         })) +
         ((eq.failed || []).length
@@ -1423,7 +1440,7 @@
           rp.missing.map(function (m) { return '<span class="pill warn">' + esc(m.ten_don_vi || m.ma_don_vi) + '</span>'; }).join('') + '</div>' : '');
     }
 
-    [['personnel', 'Quân số'], ['equipment', 'Trang thiết bị']].forEach(function (pair) {
+    [['personnel', 'Nhân sự'], ['equipment', 'Trang thiết bị']].forEach(function (pair) {
       var d = data[pair[0]];
       if (!d || !d.metrics) return;
       var scope = d.scope || {};
@@ -1801,11 +1818,11 @@
       '<div class="prose" style="font-size:13.6px">' + MD.render(
         '| # | Workflow | Cửa vào riêng |\n|---|---|---|\n' +
         '| 1 | Hỏi đáp tài liệu (RAG hybrid) | `POST /api/chat/qa` |\n' +
-        '| 2 | Soát thể thức + phân rã nhiệm vụ | `POST /api/documents/review` |\n' +
+        '| 2 | Soát cấu trúc + chữ nghĩa + phân rã nhiệm vụ | `POST /api/documents/review` |\n' +
         '| 3 | Soạn văn bản theo mẫu | `POST /api/reports/draft` |\n' +
         '| 4 | Tổng hợp báo cáo nhiều đơn vị | `POST /api/reports/aggregate` |\n' +
         '| 5 | Tạo bộ slide | `POST /api/presentations/create` |\n\n' +
-        'Agent tổng (`POST /api/agent/chat`) tự chọn một trong năm nhánh trên; không có file đính kèm thì không bao giờ đi nhánh soát văn bản.'
+        'Agent tổng (`POST /api/agent/chat`) tự chọn một trong năm nhánh trên; không có file đính kèm thì không bao giờ đi nhánh soát tài liệu.'
       ) + '</div>'));
   }
 

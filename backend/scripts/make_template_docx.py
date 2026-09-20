@@ -21,7 +21,8 @@ from docx.shared import Mm, Pt
 
 OUTPUT = Path("data/templates/bao_cao_tai_nguyen.docx")
 
-# Theo Nghị định 30/2020/NĐ-CP - trùng với config/rules/nd30.yaml
+# Theo Nghị định 30/2020/NĐ-CP. Đây là quy định cho văn bản hành chính, áp cho
+# văn bản workflow 3 sinh ra; bước soát ở workflow 2 không ép mẫu này.
 FONT = "Times New Roman"
 SIZE_NOI_DUNG = Pt(13)
 MARGINS_MM = {"top": 22, "bottom": 22, "left": 32, "right": 17}

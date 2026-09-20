@@ -235,7 +235,7 @@ def _paginate_tables(specs: list[SlideSpec]) -> list[SlideSpec]:
     Trước đây dôi ra bao nhiêu dòng thì bỏ bấy nhiêu, kèm một câu "xem chi tiết
     trong báo cáo". Câu đó sai ở hai mặt: người xem slide không có bản báo cáo
     trong tay, và một bộ slide tạo riêng lẻ thì không có bản báo cáo nào cả - 25
-    trong 33 trang bị biến mất mà chỗ duy nhất nhắc tới chúng lại trỏ vào hư không.
+    trong 33 thiết bị biến mất mà chỗ duy nhất nhắc tới chúng lại trỏ vào hư không.
 
     Bảng số liệu là thứ phải ĐỦ: thiếu một dòng là người đọc cộng ra số khác với
     tổng ghi ở slide trước đó.

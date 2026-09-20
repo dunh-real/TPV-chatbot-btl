@@ -52,10 +52,6 @@ class RuleCheckModel(BaseModel):
     skipped: list[str] = Field(default_factory=list)
     reason: str = ""
     rule_set: str = Field(default="", description="Bộ tiêu chí đã áp, tên file trong config/rules")
-    document_type: str = Field(
-        default="", description="Loại văn bản dò được tất định: cong_van | quyet_dinh | bao_cao..."
-    )
-    document_type_label: str = Field(default="", description="Tên loại để hiển thị")
 
 
 class RuleSetInfo(BaseModel):
@@ -100,18 +96,29 @@ class TaskModel(BaseModel):
     deadline: str | None = None
 
 
+class OutlineItemModel(BaseModel):
+    """Một mục trong dàn ý dò được, dùng chung cho mọi loại tài liệu."""
+
+    block_id: str
+    level: int = 1
+    text: str
+
+
 class DocumentInfoModel(BaseModel):
     source_format: str
     block_count: int = 0
     page_count: int = 0
     has_format_info: bool = False
-    components: list[str] = Field(default_factory=list)
+    title: str = Field(default="", description="Tiêu đề mở đầu tài liệu, rỗng nếu không có")
+    outline: list[OutlineItemModel] = Field(default_factory=list)
 
 
 class ReviewResponse(BaseModel):
     document: DocumentInfoModel
     rule_check: RuleCheckModel
-    llm_review: dict[str, list[LLMFindingModel]] = Field(default_factory=dict)
+    llm_review: dict[str, list[LLMFindingModel]] = Field(
+        default_factory=dict, description="Lỗi chữ nghĩa, gom theo mã khối"
+    )
     classification: ClassificationModel | None = None
     summary: str = ""
     summary_refs: list[ReferenceModel] = Field(

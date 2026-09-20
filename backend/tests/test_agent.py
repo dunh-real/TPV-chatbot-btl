@@ -57,13 +57,13 @@ async def session():
                 ma_template="BC_TAINGUYEN",
                 ten_bao_cao="Báo cáo tài nguyên đơn vị",
                 loai_bao_cao="bao_cao_tai_nguyen",
-                mo_ta="Quân số và trang thiết bị của một đơn vị",
+                mo_ta="Nhân sự và trang thiết bị của một đơn vị",
                 file_path="",
                 truong_du_lieu=json.dumps({
                     "meta": {"nguoi_ky": {"source": "input"},
                              "chuc_vu_ky": {"source": "input"},
                              "ngay_bao_cao": {"source": "today"}},
-                    "sections": [{"id": "quan_so", "title": "I. QUÂN SỐ", "type": "data"}],
+                    "sections": [{"id": "nhan_su", "title": "I. NHÂN SỰ", "type": "data"}],
                 }, ensure_ascii=False),
             ),
             TemplateBaoCao(
@@ -219,8 +219,8 @@ async def test_generate_docx_sinh_file_that(tmp_storage, db):
         content={
             "meta": {"noi_gui": "ĐƠN VỊ 1", "so_ky_hieu": "01/BC-DV01"},
             "sections": [
-                {"id": "quan_so", "title": "I. QUÂN SỐ", "paragraphs": ["Quân số: 48."]},
-                {"id": "trang_bi", "title": "II. TRANG BỊ",
+                {"id": "nhan_su", "title": "I. NHÂN SỰ", "paragraphs": ["Nhân sự: 48."]},
+                {"id": "thiet_bi", "title": "II. THIẾT BỊ",
                  "table": {"columns": ["Tên", "Số lượng"], "rows": [["Máy in", "8"]]}},
             ],
         },
@@ -282,7 +282,7 @@ async def test_generate_presentation_sinh_file_that(tmp_storage, db):
             "title": "Báo cáo tháng 8",
             "slides": [
                 {"kind": "title", "title": "Báo cáo tháng 8"},
-                {"kind": "bullet", "title": "Đánh giá", "bullets": ["Quân số ổn định"]},
+                {"kind": "bullet", "title": "Đánh giá", "bullets": ["Nhân sự ổn định"]},
             ],
         },
     )
@@ -294,7 +294,7 @@ async def test_slide_bieu_do_thieu_anh_thi_bi_chan(tmp_storage, db):
     """Slide chart không có PNG chỉ còn cái tiêu đề - phải báo lỗi, không dựng."""
     with pytest.raises(ToolError, match="cần biểu đồ"):
         await presentation_tools.generate_presentation(
-            data={"slides": [{"kind": "chart", "title": "Quân số", "chart_key": "personnel"}]},
+            data={"slides": [{"kind": "chart", "title": "Nhân sự", "chart_key": "personnel"}]},
         )
 
 
@@ -332,7 +332,7 @@ async def test_llm_hong_thi_van_dinh_tuyen_duoc(monkeypatch):
 async def test_y_dinh_la_thi_lui_ve_tu_khoa(monkeypatch):
     monkeypatch.setattr(router_mod, "get_llm",
                         lambda: FakeLLM({"intent": "xoa_du_lieu", "confidence": 0.99}))
-    result = await router_mod.classify_intent("tổng hợp quân số toàn cơ quan tháng 8")
+    result = await router_mod.classify_intent("tổng hợp nhân sự toàn công ty tháng 8")
     assert result.intent == "report" and result.source == "keyword"
 
 
@@ -345,7 +345,7 @@ async def test_llm_tu_tin_thap_thi_thua_tu_khoa(monkeypatch):
 
 def test_tu_khoa_phan_biet_slide_soan_va_tong_hop():
     assert router_mod.classify_by_keywords("soạn báo cáo cho DV01").intent == "draft"
-    assert router_mod.classify_by_keywords("tổng hợp quân số các đơn vị").intent == "report"
+    assert router_mod.classify_by_keywords("tổng hợp nhân sự các đơn vị").intent == "report"
     assert router_mod.classify_by_keywords("làm slide giao ban").intent == "presentation"
     assert router_mod.classify_by_keywords("quy định nghỉ phép thế nào").intent == "qa"
 
@@ -415,7 +415,7 @@ async def test_agent_giao_viec_cho_dung_workflow_va_gom_file(agent_env, monkeypa
 
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _aggregate)
 
-    result = await graph_mod.run_agent("tổng hợp quân số tháng 8")
+    result = await graph_mod.run_agent("tổng hợp nhân sự tháng 8")
 
     assert result["intent"] == "report"
     assert "2026-08" in result["answer"]
@@ -468,7 +468,7 @@ async def test_model_da_chac_y_dinh_thi_lam_viec_du_co_kem_cau_hoi(agent_env, mo
 
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _aggregate)
 
-    result = await graph_mod.run_agent("tổng hợp quân số tháng 8")
+    result = await graph_mod.run_agent("tổng hợp nhân sự tháng 8")
     assert goi, "Model đã chắc ý định mà workflow vẫn không chạy"
     assert result["intent"] == "report"
 
@@ -531,14 +531,14 @@ class FakePlannerLLM:
 async def test_ke_hoach_tach_duoc_hai_san_pham(monkeypatch):
     monkeypatch.setattr(planner_mod, "get_llm", lambda: FakePlannerLLM({
         "steps": [
-            {"intent": "report", "request": "tổng hợp quân số toàn cơ quan tháng 8/2026"},
+            {"intent": "report", "request": "tổng hợp nhân sự toàn công ty tháng 8/2026"},
             {"intent": "presentation", "request": "làm slide từ báo cáo tháng 8/2026",
              "depends_on": ["s1"]},
         ],
         "confidence": 0.9,
     }))
 
-    plan = await planner_mod.make_plan("tổng hợp quân số tháng 8 rồi làm slide")
+    plan = await planner_mod.make_plan("tổng hợp nhân sự tháng 8 rồi làm slide")
 
     assert [s.intent for s in plan.steps] == ["report", "presentation"]
     assert plan.steps[1].depends_on == ["s1"]
@@ -549,13 +549,13 @@ async def test_ke_hoach_tach_duoc_hai_san_pham(monkeypatch):
 async def test_hai_buoc_doc_lap_nam_chung_mot_dot(monkeypatch):
     monkeypatch.setattr(planner_mod, "get_llm", lambda: FakePlannerLLM({
         "steps": [
-            {"intent": "agent", "request": "quân số DV01 tháng 8/2026"},
+            {"intent": "agent", "request": "nhân sự DV01 tháng 8/2026"},
             {"intent": "qa", "request": "quy định về thời hạn gửi báo cáo"},
         ],
         "confidence": 0.9,
     }))
 
-    plan = await planner_mod.make_plan("quân số DV01 tháng 8 và thời hạn gửi báo cáo")
+    plan = await planner_mod.make_plan("nhân sự DV01 tháng 8 và thời hạn gửi báo cáo")
     assert [[s.id for s in wave] for wave in plan.waves()] == [["s1", "s2"]]
 
 
@@ -599,12 +599,12 @@ async def test_ke_hoach_hong_thi_lui_ve_dinh_tuyen(monkeypatch):
 
 async def test_ke_hoach_khong_sinh_hai_file_cung_loai(monkeypatch):
     monkeypatch.setattr(planner_mod, "get_llm", lambda: FakePlannerLLM({
-        "steps": [{"intent": "report", "request": "tổng hợp quân số tháng 8"},
-                  {"intent": "report", "request": "tổng hợp trang bị tháng 8"}],
+        "steps": [{"intent": "report", "request": "tổng hợp nhân sự tháng 8"},
+                  {"intent": "report", "request": "tổng hợp thiết bị tháng 8"}],
         "confidence": 0.9,
     }))
 
-    plan = await planner_mod.make_plan("tổng hợp quân số và trang bị tháng 8")
+    plan = await planner_mod.make_plan("tổng hợp nhân sự và thiết bị tháng 8")
     assert [s.intent for s in plan.steps] == ["report"]
 
 
@@ -630,7 +630,7 @@ async def test_hai_buoc_doc_lap_chay_that_su_song_song(agent_env, monkeypatch):
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _cham)
     monkeypatch.setattr(graph_mod, "run_presentation_workflow", _cham)
 
-    result = await graph_mod.run_agent("tổng hợp quân số tháng 8 và làm slide")
+    result = await graph_mod.run_agent("tổng hợp nhân sự tháng 8 và làm slide")
 
     assert chong_lan, "Hai bước độc lập vẫn chạy nối đuôi nhau"
     assert [s["intent"] for s in result["steps"]] == ["report", "presentation"]
@@ -641,7 +641,7 @@ async def test_buoc_phu_thuoc_nhan_duoc_boi_canh_cua_buoc_truoc(agent_env, monke
     monkeypatch.setattr(graph_mod, "make_plan", _plan(
         "report", "presentation",
         depends={"s2": ["s1"]},
-        requests={"s1": "tổng hợp quân số tháng 8/2026", "s2": "làm slide từ số liệu đó"}))
+        requests={"s1": "tổng hợp nhân sự tháng 8/2026", "s2": "làm slide từ số liệu đó"}))
 
     async def _aggregate(request, inputs=None, history=None):
         return {"params": {"ky": "2026-08", "ma_don_vi": ["DV01"]}, "output_path": "",
@@ -656,7 +656,7 @@ async def test_buoc_phu_thuoc_nhan_duoc_boi_canh_cua_buoc_truoc(agent_env, monke
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _aggregate)
     monkeypatch.setattr(graph_mod, "run_presentation_workflow", _presentation)
 
-    await graph_mod.run_agent("tổng hợp quân số tháng 8 rồi làm slide")
+    await graph_mod.run_agent("tổng hợp nhân sự tháng 8 rồi làm slide")
 
     assert "2026-08" in nhan_duoc["request"]
     assert "DV01" in nhan_duoc["request"]
@@ -678,7 +678,7 @@ async def test_gom_file_cua_moi_buoc_chu_khong_chi_buoc_cuoi(agent_env, monkeypa
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _aggregate)
     monkeypatch.setattr(graph_mod, "run_presentation_workflow", _presentation)
 
-    result = await graph_mod.run_agent("tổng hợp quân số tháng 8 rồi làm slide")
+    result = await graph_mod.run_agent("tổng hợp nhân sự tháng 8 rồi làm slide")
 
     assert {a["kind"] for a in result["artifacts"]} == {"docx", "pptx"}
     # Câu trả lời ghép phải nêu cả hai việc, không chỉ việc cuối.
@@ -694,7 +694,7 @@ async def test_qa_khong_ra_gi_thi_thu_lai_bang_tra_so_lieu(agent_env, monkeypatc
                 "result": {"chunk_count": 0}, "error": ""}
 
     async def _tra_so_lieu(state, request):
-        return {"answer": "Quân số DV01 tháng 8/2026 là 120 người.",
+        return {"answer": "Nhân sự DV01 tháng 8/2026 là 120 người.",
                 "result": {"stop_reason": "hoàn thành",
                            "tool_log": [{"tool": "get_personnel_statistics",
                                          "ok": True, "empty": False}]},
@@ -703,7 +703,7 @@ async def test_qa_khong_ra_gi_thi_thu_lai_bang_tra_so_lieu(agent_env, monkeypatc
     monkeypatch.setitem(graph_mod.BRANCHES, "qa", _qa_rong)
     monkeypatch.setitem(graph_mod.BRANCHES, "agent", _tra_so_lieu)
 
-    result = await graph_mod.run_agent("quân số DV01 tháng 8 là bao nhiêu")
+    result = await graph_mod.run_agent("nhân sự DV01 tháng 8 là bao nhiêu")
 
     step = result["steps"][0]
     assert step["planned_intent"] == "qa" and step["intent"] == "agent"
@@ -758,17 +758,17 @@ async def test_nguon_cua_hai_buoc_khong_dam_so_nhau(agent_env, monkeypatch):
     monkeypatch.setattr(graph_mod, "make_plan", _plan("agent", "agent"))
 
     async def _co_nguon(state, request):
-        return {"answer": "Quân số là 120 người [1].",
+        return {"answer": "Nhân sự là 120 người [1].",
                 "result": {"stop_reason": "hoàn thành",
                            "tool_log": [{"tool": "get_personnel_statistics",
                                          "ok": True, "empty": False}]},
-                "refs": [{"id": 1, "kind": "cong_cu", "label": "quân số",
+                "refs": [{"id": 1, "kind": "cong_cu", "label": "nhân sự",
                           "snippet": "…", "locator": {}}],
                 "error": ""}
 
     monkeypatch.setitem(graph_mod.BRANCHES, "agent", _co_nguon)
 
-    result = await graph_mod.run_agent("quân số DV01 và DV02 tháng 8")
+    result = await graph_mod.run_agent("nhân sự DV01 và DV02 tháng 8")
 
     assert [ref["id"] for ref in result["refs"]] == [1, 2]
     assert "[1]" in result["answer"] and "[2]" in result["answer"]
@@ -795,7 +795,7 @@ async def test_khong_ai_nghe_thi_phat_tien_trinh_la_lenh_rong(agent_env, monkeyp
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _aggregate)
 
     assert progress._emitter.get() is None
-    result = await graph_mod.run_agent("tổng hợp quân số tháng 8")
+    result = await graph_mod.run_agent("tổng hợp nhân sự tháng 8")
     assert result["intent"] == "report"
     assert progress._emitter.get() is None, "kênh phát rò ra ngoài phạm vi"
 
@@ -817,7 +817,7 @@ async def test_phat_du_ke_hoach_va_vong_doi_tung_buoc(agent_env, monkeypatch):
 
     ghi, emitter = _thu_su_kien()
     with progress.collecting(emitter):
-        await graph_mod.run_agent("tổng hợp quân số tháng 8 rồi làm slide")
+        await graph_mod.run_agent("tổng hợp nhân sự tháng 8 rồi làm slide")
 
     ten = [e for e, _ in ghi]
     assert ten.count("plan") == 1
@@ -840,23 +840,23 @@ async def test_su_kien_tien_trinh_khong_mang_ket_qua_cong_cu(agent_env, monkeypa
     monkeypatch.setattr(graph_mod, "make_plan", _plan("agent"))
 
     async def _tra_so_lieu(state, request):
-        return {"answer": "Quân số là 120 người.",
+        return {"answer": "Nhân sự là 120 người.",
                 "result": {"stop_reason": "hoàn thành",
                            "tool_log": [{"tool": "get_personnel_statistics", "ok": True,
-                                         "empty": False, "preview": '{"quan_so": 120}'}]},
+                                         "empty": False, "preview": '{"nhan_su": 120}'}]},
                 "refs": [], "error": ""}
 
     monkeypatch.setitem(graph_mod.BRANCHES, "agent", _tra_so_lieu)
 
     ghi, emitter = _thu_su_kien()
     with progress.collecting(emitter):
-        await graph_mod.run_agent("quân số DV01 tháng 8")
+        await graph_mod.run_agent("nhân sự DV01 tháng 8")
 
     assert all(e in progress.EVENTS for e, _ in ghi), "phát sự kiện ngoài danh mục"
     assert not any(e in ("tool_call", "tool_result") for e, _ in ghi)
     for _, data in ghi:
         phang = json.dumps(data, ensure_ascii=False)
-        assert "tool_log" not in phang and "quan_so" not in phang, phang[:120]
+        assert "tool_log" not in phang and "nhan_su" not in phang, phang[:120]
 
 
 async def test_phat_su_kien_thu_lai_kem_nghiep_vu_thay_the(agent_env, monkeypatch):
@@ -869,7 +869,7 @@ async def test_phat_su_kien_thu_lai_kem_nghiep_vu_thay_the(agent_env, monkeypatc
                 "result": {"chunk_count": 0}, "error": ""}
 
     async def _tra_so_lieu(state, request):
-        return {"answer": "Quân số là 120 người.",
+        return {"answer": "Nhân sự là 120 người.",
                 "result": {"stop_reason": "hoàn thành",
                            "tool_log": [{"tool": "x", "ok": True, "empty": False}]},
                 "refs": [], "error": ""}
@@ -879,7 +879,7 @@ async def test_phat_su_kien_thu_lai_kem_nghiep_vu_thay_the(agent_env, monkeypatc
 
     ghi, emitter = _thu_su_kien()
     with progress.collecting(emitter):
-        await graph_mod.run_agent("quân số DV01 tháng 8")
+        await graph_mod.run_agent("nhân sự DV01 tháng 8")
 
     retry = [d for e, d in ghi if e == "step_retry"]
     assert len(retry) == 1
@@ -956,7 +956,7 @@ async def test_mot_buoc_hong_khong_giet_ca_ke_hoach(agent_env, monkeypatch):
     monkeypatch.setattr(graph_mod, "run_aggregate_workflow", _sap)
     monkeypatch.setitem(graph_mod.BRANCHES, "qa", _qa)
 
-    result = await graph_mod.run_agent("tổng hợp quân số tháng 8 và cho biết quy định")
+    result = await graph_mod.run_agent("tổng hợp nhân sự tháng 8 và cho biết quy định")
 
     assert len(result["steps"]) == 2, "bước sau không chạy khi bước trước sập"
     assert "Nghị định 30/2020" in result["answer"], "mất luôn kết quả của bước còn lại"

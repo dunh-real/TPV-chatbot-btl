@@ -23,7 +23,7 @@ ERP_TENANT = 64
 # (id, mã, tên) - "đơn vị" trong báo cáo chính là phòng ban bên ERP.
 ERP_DEPARTMENTS = [(1, "00001", "Đơn vị 1"), (2, "00002", "Đơn vị 2")]
 
-# (id, mã, tên) - chiều gộp thứ hai của chỉ tiêu quân số.
+# (id, mã, tên) - chiều gộp thứ hai của chỉ tiêu nhân sự.
 ERP_POSITIONS = [(1, "TRPH", "Trưởng phòng"), (2, "NHV", "Nhân viên")]
 
 # (id, tên, số lượng, phòng ban, mã trạng thái, ngày tạo, ngày xoá)

@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description="Multi-agent backend (LangGraph). POST /api/agent/chat tự định tuyến "
-                "yêu cầu về một trong năm workflow: hỏi đáp, soát văn bản, soạn văn bản, "
+                "yêu cầu về một trong năm workflow: hỏi đáp, soát tài liệu, soạn văn bản, "
                 "tổng hợp báo cáo, tạo slide.",
     version="0.1.0",
     lifespan=lifespan,

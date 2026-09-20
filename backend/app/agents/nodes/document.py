@@ -5,11 +5,14 @@ suy luận thì bước soát chữ nghĩa tìm được 0 lỗi, tắt thì tì
 lỗi thật ("Chức danh | Mức" thiếu chữ "lương"). Soi lỗi chi tiết cần bám sát mặt
 chữ, còn suy luận dài khiến model tự nói mình ra khỏi những phát hiện nhỏ.
 
-                    ┌─> rule_check   (tất định, đọc định dạng)
-    parse ─> detect ├─> llm_review   (chữ nghĩa, theo lô, có verify)
-                    ├─> classify     (định tuyến, dùng danh mục phòng ban)
-                    └─> tasks        (tóm tắt + phân rã nhiệm vụ)
-                                      └─> assemble -> ReviewResult
+                       ┌─> rule_check   (tất định: dàn ý, đánh số, trình bày)
+    parse ─> dàn ý ────┼─> llm_review   (chữ nghĩa, theo lô, có verify)
+                       ├─> classify     (định tuyến, dùng danh mục phòng ban)
+                       └─> tasks        (tóm tắt + phân rã nhiệm vụ)
+                                         └─> assemble -> ReviewResult
+
+Tài liệu đưa vào có thể thuộc bất kỳ loại nào - rule engine chỉ soi cách tổ chức
+và cách trình bày, không đòi hỏi tệp phải theo mẫu văn bản nào.
 
 Ba nhánh LLM chạy song song và nhận ba gói ngữ cảnh khác nhau - xem chú thích ở
 từng node. Không nhánh nào nhận cả file kèm câu hỏi chung chung.
@@ -33,9 +36,9 @@ from app.agents.prompts import (
     DOC_TASKS_USER,
 )
 from app.core.config import get_settings
+from app.documents.outline import build_outline
 from app.documents.parser import parse_document
 from app.documents.rules import RuleFinding, get_rule_engine
-from app.documents.structure import body_blocks, detect_components
 from app.services.llm import LLMError, get_llm
 
 logger = logging.getLogger(__name__)
@@ -50,7 +53,7 @@ def _normalize(text: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# 1. Parse + dò thành phần
+# 1. Parse + dựng dàn ý
 # --------------------------------------------------------------------------- #
 async def parse_node(state: dict[str, Any]) -> dict[str, Any]:
     import anyio
@@ -62,25 +65,21 @@ async def parse_node(state: dict[str, Any]) -> dict[str, Any]:
         logger.exception("Không parse được %s", path)
         return {"error": f"Không đọc được tài liệu: {exc}"}
 
-    # Chức danh người ký lấy theo bộ tiêu chí đang chọn: cơ quan khác nhau ký
-    # bằng chức danh khác nhau, dò bằng danh sách cứng thì báo thiếu chữ ký oan.
-    try:
-        titles = get_rule_engine(state.get("rule_set", "")).chu_ky_titles
-    except FileNotFoundError:
-        titles = get_rule_engine().chu_ky_titles
-    components = detect_components(structure, chu_ky_titles=titles)
+    # Dàn ý dựng một lần ở đây rồi dùng lại cho cả rule engine lẫn phần trả về
+    # giao diện: hai nơi đọc cùng một cách hiểu về tài liệu.
+    outline = build_outline(structure)
     return {
         "structure": structure,
-        "components": components,
+        "outline": outline,
         "trace": {**state.get("trace", {}),
                   "source_format": structure.source_format,
                   "block_count": len(structure.blocks),
-                  "components_found": sorted(components.found)},
+                  "headings": len(outline.headings)},
     }
 
 
 # --------------------------------------------------------------------------- #
-# 2. Rule engine - không LLM
+# 2. Rule engine - cấu trúc và trình bày, không LLM
 # --------------------------------------------------------------------------- #
 async def rule_check_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or "structure" not in state:
@@ -90,9 +89,7 @@ async def rule_check_node(state: dict[str, Any]) -> dict[str, Any]:
     except FileNotFoundError as exc:
         logger.warning("%s - dùng bộ tiêu chí mặc định", exc)
         engine = get_rule_engine()
-    result = engine.check(state["structure"], state["components"],
-                          enforce_scope=not state.get("force_rules", False))
-    return {"rule_result": result}
+    return {"rule_result": engine.check(state["structure"])}
 
 
 # --------------------------------------------------------------------------- #
@@ -161,16 +158,15 @@ async def llm_review_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or "structure" not in state:
         return {}
 
-    structure, components = state["structure"], state["components"]
-    blocks = body_blocks(structure, components)
+    outline = state["outline"]
+    blocks = outline.blocks
     if not blocks:
         return {"llm_findings": [], "trace": {**state.get("trace", {}), "review_batches": 0}}
 
     cfg = get_settings()
     llm = get_llm()
     batches = build_review_batches(blocks)
-    doc_type = state.get("document_type") or components.value_of("ten_loai") or "văn bản hành chính"
-    trich_yeu = components.value_of("trich_yeu") or "(không có)"
+    tieu_de = outline.title.text if outline.title else (state.get("file_name") or "(không rõ)")
 
     async def review(batch) -> list[dict[str, Any]]:
         rendered = "\n\n".join(f"[{b.id}] {b.text}" for b in batch)
@@ -179,7 +175,7 @@ async def llm_review_node(state: dict[str, Any]) -> dict[str, Any]:
                 [
                     {"role": "system", "content": DOC_REVIEW_SYSTEM},
                     {"role": "user", "content": DOC_REVIEW_USER.format(
-                        doc_type=doc_type, trich_yeu=trich_yeu, blocks=rendered)},
+                        title=tieu_de, blocks=rendered)},
                 ],
                 model=cfg.utility_model, temperature=0.0, max_tokens=1200,
                 thinking=False,
@@ -229,14 +225,14 @@ async def classify_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or "structure" not in state:
         return {}
 
-    components = state["components"]
+    outline = state["outline"]
 
     try:
         data = await get_llm().chat_json(
             [
                 {"role": "system", "content": DOC_CLASSIFY_SYSTEM},
                 {"role": "user", "content": DOC_CLASSIFY_USER.format(
-                    trich_yeu=components.value_of("trich_yeu") or "(không có)",
+                    title=outline.title.text if outline.title else "(không có)",
                     noi_gui=state.get("noi_gui") or "(không rõ)",
                     content=_head_content(state["structure"]))},
             ],
@@ -355,8 +351,21 @@ def _rule_findings_payload(findings: list[RuleFinding]) -> list[dict[str, Any]]:
     return [f.as_dict() for f in findings]
 
 
+# Dàn ý trả về giao diện, cắt bớt cho khỏi dài: người đọc cần thấy tài liệu được
+# chia mục thế nào, không cần từng mục con của một tài liệu 200 trang.
+MAX_OUTLINE_ITEMS = 40
+
+
+def _outline_payload(outline: Any) -> list[dict[str, Any]]:
+    if outline is None:
+        return []
+    return [{"block_id": h.block_id, "level": h.level, "text": h.text[:120]}
+            for h in outline.headings[:MAX_OUTLINE_ITEMS]]
+
+
 async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
     structure = state.get("structure")
+    outline = state.get("outline")
     rule_result = state.get("rule_result")
     llm_findings = state.get("llm_findings") or []
 
@@ -370,12 +379,17 @@ async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
             "skipped": rule_result.skipped,
             "reason": rule_result.reason,
             "rule_set": rule_result.rule_set,
-            "document_type": rule_result.document_type,
-            "document_type_label": rule_result.document_type_label,
         }
 
-    errors = rule_payload["status"] != "skipped" and rule_result is not None and rule_result.error_count
-    errors = (errors or 0) + sum(1 for f in llm_findings if f["severity"] == "error")
+    # Gom lỗi chữ nghĩa theo khối: người đọc soát từng đoạn một, không đọc một
+    # danh sách phẳng rồi tự nhặt xem lỗi nào thuộc đoạn nào.
+    by_block: dict[str, list[dict[str, Any]]] = {}
+    for finding in llm_findings:
+        by_block.setdefault(finding["block_id"], []).append(finding)
+
+    errors = (rule_result.error_count if rule_result else 0) + sum(
+        1 for f in llm_findings if f["severity"] == "error"
+    )
     warnings = (rule_result.warning_count if rule_result else 0) + sum(
         1 for f in llm_findings if f["severity"] == "warning"
     )
@@ -387,10 +401,11 @@ async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
                 "block_count": len(structure.blocks) if structure else 0,
                 "page_count": structure.page_count if structure else 0,
                 "has_format_info": structure.has_format_info if structure else False,
-                "components": sorted(state["components"].found) if state.get("components") else [],
+                "title": outline.title.text if outline and outline.title else "",
+                "outline": _outline_payload(outline),
             },
             "rule_check": rule_payload,
-            "llm_review": {"findings": llm_findings},
+            "llm_review": by_block,
             "classification": state.get("classification"),
             "summary": state.get("summary", ""),
             "summary_refs": state.get("summary_refs", []),

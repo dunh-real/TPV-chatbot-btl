@@ -42,7 +42,7 @@ _emitter: ContextVar[Emitter | None] = ContextVar("agent_progress_emitter", defa
 # số liệu bao nhiêu là việc của câu trả lời cuối.
 #
 # `step_progress` mang TÊN công cụ chứ không mang tham số hay kết quả. Tên là
-# nhãn việc ("đang tra quân số"), không phải dữ liệu - mà thiếu nó thì một vòng
+# nhãn việc ("đang tra nhân sự"), không phải dữ liệu - mà thiếu nó thì một vòng
 # lặp công cụ 90 giây chỉ hiện đúng một dòng "đang chạy…", tức là quay về đúng
 # cái vòng xoay mà tính năng này sinh ra để thay thế.
 EVENTS = (

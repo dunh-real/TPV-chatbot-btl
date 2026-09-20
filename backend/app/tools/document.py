@@ -1,7 +1,7 @@
 """Công cụ xử lý và sinh văn bản .docx.
 
 Hai chiều ngược nhau của cùng một tầng:
-    analyze_document - đọc một file có sẵn, trả về nhận xét thể thức + nội dung
+    analyze_document - đọc một file có sẵn, trả về nhận xét cấu trúc + nội dung
     generate_docx    - nhận nội dung đã chốt, đổ ra file đúng thể thức
 
 `generate_docx` cố tình "ngu": nó dựng đúng những gì được đưa, không tự thêm số
@@ -42,7 +42,7 @@ def _ngay_tieng_viet(value: date) -> str:
 # Đọc và soát một văn bản có sẵn
 # --------------------------------------------------------------------------- #
 async def analyze_document(file_id: str, noi_gui: str = "") -> dict[str, Any]:
-    """Chạy workflow 2 trên một file đã tải lên: thể thức, chữ nghĩa, định tuyến, nhiệm vụ.
+    """Chạy workflow 2 trên một file đã tải lên: cấu trúc, chữ nghĩa, định tuyến, nhiệm vụ.
 
     `file_id` là định danh do `app.services.storage` cấp khi nhận file, không phải
     đường dẫn tuỳ ý - đây là ranh giới chặn đọc trộm file ngoài thư mục cho phép.

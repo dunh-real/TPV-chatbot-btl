@@ -24,15 +24,18 @@ logger = logging.getLogger(__name__)
 
 # Mỗi chỉ tiêu có vài cách viết thường gặp trong văn bản hành chính.
 FIELD_PATTERNS: dict[str, list[re.Pattern[str]]] = {
-    "quan_so": [
-        re.compile(r"[Qq]uân\s*số[^0-9\n]{0,30}?(\d{1,6})"),
-        re.compile(r"tổng\s*quân\s*số\s*(?:là|:)?\s*(\d{1,6})", re.I),
+    "nhan_su": [
+        re.compile(r"[Nn]hân\s*sự[^0-9\n]{0,30}?(\d{1,6})"),
+        re.compile(r"tổng\s*nhân\s*sự\s*(?:là|:)?\s*(\d{1,6})", re.I),
     ],
     "co_mat": [re.compile(r"có\s*mặt[^0-9\n]{0,20}?(\d{1,6})", re.I)],
     "vang": [re.compile(r"vắng[^0-9\n]{0,20}?(\d{1,6})", re.I)],
-    "tong_so_trang_bi": [
-        re.compile(r"(\d{1,6})\s*(?:đầu|loại)?\s*trang\s*(?:thiết\s*)?bị", re.I),
-        re.compile(r"tổng\s*(?:số\s*)?trang\s*(?:thiết\s*)?bị[^0-9\n]{0,20}?(\d{1,6})", re.I),
+    "tong_so_thiet_bi": [
+        # "trang" để tuỳ chọn để đọc được cả "80 đầu thiết bị" lẫn "80 đầu trang
+        # thiết bị", nhưng "thiết bị" thì bắt buộc: bỏ nó ra, mẫu sẽ khớp trúng
+        # chữ "bị" trong "bị hỏng", "bị mất" và đếm bừa.
+        re.compile(r"(\d{1,6})\s*(?:đầu|loại)?\s*(?:trang\s*)?thiết\s*bị", re.I),
+        re.compile(r"tổng\s*(?:số\s*)?(?:trang\s*)?thiết\s*bị[^0-9\n]{0,20}?(\d{1,6})", re.I),
     ],
 }
 
@@ -225,15 +228,15 @@ class ReconcileResult:
 
 
 FIELD_LABELS = {
-    "quan_so": "Quân số", "co_mat": "Có mặt", "vang": "Vắng",
-    "tong_so_trang_bi": "Tổng trang thiết bị",
+    "nhan_su": "Nhân sự", "co_mat": "Có mặt", "vang": "Vắng",
+    "tong_so_thiet_bi": "Tổng thiết bị",
 }
 
 
 # Từ chỉ thời gian nằm giữa tên chỉ tiêu và con số -> con số đó là MỐC THỜI GIAN.
 #
-# Trích yếu "V/v báo cáo quân số và trang thiết bị tháng 8/2026" khớp mẫu quân số
-# và trả về 8. Báo cáo của Phòng Kế toán ghi quân số 3, kiểm kê cũng 3, nhưng bản
+# Trích yếu "V/v báo cáo nhân sự và trang thiết bị tháng 8/2026" khớp mẫu nhân sự
+# và trả về 8. Báo cáo của Phòng Kế toán ghi nhân sự 3, kiểm kê cũng 3, nhưng bản
 # tổng hợp vẫn in ra một mục "ĐỐI CHIẾU SỐ LIỆU: báo cáo ghi 8, kiểm kê 3" - một
 # chênh lệch không có thật, nằm trong văn bản trình ký.
 _TIME_WORD_RE = re.compile(r"tháng|quý|năm|ngày|tuần|kỳ", re.I)

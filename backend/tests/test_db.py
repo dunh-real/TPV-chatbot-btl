@@ -3,7 +3,7 @@
 Trọng tâm là phép "as-of": ERP chỉ giữ hiện trạng, nên số liệu của một kỳ được
 dựng lại từ mốc tạo/xoá bản ghi. Sai ở đây là sai toàn bộ báo cáo, nên các mốc
 thời gian trong dữ liệu mẫu (`tests/conftest.py`) được chọn để bắt đúng hai ca
-khó: trang bị mua sau kỳ và trang bị đã thanh lý.
+khó: thiết bị mua sau kỳ và thiết bị đã thanh lý.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ async def session():
             TemplateBaoCao(
                 ma_template="BC_THANG", ten_bao_cao="Báo cáo tháng",
                 loai_bao_cao="dinh_ky", mo_ta="Báo cáo định kỳ hằng tháng",
-                truong_du_lieu=json.dumps({"muc": ["quan_so", "trang_bi"]}),
+                truong_du_lieu=json.dumps({"muc": ["nhan_su", "thiet_bi"]}),
             ),
             VanBan(ma_van_ban="10/BC-DV02", ten_van_ban="Báo cáo Đơn vị 2",
                    loai_van_ban="bao_cao_di", noi_gui="Đơn vị 2",
@@ -73,14 +73,14 @@ async def test_ma_don_vi_noi_duoc_sang_khoa_chinh(erp_session):
     assert await ErpDonViRepository(erp_session).id_map() == {"00001": 1, "00002": 2}
 
 
-# --------------------------------------------- trang bị theo "as-of" ----- #
-async def test_trang_bi_mua_sau_ky_khong_duoc_tinh(erp_session):
+# --------------------------------------------- thiết bị theo "as-of" ----- #
+async def test_thiet_bi_mua_sau_ky_khong_duoc_tinh(erp_session):
     """Xe công vụ mua 12/8 - kỳ tháng 7 chốt ngày 1/8 nên chưa được tính."""
     rows = await ErpTrangBiRepository(erp_session).list_as_of(period_end("2026-07"))
     assert "Xe công vụ" not in {asset.name for _, asset, _ in rows}
 
 
-async def test_trang_bi_da_thanh_ly_bien_khoi_ky_sau(erp_session):
+async def test_thiet_bi_da_thanh_ly_bien_khoi_ky_sau(erp_session):
     """Máy chiếu thanh lý 3/8: còn ở kỳ tháng 7, mất ở kỳ tháng 8."""
     repo = ErpTrangBiRepository(erp_session)
     thang_7 = {asset.name for _, asset, _ in await repo.list_as_of(period_end("2026-07"))}
@@ -89,7 +89,7 @@ async def test_trang_bi_da_thanh_ly_bien_khoi_ky_sau(erp_session):
     assert "Máy chiếu" not in thang_8
 
 
-async def test_tong_trang_bi_doi_theo_ky(erp_session):
+async def test_tong_thiet_bi_doi_theo_ky(erp_session):
     repo = ErpTrangBiRepository(erp_session)
     tong = lambda rows: sum(a.so_luong for _, a, _ in rows)  # noqa: E731
     # Tháng 7: máy in 8 + máy chủ 6 + máy chiếu 4 = 18
@@ -108,15 +108,15 @@ async def test_lay_kem_ten_chung_loai(erp_session):
     assert rows[0][2] == "Thiết bị"
 
 
-# ------------------------------------------- quân số theo "as-of" -------- #
-async def test_quan_so_tru_nguoi_da_nghi_viec(erp_session):
+# ------------------------------------------- nhân sự theo "as-of" -------- #
+async def test_nhan_su_tru_nguoi_da_nghi_viec(erp_session):
     """Lê Văn C nghỉ 15/8: còn tính ở kỳ tháng 7, hết tính ở kỳ tháng 8."""
     repo = ErpNhanSuRepository(erp_session)
     assert (await repo.headcount_by_dept(period_end("2026-07")))[1] == 3
     assert (await repo.headcount_by_dept(period_end("2026-08")))[1] == 2
 
 
-async def test_quan_so_cong_nguoi_moi_vao(erp_session):
+async def test_nhan_su_cong_nguoi_moi_vao(erp_session):
     repo = ErpNhanSuRepository(erp_session)
     assert (await repo.headcount_by_dept(period_end("2026-07")))[2] == 2
     assert (await repo.headcount_by_dept(period_end("2026-08")))[2] == 3
@@ -134,8 +134,8 @@ async def test_bien_dong_nhan_su_trong_ky(erp_session):
 async def test_tai_nguyen_don_vi_theo_ky(erp_session):
     tai_nguyen = await ErpTaiNguyenRepository(erp_session).get_tai_nguyen("00002", "2026-08")
     assert tai_nguyen.ten_don_vi == "Đơn vị 2"
-    assert tai_nguyen.quan_so == 3
-    assert tai_nguyen.tong_trang_bi == 8      # máy chủ 6 + xe công vụ 2
+    assert tai_nguyen.nhan_su == 3
+    assert tai_nguyen.tong_thiet_bi == 8      # máy chủ 6 + xe công vụ 2
     assert tai_nguyen.ky == "2026-08"
 
 
@@ -152,7 +152,7 @@ async def test_don_vi_khong_ton_tai(erp_session):
 async def test_chua_khai_bao_ma_trang_thai_thi_khong_ket_luan_bao_duong(erp_session):
     """Không biết mã trạng thái nào là "tốt" thì phải im lặng, không đoán."""
     tai_nguyen = await ErpTaiNguyenRepository(erp_session).get_tai_nguyen("00002", "2026-08")
-    assert all(tb["tinh_trang_tot"] is None for tb in tai_nguyen.trang_bi)
+    assert all(tb["tinh_trang_tot"] is None for tb in tai_nguyen.thiet_bi)
     assert "so_loai_can_bao_duong" not in tai_nguyen.as_dict()
 
 
@@ -212,7 +212,7 @@ async def test_danh_muc_mau_bao_cao(session):
 
 async def test_truong_du_lieu_doc_ra_json(session):
     template = await TemplateRepository(session).get("BC_THANG")
-    assert template.fields["muc"] == ["quan_so", "trang_bi"]
+    assert template.fields["muc"] == ["nhan_su", "thiet_bi"]
 
 
 async def test_so_van_ban_ghi_va_doc_lai(session):

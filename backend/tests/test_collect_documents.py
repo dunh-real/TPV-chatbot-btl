@@ -99,7 +99,7 @@ def test_file_hong_duoc_ke_ra_chu_khong_im_lang_bo_qua():
 
 def test_cot_ngay_thang_khong_bi_dem_thanh_so_luong():
     """"Bảo dưỡng gần nhất" là cột NGÀY; đếm nó thành thiết bị hỏng là sai hẳn."""
-    co_cot_ngay = """| Tên trang bị | Số lượng | Tình trạng | Bảo dưỡng gần nhất |
+    co_cot_ngay = """| Tên thiết bị | Số lượng | Tình trạng | Bảo dưỡng gần nhất |
 | --- | --- | --- | --- |
 | Máy chủ | 6 | Tốt | 2026-03-05 |
 | Máy trạm | 60 | Tốt | 2026-04-01 |
@@ -117,4 +117,4 @@ def test_lech_rang_buoc_nghiep_vu_thi_bao_ra():
 | Máy chủ | 6 | 1 |
 """
     agg = aggregate_reports([_report("DV01", thieu_cot)], "2026-08")
-    assert agg["consistency"] and "Tổng trang bị 6" in agg["consistency"][0]["message"]
+    assert agg["consistency"] and "Tổng thiết bị 6" in agg["consistency"][0]["message"]

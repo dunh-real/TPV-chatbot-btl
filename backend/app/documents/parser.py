@@ -2,7 +2,7 @@
 
 Khác với `app.rag.converter` (chỉ cần text để chunk), workflow 2 phải biết font,
 cỡ chữ và lề trang - đó là dữ liệu cho rule engine. LLM không bao giờ nhìn thấy
-những thuộc tính này, nên mọi kết luận về thể thức phải đến từ đây.
+những thuộc tính này, nên mọi kết luận về trình bày phải đến từ đây.
 
 Ba mức thông tin tuỳ nguồn:
     docx        đầy đủ: font, cỡ, đậm, canh lề, lề trang, style
@@ -13,6 +13,7 @@ Ba mức thông tin tuỳ nguồn:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -76,7 +77,7 @@ class DocumentStructure:
 
     @property
     def has_format_info(self) -> bool:
-        """Rule engine chỉ kiểm tra được thể thức khi cờ này bật."""
+        """Rule engine chỉ kiểm tra được cách trình bày khi cờ này bật."""
         return self.source_format in ("docx", "pdf_digital")
 
     @property
@@ -173,8 +174,72 @@ def _resolve_run_format(run, paragraph, default_font, default_size):
     return font or default_font, size if size is not None else default_size
 
 
+def _paragraph_block(block_id: str, paragraph, default_font, default_size) -> Block:
+    """Một đoạn kèm định dạng ĐANG CÓ HIỆU LỰC của nó."""
+    # Lấy định dạng của run đầu tiên có chữ - đại diện cho cả đoạn.
+    run = next((r for r in paragraph.runs if r.text.strip()), None)
+    line_spacing, space_before, space_after = _spacing(paragraph)
+    font, size = (
+        _resolve_run_format(run, paragraph, default_font, default_size)
+        if run is not None
+        else (default_font, default_size)
+    )
+    return Block(
+        id=block_id,
+        text=paragraph.text.strip(),
+        kind="heading" if paragraph.style.name.startswith("Heading") else "paragraph",
+        font=font,
+        size_pt=size,
+        bold=bool(run.font.bold) if run is not None else False,
+        alignment=_alignment_name(paragraph),
+        line_spacing=line_spacing,
+        space_before_pt=space_before,
+        space_after_pt=space_after,
+        style=paragraph.style.name,
+    )
+
+
+def _table_blocks(table, table_id: str, default_font, default_size) -> tuple[Block | None, list[Block]]:
+    """(khối bảng gộp, từng ô giữ định dạng thật).
+
+    Khối gộp để mọi bước sau thấy bảng là một đơn vị; từng ô giữ riêng vì định
+    dạng thật của ô không đọc được từ khối gộp.
+    """
+    cells: list[Block] = []
+    for cell_index, paragraph in enumerate(
+        p for row in table.rows for cell in row.cells for p in cell.paragraphs
+    ):
+        if not paragraph.text.strip():
+            continue
+        cells.append(_paragraph_block(f"{table_id}C{cell_index:02d}", paragraph,
+                                      default_font, default_size))
+
+    rows = [" | ".join(cell.text.strip() for cell in row.cells) for row in table.rows]
+    text = "\n".join(r for r in rows if r.strip(" |"))
+    if not text:
+        return None, cells
+
+    # Đọc định dạng thật của ô đầu tiên có chữ - lấy mặc định tài liệu sẽ báo sai
+    # khi bảng dùng style riêng (Table Grid mặc định 11pt).
+    font, size = default_font, default_size
+    for row in table.rows:
+        cell_run = next(
+            (r for cell in row.cells for p in cell.paragraphs
+             for r in p.runs if r.text.strip()),
+            None,
+        )
+        if cell_run is not None:
+            font, size = _resolve_run_format(cell_run, cell_run._parent, default_font, default_size)
+            break
+
+    return Block(id=table_id, text=text, kind="table", font=font, size_pt=size), cells
+
+
 def parse_docx(path: Path) -> DocumentStructure:
     import docx
+    from docx.oxml.ns import qn
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
 
     document = docx.Document(str(path))
     default_font, default_size = _docx_defaults(document)
@@ -191,87 +256,27 @@ def parse_docx(path: Path) -> DocumentStructure:
             right_mm=section.right_margin.mm if section.right_margin else 0.0,
         )
 
+    # Đi theo đúng thứ tự trong thân tài liệu, không đọc hết đoạn rồi mới tới bảng:
+    # một bảng nằm ngay dưới tiêu đề mục mà bị dồn xuống cuối thì mục đó hoá ra
+    # "không có nội dung", còn marker trích dẫn [n] thì trỏ sang chỗ khác.
     blocks: list[Block] = []
-    for paragraph in document.paragraphs:
-        if not paragraph.text.strip():
-            continue
-        # Lấy định dạng của run đầu tiên có chữ - đại diện cho cả đoạn.
-        run = next((r for r in paragraph.runs if r.text.strip()), None)
-        line_spacing, space_before, space_after = _spacing(paragraph)
-        font, size = (
-            _resolve_run_format(run, paragraph, default_font, default_size)
-            if run is not None
-            else (default_font, default_size)
-        )
-        blocks.append(
-            Block(
-                id=f"P{len(blocks):02d}",
-                text=paragraph.text.strip(),
-                kind="heading" if paragraph.style.name.startswith("Heading") else "paragraph",
-                font=font,
-                size_pt=size,
-                bold=bool(run.font.bold) if run is not None else False,
-                alignment=_alignment_name(paragraph),
-                line_spacing=line_spacing,
-                space_before_pt=space_before,
-                space_after_pt=space_after,
-                style=paragraph.style.name,
-            )
-        )
-
     table_cells: list[Block] = []
-    for table_index, table in enumerate(document.tables):
-        for cell_index, paragraph in enumerate(
-            p for row in table.rows for cell in row.cells for p in cell.paragraphs
-        ):
+    so_doan = so_bang = 0
+    for child in document.element.body.iterchildren():
+        if child.tag == qn("w:p"):
+            paragraph = Paragraph(child, document)
             if not paragraph.text.strip():
                 continue
-            cell_run = next((r for r in paragraph.runs if r.text.strip()), None)
-            cell_font, cell_size = (
-                _resolve_run_format(cell_run, paragraph, default_font, default_size)
-                if cell_run is not None
-                else (default_font, default_size)
-            )
-            cell_ls, cell_sb, cell_sa = _spacing(paragraph)
-            table_cells.append(Block(
-                id=f"T{table_index:02d}C{cell_index:02d}",
-                text=paragraph.text.strip(),
-                kind="paragraph",
-                font=cell_font,
-                size_pt=cell_size,
-                bold=bool(cell_run.font.bold) if cell_run is not None else False,
-                alignment=_alignment_name(paragraph),
-                line_spacing=cell_ls,
-                space_before_pt=cell_sb,
-                space_after_pt=cell_sa,
-                style=paragraph.style.name,
-            ))
-
-        rows = [
-            " | ".join(cell.text.strip() for cell in row.cells)
-            for row in table.rows
-        ]
-        text = "\n".join(r for r in rows if r.strip(" |"))
-        if not text:
-            continue
-
-        # Đọc định dạng thật của ô đầu tiên có chữ - lấy mặc định tài liệu sẽ
-        # báo sai khi bảng dùng style riêng (Table Grid mặc định 11pt).
-        font, size = default_font, default_size
-        for row in table.rows:
-            cell_run = next(
-                (r for cell in row.cells for p in cell.paragraphs
-                 for r in p.runs if r.text.strip()),
-                None,
-            )
-            if cell_run is not None:
-                paragraph = cell_run._parent
-                font, size = _resolve_run_format(cell_run, paragraph, default_font, default_size)
-                break
-
-        blocks.append(
-            Block(id=f"T{table_index:02d}", text=text, kind="table", font=font, size_pt=size)
-        )
+            blocks.append(_paragraph_block(f"P{so_doan:02d}", paragraph,
+                                           default_font, default_size))
+            so_doan += 1
+        elif child.tag == qn("w:tbl"):
+            blob, cells = _table_blocks(Table(child, document), f"T{so_bang:02d}",
+                                        default_font, default_size)
+            table_cells += cells
+            if blob is not None:
+                blocks.append(blob)
+            so_bang += 1
 
     return DocumentStructure(
         blocks=blocks,
@@ -353,7 +358,7 @@ def parse_pdf(path: Path) -> DocumentStructure:
     finally:
         document.close()
 
-    # Rất ít chữ trên mỗi trang => PDF scan, không có gì để kiểm tra thể thức.
+    # Rất ít chữ trên mỗi trang => PDF scan, không đọc được định dạng nào.
     is_scan = page_count > 0 and text_chars / page_count < 100
     return DocumentStructure(
         blocks=blocks,
@@ -379,6 +384,50 @@ def normalize_font(name: str | None) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# TXT / Markdown
+# --------------------------------------------------------------------------- #
+_MD_HEADING = re.compile(r"^(#{1,6})\s+(\S.*)$")
+
+
+def parse_text(path: Path) -> DocumentStructure:
+    """.txt/.md: không mang thông tin định dạng, nhưng Markdown có "#".
+
+    Dấu "#" là thứ bậc mục do người soạn khai hẳn ra - đọc được nó thì bước kiểm
+    cấu trúc chạy được với cả .md chứ không riêng .docx. Đổi lại phải tách khối
+    theo dòng chứ không cắt thô theo dòng trống: "## Mục\nNội dung" là hai khối
+    khác nhau nằm chung một đoạn.
+    """
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    markdown = path.suffix.lower() != ".txt"
+
+    chunks: list[tuple[str, int | None]] = []
+    buffer: list[str] = []
+    for line in raw.splitlines():
+        heading = _MD_HEADING.match(line.strip()) if markdown else None
+        if heading is not None or not line.strip():
+            chunks.append(("\n".join(buffer), None))
+            buffer = []
+        if heading is not None:
+            chunks.append((heading.group(2), len(heading.group(1))))
+        elif line.strip():
+            buffer.append(line)
+    chunks.append(("\n".join(buffer), None))
+
+    blocks: list[Block] = []
+    for text, level in chunks:
+        text = text.strip()
+        if not text:
+            continue
+        blocks.append(Block(
+            id=f"P{len(blocks):02d}",
+            text=text,
+            kind="heading" if level else "paragraph",
+            style=f"Heading {level}" if level else None,
+        ))
+    return DocumentStructure(blocks=blocks, source_format="text")
+
+
+# --------------------------------------------------------------------------- #
 def parse_document(path: str | Path) -> DocumentStructure:
     path = Path(path)
     suffix = path.suffix.lower()
@@ -387,10 +436,5 @@ def parse_document(path: str | Path) -> DocumentStructure:
     if suffix == ".pdf":
         return parse_pdf(path)
     if suffix in (".txt", ".md", ".markdown"):
-        # Không có định dạng -> chỉ chạy được nhánh LLM.
-        lines = [l.strip() for l in path.read_text(encoding="utf-8", errors="ignore").split("\n\n")]
-        return DocumentStructure(
-            blocks=[Block(id=f"P{i:02d}", text=t) for i, t in enumerate(l for l in lines if l)],
-            source_format="text",
-        )
+        return parse_text(path)
     raise ValueError(f"Workflow 2 chỉ xử lý .docx, .pdf, .txt, .md - nhận được {path.suffix}")

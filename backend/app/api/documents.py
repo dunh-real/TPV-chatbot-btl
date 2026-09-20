@@ -80,7 +80,7 @@ async def ingest_text(request: IngestTextRequest) -> IngestResponse:
 
 
 @router.get("/rule-sets", response_model=list[RuleSetInfo],
-            summary="Các bộ tiêu chí thể thức có thể chọn")
+            summary="Các bộ tiêu chí cấu trúc có thể chọn")
 async def rule_sets() -> list[RuleSetInfo]:
     """Mỗi file YAML trong `config/rules/` là một bộ tiêu chí.
 
@@ -90,26 +90,20 @@ async def rule_sets() -> list[RuleSetInfo]:
     return [RuleSetInfo(**item) for item in available_rule_sets()]
 
 
-@router.post("/review", response_model=ReviewResponse, summary="Xử lý văn bản (workflow 2)")
+@router.post("/review", response_model=ReviewResponse, summary="Soát tài liệu (workflow 2)")
 async def review_document(
     file: UploadFile = File(...),
     noi_gui: str = Form(default=""),
     rule_set: str = Form(default=""),
-    force_rules: bool = Form(default=False),
 ) -> ReviewResponse:
-    """Kiểm tra thể thức, soát chữ nghĩa, phân loại và phân rã nhiệm vụ.
+    """Kiểm tra cấu trúc, soát chữ nghĩa, phân loại và phân rã nhiệm vụ.
 
-    Thể thức do rule engine kiểm tra từ định dạng file; LLM chỉ soát chữ nghĩa và
-    đọc nội dung - hai việc dùng hai nguồn dữ liệu khác nhau.
+    Nhận MỌI loại tài liệu, không riêng văn bản hành chính. Hai nhánh dùng hai
+    nguồn dữ liệu khác nhau: rule engine đọc cách tổ chức và định dạng thật của
+    file (dàn ý, thứ bậc mục, đánh số, phông chữ, lề trang), còn LLM chỉ soát chữ
+    nghĩa - chính tả, ngữ pháp, diễn đạt, logic.
 
-    Loại văn bản (công văn, quyết định, báo cáo...) được dò tất định từ chính văn
-    bản và quyết định danh sách thành phần bắt buộc: công văn không có tên loại,
-    quyết định không có dòng "V/v" - đòi đủ mọi thành phần cho mọi loại thì loại
-    nào cũng bị báo sai vài chỗ. `rule_set` để trống là dùng bộ mặc định.
-
-    Tệp không mang dấu hiệu văn bản hành chính thì `rule_check.status = "skipped"`
-    kèm lý do, thay vì dội ra hàng chục lỗi vô nghĩa - đặt `force_rules=true` nếu
-    vẫn muốn soát.
+    `rule_set` để trống là dùng bộ tiêu chí mặc định trong `config/rules`.
     """
     cfg = get_settings()
     suffix = Path(file.filename or "").suffix.lower()
@@ -139,7 +133,6 @@ async def review_document(
     result = await run_document_workflow(
         file_path=str(target), file_name=target.name,
         noi_gui=noi_gui, departments=departments, rule_set=rule_set,
-        force_rules=force_rules,
     )
     return ReviewResponse(**result)
 

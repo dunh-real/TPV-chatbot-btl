@@ -87,7 +87,7 @@ def fake_tools(monkeypatch):
         dang_chay["n"] -= 1
         if ky == "rong":
             return {"ky": ky, "units_with_data": 0, "breakdown": []}
-        return {"ky": ky, "quan_so": 48}
+        return {"ky": ky, "nhan_su": 48}
 
     async def ghi_file(noi_dung: str):
         goi.append(("ghi_file", {"noi_dung": noi_dung}))
@@ -154,13 +154,13 @@ def test_moi_tool_deu_sinh_duoc_schema():
 # Bốn điều kiện dừng
 # --------------------------------------------------------------------------- #
 async def test_dung_khi_model_thoi_doi_tool(fake_tools, monkeypatch):
-    llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"), turn_text("Quân số là 48.")])
+    llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"), turn_text("Nhân sự là 48.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
-    result = await toolloop.run_tool_loop("quân số bao nhiêu")
+    result = await toolloop.run_tool_loop("nhân sự bao nhiêu")
     assert result["stop_reason"] == "hoàn thành"
     assert result["tools_called"] == ["doc_so_lieu"]
-    assert result["answer"] == "Quân số là 48."
+    assert result["answer"] == "Nhân sự là 48."
 
 
 async def test_dung_khi_cham_tran_so_buoc(fake_tools, monkeypatch):
@@ -198,7 +198,7 @@ async def test_loi_tool_duoc_tra_nguoc_cho_model_tu_sua(fake_tools, monkeypatch)
     """Sai tham số thì model phải được đọc thông báo lỗi, không phải sập request."""
     llm = ScriptedLLM([turn_call("doc_so_lieu", ky="sai"),
                        turn_call("doc_so_lieu", ky="2026-08"),
-                       turn_text("Quân số là 48.")])
+                       turn_text("Nhân sự là 48.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
     result = await toolloop.run_tool_loop("hỏi")
@@ -231,20 +231,20 @@ async def test_tool_ghi_bi_chan_cho_nguoi_duyet(fake_tools, monkeypatch):
 async def test_so_khong_truy_duoc_thi_bi_danh_dau(fake_tools, monkeypatch):
     """Van chống bịa số của workflow 3/4/5, áp lại cho vòng lặp."""
     llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"),
-                       turn_text("Quân số là 48, trong đó 37 người đi công tác.")])
+                       turn_text("Nhân sự là 48, trong đó 37 người đi công tác.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
-    result = await toolloop.run_tool_loop("quân số bao nhiêu")
+    result = await toolloop.run_tool_loop("nhân sự bao nhiêu")
     assert result["validation"]["status"] == "failed"
     assert "37" in result["validation"]["issues"][0]["numbers"]
 
 
 async def test_so_truy_duoc_thi_qua_van(fake_tools, monkeypatch):
     llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"),
-                       turn_text("Quân số kỳ 2026-08 là 48 người.")])
+                       turn_text("Nhân sự kỳ 2026-08 là 48 người.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
-    result = await toolloop.run_tool_loop("quân số bao nhiêu")
+    result = await toolloop.run_tool_loop("nhân sự bao nhiêu")
     assert result["validation"]["status"] == "passed"
 
 
@@ -261,7 +261,7 @@ async def test_nhieu_loi_goi_trong_mot_luot_chay_song_song(fake_tools, monkeypat
     ])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
-    result = await toolloop.run_tool_loop("quân số ba đơn vị tháng 8")
+    result = await toolloop.run_tool_loop("nhân sự ba đơn vị tháng 8")
 
     assert len(result["tool_log"]) == 3
     assert fake_tools.dinh_cao_song_song["dinh"] == 3, "ba lời gọi vẫn chạy nối đuôi"
@@ -299,14 +299,14 @@ async def test_loi_goi_trung_khong_giet_ca_luot(fake_tools, monkeypatch):
         turn_calls(("doc_so_lieu", {"ky": "2026-08", "ma_don_vi": "DV02"}),
                    ("doc_so_lieu", {"ky": "2026-08", "ma_don_vi": "DV01"}),
                    ("doc_so_lieu", {"ky": "2026-08", "ma_don_vi": "DV03"})),
-        turn_text("Quân số mỗi đơn vị là 48 người."),
+        turn_text("Nhân sự mỗi đơn vị là 48 người."),
     ])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
-    result = await toolloop.run_tool_loop("quân số ba đơn vị")
+    result = await toolloop.run_tool_loop("nhân sự ba đơn vị")
 
     assert result["stop_reason"] == "hoàn thành"
-    assert result["answer"] == "Quân số mỗi đơn vị là 48 người."
+    assert result["answer"] == "Nhân sự mỗi đơn vị là 48 người."
     assert [item["arguments"]["ma_don_vi"] for item in result["tool_log"]] == \
         ["DV01", "DV02", "DV03"], "lời gọi trùng đã kéo theo lời gọi sau nó"
 
@@ -330,8 +330,8 @@ def test_nhan_ra_ket_qua_rong_ruot():
     assert toolloop.looks_empty({"hits": []})
     assert toolloop.looks_empty([])
     # Có dữ liệu thật thì không phải rỗng, kể cả khi vài chỉ tiêu bằng 0.
-    assert not toolloop.looks_empty({"units_with_data": 2, "breakdown": [{"quan_so": 0}]})
-    assert not toolloop.looks_empty({"ky": "2026-08", "quan_so": 0})
+    assert not toolloop.looks_empty({"units_with_data": 2, "breakdown": [{"nhan_su": 0}]})
+    assert not toolloop.looks_empty({"ky": "2026-08", "nhan_su": 0})
 
 
 async def test_nguon_rong_duoc_bao_cho_model_bang_loi_khac_loi(fake_tools, monkeypatch):
@@ -348,7 +348,7 @@ async def test_nguon_rong_duoc_bao_cho_model_bang_loi_khac_loi(fake_tools, monke
                        turn_text("Kỳ này chưa có dữ liệu.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
-    result = await toolloop.run_tool_loop("quân số kỳ đó")
+    result = await toolloop.run_tool_loop("nhân sự kỳ đó")
 
     assert result["tool_log"][0]["empty"] is True
     assert result["tool_log"][0]["ok"] is True, "nguồn trống KHÁC lỗi công cụ"
@@ -363,12 +363,12 @@ async def test_phat_nhip_tim_moi_luot_va_khi_goi_cong_cu(fake_tools, monkeypatch
     """Một lượt LLM mất 10-15 giây; không báo gì thì vòng lặp trông như đã treo."""
     from app.agents import progress
 
-    llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"), turn_text("Quân số là 48.")])
+    llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"), turn_text("Nhân sự là 48.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
     ghi: list[tuple[str, dict]] = []
     with progress.collecting(lambda e, d: ghi.append((e, d))):
-        await toolloop.run_tool_loop("quân số bao nhiêu")
+        await toolloop.run_tool_loop("nhân sự bao nhiêu")
 
     nhip = [d for e, d in ghi if e == "step_progress"]
     # Hai lượt LLM -> hai nhịp "đang suy nghĩ", cộng một nhịp lúc gọi công cụ.
@@ -405,12 +405,12 @@ async def test_cau_tra_loi_cuoi_duoc_phat_theo_manh(fake_tools, monkeypatch):
     from app.agents import progress
 
     llm = ScriptedLLM([turn_call("doc_so_lieu", ky="2026-08"),
-                       turn_text("Quân số kỳ 2026-08 là 48 người.")])
+                       turn_text("Nhân sự kỳ 2026-08 là 48 người.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
     ghi: list[tuple[str, dict]] = []
     with progress.collecting(lambda e, d: ghi.append((e, d))):
-        result = await toolloop.run_tool_loop("quân số bao nhiêu")
+        result = await toolloop.run_tool_loop("nhân sự bao nhiêu")
 
     manh = [d["text"] for e, d in ghi if e == "answer_delta"]
     assert len(manh) > 1, "câu trả lời vẫn về một cục"
@@ -444,7 +444,7 @@ async def test_cau_dan_truoc_khi_goi_tool_thi_bao_xoa(fake_tools, monkeypatch):
         content="Để tôi tra số liệu đã.", reasoning="",
         tool_calls=[ToolCall(id="c1", name="doc_so_lieu", arguments={"ky": "2026-08"})],
         raw={"role": "assistant", "tool_calls": []})
-    llm = ScriptedLLM([dan, turn_text("Quân số là 48.")])
+    llm = ScriptedLLM([dan, turn_text("Nhân sự là 48.")])
     monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
 
     ghi: list[tuple[str, dict]] = []

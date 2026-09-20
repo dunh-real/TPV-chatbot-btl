@@ -11,7 +11,7 @@ from app.schemas.common import ReferenceModel
 
 class DraftRequest(BaseModel):
     request: str = Field(min_length=1, max_length=2000,
-                         examples=["Soạn báo cáo tình hình trang bị tháng 8"])
+                         examples=["Soạn báo cáo tình hình thiết bị tháng 8"])
     ma_don_vi: str | None = Field(
         default=None, description="Đơn vị lập báo cáo; bỏ trống thì hệ thống sẽ hỏi lại"
     )
@@ -113,7 +113,7 @@ class TemplateSummary(BaseModel):
 # --------------------------------------------------------------------------- #
 class AggregateRequest(BaseModel):
     request: str = Field(min_length=1, max_length=2000,
-                         examples=["Tổng hợp báo cáo quân số và trang thiết bị tháng 8"])
+                         examples=["Tổng hợp báo cáo nhân sự và trang thiết bị tháng 8"])
     inputs: dict[str, str] = Field(
         default_factory=dict,
         description="nguoi_ky, chuc_vu_ky, so_ky_hieu, noi_nhan... nếu muốn ghi đè mặc định",

@@ -13,7 +13,7 @@ def test_danh_so_lien_tuc_tu_mot():
 
 
 def test_gop_nhieu_nhom_thi_danh_so_lien_tuc():
-    a = R.from_data({"quan_so": {"tong": 113}})
+    a = R.from_data({"nhan_su": {"tong": 113}})
     b = R.from_regulations([{"doc_title": "NĐ 30", "section": "Điều 8", "text": "..."}])
 
     gop = R.merge(a, b)
@@ -46,8 +46,8 @@ def test_quen_danh_so_thi_tra_ve_tat_ca():
 
 def test_go_marker_truoc_khi_do_vao_file():
     """Văn bản hành chính không được phép có "[1]" nằm giữa câu."""
-    assert R.strip_markers("Quân số 113 người [1], tăng 3 [2][3].") == \
-        "Quân số 113 người, tăng 3."
+    assert R.strip_markers("Nhân sự 113 người [1], tăng 3 [2][3].") == \
+        "Nhân sự 113 người, tăng 3."
 
 
 def test_go_marker_khong_dung_den_so_that():
@@ -146,11 +146,11 @@ def test_khong_co_marker_thi_khong_doi_gi():
 def test_go_marker_khong_de_lai_dau_phay_thua():
     assert R.strip_markers("Tổng 21 trang thiết bị thuộc 5 chủng loại [1], [2].") == \
         "Tổng 21 trang thiết bị thuộc 5 chủng loại."
-    assert R.strip_markers("Quân số 3 người [1],,,,,, đơn vị kiến nghị rà soát.") == \
-        "Quân số 3 người, đơn vị kiến nghị rà soát."
+    assert R.strip_markers("Nhân sự 3 người [1],,,,,, đơn vị kiến nghị rà soát.") == \
+        "Nhân sự 3 người, đơn vị kiến nghị rà soát."
     assert R.strip_markers("Kiểm kê ngày 31/8/2026 [1] .") == "Kiểm kê ngày 31/8/2026."
 
 
 def test_dau_phay_that_van_duoc_giu():
-    assert R.strip_markers("Quân số 3 người, trang bị 21 chiếc.") == \
-        "Quân số 3 người, trang bị 21 chiếc."
+    assert R.strip_markers("Nhân sự 3 người, thiết bị 21 chiếc.") == \
+        "Nhân sự 3 người, thiết bị 21 chiếc."

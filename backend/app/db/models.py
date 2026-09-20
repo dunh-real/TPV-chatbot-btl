@@ -1,6 +1,6 @@
 """Dữ liệu do CHÍNH hệ thống này sinh ra và quản lý.
 
-Phòng ban, trang bị, nhân sự không nằm ở đây: chúng thuộc về ERP và chỉ được đọc
+Phòng ban, thiết bị, nhân sự không nằm ở đây: chúng thuộc về ERP và chỉ được đọc
 (xem `app.db.erp_models`). Còn lại là hai thứ ERP không có chỗ chứa - mẫu báo cáo
 và sổ văn bản do hệ thống tự phát sinh - nên vẫn cần một CSDL riêng để ghi.
 """

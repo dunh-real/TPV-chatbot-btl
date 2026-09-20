@@ -151,7 +151,7 @@ class Settings(BaseSettings):
     database_echo: bool = False
 
     # ------------------------------------------------- CSDL ERP (CHỈ ĐỌC) ---
-    # Nguồn sự thật về phòng ban / trang bị / nhân sự. Quyền được cấp là chỉ đọc,
+    # Nguồn sự thật về phòng ban / thiết bị / nhân sự. Quyền được cấp là chỉ đọc,
     # và `app.db.erp_session` chặn mọi câu lệnh ghi ngay tại engine - đừng gỡ chốt
     # đó ra kể cả khi login tình cờ có quyền ghi.
     #   mssql+aioodbc://user:pass@host:1433/db?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes

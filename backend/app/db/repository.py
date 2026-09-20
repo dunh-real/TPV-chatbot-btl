@@ -23,28 +23,28 @@ class TaiNguyenDonVi:
 
     ma_don_vi: str
     ten_don_vi: str
-    quan_so: int
-    quan_so_kiem_ke: date | None
-    trang_bi: list[dict[str, Any]] = field(default_factory=list)
+    nhan_su: int
+    nhan_su_kiem_ke: date | None
+    thiet_bi: list[dict[str, Any]] = field(default_factory=list)
     ky: str | None = None          # None = hiện trạng; "2026-08" = số liệu kỳ đó
     ghi_chu: str = ""
 
     @property
-    def tong_trang_bi(self) -> int:
-        return sum(item["so_luong"] for item in self.trang_bi)
+    def tong_thiet_bi(self) -> int:
+        return sum(item["so_luong"] for item in self.thiet_bi)
 
     def can_bao_duong(self) -> list[dict[str, Any]]:
-        """Chỉ những trang bị ĐƯỢC BIẾT CHẮC là không tốt.
+        """Chỉ những thiết bị ĐƯỢC BIẾT CHẮC là không tốt.
 
         `tinh_trang_tot=None` nghĩa là chưa khai báo mã trạng thái của ERP nên
         không diễn giải được - khi đó không kết luận gì, vì đoán sai theo hướng
         nào cũng ra một con số sai trong văn bản trình ký.
         """
-        return [t for t in self.trang_bi if t.get("tinh_trang_tot") is False]
+        return [t for t in self.thiet_bi if t.get("tinh_trang_tot") is False]
 
     @property
     def biet_tinh_trang(self) -> bool:
-        return any(t.get("tinh_trang_tot") is not None for t in self.trang_bi)
+        return any(t.get("tinh_trang_tot") is not None for t in self.thiet_bi)
 
     def as_dict(self) -> dict[str, Any]:
         """Dạng phẳng để nhúng vào prompt sinh báo cáo."""
@@ -52,14 +52,14 @@ class TaiNguyenDonVi:
             "ma_don_vi": self.ma_don_vi,
             "ten_don_vi": self.ten_don_vi,
             "ky": self.ky,
-            "quan_so": self.quan_so,
-            "quan_so_kiem_ke": self.quan_so_kiem_ke.isoformat() if self.quan_so_kiem_ke else None,
-            "tong_so_trang_bi": self.tong_trang_bi,
-            "so_loai_trang_bi": len(self.trang_bi),
-            "trang_bi": self.trang_bi,
+            "nhan_su": self.nhan_su,
+            "nhan_su_kiem_ke": self.nhan_su_kiem_ke.isoformat() if self.nhan_su_kiem_ke else None,
+            "tong_so_thiet_bi": self.tong_thiet_bi,
+            "so_loai_thiet_bi": len(self.thiet_bi),
+            "thiet_bi": self.thiet_bi,
         }
         # Vắng mặt hẳn thì prompt không nhắc tới; có mặt với giá trị 0 thì LLM sẽ
-        # viết "không có trang bị nào cần bảo dưỡng" - một khẳng định chưa kiểm được.
+        # viết "không có thiết bị nào cần bảo dưỡng" - một khẳng định chưa kiểm được.
         if self.biet_tinh_trang:
             data["so_loai_can_bao_duong"] = len(self.can_bao_duong())
         if self.ghi_chu:

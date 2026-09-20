@@ -35,7 +35,7 @@ phải và sửa **API base URL** về `http://localhost:8080`; giá trị này 
 | Màn hình | Gọi | Hiển thị đặc thù |
 |---|---|---|
 | Agent tổng | `POST /api/agent/chat`, `POST /api/agent/upload` | nhãn định tuyến, file sinh ra, `missing_input` bấm được — và **hỏi đáp tài liệu** (SSE, marker `[n]` bấm ra nguyên văn đoạn nguồn) |
-| Soát văn bản | `POST /api/documents/review`, `GET /rule-sets` | chọn bộ tiêu chí, loại văn bản hệ thống tự nhận, lỗi thể thức tách khỏi lỗi chữ nghĩa |
+| Soát tài liệu | `POST /api/documents/review`, `GET /rule-sets` | chọn bộ tiêu chí, dàn ý dò được, lỗi cấu trúc & trình bày tách khỏi lỗi chữ nghĩa |
 | Soạn báo cáo | `POST /api/reports/draft` (`nguon=tai_lieu`), `POST /api/agent/upload` | soạn từ MỘT tài liệu tải lên; từng mục kèm loại, kết quả kiểm chứng số, thẻ nói rõ mức bảo đảm |
 | Tổng hợp báo cáo | `POST /api/reports/aggregate` (`nguon_so_lieu=csdl`) | gộp nhiều đơn vị từ CSDL; số liệu gốc value/prev/delta/%, bảng theo đơn vị, đối chiếu file |
 | Tạo slide | `POST /api/presentations/create` | xem trước từng slide + JSON trung gian đã lọc |

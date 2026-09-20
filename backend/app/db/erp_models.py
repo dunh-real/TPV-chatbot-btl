@@ -44,7 +44,7 @@ class WorkDepartment(ErpBase):
 
 
 class AssetCategory(ErpBase):
-    """`Asm_AssetCategories` - chủng loại trang bị."""
+    """`Asm_AssetCategories` - chủng loại thiết bị."""
 
     __tablename__ = "Asm_AssetCategories"
 
@@ -59,7 +59,7 @@ class AssetCategory(ErpBase):
 
 
 class Asset(ErpBase):
-    """`Asm_Assets` - một trang bị thuộc một phòng ban.
+    """`Asm_Assets` - một thiết bị thuộc một phòng ban.
 
     `Quantity` cho phép NULL trong khi báo cáo luôn phải cộng ra một con số; đọc
     qua `so_luong` để một dòng thiếu số lượng được tính là 1 chứ không phải 0.
@@ -92,9 +92,9 @@ class Asset(ErpBase):
 
 
 class EmployeeProfile(ErpBase):
-    """`Hrm_EmployeeProfile` - hồ sơ nhân sự, nguồn của chỉ tiêu quân số.
+    """`Hrm_EmployeeProfile` - hồ sơ nhân sự, nguồn của chỉ tiêu nhân sự.
 
-    Quân số tại một thời điểm suy ra từ `HireDate`/`ResignationDate`. Không dùng
+    Nhân sự tại một thời điểm suy ra từ `HireDate`/`ResignationDate`. Không dùng
     `EmploymentStatusId` vì bảng tra `Hrm_EmployeeStatus` nằm ngoài danh sách bảng
     được phép đọc, nên con số sẽ không giải thích được bằng dữ liệu nhìn thấy.
     """
@@ -116,7 +116,7 @@ class EmployeeProfile(ErpBase):
 
 
 class WorkPosition(ErpBase):
-    """`Dms_WorkPosition` - chức vụ, chiều gộp thứ hai của chỉ tiêu quân số.
+    """`Dms_WorkPosition` - chức vụ, chiều gộp thứ hai của chỉ tiêu nhân sự.
 
     Không có `DisplayName` như `Dms_WorkDepartment`; tên hiển thị nằm ở `Name`.
     """

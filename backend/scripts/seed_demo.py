@@ -5,7 +5,7 @@
     uv run python scripts/seed_demo.py --reset   # xoá đúng những dòng script này tạo, rồi nạp lại
 
 CHỈ nạp hai bảng mà hệ thống này THỰC SỰ SỞ HỮU: `template_bao_cao` và
-`van_ban`. Phòng ban, đơn vị, nhân sự, trang bị **không** còn ở đây - chúng nằm
+`van_ban`. Phòng ban, đơn vị, nhân sự, thiết bị **không** còn ở đây - chúng nằm
 trong ERP và chỉ được ĐỌC (`app.db.erp_models`). Bản cũ của script này seed cả
 `DonVi`/`TrangBi`/`KyKiemKe`; các model đó đã bị xoá từ đợt chuyển sang ERP nên
 script chết ngay ở dòng `import`.
@@ -43,25 +43,25 @@ TEMPLATE_TAI_NGUYEN = {
     },
     "sections": [
         {
-            "id": "quan_so",
-            "title": "I. TÌNH HÌNH QUÂN SỐ",
+            "id": "nhan_su",
+            "title": "I. TÌNH HÌNH NHÂN SỰ",
             "type": "data",
             "query": "don_vi",
-            "fields": ["quan_so", "quan_so_kiem_ke"],
-            "narrative": "Nêu quân số hiện có và ngày kiểm kê gần nhất. "
+            "fields": ["nhan_su", "nhan_su_kiem_ke"],
+            "narrative": "Nêu nhân sự hiện có và ngày kiểm kê gần nhất. "
                          "Nếu kiểm kê quá 6 tháng thì nêu rõ là đã quá hạn.",
         },
         {
-            "id": "trang_bi",
+            "id": "thiet_bi",
             "title": "II. TÌNH TRẠNG TRANG THIẾT BỊ",
             "type": "table",
-            "query": "trang_bi",
-            "columns": ["ten_trang_bi", "so_luong", "tinh_trang", "cap_nhat_cuoi"],
+            "query": "thiet_bi",
+            "columns": ["ten_thiet_bi", "so_luong", "tinh_trang", "cap_nhat_cuoi"],
             # Không hỏi "số loại đang cần bảo dưỡng": ERP không có chỉ tiêu đó.
             # Mẫu hỏi một chỉ tiêu không tồn tại thì model sẽ dựng ra một con số
             # để trả lời - và con số đó truy được về dữ liệu nên van chắn không
             # bắt. Ba lần chạy thật đều ra "có 5 loại đang cần bảo dưỡng".
-            "narrative": "Sau bảng, nêu tổng số lượng trang bị và số chủng loại. "
+            "narrative": "Sau bảng, nêu tổng số lượng thiết bị và số chủng loại. "
                          "Không nhận xét về tình trạng nếu bảng chưa có nhãn tình trạng.",
         },
         {
@@ -70,13 +70,13 @@ TEMPLATE_TAI_NGUYEN = {
             "type": "llm",
             "narrative": "Nêu kiến nghị rà soát dựa trên số lượng và chủng loại đã nêu ở "
                          "mục II. Không suy ra tình trạng, hạn bảo dưỡng hay nhu cầu "
-                         "thay thế của bất kỳ trang bị nào - số liệu không có những "
+                         "thay thế của bất kỳ thiết bị nào - số liệu không có những "
                          "thông tin đó.",
         },
     ],
 }
 
-TEMPLATE_QUAN_SO = {
+TEMPLATE_NHAN_SU = {
     "meta": {
         "noi_gui": {"source": "unit.ten_don_vi"},
         "noi_nhan": {"source": "literal", "value": "Phòng Hành chính nhân sự"},
@@ -84,11 +84,34 @@ TEMPLATE_QUAN_SO = {
         "ngay_bao_cao": {"source": "today"},
     },
     "sections": [
-        {"id": "quan_so", "title": "I. QUÂN SỐ HIỆN CÓ", "type": "data",
-         "query": "don_vi", "fields": ["quan_so", "quan_so_kiem_ke"],
-         "narrative": "Nêu quân số và thời điểm kiểm kê."},
+        {"id": "nhan_su", "title": "I. NHÂN SỰ HIỆN CÓ", "type": "data",
+         "query": "don_vi", "fields": ["nhan_su", "nhan_su_kiem_ke"],
+         "narrative": "Nêu nhân sự và thời điểm kiểm kê."},
         {"id": "kien_nghi", "title": "II. KIẾN NGHỊ", "type": "llm",
          "narrative": "Kiến nghị về biên chế nếu cần."},
+    ],
+}
+
+# Đối xứng với TEMPLATE_NHAN_SU: có mẫu chỉ về người thì phải có mẫu chỉ về đồ.
+# Thiếu nó, câu "soạn báo cáo thiết bị cho Phòng X" không khớp mẫu nào và hệ
+# thống phải hỏi lại, dù dữ liệu thì có sẵn.
+TEMPLATE_THIET_BI = {
+    "meta": {
+        "noi_gui": {"source": "unit.ten_don_vi"},
+        "noi_nhan": {"source": "literal", "value": "Phòng Hành chính nhân sự"},
+        "nguoi_ky": {"source": "input", "label": "Tên người ký"},
+        "ngay_bao_cao": {"source": "today"},
+    },
+    "sections": [
+        {"id": "thiet_bi", "title": "I. TÌNH TRẠNG TRANG THIẾT BỊ", "type": "table",
+         "query": "thiet_bi",
+         "columns": ["ten_thiet_bi", "so_luong", "tinh_trang", "cap_nhat_cuoi"],
+         "narrative": "Sau bảng, nêu tổng số lượng thiết bị và số chủng loại. "
+                      "Không nhận xét về tình trạng nếu bảng chưa có nhãn tình trạng."},
+        {"id": "de_xuat", "title": "II. ĐỀ XUẤT, KIẾN NGHỊ", "type": "llm",
+         "narrative": "Nêu kiến nghị rà soát dựa trên số lượng và chủng loại đã nêu ở "
+                      "mục I. Không suy ra tình trạng, hạn bảo dưỡng hay nhu cầu thay "
+                      "thế của bất kỳ thiết bị nào - số liệu không có những thông tin đó."},
     ],
 }
 
@@ -108,29 +131,39 @@ TEMPLATE_TONG_HOP = {
 TEMPLATES = [
     TemplateBaoCao(
         ma_template="BC_TAINGUYEN",
-        ten_bao_cao="Báo cáo tổng hợp quân số và trang thiết bị",
+        ten_bao_cao="Báo cáo tổng hợp nhân sự và trang thiết bị",
         loai_bao_cao="bao_cao_dinh_ky",
         mo_ta=(
-            "Dùng khi cấp trên yêu cầu báo cáo đồng thời về quân số và tình trạng trang "
-            "thiết bị của đơn vị, thường phục vụ xây dựng kế hoạch bổ sung trang bị hoặc "
-            "điều chỉnh biên chế. Gồm ba phần: quân số, bảng trang thiết bị, và đề xuất."
+            "Dùng khi cấp trên yêu cầu báo cáo đồng thời về nhân sự và tình trạng trang "
+            "thiết bị của đơn vị, thường phục vụ xây dựng kế hoạch bổ sung thiết bị hoặc "
+            "điều chỉnh biên chế. Gồm ba phần: nhân sự, bảng trang thiết bị, và đề xuất."
         ),
         file_path="data/templates/bao_cao_tai_nguyen.docx",
         truong_du_lieu=json.dumps(TEMPLATE_TAI_NGUYEN, ensure_ascii=False),
     ),
     TemplateBaoCao(
-        ma_template="BC_QUANSO",
-        ten_bao_cao="Báo cáo quân số",
+        ma_template="BC_NHANSU",
+        ten_bao_cao="Báo cáo nhân sự",
         loai_bao_cao="bao_cao_dinh_ky",
         mo_ta=(
-            "Dùng khi chỉ cần báo cáo về quân số, biên chế, không đề cập trang thiết bị. "
+            "Dùng khi chỉ cần báo cáo về nhân sự, biên chế, không đề cập trang thiết bị. "
             "Thường gửi Phòng Hành chính nhân sự theo định kỳ tháng hoặc quý."
         ),
-        truong_du_lieu=json.dumps(TEMPLATE_QUAN_SO, ensure_ascii=False),
+        truong_du_lieu=json.dumps(TEMPLATE_NHAN_SU, ensure_ascii=False),
+    ),
+    TemplateBaoCao(
+        ma_template="BC_THIETBI",
+        ten_bao_cao="Báo cáo trang thiết bị",
+        loai_bao_cao="bao_cao_dinh_ky",
+        mo_ta=(
+            "Dùng khi chỉ cần báo cáo về trang thiết bị, tài sản, máy móc của MỘT "
+            "đơn vị, không đề cập nhân sự. Gồm bảng thiết bị và phần kiến nghị."
+        ),
+        truong_du_lieu=json.dumps(TEMPLATE_THIET_BI, ensure_ascii=False),
     ),
     TemplateBaoCao(
         ma_template="BC_TONGHOP",
-        ten_bao_cao="Báo cáo tổng hợp quân số và trang thiết bị toàn cơ quan",
+        ten_bao_cao="Báo cáo tổng hợp nhân sự và trang thiết bị toàn công ty",
         loai_bao_cao="bao_cao_tong_hop",
         mo_ta=(
             "Dùng khi cần tổng hợp số liệu của NHIỀU đơn vị trong một kỳ, có so sánh "
@@ -147,11 +180,11 @@ TEMPLATES = [
 # văn bản ĐẾN, không phải báo cáo của một đơn vị cho một kỳ.
 VAN_BAN = VanBan(
     ma_van_ban="105/CV-BGĐ",
-    ten_van_ban="Công văn về việc tổng hợp, báo cáo tình trạng trang thiết bị và quân số",
+    ten_van_ban="Công văn về việc tổng hợp, báo cáo tình trạng trang thiết bị và nhân sự",
     loai_van_ban="cong_van_den",
     noi_gui="Ban Giám đốc",
     noi_nhan="Các phòng ban, đơn vị trực thuộc",
-    mo_ta="Yêu cầu rà soát quân số, thống kê trang thiết bị và đề xuất bổ sung cho năm 2027. "
+    mo_ta="Yêu cầu rà soát nhân sự, thống kê trang thiết bị và đề xuất bổ sung cho năm 2027. "
           "Hạn báo cáo: 20/9/2026, gửi về Phòng Hành chính nhân sự.",
     ngay_van_ban=date(2026, 9, 5),
     file_path="data/demo/CV-105-BGD.md",
@@ -183,7 +216,7 @@ async def main(reset: bool) -> int:
         await session.merge(VAN_BAN)
 
     print(f"Đã nạp: {len(TEMPLATES)} mẫu báo cáo ({', '.join(ma_template)}), 1 văn bản demo.")
-    print("Số liệu quân số/trang bị lấy từ ERP lúc chạy, script này không đụng tới.")
+    print("Số liệu nhân sự/thiết bị lấy từ ERP lúc chạy, script này không đụng tới.")
     await dispose_engine()
     return 0
 

@@ -187,7 +187,6 @@
       fd.append('file', file);
       fd.append('noi_gui', opts.noiGui || '');
       fd.append('rule_set', opts.ruleSet || '');
-      fd.append('force_rules', opts.force ? 'true' : 'false');
       return postForm('/api/documents/review', fd, signal);
     },
     stats: function () { return request('/api/documents/stats'); },

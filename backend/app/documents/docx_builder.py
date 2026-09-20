@@ -26,8 +26,8 @@ FONT = "Times New Roman"
 SIZE_PT = 13
 TITLE_SIZE_PT = 14
 MARGINS_MM = {"top": 22, "bottom": 22, "left": 32, "right": 17}
-# Giãn dòng và cách đoạn phải nằm trong ngưỡng của chính rule engine (nd30.yaml):
-# văn bản hệ thống sinh ra mà không qua nổi bộ soát của hệ thống thì vô lý.
+# Đặt thẳng và giống nhau cho mọi đoạn: rule engine của workflow 2 đo sự nhất
+# quán, mà văn bản hệ thống sinh ra không qua nổi bộ soát của hệ thống thì vô lý.
 LINE_SPACING = 1.3
 SPACE_PT = 3
 

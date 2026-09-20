@@ -4,7 +4,7 @@
 bước sau đều đúng quy trình nhưng sai việc. Vì vậy có hai lớp:
 
     LLM         - hiểu được câu chữ tự nhiên, phân biệt "soạn cho DV01" với
-                  "tổng hợp toàn cơ quan"
+                  "tổng hợp toàn công ty"
     từ khoá     - đường lùi khi LLM hỏng hoặc trả về ý định không hợp lệ; cũng là
                   lớp kiểm tra chéo khi LLM tự tin thấp
 
@@ -39,13 +39,13 @@ MIN_CONFIDENCE = 0.5
 KEYWORDS: dict[Intent, tuple[str, ...]] = {
     "presentation": ("slide", "trình chiếu", "power ?point", "pptx", "thuyết trình",
                      "bài trình bày", "giao ban"),
-    "report": ("tổng hợp", "toàn cơ quan", "toàn đơn vị", "các đơn vị", "tất cả đơn vị",
+    "report": ("tổng hợp", "toàn công ty", "toàn đơn vị", "các đơn vị", "tất cả đơn vị",
                "nhiều đơn vị", "thống kê", "đối chiếu"),
     "draft": ("soạn", "dự thảo", "lập báo cáo", "viết báo cáo", "ra văn bản", "làm báo cáo"),
-    "document": ("thể thức", "soát", "rà soát", "kiểm tra văn bản", "văn bản này",
+    "document": ("thể thức", "cấu trúc", "soát", "rà soát", "kiểm tra văn bản", "văn bản này",
                  "file này", "tài liệu này", "công văn này", "phân loại", "giao việc"),
     # Hỏi SỐ LIỆU nghiệp vụ (khác `qa` là hỏi nội dung tài liệu).
-    "agent": ("quân số", "trang thiết bị", "trang bị", "đã gửi", "chưa gửi", "đã nộp",
+    "agent": ("nhân sự", "trang thiết bị", "thiết bị", "đã gửi", "chưa gửi", "đã nộp",
               "chưa nộp", "đơn vị nào", "kiểm kê", "vắng mặt", "bao nhiêu người"),
     "qa": ("quy định", "thế nào", "là gì", "bao nhiêu", "tra cứu", "tìm", "hỏi",
            "cho biết", "ở đâu", "khi nào"),

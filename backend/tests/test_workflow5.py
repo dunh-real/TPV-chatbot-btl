@@ -28,24 +28,24 @@ from app.documents.pptx_builder import (
 # --------------------------------------------------------------- renderer -- #
 @pytest.fixture
 def deck() -> DeckSpec:
-    chart = compare_bar_chart("Quân số", ["Tổng", "Có mặt"], [144, 133], [140, 130])
+    chart = compare_bar_chart("Nhân sự", ["Tổng", "Có mặt"], [144, 133], [140, 130])
     return DeckSpec(
-        title="Báo cáo quân số tháng 8/2026", subtitle="Phòng Hành chính quản trị",
+        title="Báo cáo nhân sự tháng 8/2026", subtitle="Phòng Hành chính quản trị",
         slides=[
-            SlideSpec(kind="title", title="Báo cáo quân số tháng 8/2026",
+            SlideSpec(kind="title", title="Báo cáo nhân sự tháng 8/2026",
                       subtitle="Phòng Hành chính quản trị"),
             SlideSpec(kind="summary", title="Tổng quan",
-                      metrics=[MetricBox("Tổng quân số", "144", "+4 (2.9%)"),
+                      metrics=[MetricBox("Tổng nhân sự", "144", "+4 (2.9%)"),
                                MetricBox("Có mặt", "133", "92.4%")],
                       bullets=["3/3 đơn vị đã gửi báo cáo"]),
-            SlideSpec(kind="chart", title="Biến động quân số", chart=chart,
+            SlideSpec(kind="chart", title="Biến động nhân sự", chart=chart,
                       caption="Nguồn: kiểm kê tháng 8/2026"),
             SlideSpec(kind="table", title="Chi tiết theo đơn vị",
-                      table=SlideTable(columns=["Đơn vị", "Quân số"],
+                      table=SlideTable(columns=["Đơn vị", "Nhân sự"],
                                        rows=[["Đơn vị 1", "48"], ["Đơn vị 2", "65"]])),
             SlideSpec(kind="bullet", title="Đánh giá",
-                      bullets=["Quân số tăng 4 người", "Tỷ lệ có mặt 92.4%"],
-                      notes="Nhấn mạnh trang bị cần bảo dưỡng"),
+                      bullets=["Nhân sự tăng 4 người", "Tỷ lệ có mặt 92.4%"],
+                      notes="Nhấn mạnh thiết bị cần bảo dưỡng"),
         ],
     )
 
@@ -101,7 +101,7 @@ def test_bang_qua_dai_tach_slide_chu_khong_cat_bo(tmp_path):
     rows = [[f"Đơn vị {i}", str(i)] for i in range(20)]
     deck = DeckSpec(title="x", slides=[
         SlideSpec(kind="table", title="Bảng dài",
-                  table=SlideTable(columns=["Đơn vị", "Quân số"], rows=rows))])
+                  table=SlideTable(columns=["Đơn vị", "Nhân sự"], rows=rows))])
 
     slides = Presentation(str(build_pptx(deck, tmp_path / "deck.pptx"))).slides
     assert len(slides) == 2                       # 20 dòng / 11 mỗi slide
@@ -122,7 +122,7 @@ def test_bang_nhieu_trang_co_danh_so_de_biet_dang_o_dau(tmp_path):
     rows = [[f"Đơn vị {i}", str(i)] for i in range(20)]
     deck = DeckSpec(title="x", slides=[
         SlideSpec(kind="table", title="Chi tiết",
-                  table=SlideTable(columns=["Đơn vị", "Quân số"], rows=rows))])
+                  table=SlideTable(columns=["Đơn vị", "Nhân sự"], rows=rows))])
 
     slides = Presentation(str(build_pptx(deck, tmp_path / "deck.pptx"))).slides
     chu = [" ".join(sh.text_frame.text for sh in slide.shapes if sh.has_text_frame)
@@ -171,10 +171,10 @@ DATA = {
                   "nguon": "Hrm_EmployeeProfile", "ghi_chu": "Số liệu kỳ được dựng lại.",
                   "khong_co_chi_tieu": ["có mặt", "vắng"]},
         "breakdown": [
-            {"ma_don_vi": "00001", "ten_don_vi": "Đơn vị 1", "quan_so": 11,
-             "quan_so_ky_truoc": 10, "tuyen_moi": 1, "nghi_viec": 0},
-            {"ma_don_vi": "00002", "ten_don_vi": "Đơn vị 2", "quan_so": 17,
-             "quan_so_ky_truoc": 17, "tuyen_moi": 0, "nghi_viec": 0},
+            {"ma_don_vi": "00001", "ten_don_vi": "Đơn vị 1", "nhan_su": 11,
+             "nhan_su_ky_truoc": 10, "tuyen_moi": 1, "nghi_viec": 0},
+            {"ma_don_vi": "00002", "ten_don_vi": "Đơn vị 2", "nhan_su": 17,
+             "nhan_su_ky_truoc": 17, "tuyen_moi": 0, "nghi_viec": 0},
         ],
         "consistency": [],
     },
@@ -193,7 +193,7 @@ def test_moi_con_so_se_len_slide_deu_co_san():
     """Model không được tính gì: chênh lệch và tỷ lệ đều phải có sẵn trong slide."""
     tat_ca = "\n".join(_slides())
 
-    assert "Tổng quân số: 28" in tat_ca
+    assert "Tổng nhân sự: 28" in tat_ca
     assert "kỳ trước 27" in tat_ca
     assert "+1 (+3.7%)" in tat_ca
     assert "chiếm 3.6%" in tat_ca
@@ -204,7 +204,7 @@ def test_bang_chi_tiet_la_bang_markdown_du_dong():
     """Presenton chỉ dựng được bảng khi nội dung slide LÀ bảng markdown."""
     bang = [s for s in _slides() if "| Đơn vị |" in s]
     assert len(bang) == 1
-    assert "| Đơn vị | Quân số | Kỳ trước | Tuyển mới | Nghỉ việc |" in bang[0]
+    assert "| Đơn vị | Nhân sự | Kỳ trước | Tuyển mới | Nghỉ việc |" in bang[0]
     assert "| Đơn vị 1 | 11 | 10 | 1 | 0 |" in bang[0]
     assert "| Đơn vị 2 | 17 | 17 | 0 | 0 |" in bang[0]
 
@@ -218,12 +218,12 @@ def test_bang_dai_cat_thanh_nhieu_slide_chu_khong_cat_dong():
     data = {"personnel": {
         "metrics": {}, "scope": {}, "consistency": [],
         "breakdown": [{"ten_nhom": f"Đơn vị {i}", "ten_don_vi": f"Đơn vị {i}",
-                       "quan_so": i, "quan_so_ky_truoc": i, "tuyen_moi": 0,
+                       "nhan_su": i, "nhan_su_ky_truoc": i, "tuyen_moi": 0,
                        "nghi_viec": 0}
                       for i in range(1, 15)]}}
     slides, so_cua_code = pr.build_slides_markdown(data, PARAMS)
 
-    bang = [s for s in slides if "| Quân số |" in s]
+    bang = [s for s in slides if "| Nhân sự |" in s]
     assert len(bang) == 3                       # 14 dòng / 6 = 3 trang
     assert "(1/3)" in bang[0] and "(3/3)" in bang[2]
     assert all(s.count("\n|") <= pr.MAX_TABLE_ROWS_SLIDE + 2 for s in bang)
@@ -263,9 +263,9 @@ def test_slide_khong_mang_theo_cau_hoi_goc():
 
 def test_canh_bao_du_lieu_thanh_slide_rieng():
     data = {**DATA, "personnel": {**DATA["personnel"],
-                                  "consistency": [{"ma_don_vi": "*", "message": "Quân số lệch."}]}}
+                                  "consistency": [{"ma_don_vi": "*", "message": "Nhân sự lệch."}]}}
     slides = pr.build_slides_markdown(data, PARAMS)[0]
-    assert any("kiểm tra lại" in s and "Quân số lệch." in s for s in slides)
+    assert any("kiểm tra lại" in s and "Nhân sự lệch." in s for s in slides)
 
 
 def test_slide_bia_chi_ghi_nguoi_trinh_bay_khi_duoc_dua_vao():
@@ -283,7 +283,7 @@ def test_slide_bia_chi_ghi_nguoi_trinh_bay_khi_duoc_dua_vao():
 # --------------------------------------------------------------------------- #
 def _lam_file(tmp_path, *bullets: str) -> str:
     deck = DeckSpec(title="Báo cáo", slides=[
-        SlideSpec(kind="title", title="Báo cáo quân số tháng 8/2026"),
+        SlideSpec(kind="title", title="Báo cáo nhân sự tháng 8/2026"),
         SlideSpec(kind="bullet", title="Đánh giá", bullets=list(bullets)),
     ])
     return str(build_pptx(deck, tmp_path / "deck.pptx"))
@@ -291,7 +291,7 @@ def _lam_file(tmp_path, *bullets: str) -> str:
 
 async def test_so_bia_tren_slide_bi_neu_ten(tmp_path):
     """Presenton giữ nguyên chữ nó viết, nên van chắn phải NÓI RA chứ không xoá."""
-    path = _lam_file(tmp_path, "Tổng quân số 28 người", "Có 47 đơn vị chưa gửi báo cáo")
+    path = _lam_file(tmp_path, "Tổng nhân sự 28 người", "Có 47 đơn vị chưa gửi báo cáo")
 
     result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
                                    "engine": "presenton"})
@@ -304,7 +304,7 @@ async def test_so_bia_tren_slide_bi_neu_ten(tmp_path):
 
 
 async def test_slide_toan_so_that_thi_khong_canh_bao(tmp_path):
-    path = _lam_file(tmp_path, "Tổng quân số 28 người, tăng 1 so với kỳ trước")
+    path = _lam_file(tmp_path, "Tổng nhân sự 28 người, tăng 1 so với kỳ trước")
 
     result = await pr.verify_node({"data": DATA, "params": PARAMS, "output_path": path,
                                    "engine": "presenton"})
@@ -315,7 +315,7 @@ async def test_so_trong_bang_cung_duoc_soi(tmp_path):
     """Bảng là chỗ dễ lọt nhất: nó trông như dữ liệu nên không ai đọc kỹ."""
     deck = DeckSpec(title="x", slides=[
         SlideSpec(kind="table", title="Chi tiết",
-                  table=SlideTable(columns=["Đơn vị", "Quân số"],
+                  table=SlideTable(columns=["Đơn vị", "Nhân sự"],
                                    rows=[["Đơn vị 1", "11"], ["Đơn vị 2", "99"]]))])
     path = str(build_pptx(deck, tmp_path / "d.pptx"))
 
@@ -385,7 +385,7 @@ class ParamsLLM:
     async def chat_json(self, messages, **kwargs):
         self.calls += 1
         return {"thang": 8, "nam": 2026, "ma_don_vi": [], "so_sanh_thang": None,
-                "noi_dung": ["quan_so", "trang_bi"]}
+                "noi_dung": ["nhan_su", "thiet_bi"]}
 
 
 class FakePresenton:
@@ -410,7 +410,7 @@ class FakePresenton:
             raise self.loi
         # Dựng đúng số slide được gửi sang, để bên gọi đếm được như hàng thật.
         deck = DeckSpec(title="Báo cáo", slides=[
-            SlideSpec(kind="title", title="Báo cáo quân số tháng 8/2026"),
+            SlideSpec(kind="title", title="Báo cáo nhân sự tháng 8/2026"),
             # Tiêu đề không mang số: van chắn soi cả tiêu đề, một con số bịa
             # trong đồ giả sẽ thành lỗi giả của bài test.
             *[SlideSpec(kind="bullet", title="Nội dung", bullets=self.bullets)
@@ -426,11 +426,11 @@ async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
     from app.agents.graph import run_presentation_workflow
 
     llm = ParamsLLM()
-    gia = FakePresenton(ppt_env, ["Tổng quân số 5 người, tăng 1 so với kỳ trước"])
+    gia = FakePresenton(ppt_env, ["Tổng nhân sự 5 người, tăng 1 so với kỳ trước"])
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
     monkeypatch.setattr(pr, "get_presenton", lambda: gia)
 
-    result = await run_presentation_workflow("Tạo slide báo cáo quân số tháng 8/2026")
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
 
     assert result["error"] == ""
     assert result["engine"] == "presenton"
@@ -453,7 +453,7 @@ async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
     assert llm.calls == 1
     # Và Presenton chỉ thấy số liệu, không thấy câu hỏi gốc.
     assert "Tạo slide báo cáo" not in gia.brief
-    assert "Tổng quân số" in gia.brief
+    assert "Tổng nhân sự" in gia.brief
     assert "KHÔNG tự cộng" in gia.instructions
 
 
@@ -467,7 +467,7 @@ async def test_presenton_hong_thi_van_ra_file_bang_duong_lui(ppt_env, monkeypatc
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
     monkeypatch.setattr(pr, "get_presenton", lambda: gia)
 
-    result = await run_presentation_workflow("Tạo slide báo cáo quân số tháng 8/2026")
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
 
     assert result["engine"] == "local"
     assert Path(result["output_path"]).exists()
@@ -515,7 +515,7 @@ def test_o_chi_tieu_giu_nguyen_bien_dong_da_tinh_san():
 
 
 def test_bang_rong_khong_thanh_slide_bang():
-    """Kỳ chưa có trang bị nào: bảng rỗng thì slide chỉ còn dòng tiêu đề cột."""
+    """Kỳ chưa có thiết bị nào: bảng rỗng thì slide chỉ còn dòng tiêu đề cột."""
     assert pr._slide_table("equipment_breakdown", {"equipment": {"breakdown": []}}) is None
     assert pr._slide_table("personnel_breakdown", DATA) is not None
 
@@ -554,6 +554,6 @@ def test_chi_dan_nhac_muc_canh_bao_khi_that_su_co_canh_bao():
 
     co_canh_bao = {**DATA, "personnel": {**DATA["personnel"],
                                          "consistency": [{"ma_don_vi": "*",
-                                                          "message": "Quân số lệch."}]}}
+                                                          "message": "Nhân sự lệch."}]}}
     assert "kiểm tra lại" in pr.instructions_for(co_canh_bao)
 

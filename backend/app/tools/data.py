@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import re
+import unicodedata
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from typing import Any
@@ -58,7 +59,7 @@ __all__ = [
 #   1. Ngữ nghĩa "as-of" quá dễ viết sai mà vẫn ra một con số trông hợp lý: bỏ
 #      sót một vế của `IsDeleted`/`DeletionTime` là số của kỳ cũ đổi luôn.
 #   2. `IN (...)` không khớp `NULL`, nên câu SQL "đúng theo trực giác" âm thầm
-#      bỏ 49/194 trang bị chưa gán phòng ban.
+#      bỏ 49/194 thiết bị chưa gán phòng ban.
 #   3. Van chắn số kiểm "con số này có trong kết quả tool không". Nếu chính câu
 #      truy vấn do model đặt ra thì mọi con số đều có trong kết quả - kể cả khi
 #      nó trả lời một câu hỏi khác.
@@ -158,25 +159,54 @@ async def _valid_units(session: AsyncSession) -> dict[str, str]:
     return await ErpDonViRepository(session).name_map()
 
 
+def _khoa_ten(text: str) -> str:
+    """Khoá so tên đơn vị: bỏ dấu, bỏ hoa thường, bỏ khoảng trắng thừa."""
+    phang = unicodedata.normalize("NFD", str(text))
+    phang = "".join(c for c in phang if unicodedata.category(c) != "Mn")
+    return " ".join(phang.replace("đ", "d").replace("Đ", "D").split()).lower()
+
+
 async def _resolve_units(session: AsyncSession, ma_don_vi: list[str] | str | None) -> list[str]:
+    """Mã đơn vị đã kiểm chứng. Nhận cả TÊN đơn vị vì model không biết mã.
+
+    Không có công cụ nào liệt kê danh mục, nên model chỉ có tên đơn vị trong câu
+    hỏi của người dùng để mà gọi. Chặn thẳng "Phòng Kỹ thuật" vì nó không phải
+    "00002" là bắt model đoán mã - nó đoán sai vài lượt rồi vòng lặp hết hạn mức.
+    Đổi lại, tên KHÔNG khớp thì thông báo lỗi phải kèm danh mục để model tự sửa
+    ngay lượt sau, thay vì mò tiếp.
+    """
     units = await _valid_units(session)
     if not ma_don_vi:
         return sorted(units)
+
     requested = [ma_don_vi] if isinstance(ma_don_vi, str) else list(ma_don_vi)
-    unknown = [code for code in requested if code not in units]
+    theo_ten = {_khoa_ten(name): code for code, name in units.items()}
+
+    resolved: list[str] = []
+    unknown: list[str] = []
+    for item in requested:
+        key = str(item).strip()
+        code = key if key in units else theo_ten.get(_khoa_ten(key))
+        if code is None:
+            unknown.append(key)
+        elif code not in resolved:
+            resolved.append(code)
+
     if unknown:
-        raise ToolError(f"Đơn vị không tồn tại: {', '.join(unknown)}")
-    return requested
+        danh_muc = "; ".join(f"{code} = {name}" for code, name in sorted(units.items()))
+        raise ToolError(f"Đơn vị không tồn tại: {', '.join(unknown)}. "
+                        f"Chỉ có các đơn vị sau: {danh_muc}")
+    return resolved
 
 
 async def _unit_ids(session: AsyncSession, codes: list[str]) -> dict[str, int]:
-    """Mã đơn vị -> khoá chính ERP. Trang bị và nhân sự đều nối bằng khoá này."""
+    """Mã đơn vị -> khoá chính ERP. Thiết bị và nhân sự đều nối bằng khoá này."""
     id_map = await ErpDonViRepository(session).id_map()
     return {code: id_map[code] for code in codes if code in id_map}
 
 
 # --------------------------------------------------------------------------- #
-# Tool 1: thống kê quân số
+# Tool 1: thống kê nhân sự
 # --------------------------------------------------------------------------- #
 async def get_personnel_statistics(
     session: AsyncSession,
@@ -185,14 +215,14 @@ async def get_personnel_statistics(
     compare_to: str | None = None,
     group_by: str = "phong_ban",
 ) -> AggregateResult:
-    """Quân số tại thời điểm chốt kỳ, kèm biến động trong kỳ.
+    """Nhân sự tại thời điểm chốt kỳ, kèm biến động trong kỳ.
 
-    Nguồn là `Hrm_EmployeeProfile`: quân số suy từ ngày vào làm / ngày nghỉ việc.
+    Nguồn là `Hrm_EmployeeProfile`: nhân sự suy từ ngày vào làm / ngày nghỉ việc.
     Không có chỉ tiêu có mặt / vắng / đi học / nghỉ phép vì dữ liệu chấm công nằm
     ở nhóm bảng `Att_*` ngoài phạm vi được phép đọc - thà thiếu chỉ tiêu còn hơn
     đưa ra một con số không đối chiếu được.
 
-    `group_by` đổi CHIỀU GỘP của bảng chi tiết, không đổi phạm vi lọc: "quân số
+    `group_by` đổi CHIỀU GỘP của bảng chi tiết, không đổi phạm vi lọc: "nhân sự
     Phòng Kế toán theo chức vụ" vẫn chỉ đếm người của Phòng Kế toán. Chỉ tiêu
     tổng vì thế không đổi theo chiều gộp - đó là phép kiểm rẻ nhất cho việc này.
     """
@@ -204,50 +234,50 @@ async def get_personnel_statistics(
     ids = await _unit_ids(session, units)
     dept_ids = list(ids.values())
 
-    # Hỏi toàn cơ quan thì hồ sơ chưa gán phòng ban vẫn là quân số của cơ quan;
+    # Hỏi toàn công ty thì hồ sơ chưa gán phòng ban vẫn là nhân sự của cơ quan;
     # hỏi vài đơn vị cụ thể thì không gán bừa vào đơn vị nào.
-    toan_co_quan = not ma_don_vi
+    toan_cong_ty = not ma_don_vi
 
     # Cột gộp do CODE chọn từ khoá model đưa vào; model không đặt tên cột.
     cot_nhom = EmployeeProfile.work_position_id if group_by == "chuc_vu" else None
 
     nhan_su = ErpNhanSuRepository(session)
     current = await nhan_su.headcount_by_dept(period_end(ky), dept_ids,
-                                              gom_chua_gan=toan_co_quan,
+                                              gom_chua_gan=toan_cong_ty,
                                               cot_nhom=cot_nhom)
     previous = await nhan_su.headcount_by_dept(period_end(compare_to), dept_ids,
-                                               gom_chua_gan=toan_co_quan,
+                                               gom_chua_gan=toan_cong_ty,
                                                cot_nhom=cot_nhom)
     bien_dong = await nhan_su.movement(period_start(ky), period_end(ky), dept_ids,
-                                       gom_chua_gan=toan_co_quan,
+                                       gom_chua_gan=toan_cong_ty,
                                        cot_nhom=cot_nhom)
 
-    quan_so = sum(current.values())
-    prev_quan_so = sum(previous.values())
+    nhan_su = sum(current.values())
+    prev_nhan_su = sum(previous.values())
     tuyen_moi = sum(bien_dong["tuyen_moi"].values())
     nghi_viec = sum(bien_dong["nghi_viec"].values())
 
     metrics = {
-        "total_personnel": Metric.build(quan_so, prev_quan_so or None),
-        "new_hires": Metric.build(tuyen_moi, total=quan_so),
-        "resignations": Metric.build(nghi_viec, total=quan_so),
+        "total_personnel": Metric.build(nhan_su, prev_nhan_su or None),
+        "new_hires": Metric.build(tuyen_moi, total=nhan_su),
+        "resignations": Metric.build(nghi_viec, total=nhan_su),
     }
 
-    # Ràng buộc kiểm được bằng chính dữ liệu đọc ra: chênh lệch quân số giữa hai
+    # Ràng buộc kiểm được bằng chính dữ liệu đọc ra: chênh lệch nhân sự giữa hai
     # kỳ phải bằng số tuyển mới trừ số nghỉ việc. Lệch nghĩa là hồ sơ thiếu ngày
     # vào làm/nghỉ việc, hoặc có người bị chuyển phòng ban giữa kỳ.
     issues: list[ConsistencyIssue] = []
-    if prev_quan_so and quan_so - prev_quan_so != tuyen_moi - nghi_viec:
+    if prev_nhan_su and nhan_su - prev_nhan_su != tuyen_moi - nghi_viec:
         issues.append(ConsistencyIssue(
-            "*", f"Quân số tăng {quan_so - prev_quan_so} nhưng tuyển mới {tuyen_moi} - "
+            "*", f"Nhân sự tăng {nhan_su - prev_nhan_su} nhưng tuyển mới {tuyen_moi} - "
                  f"nghỉ việc {nghi_viec} = {tuyen_moi - nghi_viec}. Chênh lệch thường do "
                  f"hồ sơ thiếu ngày vào làm/nghỉ việc hoặc có điều chuyển phòng ban."))
 
     def dong(ma: str, ten: str, khoa: Any) -> dict[str, Any]:
         """Một dòng của bảng chi tiết - cùng bộ chỉ tiêu cho mọi chiều gộp."""
         return {"ma_nhom": ma, "ten_nhom": ten,
-                "quan_so": current.get(khoa, 0),
-                "quan_so_ky_truoc": previous.get(khoa, 0),
+                "nhan_su": current.get(khoa, 0),
+                "nhan_su_ky_truoc": previous.get(khoa, 0),
                 "tuyen_moi": bien_dong["tuyen_moi"].get(khoa, 0),
                 "nghi_viec": bien_dong["nghi_viec"].get(khoa, 0)}
 
@@ -271,7 +301,7 @@ async def get_personnel_statistics(
     if current.get(None, 0) or previous.get(None, 0):
         breakdown.append(dong("", chua_gan_nhan, None))
 
-    # Bảng quân số giữ nguyên `ma_don_vi`/`ten_don_vi` khi gộp theo phòng ban:
+    # Bảng nhân sự giữ nguyên `ma_don_vi`/`ten_don_vi` khi gộp theo phòng ban:
     # bước đối chiếu với báo cáo đơn vị (`reconcile_node`) tra theo hai khoá đó.
     if group_by == "phong_ban":
         for row in breakdown:
@@ -299,14 +329,14 @@ async def get_personnel_statistics(
         scope["units_missing_count"] = len(scope["units_missing"])
 
     return AggregateResult(
-        period=ky, compare_to=compare_to if prev_quan_so else None,
+        period=ky, compare_to=compare_to if prev_nhan_su else None,
         scope=scope,
         metrics=metrics, breakdown=breakdown, consistency=issues,
         dimension=group_by,
         breakdown_columns=[
             {"key": "ten_nhom", "label": PERSONNEL_DIMENSIONS[group_by]},
-            {"key": "quan_so", "label": "Quân số"},
-            {"key": "quan_so_ky_truoc", "label": "Kỳ trước"},
+            {"key": "nhan_su", "label": "Nhân sự"},
+            {"key": "nhan_su_ky_truoc", "label": "Kỳ trước"},
             {"key": "tuyen_moi", "label": "Tuyển mới"},
             {"key": "nghi_viec", "label": "Nghỉ việc"},
         ],
@@ -327,7 +357,7 @@ async def get_equipment_statistics(
 
     Hai chiều gộp cho ra hai kiểu bảng khác nhau, cố ý:
 
-      - `phong_ban`  bảng LIỆT KÊ, mỗi dòng một đầu trang bị của một đơn vị.
+      - `phong_ban`  bảng LIỆT KÊ, mỗi dòng một đầu thiết bị của một đơn vị.
         Đây là bảng chi tiết mà người nghe đối chiếu con số tổng về từng đơn vị.
       - `chung_loai` bảng ĐÃ CỘNG, mỗi dòng một chủng loại.
 
@@ -342,12 +372,12 @@ async def get_equipment_statistics(
     dept_ids = list(ids.values())
     by_id = {dept_id: code for code, dept_id in ids.items()}
 
-    toan_co_quan = not ma_don_vi
+    toan_cong_ty = not ma_don_vi
 
     repo = ErpTrangBiRepository(session)
-    current = await repo.list_as_of(period_end(ky), dept_ids, gom_chua_gan=toan_co_quan)
+    current = await repo.list_as_of(period_end(ky), dept_ids, gom_chua_gan=toan_cong_ty)
     previous = await repo.list_as_of(period_end(compare_to), dept_ids,
-                                     gom_chua_gan=toan_co_quan)
+                                     gom_chua_gan=toan_cong_ty)
 
     settings = get_settings()
     labels, good_codes = settings.asset_status_labels, settings.asset_status_good
@@ -362,7 +392,7 @@ async def get_equipment_statistics(
 
     metrics = {
         "total_equipment": Metric.build(tong, prev_tong or None),
-        # Đếm TÊN trang bị khác nhau, không phải chủng loại ERP - xem
+        # Đếm TÊN thiết bị khác nhau, không phải chủng loại ERP - xem
         # `METRIC_LABELS` ở `app.agents.nodes.report`.
         "equipment_types": Metric.build(len({asset.name for _, asset, _ in current})),
     }
@@ -377,13 +407,13 @@ async def get_equipment_statistics(
         """Dòng chưa gán phòng ban xuống cuối bảng, không lẫn lên đầu.
 
         Mã đơn vị rỗng sắp xếp trước mọi mã thật, nên phải đẩy tay xuống - giống
-        chỗ đặt dòng "(chưa gán phòng ban)" của bảng quân số.
+        chỗ đặt dòng "(chưa gán phòng ban)" của bảng nhân sự.
         """
         ma = by_id.get(row[0], "")
         return (ma or "\uffff", row[1].name)
 
     if group_by == "chung_loai":
-        # Cộng theo chủng loại. Trang bị không có chủng loại vẫn phải vào bảng,
+        # Cộng theo chủng loại. Thiết bị không có chủng loại vẫn phải vào bảng,
         # nếu không tổng các dòng sẽ nhỏ hơn chỉ tiêu tổng in ở slide trước đó.
         gom: dict[str, dict[str, Any]] = {}
         for _, asset, category in current:
@@ -398,8 +428,8 @@ async def get_equipment_statistics(
         breakdown_columns = [
             {"key": "ten_nhom", "label": "Chủng loại"},
             {"key": "so_luong", "label": "Số lượng"},
-            # Số BẢN GHI trang bị trong chủng loại đó. Không cộng lại thành
-            # chỉ tiêu "Số loại trang bị" - hai cách đếm khác nhau.
+            # Số BẢN GHI thiết bị trong chủng loại đó. Không cộng lại thành
+            # chỉ tiêu "Số loại thiết bị" - hai cách đếm khác nhau.
             {"key": "so_dau_muc", "label": "Số đầu mục"},
         ]
     else:
@@ -408,7 +438,7 @@ async def get_equipment_statistics(
              "ten_nhom": names.get(by_id.get(dept_id, ""), "(chưa gán phòng ban)"),
              "ma_don_vi": by_id.get(dept_id, ""),
              "ten_don_vi": names.get(by_id.get(dept_id, ""), "(chưa gán phòng ban)"),
-             "ten_trang_bi": asset.name, "so_luong": asset.so_luong,
+             "ten_thiet_bi": asset.name, "so_luong": asset.so_luong,
              "tinh_trang": labels.get(asset.status, f"Trạng thái {asset.status}"),
              "chung_loai": category or "",
              # Xem ghi chú ở `ErpTaiNguyenRepository.get_tai_nguyen`: đây là mốc
@@ -419,7 +449,7 @@ async def get_equipment_statistics(
         ]
         breakdown_columns = [
             {"key": "ten_nhom", "label": "Đơn vị"},
-            {"key": "ten_trang_bi", "label": "Trang bị"},
+            {"key": "ten_thiet_bi", "label": "Thiết bị"},
             {"key": "so_luong", "label": "Số lượng"},
             {"key": "tinh_trang", "label": "Tình trạng"},
         ]
@@ -432,13 +462,13 @@ async def get_equipment_statistics(
         "nhom_theo": EQUIPMENT_DIMENSIONS[group_by],
     }
     # Đếm theo đơn vị chỉ có nghĩa khi bảng đang gộp theo đơn vị - xem ghi chú
-    # cùng chỗ này ở tool quân số.
+    # cùng chỗ này ở tool nhân sự.
     if group_by == "phong_ban":
         scope["units_with_data"] = len(
             {dept_id for dept_id, _, _ in current if dept_id is not None})
         scope["units_missing"] = sorted(
             set(units) - {by_id.get(d, "") for d, _, _ in current})
-        # Xem ghi chú cùng chỗ này ở tool quân số.
+        # Xem ghi chú cùng chỗ này ở tool nhân sự.
         scope["units_missing_count"] = len(scope["units_missing"])
     if not good_codes:
         scope["khong_co_chi_tieu"] = [
@@ -446,15 +476,15 @@ async def get_equipment_statistics(
             "(chưa khai báo ERP_ASSET_STATUS_GOOD nên không diễn giải được mã trạng thái)",
         ]
 
-    # Trang bị chưa gán phòng ban được cộng vào tổng nhưng không quy được về đơn vị
+    # Thiết bị chưa gán phòng ban được cộng vào tổng nhưng không quy được về đơn vị
     # nào. Người đọc phải biết điều đó, nếu không sẽ thắc mắc vì sao tổng lớn hơn
     # tổng các dòng - hoặc tệ hơn, không thắc mắc gì cả.
     issues: list[ConsistencyIssue] = []
     if chua_gan:
         scope["chua_gan_don_vi"] = chua_gan
         issues.append(ConsistencyIssue(
-            "", f"{chua_gan}/{tong} đơn vị trang bị chưa gán phòng ban trong ERP "
-                f"(Asm_Assets.WorkDepartmentId trống). Đã tính vào tổng toàn cơ quan "
+            "", f"{chua_gan}/{tong} đơn vị thiết bị chưa gán phòng ban trong ERP "
+                f"(Asm_Assets.WorkDepartmentId trống). Đã tính vào tổng toàn công ty "
                 f"nhưng không chia được về đơn vị nào."))
 
     return AggregateResult(
@@ -548,12 +578,12 @@ PERIOD_ALIASES = {"end_date": "ky", "start_date": "compare_to", "unit": "ma_don_
 TOOLS: dict[str, ToolSpec] = {
     "get_personnel_statistics": ToolSpec(
         name="get_personnel_statistics",
-        description="Thống kê quân số theo kỳ (tổng quân số tại thời điểm chốt kỳ, "
+        description="Thống kê nhân sự theo kỳ (tổng nhân sự tại thời điểm chốt kỳ, "
                     "tuyển mới, nghỉ việc trong kỳ), kèm so sánh với kỳ trước. "
                     "Bảng chi tiết gộp theo đơn vị hoặc theo chức vụ. "
                     "Không có số liệu có mặt/vắng/đi học/nghỉ phép",
         parameters={"ky": "YYYY-MM, bắt buộc (bí danh: end_date)",
-                    "ma_don_vi": "mã đơn vị hoặc danh sách mã; bỏ trống = toàn cơ quan "
+                    "ma_don_vi": "mã đơn vị hoặc danh sách mã; bỏ trống = toàn công ty "
                                  "(bí danh: unit)",
                     "compare_to": "kỳ để so sánh; bỏ trống = kỳ liền trước "
                                   "(bí danh: start_date)",
@@ -570,12 +600,12 @@ TOOLS: dict[str, ToolSpec] = {
                     "thêm tình trạng tốt/cần xử lý nếu đã khai báo mã trạng thái ERP). "
                     "Bảng chi tiết liệt kê theo đơn vị, hoặc cộng theo chủng loại",
         parameters={"ky": "YYYY-MM, bắt buộc (bí danh: end_date)",
-                    "ma_don_vi": "mã đơn vị hoặc danh sách mã; bỏ trống = toàn cơ quan "
+                    "ma_don_vi": "mã đơn vị hoặc danh sách mã; bỏ trống = toàn công ty "
                                  "(bí danh: unit)",
                     "compare_to": "kỳ để so sánh; bỏ trống = kỳ liền trước "
                                   "(bí danh: start_date)",
                     "group_by": 'chiều gộp bảng chi tiết: "phong_ban" (mặc định, liệt kê '
-                                'từng đầu trang bị) hoặc "chung_loai" (cộng theo chủng '
+                                'từng đầu thiết bị) hoặc "chung_loai" (cộng theo chủng '
                                 'loại) (bí danh: nhom_theo, theo)'},
         func=get_equipment_statistics,
         needs_session=True,
@@ -585,7 +615,7 @@ TOOLS: dict[str, ToolSpec] = {
         name="get_reporting_status",
         description="Danh sách đơn vị đã gửi và chưa gửi báo cáo trong kỳ",
         parameters={"ky": "YYYY-MM, bắt buộc (bí danh: end_date)",
-                    "ma_don_vi": "giới hạn trong các đơn vị này; bỏ trống = toàn cơ quan "
+                    "ma_don_vi": "giới hạn trong các đơn vị này; bỏ trống = toàn công ty "
                                  "(bí danh: unit)"},
         func=get_reporting_status,
         needs_session=True,

@@ -168,7 +168,6 @@ async def run_document_workflow(
     noi_gui: str = "",
     departments: list[dict[str, str]] | None = None,
     rule_set: str = "",
-    force_rules: bool = False,
 ) -> dict[str, Any]:
     state: DocumentState = {
         "file_path": file_path,
@@ -176,7 +175,6 @@ async def run_document_workflow(
         "noi_gui": noi_gui,
         "departments": departments or [],
         "rule_set": rule_set,
-        "force_rules": force_rules,
         "trace": {},
     }
     result = await get_document_graph().ainvoke(state)
@@ -488,7 +486,7 @@ async def run_presentation_workflow(
 #                            │
 #                           END
 #
-# Trước đây tầng này chỉ chọn MỘT nghiệp vụ, nên "tổng hợp quân số tháng 8 rồi
+# Trước đây tầng này chỉ chọn MỘT nghiệp vụ, nên "tổng hợp nhân sự tháng 8 rồi
 # làm slide" luôn mất một nửa. Giờ nó lập kế hoạch: bước nào chạy, bước nào phụ
 # thuộc bước nào, và bước nào chạy song song được.
 #
@@ -516,8 +514,11 @@ RETRY_AS: dict[str, str] = {
 }
 
 # Nhãn tiếng Việt của từng nghiệp vụ, dùng khi ghép câu trả lời nhiều bước.
+# Phải khớp `INTENT_LABEL` trong frontend/js/app.js - xem ghi chú ở đó.
+# "Tra cứu tài liệu" chứ không phải "Tra cứu": cạnh "Tra số liệu" của nhánh agent,
+# hai chữ đó phải phân biệt được nguồn, vì đó đúng là thứ ngăn hai nhánh này.
 INTENT_VI = {
-    "qa": "Tra cứu", "document": "Soát văn bản", "draft": "Soạn văn bản",
+    "qa": "Tra cứu tài liệu", "document": "Soát tài liệu", "draft": "Soạn văn bản",
     "report": "Tổng hợp báo cáo", "presentation": "Tạo slide", "agent": "Tra số liệu",
 }
 
@@ -863,27 +864,31 @@ def _validation_note(result: dict[str, Any]) -> str:
 
 # Tên tiếng Việt của từng tiêu chí, để dòng "Đạt:" đọc được như tiếng người.
 RULE_VI = {
-    "format.font": "phông chữ", "format.size_pt": "cỡ chữ",
-    "format.page_mm": "khổ giấy", "format.margin_mm": "lề trang",
-    "format.alignment": "canh đều hai bên", "format.line_spacing": "giãn dòng",
-    "format.paragraph_spacing_pt": "khoảng cách đoạn",
-    "component_format.quoc_hieu": "trình bày quốc hiệu",
-    "component_format.tieu_ngu": "trình bày tiêu ngữ",
+    "structure.title": "có tiêu đề", "structure.heading_levels": "thứ bậc mục",
+    "structure.empty_section": "mục nào cũng có nội dung",
+    "structure.duplicate_heading": "không trùng tên mục",
+    "structure.numbering": "đánh số liên tục",
+    "structure.paragraph_length": "độ dài đoạn",
+    "consistency.font": "phông chữ nhất quán", "consistency.size_pt": "cỡ chữ nhất quán",
+    "consistency.alignment": "canh lề nhất quán",
+    "consistency.line_spacing": "giãn dòng nhất quán",
+    "consistency.paragraph_spacing_pt": "khoảng cách đoạn nhất quán",
+    "page.size_mm": "khổ giấy", "page.margin_mm": "lề trang",
 }
 
 
 def _format_section(result: dict[str, Any]) -> list[str]:
-    """Mục 1: thể thức. Gộp lỗi cùng loại để không đổ ra một bức tường chữ."""
+    """Mục 1: cấu trúc và trình bày. Gộp lỗi cùng loại để không đổ ra bức tường chữ."""
     rule_check = result.get("rule_check", {})
     totals = result.get("totals", {})
     errors, warnings = totals.get("errors", 0), totals.get("warnings", 0)
 
     if rule_check.get("status") == "skipped":
-        return [f"1. THỂ THỨC: chưa kiểm được. {rule_check.get('reason', '')}".strip()]
+        return [f"1. CẤU TRÚC: chưa kiểm được. {rule_check.get('reason', '')}".strip()]
 
-    lines = ["1. THỂ THỨC: đạt, không phát hiện lỗi."
+    lines = ["1. CẤU TRÚC: đạt, không phát hiện lỗi."
              if not errors and not warnings
-             else f"1. THỂ THỨC: {errors} lỗi, {warnings} cảnh báo cần sửa."]
+             else f"1. CẤU TRÚC: {errors} lỗi, {warnings} cảnh báo cần xem lại."]
 
     grouped: dict[str, list[dict[str, Any]]] = {}
     for f in rule_check.get("findings", []):
@@ -904,8 +909,25 @@ def _format_section(result: dict[str, Any]) -> list[str]:
     if (ten := [RULE_VI[r] for r in rule_check.get("passed", []) if r in RULE_VI]):
         lines.append(f"   Đạt: {', '.join(ten)}.")
     if (skipped := rule_check.get("skipped")):
-        lines.append(f"   Chưa kiểm được: {'; '.join(skipped)}.")
+        lines.append(f"   Chưa kiểm được: {_skipped_vi(skipped)}.")
+    if (reason := rule_check.get("reason")):
+        lines.append(f"   {reason}")
     return lines
+
+
+def _skipped_vi(items: list[str], limit: int = 4) -> str:
+    """Tiêu chí chưa kiểm được, gọi bằng tên tiếng Việt và cắt bớt cho khỏi dài.
+
+    Mỗi mục có dạng "consistency.font" hoặc "consistency.font (3 đoạn ...)": phần
+    trong ngoặc là lý do, giữ nguyên vì đó mới là thứ người đọc cần.
+    """
+    named = []
+    for item in items[:limit]:
+        rule_id, _, reason = item.partition(" (")
+        named.append(RULE_VI.get(rule_id, rule_id) + (f" ({reason}" if reason else ""))
+    if len(items) > limit:
+        named.append(f"và {len(items) - limit} tiêu chí khác")
+    return "; ".join(named)
 
 
 def _assignment_section(result: dict[str, Any]) -> list[str]:
@@ -928,7 +950,7 @@ def _assignment_section(result: dict[str, Any]) -> list[str]:
 
 
 def _summarize_document(result: dict[str, Any]) -> str:
-    """Ba mục: soát thể thức -> tóm tắt nội dung -> gợi ý phân công.
+    """Ba mục: soát cấu trúc -> tóm tắt nội dung -> gợi ý phân công.
 
     Toàn bộ do CODE dựng từ kết quả workflow, không gọi thêm LLM: đây là thông báo
     trạng thái, để model diễn đạt lại thì nó có cơ hội nói sai điều đã xảy ra.

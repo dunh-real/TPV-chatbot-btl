@@ -28,10 +28,10 @@ Chạy thật tenant 64, kỳ 2026-08: `passed`, xuất file, 5/5 lần không c
 
 ```
 I.   TÌNH HÌNH GỬI BÁO CÁO      9 đơn vị, 1 đã gửi
-II.  TÌNH HÌNH QUÂN SỐ          [bảng 9 dòng]  28 người, +1
+II.  TÌNH HÌNH NHÂN SỰ          [bảng 9 dòng]  28 người, +1
 III. TÌNH HÌNH TRANG THIẾT BỊ   [bảng 33 dòng] 194 cái, 33 chủng loại
 IV.  ĐỐI CHIẾU SỐ LIỆU          chỉ hiện khi thật sự lệch
-V.   SỐ LIỆU CẦN KIỂM TRA LẠI   49/194 trang bị chưa gán phòng ban
+V.   SỐ LIỆU CẦN KIỂM TRA LẠI   49/194 thiết bị chưa gán phòng ban
 ```
 
 ### Workflow 5 (slide) — mình soạn nội dung, Presenton render
@@ -158,7 +158,7 @@ thật sự xảy ra — đừng rút gọn lại cho ngắn.
   tenant — quên khoá thì báo cáo của thuê bao này in tên đơn vị của thuê bao
   khác, và không van chắn nào bắt được vì tên đó là tên thật.
 - **Mốc thời gian không còn bị đọc thành số liệu.** Trích yếu "V/v báo cáo quân
-  số ... tháng 8/2026" khớp mẫu quân số và trả về 8, nên bản tổng hợp in ra mục
+  số ... tháng 8/2026" khớp mẫu nhân sự và trả về 8, nên bản tổng hợp in ra mục
   "ĐỐI CHIẾU SỐ LIỆU: báo cáo ghi 8, kiểm kê 3" — một chênh lệch không có thật,
   trong văn bản trình ký.
 
@@ -193,14 +193,14 @@ lại lỗi bỏ dòng "chưa gán" thì test đỏ đúng chỗ (`4 == 5`).
    dựng bảng: `report.py` và `presentation.py` từng mỗi bên giữ một danh sách.
 
 **Chưa mở** (dữ liệu có sẵn, chỉ thiếu code): gộp theo đơn vị cha
-(`Dms_WorkDepartment.ParentId`), trang bị mua trong kỳ (`PurchaseDate`), chuỗi
-nhiều kỳ liên tiếp. Gộp theo tình trạng trang bị thì vẫn vướng enum ở mục 4.1.
+(`Dms_WorkDepartment.ParentId`), thiết bị mua trong kỳ (`PurchaseDate`), chuỗi
+nhiều kỳ liên tiếp. Gộp theo tình trạng thiết bị thì vẫn vướng enum ở mục 4.1.
 
 ---
 
 ## 4. Ba việc CHẶN, không sửa bằng code được
 
-### 4.1 Mã trạng thái trang bị
+### 4.1 Mã trạng thái thiết bị
 `Asm_Assets.Status` có đúng một giá trị `0` trên toàn bộ 98 dòng, enum nằm trong
 mã nguồn ERP. Báo cáo và slide vì thế in `Trạng thái 0` trong bảng.
 
@@ -215,17 +215,17 @@ Chưa khai thì hệ thống **cố ý** bỏ hai chỉ tiêu "tình trạng t�
 Đừng khai bừa cho đẹp — cả 98 dòng đang là `0`, khai xong sẽ thành "100% tốt".
 
 ### 4.2 Chưa có tool "thông tin nhân viên"
-Hỏi "báo cáo thông tin nhân viên" hiện trả về quân số theo đơn vị, không có tên,
+Hỏi "báo cáo thông tin nhân viên" hiện trả về nhân sự theo đơn vị, không có tên,
 chức vụ, ngày vào làm. `Hrm_EmployeeProfile` có sẵn `FullName`,
 `WorkPositionId`, `HireDate`; `Dms_WorkPosition` đã trong `ALLOWED_TABLES` —
 thiếu đúng một tool phơi ra. Làm theo khuôn `get_personnel_statistics`, và nhớ:
 danh sách nhân sự là dữ liệu cá nhân.
 
 ### 4.3 Chất lượng dữ liệu ERP
-- 49/194 đơn vị trang bị chưa gán `WorkDepartmentId` (đang được điền dần).
+- 49/194 đơn vị thiết bị chưa gán `WorkDepartmentId` (đang được điền dần).
 - Vị trí nằm trong `Description` dạng văn xuôi ("24 màn ở tầng 4"). Không nối
   được với phòng ban, và **đừng** viết code đoán.
-- Tenant 78 có 52 nhân sự, 10 phòng ban, **0 trang bị**.
+- Tenant 78 có 52 nhân sự, 10 phòng ban, **0 thiết bị**.
 
 ---
 
@@ -244,7 +244,7 @@ danh sách nhân sự là dữ liệu cá nhân.
    rồi mới nổ** ở bước dựng response, nên tài liệu vẫn vào Qdrant còn người dùng
    thấy lỗi — dễ nạp trùng vì tưởng chưa được. Lọt qua 447 test vì **không test nào
    chạm tầng API của `documents`**; nay có `tests/test_kho_tri_thuc_api.py` (3 ca).
-3. **Câu nhắc cả hai mảng** (`"trang bị cấp cho nhân viên"`) vẫn rơi về phán
+3. **Câu nhắc cả hai mảng** (`"thiết bị cấp cho nhân viên"`) vẫn rơi về phán
    đoán của LLM. Cố ý không đè vì ý định thật sự mơ hồ.
 4. **Workflow 4 từng có 1/10 lần bị van chắn số chặn** và không bắt lại được.
    Phiên này chạy 5 lần đều `passed`, nhưng chưa đủ để kết luận là hết. Cách tìm
@@ -454,7 +454,7 @@ Cách kiểm đúng: gom toàn bộ text của các shape rồi dò từng dòng
 Vẫn như phiên trước, và phiên này lặp lại y hệt: **mỗi lần chạy thật một câu hỏi
 mới là lòi ra một lỗi mới**, không lần nào tìm ra trước bằng đọc code hay chạy
 test. Lỗi nhãn cột `bao_duong_cuoi`, lỗi mẫu hỏi chỉ tiêu không tồn tại, lỗi
-trích yếu bị đọc thành quân số — cả ba đều lọt qua 419 test cũ.
+trích yếu bị đọc thành nhân sự — cả ba đều lọt qua 419 test cũ.
 
 Cách duy nhất đang hiệu quả: **chạy thật, đọc từng câu trong file xuất ra**, và
 mỗi lần tìm ra lỗi thì thêm ca đó vào test TRƯỚC khi sửa, kiểm rằng nó đỏ.

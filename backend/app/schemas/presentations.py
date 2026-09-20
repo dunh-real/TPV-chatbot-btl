@@ -11,7 +11,7 @@ from app.schemas.reports import ValidationModel
 
 class PresentationRequest(BaseModel):
     request: str = Field(min_length=1, max_length=2000,
-                         examples=["Tạo slide báo cáo quân số tháng 8"])
+                         examples=["Tạo slide báo cáo nhân sự tháng 8"])
     inputs: dict[str, str] = Field(
         default_factory=dict, description="Thông tin bổ sung: người trình bày, đơn vị..."
     )

@@ -20,7 +20,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from app.documents.structure import _PATTERNS, build_chu_ky_pattern
+from app.documents.structure import _PATTERNS
 
 logger = logging.getLogger(__name__)
 
@@ -118,15 +118,8 @@ def logical_lines(text: str) -> list[str]:
 
 
 def _chu_ky_pattern() -> re.Pattern[str]:
-    """Danh sách chức danh lấy từ bộ tiêu chí để YAML sửa một chỗ, có hiệu lực
-    cả khi soát lẫn khi ingest."""
-    try:
-        from app.documents.rules import get_rule_engine
-
-        return build_chu_ky_pattern(get_rule_engine().chu_ky_titles)
-    except Exception as exc:  # noqa: BLE001 - thiếu file tiêu chí thì dùng mặc định
-        logger.debug("Dùng danh sách chức danh mặc định: %s", exc)
-        return _PATTERNS["chu_ky"][0]
+    """Mẫu dòng chức danh người ký; danh sách chức danh khai ở `app.documents.structure`."""
+    return _PATTERNS["chu_ky"][0]
 
 
 def _first_match(lines: list[str], pattern: re.Pattern[str]) -> tuple[int, re.Match[str]] | None:

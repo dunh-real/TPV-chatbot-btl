@@ -5,7 +5,7 @@ VÌ SAO CÓ FILE NÀY
 Ba lỗi nặng nhất của phần tạo slide đều lọt qua hơn 300 test:
 
   - `focus` model trả về cả câu thay vì một trong bốn giá trị -> ô chỉ tiêu hiện
-    quân số dưới tiêu đề nói về trang bị;
+    nhân sự dưới tiêu đề nói về thiết bị;
   - bảng 33 dòng bị cắt còn 8, kèm câu "xem chi tiết trong báo cáo" trỏ vào một
     bản báo cáo không tồn tại;
   - "tháng 8/2026 so với tháng 8 năm 2025" ra kỳ đối chiếu 2026-08, tức so kỳ với
@@ -30,9 +30,9 @@ import pytest
 
 from app.agents.nodes.report import _compare_period, scope_from_request
 
-CA_HAI = ["quan_so", "trang_bi"]
-QUAN_SO = ["quan_so"]
-TRANG_BI = ["trang_bi"]
+CA_HAI = ["nhan_su", "thiet_bi"]
+NHAN_SU = ["nhan_su"]
+THIET_BI = ["thiet_bi"]
 
 # Hôm nay trong các ca dưới đây là 19/09/2026, nên "kỳ gần nhất đã khép" là 2026-08.
 KY_MAC_DINH = "2026-08"
@@ -42,33 +42,33 @@ KY_MAC_DINH = "2026-08"
 #  kỳ đối chiếu mong đợi hoặc None, mã đơn vị mong đợi hoặc None)
 CORPUS: list[tuple[str, list[str], str | None, str | None, list[str] | None]] = [
     # --- khoanh vùng nội dung ---
-    ("Tạo slide báo cáo thông tin nhân viên", QUAN_SO, KY_MAC_DINH, "2026-07", []),
-    ("Báo cáo quân số tháng 8/2026", QUAN_SO, "2026-08", "2026-07", []),
-    ("Thống kê cán bộ, biên chế của cơ quan", QUAN_SO, KY_MAC_DINH, "2026-07", []),
-    ("slide tổng hợp nhân viên", QUAN_SO, KY_MAC_DINH, "2026-07", []),
-    ("báo cáo biên chế và tuyển mới của đơn vị", QUAN_SO, KY_MAC_DINH, "2026-07", []),
-    ("Làm slide báo cáo trang thiết bị tháng 8/2026", TRANG_BI, "2026-08", "2026-07", []),
-    ("tổng hợp trang thiết bị", TRANG_BI, KY_MAC_DINH, "2026-07", []),
-    ("slide tình hình khí tài tháng 7/2026", TRANG_BI, "2026-07", "2026-06", []),
-    ("Tình hình tài sản, vật tư của cơ quan", TRANG_BI, KY_MAC_DINH, "2026-07", []),
+    ("Tạo slide báo cáo thông tin nhân viên", NHAN_SU, KY_MAC_DINH, "2026-07", []),
+    ("Báo cáo nhân sự tháng 8/2026", NHAN_SU, "2026-08", "2026-07", []),
+    ("Thống kê cán bộ, biên chế của cơ quan", NHAN_SU, KY_MAC_DINH, "2026-07", []),
+    ("slide tổng hợp nhân viên", NHAN_SU, KY_MAC_DINH, "2026-07", []),
+    ("báo cáo biên chế và tuyển mới của đơn vị", NHAN_SU, KY_MAC_DINH, "2026-07", []),
+    ("Làm slide báo cáo trang thiết bị tháng 8/2026", THIET_BI, "2026-08", "2026-07", []),
+    ("tổng hợp trang thiết bị", THIET_BI, KY_MAC_DINH, "2026-07", []),
+    ("slide tình hình thiết bị tháng 7/2026", THIET_BI, "2026-07", "2026-06", []),
+    ("Tình hình tài sản, vật tư của cơ quan", THIET_BI, KY_MAC_DINH, "2026-07", []),
     ("Báo cáo tổng hợp tháng 8/2026", CA_HAI, "2026-08", "2026-07", []),
-    ("Báo cáo quân số và trang thiết bị tháng 8/2026", CA_HAI, "2026-08", "2026-07", []),
+    ("Báo cáo nhân sự và trang thiết bị tháng 8/2026", CA_HAI, "2026-08", "2026-07", []),
     ("Làm cho tôi bộ slide báo cáo tháng 8/2026", CA_HAI, "2026-08", "2026-07", []),
 
     # --- kỳ và kỳ đối chiếu ---
-    ("slide quân số tháng 8/2026 so với tháng 8 năm 2025", QUAN_SO, "2026-08", "2025-08", []),
-    ("slide quân số tháng 8/2026 so với cùng kỳ năm ngoái", QUAN_SO, "2026-08", "2025-08", []),
-    ("báo cáo quân số tháng 8/2026 so với tháng 3", QUAN_SO, "2026-08", "2026-03", []),
-    ("báo cáo trang thiết bị tháng 1/2026", TRANG_BI, "2026-01", "2025-12", []),
+    ("slide nhân sự tháng 8/2026 so với tháng 8 năm 2025", NHAN_SU, "2026-08", "2025-08", []),
+    ("slide nhân sự tháng 8/2026 so với cùng kỳ năm ngoái", NHAN_SU, "2026-08", "2025-08", []),
+    ("báo cáo nhân sự tháng 8/2026 so với tháng 3", NHAN_SU, "2026-08", "2026-03", []),
+    ("báo cáo trang thiết bị tháng 1/2026", THIET_BI, "2026-01", "2025-12", []),
 
     # --- phạm vi đơn vị ---
-    ("slide quân số Phòng Kế toán tháng 8/2026", QUAN_SO, "2026-08", "2026-07", ["00003"]),
-    ("báo cáo trang bị của Phòng IT", TRANG_BI, KY_MAC_DINH, "2026-07", ["00005"]),
-    ("quân số Phòng Kinh doanh và Phòng Kỹ thuật tháng 8/2026",
-     QUAN_SO, "2026-08", "2026-07", ["00001", "00002"]),
+    ("slide nhân sự Phòng Kế toán tháng 8/2026", NHAN_SU, "2026-08", "2026-07", ["00003"]),
+    ("báo cáo thiết bị của Phòng IT", THIET_BI, KY_MAC_DINH, "2026-07", ["00005"]),
+    ("nhân sự Phòng Kinh doanh và Phòng Kỹ thuật tháng 8/2026",
+     NHAN_SU, "2026-08", "2026-07", ["00001", "00002"]),
 
     # --- ca mơ hồ: nhắc cả hai mảng, code cố ý KHÔNG đè lên phán đoán của LLM ---
-    ("trang bị cấp cho nhân viên", None, KY_MAC_DINH, "2026-07", []),
+    ("thiết bị cấp cho nhân viên", None, KY_MAC_DINH, "2026-07", []),
 ]
 
 
@@ -85,12 +85,12 @@ def test_khoanh_vung_noi_dung_theo_cau_chu(cau, noi_dung, _ky, _ss, _dv):
     if noi_dung in (None, CA_HAI):
         # Câu nhắc cả hai mảng, hoặc không nhắc mảng nào: ý định thật sự mơ hồ,
         # code cố ý KHÔNG đè - trả lại nguyên lựa chọn của LLM, dù nó là gì.
-        for lua_chon in (CA_HAI, list(reversed(CA_HAI)), QUAN_SO, TRANG_BI):
+        for lua_chon in (CA_HAI, list(reversed(CA_HAI)), NHAN_SU, THIET_BI):
             assert scope_from_request(cau, lua_chon) == lua_chon
         return
 
     # Câu nhắc đúng một mảng: đè được kể cả khi LLM đoán sai hoàn toàn.
-    for lua_chon in (CA_HAI, list(reversed(CA_HAI)), QUAN_SO, TRANG_BI):
+    for lua_chon in (CA_HAI, list(reversed(CA_HAI)), NHAN_SU, THIET_BI):
         assert scope_from_request(cau, lua_chon) == noi_dung
 
 
@@ -171,15 +171,15 @@ async def test_trich_tham_so_that(cau, noi_dung, ky, so_sanh, don_vi,
 # Những bất biến dưới đây kiểm đúng khoảng đó.
 # --------------------------------------------------------------------------- #
 CAU_DUNG_SLIDE = [
-    ("Tạo slide báo cáo thông tin nhân viên", "quan_so"),
-    ("tổng hợp trang thiết bị", "trang_bi"),
-    ("slide quân số Phòng Kế toán tháng 8/2026", "quan_so"),
+    ("Tạo slide báo cáo thông tin nhân viên", "nhan_su"),
+    ("tổng hợp trang thiết bị", "thiet_bi"),
+    ("slide nhân sự Phòng Kế toán tháng 8/2026", "nhan_su"),
     ("Báo cáo tổng hợp tháng 8/2026", None),
 ]
 
-MANG_NGUOC = {"quan_so": "trang_bi", "trang_bi": "quan_so"}
-KHOA_CUA_MANG = {"quan_so": ("personnel", "personnel_breakdown"),
-                 "trang_bi": ("equipment", "equipment_breakdown")}
+MANG_NGUOC = {"nhan_su": "thiet_bi", "thiet_bi": "nhan_su"}
+KHOA_CUA_MANG = {"nhan_su": ("personnel", "personnel_breakdown"),
+                 "thiet_bi": ("equipment", "equipment_breakdown")}
 
 
 @pytest.mark.live
@@ -208,10 +208,10 @@ async def test_bo_slide_dung_voi_cau_hoi(cau, mang, dong_ket_noi_khi_xong):
 
     # Hỏi một mảng thì bản tóm tắt không được mang mảng kia sang.
     brief = ket_qua["brief"]
-    if mang == "quan_so":
+    if mang == "nhan_su":
         assert "TRANG THIẾT BỊ" not in brief
-    elif mang == "trang_bi":
-        assert "QUÂN SỐ" not in brief
+    elif mang == "thiet_bi":
+        assert "NHÂN SỰ" not in brief
 
     presentation = Presentation(ket_qua["output_path"])
     assert ket_qua["slide_count"] == len(presentation.slides)
@@ -240,8 +240,8 @@ async def _ten_tung_dong(params: dict) -> list[str]:
     from app.db.erp_session import erp_session_scope
     from app.tools.data import get_equipment_statistics, get_personnel_statistics
 
-    ham = {"quan_so": get_personnel_statistics, "trang_bi": get_equipment_statistics}
-    nhom = {"quan_so": "chuc_vu", "trang_bi": "chung_loai"}
+    ham = {"nhan_su": get_personnel_statistics, "thiet_bi": get_equipment_statistics}
+    nhom = {"nhan_su": "chuc_vu", "thiet_bi": "chung_loai"}
 
     ten: list[str] = []
     async with erp_session_scope() as session:
@@ -262,13 +262,13 @@ async def _ten_tung_dong(params: dict) -> list[str]:
 # sai: gộp nhầm chiều thì mọi con số vẫn đúng, chỉ có câu hỏi là khác.
 # --------------------------------------------------------------------------- #
 CORPUS_NHOM: list[tuple[str, str | None]] = [
-    ("Báo cáo tổng hợp quân số theo chức vụ tháng 8/2026", "chuc_vu"),
-    ("Thống kê quân số theo từng chức vụ", "chuc_vu"),
+    ("Báo cáo tổng hợp nhân sự theo chức vụ tháng 8/2026", "chuc_vu"),
+    ("Thống kê nhân sự theo từng chức vụ", "chuc_vu"),
     ("Tổng hợp trang thiết bị theo chủng loại tháng 8/2026", "chung_loai"),
-    ("báo cáo trang bị theo loại trang bị", "chung_loai"),
+    ("báo cáo thiết bị theo loại thiết bị", "chung_loai"),
     # Không nêu chiều nào thì phải là None - gộp theo đơn vị như cũ.
     ("Báo cáo tổng hợp tháng 8/2026", None),
-    ("Báo cáo quân số Phòng Kế toán tháng 8/2026", None),
+    ("Báo cáo nhân sự Phòng Kế toán tháng 8/2026", None),
 ]
 
 
@@ -300,7 +300,7 @@ async def test_bao_cao_gop_theo_chuc_vu_dung_nhan_va_dung_tong(dong_ket_noi_khi_
 
     with use_principal(Principal(tenant_id=64)):
         ket_qua = await run_aggregate_workflow(
-            "Báo cáo tổng hợp quân số theo chức vụ tháng 8/2026", inputs={})
+            "Báo cáo tổng hợp nhân sự theo chức vụ tháng 8/2026", inputs={})
 
     assert not ket_qua["error"], ket_qua["error"]
     assert ket_qua["params"]["nhom_theo"] == "chuc_vu"
