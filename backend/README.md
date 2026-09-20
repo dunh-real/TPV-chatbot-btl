@@ -272,6 +272,37 @@ thuế giá trị gia tăng là bao nhiêu?"` vẫn nhận "chưa tìm thấy".
 
 Tắt bằng `LEXICAL_RESCUE_ENABLED=false`.
 
+### Chấm điểm theo nhiều cách diễn đạt
+
+Reranker này nhạy với **từ vựng** hơn là với ý: cùng một chunk, "hạn nộp báo cáo
+là khi nào" được 0,007 còn "báo cáo gửi về trước ngày nào" được 0,94 - chỉ vì văn
+bản viết *"gửi về ... trước ngày"*. Ai tình cờ trúng chữ của văn bản thì được trả
+lời, ai dùng chữ khác thì nhận "không tìm thấy" về thứ có thật trong tài liệu.
+
+Nên mỗi ứng viên được chấm với **mọi cách diễn đạt** của câu hỏi rồi lấy **điểm
+cao nhất** (`CrossEncoderReranker.score_best`): câu gốc của người dùng, bản viết
+lại, và các biến thể. Bước sinh biến thể vốn đã chạy sẵn cho khâu truy hồi nên
+không tốn thêm lời gọi LLM nào; chi phí là vài lượt forward của cross-encoder
+(194ms → 768ms trên 14 ứng viên). Đặt `RERANK_MAX_QUERIES=1` để quay về hành vi cũ.
+
+`QUERY_REWRITE_SYSTEM` vì thế buộc sinh **ít nhất một** biến thể theo *lối văn bản
+hành chính* - diễn đạt điều người dùng muốn biết bằng cách một công văn sẽ viết ra
+nó, và bỏ số hiệu khỏi biến thể đó. Vẫn giữ **ít nhất một** biến thể mang nguyên
+mã hiệu, vì nhánh BM25 cần nó để ra đúng tài liệu.
+
+Hai ràng buộc:
+
+- **Max, không phải trung bình.** Biến thể do máy sinh; một biến thể lạc đề không
+  được kéo tụt chunk đúng.
+- **Câu GỐC của người dùng luôn nằm trong tập chấm.** Bản viết lại có lúc kém hơn
+  chính câu người hỏi - đã gặp: "Ai ký công văn chỉ thị kiểm kê" được 0,1298 với
+  câu gốc, cả 4 bản viết lại đều dưới ngưỡng, và một tài liệu KHÁC trèo lên 0,1201.
+
+Cách này **không** nới van: câu hỏi ngoài kho (thuế GTGT, lương tối thiểu, nghỉ
+phép) vẫn trả về rỗng, vì nó không bơm nội dung của kho vào truy vấn. Mở rộng truy
+vấn bằng từ vựng lấy từ chính chunk (pseudo-relevance feedback) thì ngược lại -
+đã đo: thổi câu ngoài kho từ 0,0000 lên 0,9082, nên **không dùng**.
+
 Nhánh đó **không** trả về một câu cứng: phần lớn lượt rơi vào đây là chào hỏi hoặc
 hỏi hệ thống làm được gì, đáp lại bằng "không tìm thấy trong tài liệu" thì người
 dùng tưởng máy hỏng. Model được đối đáp bình thường nhưng bị chặn đúng một việc —
@@ -322,9 +353,37 @@ Không cần tài khoản lẫn domain, nhưng **URL đổi mỗi lần chạy l
 cam kết uptime. Đã kiểm: SSE của `/api/chat/qa/stream` không bị Cloudflare gom
 bộ đệm, upload multipart và tải `.docx`/`.pptx` đều qua được.
 
-Giới hạn cần nhớ: Cloudflare cắt request quá **100 giây** (lỗi 524). Các
-workflow hiện chạy 3-10 giây nên còn xa ngưỡng, nhưng nếu đổi sang model chậm
-hơn thì phải chuyển các endpoint sinh file sang dạng chạy nền + hỏi trạng thái.
+### Giới hạn 524 của Cloudflare
+
+Cloudflare cắt request nếu origin chưa trả **byte đầu tiên** trong
+**125 giây** (tài liệu Cloudflare hiện tại; con số 100 giây hay bị trích là bản
+cũ). **Không chỉnh được** trên gói Free/Pro/Business — chỉ **Enterprise** mới
+nâng được, tối đa 6000 giây, bằng Cache Rule `Proxy Read Timeout` hoặc API
+`proxy_read_timeout` của zone. Nói cách khác: với gói thường thì đây là trần
+cứng, phải sửa ở phía mình chứ không "khai to lên" được.
+
+| Endpoint | Đo được | Biên tới 125s |
+|---|---|---|
+| `/api/chat/*`, `/api/documents/review` | 3-30 giây | rộng |
+| `/api/reports/draft`, `/aggregate` | 20-40 giây | rộng |
+| **`/api/presentations/create`** | **76-90 giây** | **~35-49 giây** |
+
+Đo ngày 20/09/2026, tenant 64, kỳ 2026-08: **80,1 giây** gọi thẳng `localhost`,
+**76,1 giây** qua `chatbot-demo.tpvtech.vn` - cả hai đều `200`, không dính 524.
+
+Biên ~35-49 giây là đủ cho demo bình thường, nhưng đừng coi là an toàn vĩnh viễn:
+thời gian này do OpenRouter quyết, không phải mình. Bộ slide dài hơn, model đổi,
+hoặc mạng chậm là chạm trần. Ba đường xử lý, theo thứ tự rẻ dần về công sức:
+
+- **Trước mắt (không sửa code):** tạo slide trước buổi demo, hoặc lúc demo gọi
+  qua `localhost` thay vì đường public.
+- **Sửa hẳn, hợp với mọi gói:** cho `/api/presentations/create` phát SSE như
+  `/api/chat/qa/stream`, hoặc trả `202` rồi cho hỏi trạng thái. Byte đầu đi sớm
+  thì đồng hồ 125 giây không còn đếm nữa. **Chưa làm.** Lưu ý khi làm: phải phát
+  dữ liệu thật đều đặn (có nguồn nói Cloudflare cần thấy >8KB sớm), và vẫn phải
+  có heartbeat + đường huỷ - streaming không biến việc dài thành việc vô hạn.
+- **Nâng trần:** chỉ khi zone `tpvtech.vn` là gói Enterprise. Cần kiểm tra lại
+  gói trước khi tính đường này.
 
 URL public ai biết cũng gọi được, kể cả `DELETE /api/documents/{doc_id}`. Chốt
 cửa bằng một dòng trong `.env`:
@@ -672,12 +731,16 @@ Bảng cũ thiếu cột thì `create_all()` tự thêm bằng một câu `ALTER
 động (chỉ cột nullable — xem `_them_cot_con_thieu`); dự án chưa dùng migration.
 
 ```bash
-# `scripts/seed_demo.py` đã cũ từ đợt chuyển sang ERP: nó còn import các model
-# đã bị xoá (`DonVi`, `TrangBi`, `KyKiemKe`) nên chạy là lỗi ngay. Mẫu báo cáo
-# hiện nằm sẵn trong `data/demo.db`.
-uv run python scripts/seed_demo.py --reset        # ĐANG HỎNG, xem ghi chú trên
+# Nạp mẫu báo cáo + văn bản demo cho máy cài mới. Chỉ ghi hai bảng hệ thống này
+# sở hữu (`template_bao_cao`, `van_ban`); quân số/trang bị đọc từ ERP lúc chạy.
+uv run python scripts/seed_demo.py
+uv run python scripts/seed_demo.py --reset        # xoá ĐÚNG dòng nó tạo rồi nạp lại
 uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql   # DDL cho SQL Server
 ```
+
+`--reset` **không** `drop_all`: sổ `van_ban` trên máy đang chạy giữ các báo cáo
+đã phát hành, và số ký hiệu của báo cáo mới đếm từ sổ đó - xoá cả bảng là tua
+bộ đếm về `01` rồi ghi đè lên bản đã ký.
 
 Chuyển sang SQL Server chỉ cần đổi `DATABASE_URL` trong `.env`, không sửa code:
 

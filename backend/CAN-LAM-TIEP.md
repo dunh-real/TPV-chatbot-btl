@@ -1,11 +1,21 @@
-# Việc còn lại — cập nhật 19/09/2026 (phiên chiều)
+# Việc còn lại — cập nhật 20/09/2026
 
 Ghi cho người tiếp tục sửa backend (Tiến Anh và đội dev khi nối giao diện).
 
-Trạng thái cuối phiên: **439 test mặc định + 31 test `live` đều xanh**, tầng
-`live` chạy trên ERP, vLLM và Presenton thật.
+Trạng thái: **447 test mặc định xanh** + 31 test `live` (chạy trên ERP, vLLM và
+Presenton thật, không nằm trong lần chạy mặc định).
 
-Phiên này làm bốn việc: đổi phần tạo slide sang Presenton, tinh chỉnh workflow 3,
+Phiên 20/09 dọn bốn thứ, tất cả đều nhắm vào buổi demo:
+
+1. Ô chờ của các workflow dài có **đồng hồ đếm giây thật** (§1) — 76-90 giây mà
+   màn hình đứng im thì người xem tưởng treo.
+2. **Đo thời gian thật qua đường public**: 76-90 giây so với trần 125 giây của
+   Cloudflare, biên còn ~35-49 giây (§1) — đủ cho demo, nhưng trần đó không nâng
+   được nếu không phải gói Enterprise, nên **chưa sửa hẳn**.
+3. `PUBLIC_HOSTNAME` trong `.env` ghi sai tên miền, mở ra là trang lỗi (§6).
+4. `scripts/seed_demo.py` viết lại cho khớp schema ERP (§5.1).
+
+Phiên 19/09 trước đó: đổi phần tạo slide sang Presenton, tinh chỉnh workflow 3,
 sửa mấy chỗ truy xuất CSDL cho đúng, và mở biến thể truy vấn bằng `group_by`.
 
 ---
@@ -96,8 +106,19 @@ biết còn hạn mức.
 
 ### Còn lại của phần này
 
-- **Mỗi bộ slide mất khoảng 60-90 giây.** Giao diện cần hiện tiến trình, nếu
-  không người dùng tưởng treo. `elapsed_seconds` có trong kết quả trả về.
+- ~~**Giao diện cần hiện tiến trình**~~ — **đã làm 20/09**. `loaderNode` nay
+  nhận `hint = {text, slowAfter}` và hiện đồng hồ đếm giây thật; quá `slowAfter`
+  thì đổi chữ thành "lâu hơn thường lệ — vẫn đang chạy". Chỉ đếm thời gian THẬT,
+  không vẽ thanh tiến trình giả (các endpoint này trả về một cục, không phát sự
+  kiện). Đã gắn cho 4 màn: slide, soạn báo cáo, tổng hợp, soát văn bản.
+- **Cloudflare 524 — xem `README` §"Giới hạn 524 của Cloudflare".**
+  Đo 20/09: **80,1 giây** qua `localhost`, **76,1 giây** qua
+  `chatbot-demo.tpvtech.vn` (cả hai `200`). Trần là **125 giây** (không phải 100
+  như bản ghi đầu tiên của phiên này — 100 là số cũ hay bị trích lại), nên biên
+  còn **~35-49 giây**: đủ cho demo, chưa phải chữa gấp.
+  **Trần này KHÔNG nâng được** trừ khi zone là gói Enterprise — Free/Pro/Business
+  cố định. Nên đường sửa hẳn là phát SSE hoặc trả `202` + hỏi trạng thái, chứ
+  không phải chỉnh cấu hình Cloudflare. **Chưa làm.**
 - **`data/output/` chỉ dồn thêm.** Nay mỗi lần tạo là một file mới; cần dọn định kỳ.
 - **Slide bìa in chữ "Chưa cung cấp"** nếu không truyền `inputs.nguoi_trinh_bay`.
   Cố ý không tự điền — bịa một cái tên ngay trang đầu thì tệ hơn.
@@ -210,13 +231,22 @@ danh sách nhân sự là dữ liệu cá nhân.
 
 ## 5. Việc nhỏ còn tồn
 
-1. **`scripts/seed_demo.py` đã hỏng** từ đợt chuyển sang ERP: nó import `DonVi`,
-   `TrangBi`, `KyKiemKe` — các model đã bị xoá. Mẫu báo cáo hiện nằm sẵn trong
-   `data/demo.db`. Hoặc sửa lại script cho khớp, hoặc xoá hẳn và ghi rõ mẫu lấy
-   từ đâu; để nguyên là bẫy cho người cài mới.
-2. **Câu nhắc cả hai mảng** (`"trang bị cấp cho nhân viên"`) vẫn rơi về phán
+1. ~~**`scripts/seed_demo.py` đã hỏng**~~ — **đã sửa 20/09**. Viết lại cho khớp
+   schema hiện tại: chỉ nạp `template_bao_cao` + `van_ban`, bỏ hẳn phần seed
+   `DonVi`/`TrangBi`/`KyKiemKe` (ERP sở hữu, chỉ đọc). `--reset` nay xoá ĐÚNG
+   những dòng nó tạo thay vì `drop_all` — bản cũ xoá cả sổ `van_ban`, tức tua
+   bộ đếm số ký hiệu về `01` rồi ghi đè lên báo cáo đã phát hành. Chạy hai lần
+   liên tiếp không đổi số dòng (3 mẫu / 54 văn bản trên `data/demo.db`).
+2. ~~**Màn "Kho tri thức" chết hoàn toàn**~~ — **đã sửa 20/09**. `/api/documents/upload`
+   và `/ingest-text` đều trả **500**: `IngestResponse(**result.__dict__)` mà
+   `IngestResult` là `@dataclass(slots=True)` — dataclass có `slots` thì KHÔNG có
+   `__dict__`. Sửa bằng `dataclasses.asdict()`. Đáng chú ý: **ingest đã chạy xong
+   rồi mới nổ** ở bước dựng response, nên tài liệu vẫn vào Qdrant còn người dùng
+   thấy lỗi — dễ nạp trùng vì tưởng chưa được. Lọt qua 447 test vì **không test nào
+   chạm tầng API của `documents`**; nay có `tests/test_kho_tri_thuc_api.py` (3 ca).
+3. **Câu nhắc cả hai mảng** (`"trang bị cấp cho nhân viên"`) vẫn rơi về phán
    đoán của LLM. Cố ý không đè vì ý định thật sự mơ hồ.
-3. **Workflow 4 từng có 1/10 lần bị van chắn số chặn** và không bắt lại được.
+4. **Workflow 4 từng có 1/10 lần bị van chắn số chặn** và không bắt lại được.
    Phiên này chạy 5 lần đều `passed`, nhưng chưa đủ để kết luận là hết. Cách tìm
    nếu gặp lại: log `quote` và `numbers` của mọi issue mức `error` ra file, chạy
    vài chục lần rồi đọc. Đừng đoán.
@@ -235,12 +265,104 @@ danh sách nhân sự là dữ liệu cá nhân.
 - **Presenton cũng đọc cấu hình lúc khởi động**: đổi `.env` thì
   `docker compose --env-file .env -f docker/presenton.yml up -d --force-recreate`.
 
+- **`PUBLIC_HOSTNAME` trong `.env` từng ghi sai** (`chatbot.tpvtech.vn`). Tên đó
+  trả **525** (SSL handshake hỏng); tên chạy được là **`chatbot-demo.tpvtech.vn`**
+  → `200`. `serve_public.sh` in đúng giá trị này ra khung URL cuối màn hình, nên
+  ghi sai là người mở link lúc demo gặp trang lỗi. Đã sửa 20/09. Đổi hostname
+  thì phải sửa cả ô **Public hostname** bên dashboard Cloudflare.
+
+- **Đang có 2 tiến trình `cloudflared` của dự án này** (một chạy bằng
+  `--config ~/.cloudflared/tpv-chatbot.yml`, một bằng `--token` từ
+  `serve_public.sh`), cạnh vài tunnel của dự án khác trên cùng máy. Khác token
+  nên không chia tải lẫn nhau, nhưng trước khi demo nên xác minh cái nào đang
+  phục vụ `chatbot-demo.tpvtech.vn` để khỏi tắt nhầm.
+
+- **`PUBLIC_ACCESS_TOKEN` vẫn chưa đặt.** Đường public hiện ai biết cũng gọi
+  được, kể cả `DELETE /api/documents/{id}`. Trước khi đưa link cho khách thì đặt
+  token, hoặc bật Cloudflare Access.
+
 - **`TRUST_IDENTITY_HEADERS=true` là lỗ hổng có chủ ý.** Ai gọi được API cũng tự
   xưng tenant bất kỳ qua `X-Tenant-Id`. Khi giao diện có đăng nhập: viết phần
   giải mã JWT trong `_from_token()` (`app/core/context.py`) rồi đặt `false`.
 
 - **File đầu ra cũ không mang dấu tenant thì không tải được nữa** (cố ý). Xoá
   `backend/data/output/*` không có hậu tố `__t<N>`.
+
+---
+
+## 6b. Reranker nhạy từ vựng — ĐÃ SỬA 20/09
+
+### Bệnh
+
+`AITeamVN/Vietnamese_Reranker` gần như so khớp từ vựng chứ không hiểu diễn đạt
+khác. Cùng MỘT chunk của `CV-105-BGD`, cùng một ý:
+
+| Câu hỏi | Điểm |
+|---|---|
+| "**hạn nộp** báo cáo là khi nào" | 0,0073 |
+| "báo cáo **gửi về trước ngày** nào" | **0,9399** |
+
+Văn bản viết *"Báo cáo **gửi về** ... **trước ngày** 20/9/2026"*. Ai tình cờ dùng
+đúng chữ của văn bản thì được trả lời, ai dùng chữ khác thì nhận "không tìm thấy"
+về một thứ có thật trong tài liệu.
+
+Dài hơn KHÔNG giúp — đo tách bạch hai yếu tố:
+
+| Nhóm | Độ dài | Từ vựng | Điểm |
+|---|---|---|---|
+| ngắn, từ vựng lệch | 7-12 từ | lệch | 0,0034-0,0043 |
+| **dài, từ vựng lệch** | **28-33 từ** | lệch | **0,0000-0,0002** |
+| ngắn, trùng từ văn bản | 7-10 từ | trùng | 0,86-0,94 |
+| dài, trùng từ văn bản | 30 từ | trùng | **1,0000** |
+
+Nối dài mà không thêm từ ngữ của văn bản thì **loãng đi, điểm tụt**.
+
+### Cách sửa đã làm
+
+1. **`QUERY_REWRITE_SYSTEM`** ([prompts.py](app/agents/prompts.py)): buộc sinh
+   **ít nhất một** biến thể theo LỐI VĂN BẢN HÀNH CHÍNH, bỏ số hiệu khỏi biến thể
+   đó. Quy tắc cũ "giữ nguyên mọi mã hiệu" vẫn còn nhưng nay chỉ áp cho **ít nhất
+   một** biến thể — nhánh BM25 vẫn cần mã hiệu để ra đúng tài liệu.
+2. **`CrossEncoderReranker.score_best`** ([reranker.py](app/rag/reranker.py)): chấm
+   với MỌI cách diễn đạt rồi lấy **max** cho từng ứng viên. `rerank()` nay nhận
+   `str` hoặc danh sách. Trần `rerank_max_queries = 5`.
+3. **Câu GỐC luôn nằm trong tập chấm** ([qa.py](app/agents/nodes/qa.py),
+   [chat.py](app/api/chat.py)). Đây là chỗ suýt hỏng: bản viết lại và biến thể đều
+   do máy sinh, có lúc kém hơn chính câu người dùng hỏi. "Ai ký công văn chỉ thị
+   kiểm kê" được 0,1298 với câu gốc, nhưng cả 4 câu viết lại đều dưới ngưỡng và
+   một tài liệu KHÁC trèo lên 0,1201 — hệ thống trả lời về sai văn bản.
+
+### Kết quả đo lại (20/09, sau khi sửa)
+
+| Câu hỏi | Trước | Sau |
+|---|---|---|
+| "Công văn 105 yêu cầu báo cáo gì, hạn nộp khi nào" | 0,0116 ❌ | **0,865** ✅ |
+| "Ai ký công văn chỉ thị kiểm kê" | 0,1298 ✅ | **0,130 ✅ đúng tài liệu** |
+| "Phòng Kỹ thuật kiểm kê bao nhiêu trang thiết bị" | 0,9985 ✅ | 0,999 ✅ |
+| "Công văn 105/CV-BGĐ do ai ký, ban hành ngày nào" | 1 nguồn | **3 nguồn** ✅ |
+| *ngoài kho*: nghỉ phép / thuế GTGT / lương tối thiểu | rỗng ✅ | **rỗng ✅** |
+
+**Van không mở toang** — đây là ranh giới quan trọng nhất, có test giữ
+(`tests/test_rerank_nhieu_cach_hoi.py`, 7 ca).
+
+**Chi phí:** rerank 194ms → 768ms (5 cách hỏi thay vì 1, trên 14 ứng viên). Cả
+câu hỏi QA là ~9,3s nên phần tăng ~6%. Kho lớn hơn (`rrf_top_k=20`) thì ước
+~1,1s. Đặt `rerank_max_queries = 1` là quay về hành vi cũ.
+**Không thêm lời gọi LLM nào** — biến thể vốn đã sinh sẵn cho khâu truy hồi.
+
+### Còn lại
+
+- **Câu trống ngữ cảnh vẫn rớt**: "hạn nộp báo cáo là khi nào" (không nói báo cáo
+  nào) → 0 nguồn, hệ thống hỏi lại. Chấp nhận được: câu đó mơ hồ thật.
+- **Không hạ `RERANK_SCORE_THRESHOLD`.** Đã đo: câu ngoài kho 0,0002 còn ca hỏng
+  0,0116 — hai vùng chồng nhau, không ngưỡng nào tách được.
+
+### Hai cách ĐÃ THỬ VÀ LOẠI — đừng thử lại
+
+| Cách | Vì sao loại |
+|---|---|
+| Gắn số hiệu làm tiền tố chunk | 0,0001 → 0,0345, vẫn dưới ngưỡng, và làm TỤT câu hỏi nội dung (0,9009 → 0,8638) |
+| Mở rộng câu hỏi bằng từ vựng lấy từ chính chunk (PRF) | Chữa được ca hỏng (0,0043 → 0,9971) nhưng thổi câu NGOÀI KHO từ 0,0000 lên **0,9082** — mất hẳn khả năng nói "không có trong tài liệu" |
 
 ---
 

@@ -1,12 +1,18 @@
 #!/usr/bin/env python
-"""Tạo bảng và nạp dữ liệu mẫu cho kịch bản demo.
+"""Nạp dữ liệu mẫu cho máy cài mới.
 
-    uv run python scripts/seed_demo.py           # SQLite theo DATABASE_URL
-    uv run python scripts/seed_demo.py --reset   # xoá sạch rồi nạp lại
+    uv run python scripts/seed_demo.py           # nạp/cập nhật mẫu báo cáo + văn bản demo
+    uv run python scripts/seed_demo.py --reset   # xoá đúng những dòng script này tạo, rồi nạp lại
 
-Kịch bản: Ban Giám đốc gửi công văn 105/CV-BGĐ yêu cầu các đơn vị báo cáo quân số
-và trang thiết bị; hệ thống định tuyến, phân rã nhiệm vụ rồi sinh báo cáo từ
-template + số liệu trong CSDL.
+CHỈ nạp hai bảng mà hệ thống này THỰC SỰ SỞ HỮU: `template_bao_cao` và
+`van_ban`. Phòng ban, đơn vị, nhân sự, trang bị **không** còn ở đây - chúng nằm
+trong ERP và chỉ được ĐỌC (`app.db.erp_models`). Bản cũ của script này seed cả
+`DonVi`/`TrangBi`/`KyKiemKe`; các model đó đã bị xoá từ đợt chuyển sang ERP nên
+script chết ngay ở dòng `import`.
+
+Không có đường nào để script này dựng dữ liệu nghiệp vụ nữa, và cũng không nên
+có: ghi vào ERP là việc của ERP. Máy cài mới muốn có số liệu thì trỏ
+`ERP_DATABASE_URL` vào ERP thật.
 """
 
 from __future__ import annotations
@@ -21,66 +27,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.db.models import (  # noqa: E402
-    Base, DonVi, KiemKeTrangBi, KyKiemKe, PhongBan, TemplateBaoCao, TrangBi, VanBan,
-)
-from app.db.session import create_all, dispose_engine, get_engine, session_scope  # noqa: E402
+from sqlalchemy import delete  # noqa: E402
 
-PHONG_BAN = [
-    PhongBan(
-        ma_phong_ban="P.HCNS",
-        ten_phong_ban="Phòng Hành chính nhân sự",
-        email="hcns@tpv.vn",
-        mo_ta=(
-            "Quản lý nhân sự: tuyển dụng, hợp đồng lao động, điều động, bổ nhiệm, "
-            "nâng lương, đào tạo, chế độ chính sách, bảo hiểm và hồ sơ cán bộ. "
-            "Công tác văn thư, lưu trữ, tiếp nhận và phát hành văn bản. "
-            "Xử lý mọi văn bản liên quan tới con người: kiểm kê nhân sự, quân số, "
-            "khen thưởng, kỷ luật, nghỉ phép, chuyển tiếp hợp đồng."
-        ),
-    ),
-    PhongBan(
-        ma_phong_ban="P.KETOAN",
-        ten_phong_ban="Phòng Kế toán",
-        email="ketoan@tpv.vn",
-        mo_ta=(
-            "Hạch toán kế toán, quản lý thu chi, thanh toán, công nợ và sổ sách tài chính. "
-            "Lập dự toán, quyết toán ngân sách, thẩm định kinh phí cho các đề xuất mua sắm, "
-            "bảo dưỡng, thay thế trang thiết bị. Tổng hợp số liệu tài chính toàn công ty."
-        ),
-    ),
-    PhongBan(
-        ma_phong_ban="P.HCC",
-        ten_phong_ban="Phòng Hành chính công",
-        email="hcc@tpv.vn",
-        mo_ta=(
-            "Quan hệ với cơ quan nhà nước, thủ tục hành chính công, giấy phép, hồ sơ pháp lý. "
-            "Theo dõi việc chấp hành văn bản chỉ đạo của cấp trên và báo cáo ra bên ngoài. "
-            "Quản lý con dấu, chứng thực và các thủ tục hành chính đối ngoại."
-        ),
-    ),
-    PhongBan(
-        ma_phong_ban="P.KYTHUAT",
-        ten_phong_ban="Phòng Kỹ thuật",
-        email="kythuat@tpv.vn",
-        mo_ta=(
-            "Quản lý kỹ thuật, vận hành, bảo dưỡng, sửa chữa máy móc, trang thiết bị và "
-            "hệ thống công nghệ thông tin. Kiểm kê và đánh giá tình trạng kỹ thuật của "
-            "tài sản, thiết bị; lập kế hoạch bảo dưỡng định kỳ và tham mưu phương án "
-            "nâng cấp, thay thế thiết bị."
-        ),
-    ),
-    PhongBan(
-        ma_phong_ban="P.KINHDOANH",
-        ten_phong_ban="Phòng Kinh doanh",
-        email="kinhdoanh@tpv.vn",
-        mo_ta=(
-            "Phát triển thị trường, chăm sóc khách hàng, hợp đồng bán hàng và doanh thu. "
-            "Quản lý trang thiết bị, phương tiện phục vụ bán hàng và nhân sự kinh doanh "
-            "thuộc phạm vi phòng. Báo cáo tình hình kinh doanh theo yêu cầu của Ban Giám đốc."
-        ),
-    ),
-]
+from app.db.models import TemplateBaoCao, VanBan  # noqa: E402
+from app.db.session import create_all, dispose_engine, session_scope  # noqa: E402
 
 TEMPLATE_TAI_NGUYEN = {
     "meta": {
@@ -192,89 +142,9 @@ TEMPLATES = [
     ),
 ]
 
-DON_VI = [
-    (DonVi(ma_don_vi="DV01", ten_don_vi="Đơn vị 1 - Khối văn phòng",
-           quan_so=48, quan_so_kiem_ke=date(2026, 8, 15)),
-     [("Máy tính để bàn", 45, "Tốt", date(2026, 6, 10)),
-      ("Máy in laser", 8, "Cần bảo dưỡng", date(2025, 11, 20)),
-      ("Máy photocopy", 3, "Tốt", date(2026, 7, 1)),
-      ("Máy chiếu", 4, "Hỏng", date(2025, 3, 5))]),
-    (DonVi(ma_don_vi="DV02", ten_don_vi="Đơn vị 2 - Khối kỹ thuật",
-           quan_so=65, quan_so_kiem_ke=date(2026, 3, 1)),
-     [("Máy tính trạm", 60, "Tốt", date(2026, 5, 12)),
-      ("Máy chủ", 6, "Tốt", date(2026, 8, 2)),
-      ("Thiết bị đo kiểm", 12, "Cần bảo dưỡng", date(2025, 9, 18)),
-      ("Xe công vụ", 2, "Cần bảo dưỡng", date(2026, 1, 25))]),
-    (DonVi(ma_don_vi="DV03", ten_don_vi="Đơn vị 3 - Khối hậu cần",
-           quan_so=32, quan_so_kiem_ke=date(2026, 9, 1)),
-     [("Xe tải nhẹ", 4, "Tốt", date(2026, 6, 30)),
-      ("Kho lạnh", 2, "Hỏng", date(2024, 12, 15)),
-      ("Máy phát điện", 3, "Tốt", date(2026, 4, 8))]),
-]
 
-# (kỳ, ngày kiểm kê, quân số, (có mặt, đi học, nghỉ phép),
-#  [(tên trang bị, số lượng, tình trạng, bảo dưỡng cuối)])
-KIEM_KE: dict[str, list[tuple]] = {
-    "DV01": [
-        ("2026-06", date(2026, 6, 28), 45, (42, 2, 1), [
-            ("Máy tính để bàn", 42, "Tốt", date(2026, 6, 10)),
-            ("Máy in laser", 8, "Tốt", date(2026, 5, 20)),
-            ("Máy photocopy", 3, "Tốt", date(2026, 4, 1)),
-            ("Máy chiếu", 4, "Cần bảo dưỡng", date(2025, 3, 5))]),
-        ("2026-07", date(2026, 7, 30), 46, (43, 2, 1), [
-            ("Máy tính để bàn", 44, "Tốt", date(2026, 6, 10)),
-            ("Máy in laser", 8, "Cần bảo dưỡng", date(2025, 11, 20)),
-            ("Máy photocopy", 3, "Tốt", date(2026, 7, 1)),
-            ("Máy chiếu", 4, "Cần bảo dưỡng", date(2025, 3, 5))]),
-        ("2026-08", date(2026, 8, 29), 48, (44, 3, 1), [
-            ("Máy tính để bàn", 45, "Tốt", date(2026, 6, 10)),
-            ("Máy in laser", 8, "Cần bảo dưỡng", date(2025, 11, 20)),
-            ("Máy photocopy", 3, "Tốt", date(2026, 7, 1)),
-            ("Máy chiếu", 4, "Hỏng", date(2025, 3, 5))]),
-        ("2026-09", date(2026, 9, 27), 48, (45, 2, 1), [
-            ("Máy tính để bàn", 45, "Tốt", date(2026, 9, 5)),
-            ("Máy in laser", 8, "Cần bảo dưỡng", date(2025, 11, 20)),
-            ("Máy photocopy", 3, "Tốt", date(2026, 7, 1)),
-            ("Máy chiếu", 4, "Hỏng", date(2025, 3, 5))]),
-    ],
-    "DV02": [
-        ("2026-06", date(2026, 6, 25), 62, (57, 3, 2), [
-            ("Máy tính trạm", 58, "Tốt", date(2026, 5, 12)),
-            ("Máy chủ", 6, "Tốt", date(2026, 2, 2)),
-            ("Thiết bị đo kiểm", 12, "Tốt", date(2026, 3, 18)),
-            ("Xe công vụ", 2, "Tốt", date(2026, 1, 25))]),
-        ("2026-07", date(2026, 7, 28), 64, (59, 3, 2), [
-            ("Máy tính trạm", 60, "Tốt", date(2026, 5, 12)),
-            ("Máy chủ", 6, "Tốt", date(2026, 2, 2)),
-            ("Thiết bị đo kiểm", 12, "Cần bảo dưỡng", date(2025, 9, 18)),
-            ("Xe công vụ", 2, "Tốt", date(2026, 1, 25))]),
-        ("2026-08", date(2026, 8, 30), 65, (60, 3, 2), [
-            ("Máy tính trạm", 60, "Tốt", date(2026, 5, 12)),
-            ("Máy chủ", 6, "Tốt", date(2026, 8, 2)),
-            ("Thiết bị đo kiểm", 12, "Cần bảo dưỡng", date(2025, 9, 18)),
-            ("Xe công vụ", 2, "Cần bảo dưỡng", date(2026, 1, 25))]),
-        ("2026-09", date(2026, 9, 26), 65, (61, 2, 2), [
-            ("Máy tính trạm", 61, "Tốt", date(2026, 9, 12)),
-            ("Máy chủ", 6, "Tốt", date(2026, 8, 2)),
-            ("Thiết bị đo kiểm", 12, "Cần bảo dưỡng", date(2025, 9, 18)),
-            ("Xe công vụ", 2, "Cần bảo dưỡng", date(2026, 1, 25))]),
-    ],
-    "DV03": [
-        ("2026-07", date(2026, 7, 29), 30, (28, 1, 1), [
-            ("Xe tải nhẹ", 4, "Tốt", date(2026, 6, 30)),
-            ("Kho lạnh", 2, "Cần bảo dưỡng", date(2024, 12, 15)),
-            ("Máy phát điện", 3, "Tốt", date(2026, 4, 8))]),
-        ("2026-08", date(2026, 8, 31), 31, (29, 1, 1), [
-            ("Xe tải nhẹ", 4, "Tốt", date(2026, 6, 30)),
-            ("Kho lạnh", 2, "Hỏng", date(2024, 12, 15)),
-            ("Máy phát điện", 3, "Tốt", date(2026, 4, 8))]),
-        ("2026-09", date(2026, 9, 28), 32, (30, 1, 1), [
-            ("Xe tải nhẹ", 4, "Tốt", date(2026, 9, 2)),
-            ("Kho lạnh", 2, "Hỏng", date(2024, 12, 15)),
-            ("Máy phát điện", 3, "Tốt", date(2026, 4, 8))]),
-    ],
-}
-
+# Công văn đến mở đầu kịch bản demo. `ma_don_vi`/`ky` để trống là ĐÚNG: đây là
+# văn bản ĐẾN, không phải báo cáo của một đơn vị cho một kỳ.
 VAN_BAN = VanBan(
     ma_van_ban="105/CV-BGĐ",
     ten_van_ban="Công văn về việc tổng hợp, báo cáo tình trạng trang thiết bị và quân số",
@@ -290,74 +160,38 @@ VAN_BAN = VanBan(
 
 
 async def main(reset: bool) -> int:
-    if reset:
-        async with get_engine().begin() as connection:
-            await connection.run_sync(Base.metadata.drop_all)
-        print("Đã xoá toàn bộ bảng cũ.")
-
     await create_all()
 
-    async with session_scope() as session:
-        # Danh mục phòng ban là nguồn cho bước phân công văn bản, nên seed phải là
-        # nguồn sự thật: `merge` không xoá dòng cũ, để lại thì model vẫn phân việc
-        # cho những phòng ban đã bỏ.
-        from sqlalchemy import delete
+    ma_template = [t.ma_template for t in TEMPLATES]
 
-        await session.execute(
-            delete(PhongBan).where(
-                PhongBan.ma_phong_ban.notin_([pb.ma_phong_ban for pb in PHONG_BAN])
+    async with session_scope() as session:
+        if reset:
+            # Xoá ĐÚNG những dòng script này tạo, không `drop_all`. Sổ `van_ban`
+            # trên máy đang chạy có hàng chục báo cáo thật, và số ký hiệu của báo
+            # cáo mới đếm từ sổ đó - xoá cả bảng là tua ngược bộ đếm về 01 rồi
+            # ghi đè lên bản đã phát hành.
+            await session.execute(
+                delete(TemplateBaoCao).where(TemplateBaoCao.ma_template.in_(ma_template))
             )
-        )
-        for phong_ban in PHONG_BAN:
-            await session.merge(phong_ban)
+            await session.execute(
+                delete(VanBan).where(VanBan.ma_van_ban == VAN_BAN.ma_van_ban)
+            )
+            print(f"Đã xoá {len(ma_template)} mẫu báo cáo và 1 văn bản demo.")
+
         for template in TEMPLATES:
             await session.merge(template)
-        for don_vi, danh_sach in DON_VI:
-            await session.merge(don_vi)
-            for ten, so_luong, tinh_trang, bao_duong in danh_sach:
-                await session.merge(
-                    TrangBi(ma_don_vi=don_vi.ma_don_vi, ten_trang_bi=ten, so_luong=so_luong,
-                            tinh_trang=tinh_trang, cap_nhat_cuoi=bao_duong)
-                )
         await session.merge(VAN_BAN)
-        await session.flush()
 
-        # Kỳ kiểm kê: xoá kỳ cũ của đơn vị rồi ghi lại, tránh nhân đôi khi chạy nhiều lần.
-        from sqlalchemy import delete, select
-
-        so_ky = 0
-        for ma_don_vi, cac_ky in KIEM_KE.items():
-            for ky, ngay, quan_so, (co_mat, di_hoc, nghi_phep), danh_sach in cac_ky:
-                existing = await session.execute(
-                    select(KyKiemKe).where(KyKiemKe.ma_don_vi == ma_don_vi, KyKiemKe.ky == ky)
-                )
-                if (cu := existing.scalar_one_or_none()) is not None:
-                    await session.execute(
-                        delete(KiemKeTrangBi).where(KiemKeTrangBi.kiem_ke_id == cu.id)
-                    )
-                    await session.delete(cu)
-                    await session.flush()
-
-                kiem_ke = KyKiemKe(ma_don_vi=ma_don_vi, ky=ky, ngay_kiem_ke=ngay,
-                                   quan_so=quan_so, co_mat=co_mat, vang=quan_so - co_mat,
-                                   di_hoc=di_hoc, nghi_phep=nghi_phep)
-                session.add(kiem_ke)
-                await session.flush()
-                for ten, so_luong, tinh_trang, bao_duong in danh_sach:
-                    session.add(KiemKeTrangBi(
-                        kiem_ke_id=kiem_ke.id, ten_trang_bi=ten, so_luong=so_luong,
-                        tinh_trang=tinh_trang, cap_nhat_cuoi=bao_duong))
-                so_ky += 1
-
-    print(f"Đã nạp: {len(PHONG_BAN)} phòng ban, {len(TEMPLATES)} template, "
-          f"{len(DON_VI)} đơn vị, {so_ky} kỳ kiểm kê, 1 văn bản mẫu.")
+    print(f"Đã nạp: {len(TEMPLATES)} mẫu báo cáo ({', '.join(ma_template)}), 1 văn bản demo.")
+    print("Số liệu quân số/trang bị lấy từ ERP lúc chạy, script này không đụng tới.")
     await dispose_engine()
     return 0
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Nạp dữ liệu mẫu cho demo")
-    parser.add_argument("--reset", action="store_true", help="Xoá sạch bảng rồi nạp lại")
+    parser.add_argument("--reset", action="store_true",
+                        help="Xoá những dòng script này tạo rồi nạp lại (không đụng dòng khác)")
     ns = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)-8s %(name)s: %(message)s")
     raise SystemExit(asyncio.run(main(ns.reset)))
