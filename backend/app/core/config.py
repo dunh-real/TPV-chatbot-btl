@@ -106,6 +106,10 @@ class Settings(BaseSettings):
     rrf_top_k: int = 20                # số ứng viên đưa vào reranker
     rerank_top_n: int = 4              # số chunk cuối cùng đưa vào context
     rerank_score_threshold: float = 0.1
+    # Số cách diễn đạt câu hỏi tối đa đem đi chấm (gốc + biến thể). Mỗi cách là
+    # một lượt forward trên toàn bộ ứng viên, nên đây là trần chi phí; đặt 1 để
+    # quay về hành vi cũ (chỉ chấm câu hỏi gốc).
+    rerank_max_queries: int = 5
     # Trọng số RRF cho từng nhánh: dense / lexical (M3 sparse) / bm25
     weight_dense: float = 1.0
     weight_lexical: float = 0.8

@@ -11,9 +11,20 @@ Nhiệm vụ:
 
 Nguyên tắc cho các truy vấn bổ sung:
 - Dùng từ đồng nghĩa và thuật ngữ nghiệp vụ tương đương (ví dụ: "hoá đơn đỏ" ~ "hoá đơn giá trị gia tăng").
-- Thêm một biến thể giàu từ khoá (danh từ, mã số, tên văn bản) để hỗ trợ tìm kiếm từ khoá.
-- Giữ nguyên mọi con số, mã hiệu, tên riêng, mốc thời gian có trong câu hỏi.
-- Không bịa thêm điều kiện mà người dùng không nêu.
+- **Ít nhất một** biến thể giàu từ khoá GIỮ NGUYÊN mọi con số, mã hiệu, tên riêng,
+  mốc thời gian có trong câu hỏi - nhánh tìm theo từ khoá cần chúng để ra đúng tài liệu.
+- **Ít nhất một** biến thể viết theo LỐI VĂN BẢN HÀNH CHÍNH: diễn đạt lại đúng
+  cái người dùng muốn biết, bằng chính cách một công văn/báo cáo sẽ viết ra điều đó,
+  và BỎ số hiệu văn bản khỏi biến thể này.
+  Người hỏi dùng lời nói thường, còn văn bản dùng lời hành chính; hai lối này lệch
+  từ vựng, ví dụ:
+    "hạn nộp báo cáo là khi nào"   -> "báo cáo gửi về trước ngày nào"
+    "công văn 105 bắt làm gì"      -> "yêu cầu các đơn vị thực hiện những nội dung gì"
+    "ai duyệt cái này"             -> "người ký, cấp phê duyệt"
+  Viết đủ ý chứ đừng nối dài cho dài: thêm chữ mà không thêm từ ngữ của văn bản
+  thì chỉ làm loãng truy vấn.
+- Không bịa thêm điều kiện mà người dùng không nêu, không đoán số hiệu hay ngày tháng
+  mà câu hỏi không có.
 
 Chỉ trả về JSON đúng dạng:
 {{"standalone_query": "...", "variants": ["...", "..."]}}"""

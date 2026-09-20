@@ -102,7 +102,17 @@ async def rewrite_query_node(state: QAState) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 async def retrieve_node(state: QAState) -> dict[str, Any]:
     cfg = get_settings()
-    query = state.get("standalone_query") or state["question"]
+    question = state["question"].strip()
+    query = state.get("standalone_query") or question
+    # Câu GỐC của người dùng luôn phải nằm trong tập đem đi chấm điểm, kể cả khi
+    # đã có bản viết lại. Bản viết lại và các biến thể đều do máy sinh: chúng có
+    # thể diễn đạt kém hơn chính câu người dùng hỏi. Đã gặp thật - "Ai ký công
+    # văn chỉ thị kiểm kê" được 0,1298 với câu gốc, nhưng cả 4 câu viết lại đều
+    # dưới ngưỡng, và một tài liệu KHÁC trèo lên 0,1201: hệ thống trả lời về sai
+    # văn bản. Thêm câu gốc vào thì nó vẫn được chấm và vẫn thắng.
+    variants = list(state.get("query_variants") or [])
+    if question and question != query:
+        variants.insert(0, question)
     query_filter = build_filter(
         doc_ids=state.get("doc_ids"),
         sources=state.get("sources"),
@@ -112,7 +122,7 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
     try:
         result = await get_retriever().retrieve(
             query=query,
-            query_variants=state.get("query_variants"),
+            query_variants=variants,
             query_filter=query_filter,
             top_n=state.get("top_n") or cfg.rerank_top_n,
             rerank=state.get("use_rerank", True),

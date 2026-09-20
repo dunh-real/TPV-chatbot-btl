@@ -153,7 +153,11 @@ async def search(request: SearchRequest) -> SearchResponse:
 
         rewritten = await rewrite_query_node({"question": query, "history": []})  # type: ignore[arg-type]
         query = rewritten.get("standalone_query", query)
-        query_variants = rewritten.get("query_variants", [])
+        query_variants = list(rewritten.get("query_variants", []))
+        # Giữ câu gốc trong tập chấm điểm, cùng lý do với `retrieve_node`: bản
+        # viết lại do máy sinh, có lúc diễn đạt kém hơn chính câu người dùng hỏi.
+        if request.query and request.query != query:
+            query_variants.insert(0, request.query)
 
     result = await get_retriever().retrieve(
         query=query,

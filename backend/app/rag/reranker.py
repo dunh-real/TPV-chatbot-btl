@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from app.core.config import Settings, get_settings
@@ -80,19 +81,49 @@ class CrossEncoderReranker:
                 scores.extend(torch.sigmoid(logits).cpu().tolist())
         return scores
 
+    def score_best(self, queries: Sequence[str], documents: list[str]) -> list[float]:
+        """Điểm CAO NHẤT của mỗi document qua mọi cách diễn đạt câu hỏi.
+
+        Cross-encoder này gần như so khớp từ vựng chứ không hiểu diễn đạt khác:
+        cùng một chunk và cùng một ý, hỏi "hạn nộp báo cáo là khi nào" được
+        0,007 còn "báo cáo gửi về trước ngày nào" được 0,94 - chỉ vì văn bản
+        viết "gửi về ... trước ngày". Chấm với mỗi cách diễn đạt rồi lấy max:
+        một chunk trả lời được BẤT KỲ cách hỏi nào thì nó liên quan, không phụ
+        thuộc vào việc người dùng có tình cờ trúng từ của văn bản hay không.
+
+        Max chứ không phải trung bình: trung bình thì một biến thể lạc đề kéo
+        tụt cả chunk đúng, mà biến thể là thứ máy tự sinh - người dùng không
+        chịu trách nhiệm cho nó.
+        """
+        if not documents:
+            return []
+        uniq = list(dict.fromkeys(q for q in queries if q and q.strip()))
+        if not uniq:
+            return [0.0] * len(documents)
+
+        best = self.score(uniq[0], documents)
+        for q in uniq[1 : self.settings.rerank_max_queries]:
+            best = [max(a, b) for a, b in zip(best, self.score(q, documents), strict=True)]
+        return best
+
     def rerank(
         self,
-        query: str,
+        query: str | Sequence[str],
         documents: list[str],
         top_n: int | None = None,
         score_threshold: float | None = None,
     ) -> list[RerankResult]:
         """Xếp hạng lại và cắt còn `top_n` ứng viên vượt ngưỡng.
 
+        `query` nhận một chuỗi, hoặc nhiều cách diễn đạt - khi đó mỗi ứng viên
+        lấy điểm cao nhất của nó (xem `score_best`).
+
         Có thể trả về danh sách rỗng khi không ứng viên nào đủ liên quan - đó là
         tín hiệu để pipeline trả lời "không tìm thấy căn cứ" thay vì bịa.
         """
-        results = [RerankResult(index=i, score=s) for i, s in enumerate(self.score(query, documents))]
+        queries = [query] if isinstance(query, str) else list(query)
+        results = [RerankResult(index=i, score=s)
+                   for i, s in enumerate(self.score_best(queries, documents))]
         results.sort(key=lambda r: r.score, reverse=True)
 
         threshold = (

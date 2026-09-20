@@ -278,8 +278,13 @@ class HybridRetriever:
         t0 = time.perf_counter()
         # Lấy điểm của MỌI ứng viên rồi tự cắt ngưỡng ở đây: van cứu bên dưới cần
         # biết điểm thật của chunk bị loại, chứ hiện 0.0 là nói dối người đọc.
+        # Chấm với MỌI cách diễn đạt rồi lấy max cho từng ứng viên. Reranker này
+        # nhạy với từ vựng chứ không hiểu diễn đạt khác (xem `score_best`), nên
+        # chấm mỗi câu hỏi gốc là để may rủi việc người dùng có trúng từ của văn
+        # bản hay không. Biến thể vốn đã sinh sẵn cho khâu truy hồi - dùng lại ở
+        # đây không tốn thêm lời gọi LLM nào.
         scored = await anyio.to_thread.run_sync(
-            lambda: get_reranker().rerank(query, documents, top_n=len(documents),
+            lambda: get_reranker().rerank(queries, documents, top_n=len(documents),
                                           score_threshold=0.0)
         )
         timings["rerank"] = (time.perf_counter() - t0) * 1000
