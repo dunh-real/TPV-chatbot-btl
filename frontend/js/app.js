@@ -673,6 +673,27 @@
     var art = artifactsNode(data.artifacts);
     if (art) { shell.extra.appendChild(el('div', { style: 'margin-top:12px' })).appendChild(art); }
 
+    /* Tài liệu hội thoại đang nhớ. Hiện ra để người dùng biết "tài liệu đó" đang
+       trỏ tới cái nào - nếu không, lượt sau họ gõ "tổng hợp tài liệu đó" mà
+       không chắc agent hiểu là file nào trong mấy file đã gửi. */
+    var sf = data.session_files || [];
+    if (sf.length) {
+      var box = el('div', { class: 'block', style: 'margin-top:10px' });
+      box.innerHTML = '<div class="block-head">Tài liệu trong phiên <span class="block-count">'
+        + sf.length + '</span></div>';
+      var body = el('div', { class: 'block-body' });
+      body.appendChild(el('div', { class: 'tag-row' })).innerHTML =
+        sf.map(function (f, i) {
+          return '<span class="pill' + (i === 0 ? ' accent' : '') + '" title="' + esc(f.file_id) + '">'
+            + esc(f.ten) + (i === 0 ? ' · mới nhất' : '') + '</span>';
+        }).join('');
+      body.appendChild(el('p', { class: 'muted sm', style: 'margin-top:8px' },
+        'Nói <b>"tài liệu đó"</b>, <b>"file vừa gửi"</b>… là agent dùng lại tài liệu mới nhất, '
+        + 'không cần đính kèm lại. Hỏi số liệu bình thường thì vẫn đọc CSDL.'));
+      box.appendChild(body);
+      shell.extra.appendChild(box);
+    }
+
     if (data.missing_input && data.missing_input.length) {
       var box = el('div', { class: 'block open', style: 'margin-top:10px' });
       box.innerHTML = '<div class="block-head" style="cursor:default">Thiếu thông tin <span class="block-count">' + data.missing_input.length + '</span></div>';

@@ -128,10 +128,18 @@ def single_step(intent: Intent, request: str, confidence: float, reason: str = "
 
 
 async def _fallback(request: str, has_file: bool, history: list[dict[str, str]] | None) -> Plan:
-    """Đường lùi: định tuyến một bước như trước khi có tầng lập kế hoạch."""
+    """Đường lùi: định tuyến một bước như trước khi có tầng lập kế hoạch.
+
+    Đường này KHÔNG đi qua `_validate`, nên mọi chốt đặt trong đó đều không chạy.
+    Trước đây nó âm thầm nuốt mất chốt "có file thì đọc file": model trả JSON quá
+    dài bị cắt cụt -> rơi vào đây -> chọn `report` -> file người dùng gửi bị vứt
+    đi. Vì vậy chốt nào cần đúng cho cả hai đường thì phải gọi lại ở đây.
+    """
     routed = await classify_intent(request, has_file=has_file, history=history)
-    return single_step(routed.intent, request, routed.confidence, routed.reason,
+    plan = single_step(routed.intent, request, routed.confidence, routed.reason,
                        routed.clarify, source=routed.source)
+    plan.steps = _uu_tien_file_dinh_kem(plan.steps, has_file)
+    return plan
 
 
 def _validate(raw_steps: Any, request: str, has_file: bool) -> list[PlanStep]:
@@ -172,6 +180,7 @@ def _validate(raw_steps: Any, request: str, has_file: bool) -> list[PlanStep]:
                               depends_on=depends, reason=str(item.get("reason") or "")))
 
     steps = _bo_buoc_lay_so_lieu_thua(steps)
+    steps = _uu_tien_file_dinh_kem(steps, has_file)
 
     # Kế hoạch chỉ có một bước thì câu của người dùng ĐÃ tự đứng một mình được -
     # không cần model viết lại, và mỗi lần viết lại là một dịp rụng chữ. Đã có ca
@@ -182,6 +191,46 @@ def _validate(raw_steps: Any, request: str, has_file: bool) -> list[PlanStep]:
     if len(steps) == 1 and request.strip():
         steps[0].request = request.strip()
     return steps
+
+
+# Động từ nói rằng người dùng muốn MỘT VĂN BẢN, không phải một câu trả lời.
+_DONG_TU_SOAN = ("soạn", "dự thảo", "lập báo cáo", "viết báo cáo", "ra văn bản",
+                 "làm báo cáo", "tổng hợp báo cáo", "lập bảng", "xuất báo cáo")
+
+# Nghiệp vụ KHÔNG đọc file đính kèm: chúng lấy số từ CSDL hoặc từ kho tài liệu.
+_BO_QUA_FILE = frozenset({"report", "agent", "qa"})
+
+
+def _uu_tien_file_dinh_kem(steps: list[PlanStep], has_file: bool) -> list[PlanStep]:
+    """Có file đính kèm + đòi một văn bản => soạn TỪ FILE ĐÓ.
+
+    `report`, `agent`, `qa` đều không đọc file đính kèm: chúng lấy số từ CSDL hoặc
+    từ kho tri thức. Người dùng gửi kèm một tài liệu rồi bảo "soạn báo cáo về
+    trang thiết bị" mà rơi vào một trong ba nhánh đó thì file bị vứt đi - đã xảy
+    ra thật: báo cáo trả "Tổng thiết bị: 0" trong khi file họ gửi ghi 79 thiết bị.
+
+    Chỉ đổi khi câu có ĐỘNG TỪ SOẠN. Đính kèm file rồi hỏi "quy định nghỉ phép
+    thế nào" vẫn là `qa` - file lúc đó chỉ là thứ còn sót lại của lượt trước, và
+    biến câu hỏi đó thành lệnh soạn văn bản mới là sai.
+
+    Nhắc trong prompt không dứt được: model lúc chọn `report` vì câu có chữ "báo
+    cáo", lúc chọn `agent` vì nghĩ chỉ cần tra số. Nên chặn ở đây.
+    """
+    if not has_file:
+        return steps
+    doi = [s for s in steps
+           if s.intent in _BO_QUA_FILE
+           and any(v in s.request.lower() for v in _DONG_TU_SOAN)]
+    if not doi:
+        return steps
+    can_doi = {s.id for s in doi}
+    logger.info("Đổi %d bước %s -> 'draft': có file đính kèm và yêu cầu soạn văn bản",
+                len(doi), [s.intent for s in doi])
+    return [
+        PlanStep(id=s.id, intent="draft" if s.id in can_doi else s.intent,
+                 request=s.request, depends_on=list(s.depends_on), reason=s.reason)
+        for s in steps
+    ]
 
 
 def _bo_buoc_lay_so_lieu_thua(steps: list[PlanStep]) -> list[PlanStep]:
@@ -262,7 +311,11 @@ async def make_plan(
                 {"role": "user", "content": PLANNER_USER.format(
                     history=format_history(history), request=request)},
             ],
-            model=get_settings().utility_model, temperature=0.0, max_tokens=600,
+            # 600 token là quá chật: model viết `reason` dài vài dòng cho mỗi bước,
+            # JSON chưa đóng ngoặc đã hết token, `chat_json` ném lỗi phân tích, và
+            # MỌI yêu cầu lặng lẽ rơi về router dự phòng - tức toàn bộ tầng lập kế
+            # hoạch ngừng hoạt động mà không ai thấy, chỉ thấy định tuyến kém đi.
+            model=get_settings().utility_model, temperature=0.0, max_tokens=1600,
             thinking=False,
         )
     except (LLMError, Exception) as exc:  # noqa: BLE001 - hỏng thì vẫn phải làm việc

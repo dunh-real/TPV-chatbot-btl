@@ -445,6 +445,13 @@ Quy tắc tách bước:
 - Tối đa {max_steps} bước. Không tách được thì trả về đúng một bước.
 - Người dùng có gửi kèm file: {has_file}. Không có file thì KHÔNG dùng document.
   Đã có file rồi thì đừng đặt `clarify` xin người dùng tải file lên.
+- CÓ FILE ĐÍNH KÈM thì nguồn số liệu là CHÍNH FILE ĐÓ, không phải CSDL:
+    "soạn báo cáo về trang thiết bị"  + có file -> draft (soạn từ tài liệu đó)
+    "tổng hợp báo cáo này"            + có file -> draft
+    "soát giúp tài liệu này"          + có file -> document
+  Chọn report ở đây là bỏ file đi rồi đọc CSDL - ra một bản báo cáo không liên
+  quan gì tới thứ người dùng vừa gửi. Chỉ chọn report khi người dùng nói rõ là
+  muốn số liệu toàn công ty, dù có đính kèm file.
 - Mỗi bước phải là một SẢN PHẨM hoặc một CÂU TRẢ LỜI riêng mà người dùng đòi.
   "Tổng hợp nhân sự tháng 8 rồi làm slide" = 2 bước (report, presentation).
   "Soát công văn này rồi soạn văn bản trả lời" = 2 bước (document, draft).

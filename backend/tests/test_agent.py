@@ -430,7 +430,8 @@ async def test_agent_giao_viec_cho_dung_workflow_va_gom_file(agent_env, monkeypa
 async def test_agent_hoi_lai_khi_thieu_don_vi(agent_env, monkeypatch):
     monkeypatch.setattr(graph_mod, "make_plan", _plan("draft"))
 
-    async def _draft(request, ma_don_vi=None, inputs=None, history=None):
+    async def _draft(request, ma_don_vi=None, inputs=None, history=None,
+                     nguon="csdl", file_id=""):
         return {"missing_input": ["ma_don_vi"], "output_path": "", "params": {}}
 
     monkeypatch.setattr(graph_mod, "run_draft_workflow", _draft)
@@ -739,7 +740,8 @@ async def test_thieu_dau_vao_thi_hoi_nguoi_dung_chu_khong_thu_lai(agent_env, mon
     """Thiếu mã đơn vị thì chạy lại bằng nghiệp vụ nào cũng vẫn thiếu."""
     monkeypatch.setattr(graph_mod, "make_plan", _plan("draft"))
 
-    async def _draft(request, ma_don_vi=None, inputs=None, history=None):
+    async def _draft(request, ma_don_vi=None, inputs=None, history=None,
+                     nguon="csdl", file_id=""):
         return {"missing_input": ["ma_don_vi"], "output_path": "", "params": {}}
 
     async def _khong_duoc_goi(state, request):

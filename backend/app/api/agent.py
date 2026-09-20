@@ -82,6 +82,7 @@ def _response(result: dict, include_trace: bool) -> AgentResponse:
         citations=result.get("citations", []),
         refs=result.get("refs", []),
         artifacts=artifacts,
+        session_files=result.get("session_files", []),
         missing_input=result.get("missing_input", []),
         result=result.get("result", {}),
         trace=result.get("trace") if include_trace else None,

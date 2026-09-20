@@ -70,7 +70,7 @@ from app.agents.state import (
     StepResult,
 )
 from app.services.conversation import get_memory
-from app.services import errors
+from app.services import errors, session_files
 from app.tools.base import ToolError
 
 logger = logging.getLogger(__name__)
@@ -600,11 +600,23 @@ async def document_branch(state: AgentState, request: str) -> dict[str, Any]:
 
 
 async def draft_branch(state: AgentState, request: str) -> dict[str, Any]:
+    """Soạn văn bản. Có file đính kèm thì soạn TỪ FILE ĐÓ, không phải từ CSDL.
+
+    Người dùng đính kèm một tài liệu rồi bảo "soạn báo cáo về trang thiết bị" thì
+    ý họ là tổng hợp lại chính tài liệu vừa gửi. Trước đây nhánh này bỏ quên
+    `file_id`, nên nó lặng lẽ rơi về `nguon="csdl"`: file bị vứt đi, báo cáo dựng
+    từ CSDL, và ra đúng những con số không liên quan gì tới thứ người dùng gửi.
+    Cả một năng lực (soạn báo cáo từ tài liệu) vì thế không gọi tới được từ màn
+    agent, dù workflow bên dưới đã có sẵn.
+    """
+    file_id = (state.get("file_id") or "").strip()
     result = await run_draft_workflow(
         request=request,
         ma_don_vi=state.get("ma_don_vi"),
         inputs=state.get("inputs", {}),
         history=state.get("history"),
+        nguon="tai_lieu" if file_id else "csdl",
+        file_id=file_id,
     )
     return {"answer": _summarize_draft(result), "result": result,
             "missing_input": result.get("missing_input", []),
@@ -1155,6 +1167,14 @@ async def run_agent(
 ) -> dict[str, Any]:
     """Điểm vào duy nhất của agent: một yêu cầu, một câu trả lời, kèm file nếu có."""
     conversation_id = conversation_id or str(uuid.uuid4())
+
+    # Tài liệu đã tải lên thuộc về cả HỘI THOẠI, không riêng lượt gửi nó. Người
+    # dùng đính kèm ở lượt 1 rồi lượt 2 gõ "tổng hợp lại tài liệu đó" thì lượt 2
+    # không mang `file_id` nào - thiếu chỗ này, agent coi như chưa từng thấy file.
+    if file_id:
+        await session_files.ghi_nho(conversation_id, file_id)
+    file_id = await session_files.file_cho_yeu_cau(conversation_id, request, file_id)
+
     state: AgentState = {
         "request": request,
         "conversation_id": conversation_id,
@@ -1169,6 +1189,9 @@ async def run_agent(
     return {
         "request": request,
         "conversation_id": conversation_id,
+        # Tài liệu hội thoại đang nhớ - để giao diện hiện ra, và để người dùng
+        # biết "tài liệu đó" đang trỏ tới cái nào.
+        "session_files": await session_files.danh_sach(conversation_id),
         # `intent` là nghiệp vụ của bước CHÍNH (bước cuối). Kế hoạch nhiều bước
         # thì `plan` và `steps` mới nói đủ; hai khoá này giữ cho client cũ chạy.
         "intent": (steps[-1].get("intent") if steps else result.get("intent", "")) or "",

@@ -223,6 +223,7 @@ quyền — đủ để dựng ô "đăng nhập bằng" khi chưa có đăng nh
 | `citations` | Nguồn của nhánh hỏi đáp tài liệu |
 | `refs` | Nguồn của các nhánh còn lại |
 | `artifacts` | File sinh ra (.docx / .pptx) |
+| `session_files` | Tài liệu đã tải lên trong hội thoại này, mới nhất trước (mục 7) |
 | `missing_input` | Thiếu thông tin thì agent dừng để hỏi lại |
 | `result` | Kết quả thô của workflow. Hình dạng đổi theo `intent` — trừ `result.validation` **luôn có và phải hiện** (mục 9) |
 | `trace` | `null` trừ khi `include_trace: true` |
@@ -478,6 +479,38 @@ curl -X POST https://chatbot-demo.tpvtech.vn/api/agent/upload \
 - **Không có `file_id` thì agent không bao giờ chọn nhánh `document`.** Câu
   “soát giúp tài liệu này” mà quên gửi `file_id` sẽ bị định tuyến sang nghiệp vụ
   khác. Nếu giao diện của bạn có nút đính kèm, hãy chắc là `file_id` được gửi kèm.
+
+### Agent nhớ tài liệu trong suốt hội thoại
+
+Tài liệu đã gửi thuộc về **cả hội thoại**, không riêng lượt gửi nó. Gửi kèm
+`conversation_id` thì lượt sau không cần đính kèm lại:
+
+```
+lượt 1:  {"request": "soát giúp tài liệu này", "file_id": "upload:bao_cao.docx"}
+lượt 2:  {"request": "tổng hợp lại tài liệu đó thành báo cáo",
+          "conversation_id": "<id từ lượt 1>"}          ← không có file_id
+         → agent tự dùng lại bao_cao.docx
+```
+
+Điều kiện dùng lại: câu chữ phải **trỏ tới một tài liệu** — "tài liệu đó",
+"file vừa gửi", "văn bản này", "tệp đính kèm". Hỏi số liệu bình thường
+("nhân sự toàn công ty tháng 8 bao nhiêu") thì **không** dính file, vẫn đọc CSDL.
+
+> Đây là cố ý: gắn lại file cho mọi lượt sau sẽ đẩy một câu hỏi CSDL sang nhánh
+> đọc tài liệu và trả lời sai nguồn.
+
+Phản hồi trả về `session_files` — danh sách tài liệu hội thoại đang nhớ, **mới
+nhất đứng đầu**, tối đa 10:
+
+```json
+"session_files": [{"file_id": "upload:bao_cao.docx", "ten": "bao_cao.docx", "ts": 1758...}]
+```
+
+**Hãy hiện danh sách này.** Không hiện thì người dùng gõ "tài liệu đó" mà không
+biết agent đang trỏ vào file nào trong mấy file họ đã gửi.
+
+Tài liệu được nhớ cùng thời hạn với lịch sử hội thoại. Hội thoại mới
+(`conversation_id` mới hoặc bỏ trống) là bắt đầu lại từ đầu, không nhớ gì.
 
 ---
 
@@ -795,6 +828,7 @@ giao diện của bạn ngang hàng, không thiếu tính năng nào.
 | 5 | `error` | Huy hiệu `lỗi` **và** một khối đỏ ghi nội dung lỗi | 12 |
 | 6 | `plan` + `steps` | Sơ đồ các bước, gom theo đợt chạy song song | 5 |
 | 7 | `artifacts` | Danh sách file tải về | 8 |
+| 7b | `session_files` | Chip tài liệu hội thoại đang nhớ | 7 |
 | 8 | `missing_input` | Chip bấm được, mở ô nhập tham số tương ứng | 10 |
 | 9 | `citations` + `refs` | Hai khối nguồn, và `[n]` trong câu trả lời bấm được | 9 |
 | 10 | `result`, `trace` | Khối JSON thô gập lại, cho người gỡ lỗi | — |
@@ -832,6 +866,9 @@ Chạy hết danh sách này trước khi bàn giao:
 - [ ] `answer` render được **bảng Markdown**
 - [ ] `[1]` trong câu trả lời bấm được, hiện `snippet`
 - [ ] `artifacts[].download_url` tải được file .docx và .pptx
+- [ ] Đính kèm file ở lượt 1, lượt 2 gõ "tổng hợp tài liệu đó" **không**
+      đính kèm lại — agent vẫn dùng đúng file (mục 7)
+- [ ] Hiện `session_files` để người dùng biết "tài liệu đó" là file nào
 - [ ] **`result.validation` hiện thành huy hiệu**, và `status: failed` trông
       KHÁC HẲN `status: passed` (mục 9b)
 - [ ] Đã đối chiếu đủ 10 mục ở bảng ngang hàng (mục 13b)

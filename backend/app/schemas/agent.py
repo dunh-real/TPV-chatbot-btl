@@ -97,6 +97,11 @@ class AgentResponse(BaseModel):
         description="Nguồn trích dẫn của các nhánh còn lại; khớp với marker [n] trong answer",
     )
     artifacts: list[Artifact] = Field(default_factory=list)
+    session_files: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Tài liệu đã tải lên trong hội thoại này, mới nhất trước. "
+                    "Người dùng nói \"tài liệu đó\" là trỏ tới phần tử đầu tiên",
+    )
     missing_input: list[str] = Field(
         default_factory=list, description="Thiếu thông tin này thì agent dừng để hỏi lại"
     )
