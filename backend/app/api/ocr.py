@@ -197,8 +197,10 @@ async def extract(
     Tài liệu dài có thể mất vài phút - qua Cloudflare thì nên dùng `/extract/stream`
     để khỏi chạm trần 125 giây.
     """
+    # Kiểm trên tên ĐÃ làm sạch, đúng cái tên rồi sẽ nằm trên đĩa: tên thô có
+    # thể là "=?utf-8?B?...?=" của cổng ABP, đuôi thật nằm trong phần base64.
     try:
-        kiem_tra_dinh_dang(file.filename or "")
+        kiem_tra_dinh_dang(storage.safe_name(file.filename or ""))
     except OcrError as exc:
         await file.close()
         raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import secrets
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -20,7 +21,7 @@ from app.agents.quyen import ThieuQuyen
 from app.core.context import current_principal
 from app.db.erp_session import dispose_erp_engine
 from app.db.session import dispose_engine, healthcheck
-from app.schemas.common import HealthResponse
+from app.schemas.common import HealthResponse, RequestCheckResponse
 from app.services.cache import get_cache
 from app.services.conversation import get_memory
 from app.services.llm import get_llm
@@ -215,6 +216,93 @@ async def health() -> HealthResponse:
                  "reranker_model": settings.reranker_model,
                  "conversation_collection": conversations.collection,
                  "conversation_turns": str(conversation_turns)},
+    )
+
+
+@app.get("/health/request", response_model=RequestCheckResponse, tags=["system"],
+         summary="Server nhận được request này ở dạng nào")
+async def health_request(request: Request) -> RequestCheckResponse:
+    """Soi đúng những gì server nhận được, để bên gọi tự chẩn đoán.
+
+    `/health` trả lời "backend còn sống không", `/whoami` trả lời "backend nghĩ
+    tôi là ai". Endpoint này trả lời câu thứ ba, và là câu tốn thời gian nhất khi
+    tích hợp: "request của tôi tới nơi ở dạng nào".
+
+    Lý do cần: trình duyệt bị CORS chặn KHÔNG trả về mã lỗi nào cho JavaScript -
+    `fetch` chỉ ném `TypeError: Failed to fetch`. Mọi nguyên nhân khác nhau hẳn
+    (server chết, sai địa chỉ, sai scheme, bị chặn origin) đều hiện ra cùng một
+    câu "lỗi kết nối", nên đội giao diện không có gì để lần. Mở thẳng URL này
+    trong một tab trình duyệt thì là điều hướng cùng origin, CORS không áp dụng,
+    nên nó LUÔN trả lời được - kể cả khi mọi lời gọi fetch đang bị chặn.
+
+    Không dội lại toàn bộ header: API này mở ra Internet và chưa có chốt token,
+    nên một endpoint dội header là chỗ rò `Cookie`/`Authorization`. Chỉ trả về
+    danh sách đã chọn, và danh sách origin đã khai thì chỉ trả cho lời gọi từ
+    chính máy chủ (xem `tu_may_chu` bên dưới).
+    """
+    h = request.headers
+    origin = h.get("origin")
+
+    # Qua Cloudflare thì `request.client.host` luôn là 127.0.0.1 (tunnel nối vào
+    # loopback), nên chỉ mình nó không phân biệt được người gọi ở đâu. Phải xét
+    # thêm header của proxy.
+    fwd_for, cf_ip = h.get("x-forwarded-for", ""), h.get("cf-connecting-ip", "")
+    qua_proxy = bool(fwd_for or cf_ip)
+    client_ip = cf_ip or fwd_for.split(",")[0].strip() or (
+        request.client.host if request.client else "")
+    tu_may_chu = not qua_proxy and client_ip in ("127.0.0.1", "::1", "testclient")
+
+    scheme = h.get("x-forwarded-proto") or request.url.scheme
+    cho_phep = None if origin is None else (
+        "*" in settings.cors_origins or origin in settings.cors_origins)
+
+    chuan_doan: list[str] = []
+    if origin is None:
+        chuan_doan.append(
+            "Request không kèm header Origin, tức không phải gọi từ trang web "
+            "(curl, Postman, hoặc server gọi server). CORS không áp dụng.")
+    elif cho_phep:
+        chuan_doan.append(f"Origin {origin} nằm trong danh sách cho phép - CORS không chặn.")
+    else:
+        chuan_doan.append(
+            f"Origin {origin} KHÔNG có trong CORS_ORIGINS, nên trình duyệt sẽ "
+            f"chặn và giao diện chỉ thấy 'Failed to fetch'. Thêm ĐÚNG chuỗi "
+            f"'{origin}' vào CORS_ORIGINS trong backend/.env rồi khởi động lại "
+            f"backend. Chuỗi này không có dấu '/' ở cuối và không có đường dẫn - "
+            f"chép nguyên văn, đừng chép từ thanh địa chỉ.")
+
+    if origin and origin.startswith("https://") and scheme == "http":
+        chuan_doan.append(
+            "Trang chạy HTTPS nhưng gọi API qua HTTP: trình duyệt chặn mixed "
+            "content trước cả khi request rời máy. Đổi địa chỉ API sang https://.")
+
+    principal = current_principal()
+    if settings.trust_identity_headers and principal.source == "default":
+        chuan_doan.append(
+            f"Không nhận được X-Tenant-Id, đang dùng tenant mặc định "
+            f"{principal.tenant_id} của .env. Số liệu trả về sẽ là của tenant này.")
+
+    # Danh sách origin đã khai chỉ trả cho lời gọi từ chính máy chủ: biết chính
+    # xác những origin nào được tin là thông tin có ích cho người tấn công, mà
+    # người gỡ lỗi từ xa không cần - họ chỉ cần biết origin CỦA HỌ có qua không.
+    da_khai = list(settings.cors_origins) if tu_may_chu else None
+    if tu_may_chu:
+        hong = [o for o in settings.cors_origins
+                if o != "*" and (o.endswith("/") or o.strip() != o
+                                 or "<" in o or ">" in o or o.count("/") != 2)]
+        if hong:
+            chuan_doan.append(
+                f"CORS_ORIGINS có {len(hong)} dòng sai định dạng nên sẽ không bao "
+                f"giờ khớp: {hong}. Origin chỉ gồm scheme://host[:port].")
+
+    return RequestCheckResponse(
+        origin=origin, cors_cho_phep=cho_phep, cors_da_khai=da_khai,
+        host=h.get("host", ""), scheme=scheme, qua_proxy=qua_proxy,
+        client_ip=client_ip, method=request.method,
+        danh_tinh={"tenant_id": principal.tenant_id, "user_id": principal.user_id,
+                   "source": principal.source},
+        chuan_doan=chuan_doan,
+        server_time=datetime.now().isoformat(timespec="seconds"),
     )
 
 

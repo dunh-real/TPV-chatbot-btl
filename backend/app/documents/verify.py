@@ -27,6 +27,44 @@ NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
 DURATION_RE = re.compile(r"\d+(?:[.,]\d+)*\s*(?:tháng|năm|ngày|tuần|quý|giờ)\b", re.I)
 ORDINAL_RE = re.compile(r"(?:mục|điểm|khoản|điều|phần|bảng|biểu)\s+\d+", re.I)
 
+# Hệ chữ không bao giờ xuất hiện trong văn bản hành chính tiếng Việt.
+#
+# Không phải phòng xa: đã xảy ra thật. Bộ slide dựng bằng Qwen3.6 (model gốc
+# Trung Quốc) trả về tiêu đề "Ghi chú và số liệu cần检查" - hai chữ Hán thay chỗ
+# "kiểm tra", ngay trên slide cuối. Một lần trong 163 đoạn chữ, tức là ngẫu
+# nhiên, tức là sẽ lặp lại.
+#
+# Van chắn số không bắt được vì nó chỉ soi CHỮ SỐ. Và người duyệt đọc lướt một
+# bộ slide 8 trang rất dễ bỏ qua hai ký tự lạ nằm giữa câu tiếng Việt.
+#
+# Khoanh theo HỆ CHỮ chứ không theo ngôn ngữ: tên thiết bị trong ERP là chữ
+# Latin ("Dell PowerEdge R450", "Keychron K2"), tên đơn vị là tiếng Việt, nên
+# mọi ký tự thuộc các khối dưới đây đều là rác model sinh ra, không có ngoại lệ
+# hợp lệ nào. Liệt kê cả những hệ chưa thấy lọt bao giờ vì chi phí bằng không.
+CHU_NGOAI_HE_RE = re.compile(
+    "["
+    "\u4e00-\u9fff"   # Hán
+    "\u3400-\u4dbf"   # Hán mở rộng A
+    "\u3040-\u309f"   # Hiragana
+    "\u30a0-\u30ff"   # Katakana
+    "\uac00-\ud7af"   # Hangul
+    "\u0400-\u04ff"   # Kirin
+    "\u0600-\u06ff"   # Ả Rập
+    "\u0590-\u05ff"   # Hebrew
+    "\u0e00-\u0e7f"   # Thái
+    "\u0900-\u097f"   # Devanagari
+    "]"
+)
+
+
+def tim_chu_ngoai_he(text: str) -> list[str]:
+    """Các ký tự thuộc hệ chữ lạ trong `text`. Rỗng nghĩa là sạch.
+
+    Trả về danh sách ký tự chứ không phải True/False: chỗ gọi cần in ra đúng ký
+    tự nào để người sửa tìm được nó trong slide.
+    """
+    return CHU_NGOAI_HE_RE.findall(text or "")
+
 
 @dataclass(slots=True)
 class NumberCheck:

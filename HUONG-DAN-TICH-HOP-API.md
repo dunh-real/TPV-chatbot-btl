@@ -980,6 +980,12 @@ Ngoài ba khối trên, `markdown` là Markdown thường: tiêu đề `##`, g�
 mục đánh số, bảng. Chữ bị ngắt giữa câu trên bản gốc đã được nối lại thành đoạn
 liền, nên đoạn văn tự xuống dòng theo bề ngang khung của bạn.
 
+**Bảng trên trang scan trả về dạng bảng Markdown** (`| a | b |` kèm dòng ngăn
+`| --- | --- |`), kể cả khi bảng chỉ tồn tại dưới dạng ảnh chụp — mô hình đọc
+hàng cột từ ảnh rồi dựng lại. Ô có nội dung tràn xuống dòng dưới trên giấy vẫn
+được gộp đúng vào một ô. Trình render của bạn **bắt buộc bật bảng** (mục 3.1 đã
+nói vì lý do khác); không bật thì cả bảng hiện thành một đống ký tự `|`.
+
 > 🚨 **Tài liệu dài thì dùng `/extract/stream`.** 30 trang scan mất vài phút, mà
 > đường công khai qua Cloudflare cắt mọi request im lặng quá 125 giây (xem mục
 > 11). Stream trả từng trang nên không chạm trần đó.

@@ -111,6 +111,10 @@ def _noi_duoc(dong: str, sau: str, dai_nhat: int) -> bool:
         return False
     if _DAU_DANH_SACH.match(sau):
         return False
+    # Hàng bảng không bao giờ nối với dòng sau: nối vào là có chữ nằm ngoài dấu
+    # | cuối cùng, hàng đó lệch cột, và trình render hiện cả bảng thành chữ.
+    if dong.lstrip().startswith("|"):
+        return False
     # Dòng bị ngắt do hết chỗ thì phải gần chạm mép phải của khối.
     if len(dong) < dai_nhat * 0.6:
         return False

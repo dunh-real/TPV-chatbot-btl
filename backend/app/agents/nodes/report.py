@@ -32,6 +32,7 @@ from app.agents.prompts import (
     AGG_PARAMS_USER,
 )
 from app.core.config import get_settings
+from app.core.text import khong_dau
 from app.documents.charts import compare_bar_chart, status_bar_chart
 from app.documents.docx_builder import (
     DocumentPayload,
@@ -40,7 +41,11 @@ from app.documents.docx_builder import (
     build_docx,
 )
 from app.documents.extract_figures import reconcile_file
-from app.documents.verify import check_numbers, collect_known_numbers
+from app.documents.verify import (
+    check_numbers,
+    collect_known_numbers,
+    tim_chu_ngoai_he,
+)
 from app.db.erp_repository import ErpTaiNguyenRepository
 from app.db.erp_session import erp_session_scope
 from app.db.repository import TemplateRepository, VanBanRepository
@@ -198,6 +203,12 @@ def _compare_period(ky: str, nam: int, params: dict[str, Any],
 #
 # Chỉ đè khi yêu cầu nhắc tới ĐÚNG MỘT mảng: nhắc cả hai, hoặc không nhắc mảng
 # nào ("báo cáo tổng hợp"), thì giữ nguyên kết quả của LLM.
+#
+# So khớp trên dạng KHÔNG DẤU (`khong_dau`). Từ khoá viết có dấu cho dễ đọc,
+# nhưng người dùng gõ "tao slide bao cao tai san cong ty" thì cổng này phải khoá
+# vào thiết bị y như khi họ gõ đủ dấu. Trước đây nó so chuỗi thô nên câu không
+# dấu trượt hết từ khoá, cổng im lặng nhường cho LLM, và LLM trả về CẢ HAI mảng -
+# bộ slide xin về tài sản ra đầy bảng nhân sự.
 NOI_DUNG_KEYWORDS: dict[str, tuple[str, ...]] = {
     "nhan_su": ("nhân sự", "nhân viên", "cán bộ", "biên chế",
                 "người lao động", "lao động", "tuyển mới", "nghỉ việc"),
@@ -216,11 +227,16 @@ NHOM_THEO_KEYWORDS: dict[str, tuple[str, ...]] = {
 }
 
 
+def _khoa_nhac_toi(request: str, tu_khoa: dict[str, tuple[str, ...]]) -> list[str]:
+    """Những khoá mà câu chữ thật sự nhắc tới, so trên dạng không dấu."""
+    phang = khong_dau(request or "")
+    return [key for key, words in tu_khoa.items()
+            if any(khong_dau(word) in phang for word in words)]
+
+
 def dimension_from_request(request: str, llm_choice: Any) -> str | None:
     """Chiều gộp mà câu chữ thật sự yêu cầu; không rõ thì trả None (theo đơn vị)."""
-    lower = (request or "").lower()
-    nhac_toi = [key for key, words in NHOM_THEO_KEYWORDS.items()
-                if any(word in lower for word in words)]
+    nhac_toi = _khoa_nhac_toi(request, NHOM_THEO_KEYWORDS)
     if len(nhac_toi) == 1:
         return nhac_toi[0]
     return llm_choice if llm_choice in NHOM_THEO_KEYWORDS else None
@@ -228,9 +244,7 @@ def dimension_from_request(request: str, llm_choice: Any) -> str | None:
 
 def scope_from_request(request: str, llm_choice: list[str]) -> list[str]:
     """Mảng nội dung mà yêu cầu thật sự hỏi tới."""
-    lower = (request or "").lower()
-    nhac_toi = [key for key, words in NOI_DUNG_KEYWORDS.items()
-                if any(word in lower for word in words)]
+    nhac_toi = _khoa_nhac_toi(request, NOI_DUNG_KEYWORDS)
     if len(nhac_toi) == 1:
         return nhac_toi
     return llm_choice
@@ -734,6 +748,22 @@ def _period_numbers(params: dict[str, Any]) -> set[str]:
 
 
 # --------------------------------------------------------------------------- #
+_TEN_MANG = {"nhan_su": "nhân sự", "thiet_bi": "trang thiết bị"}
+
+
+def _trich_yeu(params: dict[str, Any], period_label: str) -> str:
+    """Trích yếu nêu ĐÚNG mảng đã tổng hợp, không nêu mảng không có trong báo cáo.
+
+    Trước đây câu này cứng là "nhân sự và trang thiết bị" bất kể người dùng hỏi
+    gì. Xin riêng báo cáo thiết bị thì văn bản trình ký vẫn mang trích yếu nhắc
+    nhân sự, trong khi bên trong không có mục nhân sự nào - người đọc tưởng báo
+    cáo bị thiếu mục.
+    """
+    mang = [_TEN_MANG[c] for c in ("nhan_su", "thiet_bi")
+            if c in (params.get("noi_dung") or [])]
+    return f"V/v tổng hợp tình hình {' và '.join(mang) or 'số liệu'} {period_label}"
+
+
 async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error"):
         return {"validation": {"status": "skipped", "issues": []}}
@@ -757,6 +787,21 @@ async def validate_node(state: dict[str, Any]) -> dict[str, Any]:
             if not check.ok:
                 issues.append({"type": "unverified_number", "section": section["id"],
                                "numbers": check.unverified, "severity": "error",
+                               "quote": paragraph[:160]})
+            # Chữ Hán lẫn vào văn bản hành chính tiếng Việt - cùng lỗi đã bắt
+            # được ở bộ slide ("tổ chuyên門", "Tổ Phát展展展"): model thay từ
+            # Hán-Việt bằng chữ Hán gốc.
+            #
+            # `warning` chứ KHÔNG phải `error`, dù van này chạy trước bước xuất
+            # file và `error` sẽ chặn được. Lý do: `error` ở đây dành cho số
+            # bịa - thứ nguy hiểm vì đọc lướt không thấy và đi thẳng vào quyết
+            # định. Chữ Hán thì ngược lại, ai đọc cũng thấy ngay. Chặn cả bản
+            # báo cáo vì hai ký tự là đổi một lỗi sửa trong ba giây lấy việc
+            # người dùng không nhận được gì - và chạy lại cũng chỉ gặp đúng
+            # model đó, đúng xác suất đó.
+            if (la := tim_chu_ngoai_he(paragraph)):
+                issues.append({"type": "foreign_script", "section": section["id"],
+                               "characters": sorted(set(la)), "severity": "warning",
                                "quote": paragraph[:160]})
 
     if not state.get("data", {}).get("personnel_consistent", True):
@@ -797,8 +842,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
             "so_ky_hieu": so_ky_hieu,
             "dia_danh": inputs.get("dia_danh", "Hà Nội"),
             "ngay_bao_cao": _ngay_tieng_viet(date.today()),
-            "trich_yeu": inputs.get(
-                "trich_yeu", f"V/v tổng hợp tình hình nhân sự và trang thiết bị {period_label}"),
+            "trich_yeu": inputs.get("trich_yeu", _trich_yeu(params, period_label)),
             "chuc_vu_ky": inputs.get("chuc_vu_ky", "TRƯỞNG PHÒNG"),
             "nguoi_ky": inputs.get("nguoi_ky", ""),
             "can_cu": inputs.get("can_cu", ""),

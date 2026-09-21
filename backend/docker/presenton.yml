@@ -28,6 +28,19 @@ services:
       - CUSTOM_LLM_URL=${PRESENTON_CUSTOM_LLM_URL:-https://openrouter.ai/api/v1}
       - CUSTOM_LLM_API_KEY=${llm_slide_api_key:?thiếu llm_slide_api_key trong backend/.env}
       - CUSTOM_MODEL=${PRESENTON_CUSTOM_MODEL:-qwen/qwen3.6-plus}
+      # Tắt khối suy luận của model. BẮT BUỘC khi endpoint custom là một model
+      # biết suy luận (Qwen3, DeepSeek-R1...): `generate_slide_content` ép
+      # `response_format` theo JSON schema nên model không emit được khối
+      # <think>, nó đốt hết hạn mức vào lý luận rồi trả JSON RỖNG
+      # (`{"bullets": [], "speaker_note": ""}`). Presenton thấy rỗng thì quay
+      # vòng retry 12 lần, mỗi slide tốn ~170s và vẫn ra slide trống.
+      #
+      # Cờ này chỉ ăn nhờ bản vá trong docker/presenton/Dockerfile: Presenton
+      # gốc gửi `enable_thinking` ở mức cao nhất của body, còn vLLM chỉ đọc nó
+      # trong `chat_template_kwargs`. Bỏ bản vá đi thì cờ này thành vô nghĩa.
+      #
+      # Với endpoint không phải model suy luận thì để true cũng vô hại.
+      - DISABLE_THINKING=${PRESENTON_DISABLE_THINKING:-true}
       # Sinh ảnh minh hoạ tốn thêm một vòng gọi API và không dùng được cho báo
       # cáo số liệu - ảnh do model vẽ không phải là dữ liệu.
       - DISABLE_IMAGE_GENERATION=true

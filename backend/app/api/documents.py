@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
 from dataclasses import asdict
 from pathlib import Path
 
@@ -45,20 +44,19 @@ async def upload_document(
     file: UploadFile = File(...),
     doc_type: str = Form(default=""),
 ) -> IngestResponse:
-    cfg = get_settings()
-    suffix = Path(file.filename or "").suffix.lower()
+    # Đuôi file phải đọc trên tên ĐÃ làm sạch, không phải tên thô: cổng ABP gửi
+    # tên tiếng Việt dưới dạng "=?utf-8?B?...?=" và đuôi thật nằm trong base64.
+    ten_sach = storage.safe_name(file.filename or "")
+    suffix = Path(ten_sach).suffix.lower()
     if suffix not in SUPPORTED_SUFFIXES:
+        await file.close()
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Chỉ hỗ trợ: {', '.join(sorted(SUPPORTED_SUFFIXES))}",
         )
 
-    upload_dir = Path(cfg.upload_dir)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    target = upload_dir / Path(file.filename).name
     try:
-        with target.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        target = storage.save_upload(file.file, file.filename or "tai-lieu", kind="upload").path
     finally:
         await file.close()
 
@@ -118,20 +116,16 @@ async def review_document(
 
     `rule_set` để trống là dùng bộ tiêu chí mặc định trong `config/rules`.
     """
-    cfg = get_settings()
-    suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in {".docx", ".pdf", ".txt", ".md"}:
+    ten_sach = storage.safe_name(file.filename or "")
+    if Path(ten_sach).suffix.lower() not in {".docx", ".pdf", ".txt", ".md"}:
+        await file.close()
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Workflow 2 chỉ xử lý .docx, .pdf, .txt, .md",
         )
 
-    upload_dir = Path(cfg.upload_dir)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    target = upload_dir / Path(file.filename).name
     try:
-        with target.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        target = storage.save_upload(file.file, file.filename or "tai-lieu", kind="upload").path
     finally:
         await file.close()
 

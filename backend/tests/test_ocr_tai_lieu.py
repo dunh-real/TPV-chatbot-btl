@@ -242,6 +242,133 @@ async def test_stream_phat_du_start_trang_done(tmp_path, ocr_gia, kho_upload):
     assert sorted(p["so_trang"] for e, p in su_kien if e == "trang") == [1, 2]
 
 
+async def test_ten_file_kieu_email_van_giu_duoc_duoi(tmp_path, ocr_gia, kho_upload):
+    """Cổng ABP gửi tên file tiếng Việt dưới dạng "=?utf-8?B?...?=" (RFC 2047).
+
+    Đuôi `.pdf` nằm trong phần base64. Lọc ký tự lạ trước khi giải mã thì `=` và
+    `?` thành `_`, file lưu xuống mất đuôi, và `/extract/stream` trả 415 "chỉ đọc
+    được ảnh trang" - đúng file đó tải thẳng từ trình duyệt lại chạy ngon. Đó là
+    lý do cùng một tài liệu lúc nhận lúc không.
+    """
+    import base64
+
+    from app.services import storage
+
+    path = _pdf(tmp_path, ["", ""], ten="scan.pdf")
+    ten_that = "Bảng PL3a Hợp đồng 54.pdf"
+    ten_gui = "=?utf-8?B?" + base64.b64encode(ten_that.encode()).decode() + "?="
+
+    res = await _call("POST", "/api/agent/upload",
+                      files={"file": (ten_gui, path.read_bytes(), "application/pdf")},
+                      data={"muc_dich": "upload"})
+    assert res.status_code == 200, res.text
+    file_id = res.json()["file_id"]
+    assert file_id.endswith(".pdf"), file_id
+
+    # Cùng tài liệu, tải thẳng từ trình duyệt: hai đường phải ra cùng một tên,
+    # không thì kho upload có hai bản của một file.
+    assert storage.safe_name(ten_gui) == storage.safe_name(ten_that)
+
+    res = await _call("POST", "/api/ocr/extract/stream",
+                      json={"file_id": file_id, "che_do": "auto"})
+    assert res.status_code == 200, res.text
+    assert "event: start" in res.text
+
+
+@pytest.mark.parametrize("duong, ten", [
+    ("/api/documents/upload", "Báo cáo kiểm kê.docx"),
+    ("/api/documents/review", "Báo cáo kiểm kê.docx"),
+    ("/api/ocr/extract", "Công văn số 1516.pdf"),
+])
+async def test_cua_nap_tai_lieu_cung_giai_duoc_ten_kieu_email(duong, ten, kho_upload):
+    """Kiểm đuôi file phải đọc trên tên ĐÃ làm sạch, ở mọi cửa nhận file.
+
+    Ba cửa `/api/ocr/extract`, `/api/documents/upload` và `/api/documents/review`
+    đều tự kiểm đuôi rồi mới nhận. Cửa nào đọc tên thô thì tên kiểu
+    "=?utf-8?B?...?=" bị chặn ngay bằng 415, dù đó là .docx thật.
+    """
+    import base64
+
+    ma = "=?utf-8?B?" + base64.b64encode(ten.encode()).decode() + "?="
+
+    res = await _call("POST", duong,
+                      files={"file": (ma, b"noi dung gia", "application/octet-stream")})
+    # Nội dung là file giả nên bước đọc sẽ hỏng, nhưng phải hỏng VÌ nội dung -
+    # không được dừng ngay ở cửa vì tưởng sai định dạng.
+    assert res.status_code != 415, res.text
+
+
+def test_moi_kieu_ma_hoa_ten_deu_ra_mot_ten():
+    """Năm cách client gửi cùng một tên file phải cho cùng một kết quả.
+
+    Hai cái bẫy nằm ở đây:
+
+    - Bảng chữ cái base64 có cả `/`. Cắt thư mục TRƯỚC khi giải mã thì phần
+      base64 bị xén ở dấu `/` cuối, còn lại một mẩu rác không giải được và cũng
+      không còn đuôi - đúng cái tên `Mm8yAbmcgeHV5ZcyCbi5wZGY` đã thấy trong kho.
+    - macOS gửi tên ở dạng NFD ("e" + dấu mũ rời), Windows gửi NFC ("ê"). Không
+      chuẩn hoá thì mỗi dấu rời thành thêm một `_`, và cùng một file nằm hai bản
+      trong kho dưới hai cái tên.
+    """
+    import base64
+    import unicodedata
+    from email.header import Header
+
+    from app.services import storage
+
+    ten = ("681 QĐ vv phê duyệt nhiệm vụ và dự toán chi tiết kinh phí thực hiện "
+           "nhiệm vụ sử dụng nguồn chi thường xuyên.pdf")
+    nfd = unicodedata.normalize("NFD", ten)
+
+    def mot_word(raw: str) -> str:
+        return "=?utf-8?B?" + base64.b64encode(raw.encode()).decode() + "?="
+
+    cach_gui = [
+        ten,                          # trình duyệt gửi thẳng
+        nfd,                          # macOS, dạng NFD
+        mot_word(ten),                # cổng ABP, một encoded-word
+        mot_word(nfd),                # ... và base64 của nó có chứa "/"
+        Header(ten, "utf-8").encode(),  # chẻ thành nhiều encoded-word
+    ]
+    assert "/" in mot_word(nfd), "ca thử mất ý nghĩa nếu base64 không có dấu /"
+
+    ket_qua = {storage.safe_name(c) for c in cach_gui}
+    assert len(ket_qua) == 1, ket_qua
+    ten_luu = ket_qua.pop()
+    assert ten_luu.endswith(".pdf")
+    assert storage.safe_name(ten_luu) == ten_luu
+
+
+def test_ten_van_ban_qua_dai_van_giu_duoc_duoi():
+    """Cắt phần thân, đừng cắt cụt cả tên.
+
+    Tên văn bản hành chính tiếng Việt vượt 180 ký tự là chuyện thường - mỗi chữ
+    có dấu thành một `_` sau khi lọc. Cắt thẳng `name[:180]` thì đuôi `.pdf` rơi
+    mất, và file hoá ra không OCR được y như trường hợp encoded-word.
+    """
+    from app.services import storage
+
+    dai = ("Quyết định về việc phê duyệt nhiệm vụ và dự toán chi tiết kinh phí "
+           "thực hiện nhiệm vụ sử dụng nguồn chi thường xuyên lĩnh vực chuyển đổi "
+           "số của Ngành Nông nghiệp và Môi trường năm 2026.pdf")
+    assert len(dai) > 180
+
+    ten = storage.safe_name(dai)
+    assert len(ten) <= 180
+    assert ten.endswith(".pdf")
+    assert storage.safe_name(ten) == ten
+
+
+def test_ten_file_kieu_email_khong_mo_duong_vuot_thu_muc():
+    """Giải mã xong vẫn phải cắt thư mục: encoded-word giấu được cả `../`."""
+    import base64
+
+    from app.services import storage
+
+    doc_hai = "=?utf-8?B?" + base64.b64encode(b"../../etc/passwd").decode() + "?="
+    assert storage.safe_name(doc_hai) == "passwd"
+
+
 async def test_stream_bao_loi_khi_file_khong_ton_tai(kho_upload):
     res = await _call("POST", "/api/ocr/extract/stream",
                       json={"file_id": "upload:khong-co-that.pdf"})

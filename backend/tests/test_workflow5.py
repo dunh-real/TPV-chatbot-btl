@@ -202,11 +202,32 @@ def test_moi_con_so_se_len_slide_deu_co_san():
 
 def test_bang_chi_tiet_la_bang_markdown_du_dong():
     """Presenton chỉ dựng được bảng khi nội dung slide LÀ bảng markdown."""
-    bang = [s for s in _slides() if "| Đơn vị |" in s]
+    # Lọc theo ĐÚNG tiêu đề cột của bảng chi tiết: bảng "Đơn vị chưa gửi báo
+    # cáo" cũng có cột "Đơn vị", lọc lỏng thì hai bảng lẫn vào nhau.
+    bang = [s for s in _slides() if "| Đơn vị | Nhân sự |" in s]
     assert len(bang) == 1
     assert "| Đơn vị | Nhân sự | Kỳ trước | Tuyển mới | Nghỉ việc |" in bang[0]
     assert "| Đơn vị 1 | 11 | 10 | 1 | 0 |" in bang[0]
     assert "| Đơn vị 2 | 17 | 17 | 0 | 0 |" in bang[0]
+
+
+def test_don_vi_chua_gui_la_bang_chu_khong_phai_cau_liet_ke():
+    """Danh sách tên đơn vị trong một câu là chỗ model làm hỏng chữ.
+
+    Đo trên bốn bộ slide thật: slide này là nơi DUY NHẤT lọt chữ Hán, và lần
+    nào cũng lọt ("tổ chuyên門", "Tổ Phát展展展" - từ Hán-Việt bị thay bằng chữ
+    Hán gốc, ca sau còn nuốt mất đuôi danh sách). Các slide bảng thì không sai
+    một tên nào. Nên danh sách này phải đi qua bảng.
+    """
+    slides = _slides()
+    tom_tat = [s for s in slides if s.startswith("## Tình hình gửi báo cáo")]
+    assert len(tom_tat) == 1
+    # Slide tóm tắt chỉ nêu SỐ LƯỢNG, không liệt kê tên - không còn câu dài để hỏng.
+    assert "Đơn vị 1" not in tom_tat[0]
+
+    bang = [s for s in slides if "| Mã đơn vị | Đơn vị |" in s]
+    assert bang, "Đơn vị chưa gửi phải nằm trong bảng markdown"
+    assert "| 00001 | Đơn vị 1 |" in "\n".join(bang)
 
 
 def test_bang_dai_cat_thanh_nhieu_slide_chu_khong_cat_dong():
@@ -444,7 +465,7 @@ async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
     assert len(Presentation(result["output_path"]).slides) == result["slide_count"]
 
     # Bảng chi tiết đi sang Presenton dưới dạng bảng markdown, đủ dòng.
-    bang = [s for s in gia.slides_markdown if "| Đơn vị |" in s]
+    bang = [s for s in gia.slides_markdown if "| Đơn vị | Nhân sự |" in s]
     assert len(bang) == 1
     assert "| Đơn vị 1 |" in bang[0] and "| Đơn vị 2 |" in bang[0]
 
@@ -557,3 +578,32 @@ def test_chi_dan_nhac_muc_canh_bao_khi_that_su_co_canh_bao():
                                                           "message": "Nhân sự lệch."}]}}
     assert "kiểm tra lại" in pr.instructions_for(co_canh_bao)
 
+
+
+# --------------------------------------------------------------------------- #
+# Chữ nước ngoài lọt vào bộ slide tiếng Việt
+# --------------------------------------------------------------------------- #
+from app.documents.verify import tim_chu_ngoai_he
+
+
+@pytest.mark.parametrize("dong, mong_doi", [
+    # Ca thật: Qwen3.6 trả về tiêu đề slide cuối với hai chữ Hán thay "kiểm tra".
+    ("Ghi chú và số liệu cần检查", ["检", "查"]),
+    ("スライド", ["ス", "ラ", "イ", "ド"]),
+    ("보고서", ["보", "고", "서"]),
+])
+def test_bat_duoc_chu_ngoai_he(dong, mong_doi):
+    assert tim_chu_ngoai_he(dong) == mong_doi
+
+
+@pytest.mark.parametrize("dong", [
+    "Ghi chú và số liệu cần kiểm tra lại",
+    "Trang thiết bị theo đơn vị (1/5)",
+    "Tổng thiết bị: 149; kỳ trước 120; biến động +29 (+24.2%).",
+    "Dell PowerEdge R450",           # tên thiết bị trong ERP là chữ Latin
+    "Phòng Đảm bảo chất lượng",      # đủ dấu tiếng Việt, kể cả 'Đ'
+    "",
+])
+def test_khong_bao_oan_chu_tieng_viet(dong):
+    """Báo oan còn tệ hơn không báo: người duyệt mất lòng tin vào chốt này."""
+    assert tim_chu_ngoai_he(dong) == []

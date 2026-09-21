@@ -469,6 +469,32 @@ def test_yeu_cau_neu_ro_mot_mang_thi_de_len_lua_chon_cua_llm(yeu_cau, mong_doi):
     assert scope_from_request(yeu_cau, CA_HAI) == mong_doi
 
 
+@pytest.mark.parametrize("yeu_cau, mong_doi", [
+    # Ca đã xảy ra thật: gõ không dấu thì cổng từ khoá trượt hết, LLM trả về CẢ
+    # HAI mảng, và bộ slide xin về tài sản ra bốn slide bảng nhân sự.
+    ("Tạo slide báo cáo tai san cong ty", ["thiet_bi"]),
+    ("tao slide bao cao trang thiet bi", ["thiet_bi"]),
+    ("bao cao nhan su thang 8", ["nhan_su"]),
+    ("thong ke can bo, bien che", ["nhan_su"]),
+    ("tinh hinh nguoi lao dong", ["nhan_su"]),
+    ("TAI SAN CONG TY", ["thiet_bi"]),          # gõ hoa, vẫn không dấu
+    ("Tình hình  tài  sản", ["thiet_bi"]),      # khoảng trắng thừa
+])
+def test_go_khong_dau_van_khoanh_dung_mang(yeu_cau, mong_doi):
+    """Người dùng không bật bộ gõ thì yêu cầu vẫn phải vào đúng mảng số liệu."""
+    assert scope_from_request(yeu_cau, CA_HAI) == mong_doi
+
+
+@pytest.mark.parametrize("yeu_cau", [
+    "bao cao tong hop thang 8",          # không nhắc mảng nào
+    "bao cao nhan su va trang thiet bi",  # nhắc cả hai
+])
+def test_go_khong_dau_ma_cau_mo_ho_thi_van_nhuong_llm(yeu_cau):
+    """Bỏ dấu không được làm cổng khoanh vùng hăng hơn: mơ hồ thì vẫn nhường LLM."""
+    assert scope_from_request(yeu_cau, CA_HAI) == CA_HAI
+    assert scope_from_request(yeu_cau, ["thiet_bi"]) == ["thiet_bi"]
+
+
 @pytest.mark.parametrize("yeu_cau", [
     "Báo cáo tổng hợp tháng 8/2026",       # không nhắc mảng nào
     "Báo cáo nhân sự và trang thiết bị",   # nhắc cả hai
@@ -739,3 +765,9 @@ def test_cau_chu_quyet_dinh_chieu_gop():
     assert rp.dimension_from_request("báo cáo tháng 8", "chuc_vu") == "chuc_vu"
     # Model trả về giá trị lạ thì bỏ, không để nó đi tiếp xuống tầng truy vấn.
     assert rp.dimension_from_request("báo cáo tháng 8", "gioi_tinh") is None
+
+
+def test_chieu_gop_doc_duoc_ca_cau_go_khong_dau():
+    """Cùng lý do với `scope_from_request`: bộ gõ tắt không đổi ý người dùng."""
+    assert rp.dimension_from_request("bao cao nhan su theo chuc vu", None) == "chuc_vu"
+    assert rp.dimension_from_request("tong hop thiet bi theo chung loai", None) == "chung_loai"

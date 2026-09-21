@@ -143,10 +143,16 @@ def _docx_defaults(document) -> tuple[str | None, float | None]:
     """Font/cỡ mặc định của tài liệu (w:docDefaults) - run không khai báo thì kế thừa."""
     from docx.oxml.ns import qn
 
-    try:
-        defaults = document.styles.element.find(qn("w:docDefaults"))
-        rpr = defaults.find(qn("w:rPrDefault")).find(qn("w:rPr"))
-    except AttributeError:
+    # Mọi mắt xích đều có thể vắng: Word chỉ ghi <w:rPrDefault/> rỗng là hợp lệ,
+    # và nhiều bộ sinh docx (văn bản tải từ cổng thông tin) ghi đúng như vậy.
+    # Thiếu mặc định thì run tự khai báo lấy, nên bỏ qua chứ không hỏng cả bản soát.
+    node = document.styles.element.find(qn("w:docDefaults"))
+    for tag in ("w:rPrDefault", "w:rPr"):
+        if node is None:
+            return None, None
+        node = node.find(qn(tag))
+    rpr = node
+    if rpr is None:
         return None, None
 
     font = None

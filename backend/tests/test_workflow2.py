@@ -148,6 +148,33 @@ def test_parse_docx_lay_duoc_phong_co_chu_va_le(tmp_path):
     assert structure.geometry is not None and structure.geometry.measured is False
 
 
+def test_docx_khong_khai_font_mac_dinh_van_doc_duoc(tmp_path):
+    """<w:rPrDefault/> rỗng là hợp lệ, và văn bản tải từ cổng thông tin hay ghi vậy.
+
+    Trước đây chuỗi `docDefaults -> rPrDefault -> rPr` được dò một lèo rồi bắt
+    AttributeError; mắt xích cuối vắng thì `rPr` thành None mà lọt ra ngoài khối
+    try, và cả bản soát chết với "'NoneType' object has no attribute 'find'".
+    Không có mặc định thì từng run tự khai lấy - thiếu thì bỏ qua, đừng hỏng.
+    """
+    docx = pytest.importorskip("docx")
+    from docx.oxml.ns import qn
+
+    document = docx.Document()
+    document.add_paragraph("Nội dung không khai font.")
+    defaults = document.styles.element.find(qn("w:docDefaults"))
+    rpr_default = defaults.find(qn("w:rPrDefault"))
+    for con in list(rpr_default):
+        rpr_default.remove(con)
+
+    path = tmp_path / "khong_co_mac_dinh.docx"
+    document.save(path)
+    structure = parse_document(path)
+
+    assert structure.source_format == "docx"
+    assert structure.default_font is None and structure.default_size_pt is None
+    assert [b.text for b in structure.blocks] == ["Nội dung không khai font."]
+
+
 def test_bang_giu_dung_vi_tri_trong_tai_lieu(tmp_path):
     """Bảng nằm ngay dưới tiêu đề mục phải ở ngay dưới tiêu đề đó.
 

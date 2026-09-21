@@ -343,6 +343,181 @@ Giao diện demo nằm ở [../frontend/](../frontend/) và được backend ph�
 mở **http://localhost:8080/ui/** (vào `/` cũng tự chuyển sang). HTML/CSS/JS
 thuần, không build, cùng origin nên không phải mở CORS.
 
+### Lỡ tắt backend thì bật lại thế nào
+
+Backend trên máy dev chạy bằng lệnh trực tiếp, **không phải systemd service**, nên
+tắt là tắt hẳn - không có gì tự dựng lại.
+
+**1. Kiểm những thứ backend cần, trước khi bật.** Backend vẫn khởi động được khi
+chúng chết, chỉ trả lời ở chế độ degraded - nên phải xem, đừng đoán:
+
+```bash
+docker ps --format "{{.Names}}: {{.Status}}" | grep -E "tpv-qdrant|tpv-chatbot-redis|tpv-btl-presenton|mssql-server"
+curl -s localhost:8001/v1/models | head -c 80        # vLLM
+# Loc theo comm=python, KHONG dung `pgrep -f ... && echo OK` tran: pgrep khop ca
+# dong lenh dang chay chinh no, nen luon bao OK du relay da chet.
+for p in $(pgrep -f vllm_relay.py); do
+  [ "$(cat /proc/$p/comm)" = python ] && echo "relay OK (pid $p)"
+done
+```
+
+Thiếu cái nào thì dựng lại cái đó: Qdrant/Redis/Presenton/MSSQL bằng `docker start
+<tên>`, vLLM bằng `./scripts/serve_vllm.sh`, relay bằng `nohup .venv/bin/python
+scripts/vllm_relay.py > /tmp/relay.log 2>&1 &` (relay chỉ cần khi Presenton dùng
+vLLM local - xem đầu [scripts/vllm_relay.py](scripts/vllm_relay.py)).
+
+**2. Dừng tiến trình cũ nếu còn sót.** Lọc theo `/proc/<pid>/comm` chứ ĐỪNG
+`pkill -f uvicorn`:
+
+```bash
+for p in $(pgrep -f "uvicorn app.main:app"); do
+  [ "$(cat /proc/$p/comm 2>/dev/null)" = "python" ] && kill -TERM $p
+done
+sleep 5
+curl -s -o /dev/null -w "%{http_code}\n" localhost:8081/health    # 000 = da dung han
+```
+
+`pgrep -f` khớp **toàn bộ dòng lệnh**, kể cả dòng `bash -c` đang chứa chính chuỗi
+đó - nên `pkill -f uvicorn` giết luôn shell vừa gõ lệnh, và bước khởi động lại
+phía sau không bao giờ chạy. Triệu chứng: tưởng đã restart, thực ra tiến trình cũ
+vẫn phục vụ code cũ. Đã mất khá nhiều thời gian vì chuyện này.
+
+**3. Bật lại.** Chạy TỪ thư mục `backend/`:
+
+```bash
+cd backend
+nohup .venv/bin/python .venv/bin/uvicorn app.main:app \
+      --port 8081 --host 0.0.0.0 > /tmp/tpv-backend.log 2>&1 &
+```
+
+- `--host 0.0.0.0` để máy khác gọi được qua Tailscale/LAN, và vẫn giữ loopback
+  cho Cloudflare tunnel. Bỏ đi thì chỉ còn máy này gọi được (xem mục dưới).
+- **Không dùng `--reload` khi chạy nền**: nó sinh tiến trình con, `kill` tiến
+  trình cha để lại con mồ côi vẫn giữ cổng 8081.
+- Khởi động mất **20-30 giây** vì nạp sẵn embedding + reranker
+  (`WARMUP_MODELS=true`). Chưa thấy `Application startup complete` thì chưa xong.
+
+**4. Nghiệm thu.**
+
+```bash
+curl -s localhost:8081/health | jq          # status: ok, qdrant/llm/database deu true
+curl -s localhost:8081/health/request | jq .chuan_doan
+curl -s -o /dev/null -w "%{http_code}\n" https://chatbot-demo.tpvtech.vn/health   # duong public
+```
+
+**5. Sửa code xong thì phải bật lại.** Không có `--reload`, nên tiến trình đang
+chạy giữ nguyên code lúc khởi động. Cách kiểm chắc chắn:
+
+```bash
+P=$(for p in $(pgrep -f "uvicorn app.main:app"); do \
+      [ "$(cat /proc/$p/comm)" = python ] && echo $p; done | head -1)
+ps -o lstart= -p $P                                   # backend khoi dong luc nao
+find app -name "*.py" -newermt "$(ps -o lstart= -p $P)"   # file nao moi hon
+```
+
+Dòng thứ hai in ra file nào thì file đó **chưa** được nạp.
+
+### Cho máy khác gọi tới (Tailscale, LAN)
+
+Mặc định uvicorn chỉ nghe **loopback**, nên máy khác gọi vào sẽ `Connection
+refused` - dù CORS có khai đúng tới đâu. CORS chỉ vào cuộc SAU khi kết nối đã
+thành công; hỏng ở tầng dưới thì mọi dòng `CORS_ORIGINS` đều vô nghĩa.
+
+```bash
+# Chi may nay goi duoc (mac dinh)
+uv run uvicorn app.main:app --port 8080 --host 127.0.0.1
+
+# Moi card mang: loopback + Tailscale + LAN
+uv run uvicorn app.main:app --port 8080 --host 0.0.0.0
+
+# Chi Tailscale - hep hon, nhung MAT loopback nen Cloudflare tunnel se dut
+uv run uvicorn app.main:app --port 8080 --host 100.75.29.73
+```
+
+`0.0.0.0` bao gồm cả `127.0.0.1`, nên Cloudflare tunnel (trỏ vào loopback) vẫn
+chạy bình thường. Bind một IP cụ thể thì không.
+
+**URL phải kèm cổng.** Thiếu cổng là về cổng 80, và trên máy dev này cổng 80
+đang là nginx của dự án khác - nó trả `301` sang `moonleaf.vn`, nên request
+không bao giờ chạm tới backend:
+
+```
+http://100.75.29.73/health/request        -> 301 moonleaf.vn   (SAI: thieu cong)
+http://100.75.29.73:8080/health/request   -> 200               (dung)
+```
+
+Ví dụ trong README dùng `8080`; máy dev hiện chạy `8081`. Dùng đúng cổng đã khởi
+động, đừng chép cứng.
+
+Mở ra ngoài loopback là mở thật: mọi máy trong LAN và toàn bộ tailnet đều gọi
+được, mà API trả hồ sơ nhân sự và tài sản. Đặt `PUBLIC_ACCESS_TOKEN` trước khi
+mở nếu mạng đó không chỉ có mình bạn.
+
+### Khai CORS cho giao diện ở domain khác
+
+Giao diện cùng origin (`/ui/`) không cần gì. Giao diện ở domain khác thì phải
+khai vào `CORS_ORIGINS` trong `.env`, **ngăn cách bằng dấu phẩy**:
+
+```
+CORS_ORIGINS=http://localhost:5173,https://bqp-ai.tpvtech.vn
+```
+
+Giá trị phải là **origin**, không phải URL. Theo RFC 6454 trình duyệt gửi header
+`Origin` chỉ gồm `scheme://host[:port]` - nó cắt sạch đường dẫn. Starlette so
+khớp chuỗi tuyệt đối (`origin in allow_origins`), nên chỉ lệch một ký tự là
+không bao giờ khớp, và hỏng HOÀN TOÀN im lặng.
+
+| Viết | Kết quả |
+|---|---|
+| `https://bqp-ai.tpvtech.vn` | ✅ |
+| `https://bqp-ai.tpvtech.vn/` | ❌ dấu `/` thừa - trình duyệt không bao giờ gửi nó |
+| `https://bqp-ai.tpvtech.vn/chat` | ❌ Origin không chứa đường dẫn |
+| `https://<bqp-ai.tpvtech.vn>` | ❌ chép nguyên chỗ viết mẫu |
+| `http://100.75.29.73:8080` | ✅ khác cổng thì phải ghi cổng |
+
+Hai dòng sai đầu bảng là lỗi đã xảy ra thật khi tích hợp với giao diện bên thứ
+ba - chép từ thanh địa chỉ trình duyệt ra thì luôn dính dấu `/`.
+
+Đổi `.env` xong **phải khởi động lại backend**, cấu hình chỉ đọc lúc khởi động.
+
+### `/health/request` — request tới nơi ở dạng nào
+
+Bị CORS chặn thì trình duyệt KHÔNG trả mã lỗi nào cho JavaScript: `fetch` chỉ ném
+`TypeError: Failed to fetch`. Server chết, sai địa chỉ, sai scheme, chặn origin -
+bốn nguyên nhân khác hẳn nhau đều hiện ra là "lỗi kết nối". Endpoint này trả lời
+thẳng bằng thứ server thật sự nhận được:
+
+```bash
+curl http://localhost:8080/health/request -H "Origin: https://bqp-ai.tpvtech.vn"
+```
+
+```json
+{"origin": "https://bqp-ai.tpvtech.vn", "cors_cho_phep": false,
+ "scheme": "https", "qua_proxy": true, "client_ip": "203.0.113.9",
+ "danh_tinh": {"tenant_id": 94, "source": "default"},
+ "chuan_doan": ["Origin https://bqp-ai.tpvtech.vn KHÔNG có trong CORS_ORIGINS..."]}
+```
+
+Cách dùng nhanh nhất: bảo đội giao diện **mở thẳng URL đó trong một tab**. Điều
+hướng cùng origin nên CORS không áp dụng - nó luôn trả lời được, kể cả khi mọi
+lời gọi `fetch` đang bị chặn. Muốn xem đúng góc nhìn của giao diện thì chạy
+`fetch(...)` trong Console của trang đó.
+
+Nó bắt luôn: trang HTTPS gọi API HTTP (mixed content), thiếu `X-Tenant-Id`, và
+các dòng `CORS_ORIGINS` sai định dạng ở bảng trên.
+
+Không dội lại toàn bộ header - API mở ra Internet mà dội header là chỗ rò
+`Cookie`/`Authorization`. Danh sách origin đã khai chỉ trả cho lời gọi từ chính
+máy chủ; khách từ xa chỉ thấy origin của họ có qua hay không.
+
+Ba endpoint hệ thống chia việc:
+
+| Endpoint | Trả lời câu hỏi |
+|---|---|
+| `/health` | backend còn sống không (Qdrant, vLLM, CSDL) |
+| `/health/request` | request CỦA TÔI tới nơi ở dạng nào |
+| `/whoami` | backend nghĩ tôi là ai (tenant, user) |
+
 ### Mở ra Internet để demo từ xa
 
 ```bash
@@ -439,6 +614,9 @@ Ingest lại cùng `doc_id` sẽ ghi đè sạch bản cũ.
 | `POST /api/chat/search` | Chỉ truy hồi — xem hạng từng nhánh, điểm RRF, điểm rerank |
 | `GET/DELETE /api/chat/history/{id}` | Lịch sử hội thoại (Redis) |
 | `GET /api/documents/stats` | Số point trong collection |
+| `GET /health` | Backend còn sống không — Qdrant, vLLM, CSDL |
+| `GET /health/request` | Request của tôi tới nơi ở dạng nào — origin, CORS, scheme, proxy |
+| `GET /whoami` | Backend nghĩ tôi là ai — tenant, user, nguồn danh tính |
 
 ```bash
 # Agent tự định tuyến — không cần nói mình muốn workflow nào

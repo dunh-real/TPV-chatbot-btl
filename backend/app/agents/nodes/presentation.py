@@ -43,7 +43,11 @@ from app.documents.pptx_builder import (
     build_pptx,
     count_slides,
 )
-from app.documents.verify import check_numbers, collect_known_numbers
+from app.documents.verify import (
+    check_numbers,
+    collect_known_numbers,
+    tim_chu_ngoai_he,
+)
 from app.services import storage
 from app.services.presenton import PresentonError, get_presenton
 
@@ -203,6 +207,43 @@ def _slide_bang(source: dict[str, Any], mac_dinh: str, ten_mang: str,
     return slides, so_cua_code
 
 
+def _slide_don_vi_chua_gui(reporting: dict[str, Any],
+                           period: str) -> tuple[list[str], set[str]]:
+    """Đơn vị chưa gửi báo cáo, dạng BẢNG chứ không phải câu liệt kê.
+
+    Bản cũ nhét cả danh sách vào một câu ("Chưa gửi: Phòng A, Tổ B, ..."). Đo
+    trên bốn bộ slide thật thì slide này là chỗ DUY NHẤT model làm hỏng chữ, và
+    lần nào cũng hỏng:
+
+        "...các phòng ban và tổ chuyên門"          (môn  -> 門)
+        "Tổ Phân tích nghiệp vụ, Tổ Phát展展展"     (triển -> 展, rồi cụt danh sách)
+
+    Toàn là từ Hán-Việt bị model thay bằng chữ Hán gốc, và ca thứ hai còn nuốt
+    mất phần đuôi danh sách. Trong khi đó các slide BẢNG (nhân sự/thiết bị theo
+    đơn vị) không sai một tên nào qua cả bốn lần dựng - vì bảng đi qua layout
+    bảng, model chỉ xếp ô chứ không viết lại câu.
+
+    Nên chuyển danh sách sang bảng: bỏ hẳn nguyên nhân thay vì dò chữ Hán sau
+    khi file đã hỏng. Chốt CJK ở `verify_node` vẫn giữ, nó là lưới an toàn cho
+    những chỗ khác.
+    """
+    missing = reporting.get("missing") or []
+    if not missing:
+        return [], set()
+
+    rows = [[m["ma_don_vi"], m["ten_don_vi"]] for m in missing]
+    trang = [rows[i:i + MAX_TABLE_ROWS_SLIDE]
+             for i in range(0, len(rows), MAX_TABLE_ROWS_SLIDE)]
+    dau_bang = "| Mã đơn vị | Đơn vị |\n|---|---|"
+
+    slides: list[str] = []
+    for index, dong in enumerate(trang, start=1):
+        so_trang = f" ({index}/{len(trang)})" if len(trang) > 1 else ""
+        than = "\n".join("| " + " | ".join(o) + " |" for o in dong)
+        slides.append(f"## Đơn vị chưa gửi báo cáo{so_trang}\n\n{dau_bang}\n{than}")
+    return slides, {str(i) for i in range(1, len(trang) + 1)}
+
+
 def build_slides_markdown(
     data: dict[str, Any], params: dict[str, Any], inputs: dict[str, Any] | None = None
 ) -> tuple[list[str], set[str]]:
@@ -234,12 +275,15 @@ def build_slides_markdown(
             slides[-1] += ("\n\nKhông có số liệu về: " + ", ".join(thieu) + ".")
 
     if (reporting := data.get("reporting")):
-        dong = [f"- Đã gửi trong kỳ: {reporting['units_reported']}/"
-                f"{reporting['units_total']} đơn vị."]
-        if (missing := reporting.get("missing")):
-            dong.append("- Chưa gửi: "
-                        + ", ".join(m["ten_don_vi"] for m in missing) + ".")
-        slides.append(f"## Tình hình gửi báo cáo {period}\n\n" + "\n".join(dong))
+        slides.append(
+            f"## Tình hình gửi báo cáo {period}\n\n"
+            f"- Đã gửi trong kỳ: {reporting['units_reported']}/"
+            f"{reporting['units_total']} đơn vị.\n"
+            f"- Chưa gửi: {len(reporting.get('missing') or [])} đơn vị"
+            f"{' (danh sách ở slide sau)' if reporting.get('missing') else ''}.")
+        bang, so = _slide_don_vi_chua_gui(reporting, period)
+        slides += bang
+        so_cua_code |= so
 
     # Cảnh báo chất lượng dữ liệu và ghi chú nguồn là phần người ký cần thấy
     # nhất, nên chúng đứng thành slide riêng chứ không nép vào chân trang.
@@ -275,7 +319,11 @@ INSTRUCTIONS = (
     "6. Với layout chỉ tiêu: phần mô tả của mỗi ô PHẢI mở đầu bằng tên chỉ tiêu "
     '(ví dụ "Tổng nhân sự: kỳ trước 27..."). Ô chỉ có con số mà không có tên '
     "chỉ tiêu thì người xem không biết nó là gì.\n"
-    "7. Tiêu đề slide GIỮ NGUYÊN TỪNG CHỮ, kể cả phần đánh số trang dạng "
+    "7. CHỈ dùng chữ Latin có dấu tiếng Việt. TUYỆT ĐỐI không dùng chữ Hán, "
+    "Nhật, Hàn. Từ Hán-Việt phải viết bằng chữ quốc ngữ: viết \"kiểm tra\", "
+    "\"chuyên môn\", \"phát triển\", \"vì sao\" - không được thay bằng ký tự "
+    "chữ Hán tương ứng.\n"
+    "8. Tiêu đề slide GIỮ NGUYÊN TỪNG CHỮ, kể cả phần đánh số trang dạng "
     '"(2/6)". Không rút gọn, không diễn đạt lại, không bỏ dấu ngoặc. Các slide '
     "cùng một bảng bị cắt trang phải mang tiêu đề giống hệt nhau, chỉ khác số "
     "trang - mỗi trang một cách gọi thì người xem tưởng là sáu bảng khác nhau."
@@ -285,7 +333,7 @@ INSTRUCTIONS = (
 # slide cũng mọc ra một dòng "số liệu cần kiểm tra lại: chưa nêu" - người xem đọc
 # vào tưởng hệ thống chưa kiểm, trong khi thật ra không có gì để kiểm.
 CANH_BAO_INSTRUCTION = (
-    "\n6. Bộ slide phải có phần nêu lại ghi chú và mục số liệu cần kiểm tra lại."
+    "\n9. Bộ slide phải có phần nêu lại ghi chú và mục số liệu cần kiểm tra lại."
 )
 
 
@@ -480,12 +528,21 @@ async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
     known |= set(state.get("so_cua_code") or [])
 
     issues: list[dict[str, Any]] = []
-    for _index, tieu_de, dong in doan_van:
+    for index, tieu_de, dong in doan_van:
         check = check_numbers(dong, known, tieu_de)
         if not check.ok:
             issues.append({"type": "unverified_number", "section": tieu_de,
                            "numbers": check.unverified, "severity": "warning",
                            "quote": dong[:160]})
+        # Chữ thuộc hệ chữ khác lọt vào giữa câu tiếng Việt. Cảnh báo chứ không
+        # chặn, cùng lý do với số không truy được: file đã dựng xong ở phía
+        # Presenton, xoá đi thì người dùng không còn gì để sửa. Bù lại phải nói
+        # rõ slide nào và ký tự nào, vì hai ký tự lạ giữa một câu dài thì đọc
+        # lướt không thấy.
+        if (la := tim_chu_ngoai_he(dong)):
+            issues.append({"type": "foreign_script", "section": tieu_de,
+                           "slide": index, "characters": sorted(set(la)),
+                           "severity": "warning", "quote": dong[:160]})
 
     return {
         "slide_count": slide_count,

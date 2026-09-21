@@ -15,7 +15,9 @@ from __future__ import annotations
 import logging
 import re
 import shutil
+import unicodedata
 from dataclasses import dataclass
+from email.header import decode_header
 from datetime import datetime
 from pathlib import Path
 from typing import Any, BinaryIO, Literal
@@ -29,6 +31,11 @@ Kind = Literal["upload", "output"]
 KINDS: tuple[Kind, ...] = ("upload", "output")
 
 _UNSAFE_RE = re.compile(r"[^A-Za-z0-9_.\-]")
+
+# Tên file kiểu email: "=?utf-8?B?<base64>?=" (RFC 2047). Đó là quy ước của thư
+# điện tử chứ không phải của HTTP, nên không thư viện multipart nào giải hộ -
+# nhưng cổng ABP của bên thứ ba lại gửi tên file tiếng Việt đúng bằng dạng này.
+_ENCODED_WORD_RE = re.compile(r"=\?[^?]+\?[BbQq]\?[^?]*\?=")
 
 
 class StorageError(ValueError):
@@ -84,10 +91,71 @@ def root(kind: Kind) -> Path:
     return path
 
 
+def _giai_ma_encoded_word(filename: str) -> str:
+    """Trả tên thật của "=?utf-8?B?...?="; không phải encoded-word thì giữ nguyên.
+
+    Phải chạy TRƯỚC khi lọc ký tự lạ. `=` và `?` đều bị `_UNSAFE_RE` thay bằng
+    `_`, mà đuôi file lúc đó còn nằm trong phần base64 - lọc trước thì file lưu
+    xuống không còn đuôi, và mọi bước kiểm định dạng phía sau đều từ chối nó.
+    Triệu chứng đã gặp: cùng một PDF, tải lên từ trình duyệt thì OCR được, đi qua
+    cổng ABP thì trả 415 "chỉ đọc được ảnh trang".
+    """
+    if not _ENCODED_WORD_RE.search(filename):
+        return filename
+    try:
+        phan_da_giai = decode_header(filename)
+    except (ValueError, UnicodeDecodeError):
+        return filename
+
+    manh: list[str] = []
+    for phan, charset in phan_da_giai:
+        if isinstance(phan, str):
+            manh.append(phan)
+            continue
+        try:
+            manh.append(phan.decode(charset or "utf-8", errors="replace"))
+        except LookupError:
+            # Bảng mã lạ: đọc như UTF-8 còn hơn vứt cả tên - phần rác sẽ bị
+            # `_UNSAFE_RE` dọn, còn đuôi file thì giữ được.
+            manh.append(phan.decode("utf-8", errors="replace"))
+    return "".join(manh)
+
+
+# Tên file dài quá thì cắt, nhưng cắt phần thân chứ không cắt cụt cả tên: mất
+# đuôi là mất luôn thông tin "đây là file gì", và mọi bước kiểm định dạng phía
+# sau sẽ từ chối. Tên văn bản hành chính tiếng Việt dài hơn 180 ký tự là chuyện
+# thường - mỗi chữ có dấu chiếm một ký tự `_` sau khi lọc.
+_TEN_TOI_DA = 180
+_DUOI_TOI_DA = 12          # đủ cho .jpeg / .tiff / .xlsx / .pptx
+
+
+def _cat_giu_duoi(name: str) -> str:
+    """Cắt cho vừa `_TEN_TOI_DA`, ưu tiên giữ đuôi file."""
+    if len(name) <= _TEN_TOI_DA:
+        return name
+    duoi = Path(name).suffix
+    if not duoi or len(duoi) > _DUOI_TOI_DA:
+        return name[:_TEN_TOI_DA]
+    return Path(name).stem[:_TEN_TOI_DA - len(duoi)] + duoi
+
+
 def safe_name(filename: str) -> str:
-    """Bỏ mọi thành phần thư mục và ký tự lạ, chỉ giữ lại tên file."""
-    name = _UNSAFE_RE.sub("_", Path(filename or "").name).strip("._") or "file"
-    return name[:180]
+    """Bỏ mọi thành phần thư mục và ký tự lạ, chỉ giữ lại tên file.
+
+    Chạy hai lần trên cùng một tên cho ra cùng một kết quả: sau lượt đầu không
+    còn `=?...?=` nào để giải và tên đã đủ ngắn, nên `resolve()` tìm lại đúng
+    file mà `save_upload` đã ghi.
+    """
+    # Giải mã trên chuỗi NGUYÊN VẸN, cắt thư mục sau. Làm ngược lại là hỏng:
+    # bảng chữ cái base64 có cả `/`, nên `Path(...).name` chạy trước sẽ xén cụt
+    # phần base64 ở dấu `/` cuối cùng và chỉ còn lại một mẩu rác không giải được.
+    # Cắt thư mục SAU khi giải vẫn chặn được `../../etc/passwd` giấu trong base64.
+    goc = _giai_ma_encoded_word(filename or "")
+    # NFC để cùng một file từ macOS (NFD: "e" + dấu rời) và từ Windows (NFC: "ê")
+    # ra cùng một tên; không chuẩn hoá thì mỗi dấu rời thành thêm một `_`.
+    goc = unicodedata.normalize("NFC", goc)
+    name = _UNSAFE_RE.sub("_", Path(goc).name).strip("._") or "file"
+    return _cat_giu_duoi(name)
 
 
 # Dấu tenant gắn vào tên file đầu ra: "SLIDE_2026-08__t64.pptx".

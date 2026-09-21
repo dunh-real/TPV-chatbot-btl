@@ -381,6 +381,38 @@ async def get_equipment_statistics(
     previous = await repo.list_as_of(period_end(compare_to), dept_ids,
                                      gom_chua_gan=toan_cong_ty)
 
+    # Kỳ rỗng mà hiện tại có dữ liệu -> báo HIỆN TRẠNG, và nói ra là đã đổi mốc.
+    #
+    # Vì sao cần: `list_as_of` dựng số liệu kỳ bằng câu hỏi "bản ghi này đã tồn
+    # tại lúc đó chưa". Với nhân sự thì hợp lý - `HireDate` là ngày vào làm thật,
+    # có dữ liệu lùi tới 2021. Với thiết bị thì KHÔNG: quét cả ERP thấy
+    # `PurchaseDate` trùng đúng `CreationTime` ở 56/56 dòng của tenant 63, 33/33
+    # của 64 và 29/29 của 94 - tức ERP không lưu ngày mua thật, chỉ lưu ngày gõ
+    # dữ liệu vào. Trục kỳ của thiết bị vì thế chỉ có hai trạng thái: rỗng hoặc
+    # toàn bộ.
+    #
+    # Hậu quả trước khi có chốt này: hỏi "báo cáo trang thiết bị tháng 8/2026"
+    # trên tenant 94 (dữ liệu nhập 20/09) ra "Tổng thiết bị: 0" in như một sự
+    # thật, trong khi công ty có 149 đơn vị / 29 chủng loại đang hoạt động.
+    # Người đọc hiểu là công ty không có thiết bị nào.
+    #
+    # Không cứng hoá theo kỳ: kỳ nào truy ra dữ liệu thì vẫn báo đúng kỳ đó
+    # (tenant 64 hỏi tháng 8 ra số thật). Chỉ khi kỳ RỖNG mà hiện tại CÓ thì mới
+    # lùi - trường hợp đó chắc chắn là thiếu lịch sử, không phải công ty tay trắng.
+    moc_hien_trang: datetime | None = None
+    if not current:
+        bay_gio = datetime.now()
+        hien_trang = await repo.list_as_of(bay_gio, dept_ids, gom_chua_gan=toan_cong_ty)
+        if hien_trang:
+            current = hien_trang
+            # Kỳ đối chiếu cũng rỗng theo, nên bỏ luôn: so hiện trạng với một kỳ
+            # không có gì thì ra "tăng 149", một con số vô nghĩa mà trông như tin
+            # tốt. `Metric.build` nhận prev rỗng thì không sinh delta.
+            previous = []
+            moc_hien_trang = bay_gio
+            logger.info("Kỳ %s không có dữ liệu thiết bị; báo hiện trạng tại %s",
+                        ky, bay_gio.date())
+
     settings = get_settings()
     labels, good_codes = settings.asset_status_labels, settings.asset_status_good
 
@@ -463,6 +495,15 @@ async def get_equipment_statistics(
         "nguon": "Asm_Assets", "ghi_chu": AS_OF_NOTE,
         "nhom_theo": EQUIPMENT_DIMENSIONS[group_by],
     }
+    if moc_hien_trang is not None:
+        # Ghi đè `ghi_chu` chứ không thêm dòng thứ hai: hai câu nói về hai mốc
+        # khác nhau đứng cạnh nhau thì người đọc không biết tin câu nào.
+        scope["ghi_chu"] = (
+            f"Kỳ {ky} chưa có dữ liệu thiết bị trong ERP. Số liệu dưới đây là "
+            f"HIỆN TRẠNG tại {moc_hien_trang.strftime('%d/%m/%Y')}, không phải "
+            f"số chốt tại kỳ, và không so sánh được với kỳ trước.")
+        scope["moc_so_lieu"] = moc_hien_trang.date().isoformat()
+        scope["ky_yeu_cau_rong"] = True
     # Đếm theo đơn vị chỉ có nghĩa khi bảng đang gộp theo đơn vị - xem ghi chú
     # cùng chỗ này ở tool nhân sự.
     if group_by == "phong_ban":

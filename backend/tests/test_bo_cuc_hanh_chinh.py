@@ -174,3 +174,45 @@ def test_cau_binh_thuong_co_dau_gach_khong_bi_tach():
     """Không có mục nào ở dưới thì đó là câu thường, đừng biến thành danh sách."""
     text = "Ghi chú: - chỉ là một dấu gạch trong câu."
     assert noi_dong_bi_ngat(text) == text
+
+
+# ------------------------------------------------------------ bảng ------- #
+BANG = (
+    "| STT | Tên ngành | Mã ngành |\n"
+    "| --- | --- | --- |\n"
+    "| 1 | Mua bán hàng thuỷ sản | 4620 |\n"
+    "| 2 | Kinh doanh dịch vụ khách sạn | 5510 |"
+)
+
+
+def _so_cot(md: str) -> set[int]:
+    """Số dấu | trên mỗi hàng BẢNG. Bỏ qua dòng `|||` của khối tiêu ngữ - nó
+    cũng mở đầu bằng | nhưng là dấu ngăn cột của khối hai cột, không phải bảng."""
+    return {
+        d.count("|") for d in md.split("\n")
+        if d.strip().startswith("|") and NGAN_COT not in d
+    }
+
+
+def test_bang_khong_bi_noi_dong():
+    assert noi_dong_bi_ngat(BANG) == BANG
+    assert _so_cot(noi_dong_bi_ngat(BANG)) == {4}
+
+
+def test_hang_bang_khong_nuot_dong_chu_ngay_sau():
+    """Nối vào là có chữ nằm NGOÀI dấu | cuối, hàng lệch cột, vỡ cả bảng.
+
+    Dòng sau bắt đầu bằng chữ thường nên mọi điều kiện nối khác đều thoả - chỉ
+    riêng việc dòng trước là hàng bảng mới chặn được.
+    """
+    t = "| 18 | Cho thuê tài sản, xe ô tô | 7740, 7710 |\nghi chú thêm"
+    assert noi_dong_bi_ngat(t) == t
+
+
+def test_bang_qua_ca_chuoi_xu_ly_van_deu_cot():
+    """OCR -> nối dòng -> dựng bố cục -> làm sạch, bảng phải nguyên vẹn."""
+    trang = ("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\n"
+             "3. Ngành nghề kinh doanh:\n" + BANG + "\n\n4. Vốn điều lệ: 6.000.000.000 đồng")
+    ra = cleanup_markdown(dung_bo_cuc(noi_dong_bi_ngat(trang)))
+    assert _so_cot(ra) == {4}
+    assert "| --- | --- | --- |" in ra

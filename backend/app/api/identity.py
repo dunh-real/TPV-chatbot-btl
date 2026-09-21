@@ -46,9 +46,41 @@ class IdentityMiddleware:
             return
 
         with use_principal(principal):
+            _ghi_log_nguon(headers, scope)
             logger.debug("%s %s - %s", scope.get("method"), scope.get("path"),
                          principal.describe())
             await self.app(scope, receive, send)
+
+
+# Đường dẫn bị thăm dò liên tục; ghi log chúng thì phần đáng đọc bị đẩy trôi.
+_IM_LANG = ("/health", "/favicon.ico", "/ui/", "/static/", "/docs", "/openapi.json")
+
+
+def _ghi_log_nguon(headers: dict[str, str], scope: Scope) -> None:
+    """Ghi lại request đến TỪ ĐÂU, không chỉ tới đường dẫn nào.
+
+    Log truy cập của uvicorn chỉ có IP và đường dẫn. Qua Cloudflare thì IP nào
+    cũng như nhau, nên khi đội giao diện báo "không kết nối được" mà bên này
+    nhìn log thì không phân biệt nổi: request của họ chưa tới, hay tới rồi bị
+    CORS chặn, hay tới từ một giao diện khác. Ba nguyên nhân đó cần ba cách sửa.
+
+    `Origin` là thứ trả lời được câu đó, và nó chỉ đáng ghi ở tuyến `/api` -
+    `/health` bị thăm dò vài lần một phút.
+    """
+    path = str(scope.get("path") or "")
+    if not path.startswith("/api") or path.startswith(_IM_LANG):
+        return
+    origin = headers.get("origin")
+    if origin is None:
+        # Không có Origin = không phải trình duyệt, hoặc điều hướng cùng origin.
+        nguon = "không có Origin (không phải gọi chéo từ trình duyệt)"
+    else:
+        from app.core.config import get_settings
+
+        cho_phep = get_settings().cors_origins
+        ok = "*" in cho_phep or origin in cho_phep
+        nguon = f"Origin={origin} ({'được phép' if ok else 'BỊ CORS CHẶN'})"
+    logger.info("%s %s <- %s", scope.get("method"), path, nguon)
 
 
 async def _kem_quyen(principal):
