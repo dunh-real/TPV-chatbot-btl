@@ -20,6 +20,17 @@ class AgentRequest(BaseModel):
         default="", description="Định danh file đã tải lên (POST /api/agent/upload)"
     )
     ma_don_vi: str = Field(default="", description="Đơn vị mặc định khi soạn văn bản")
+    # Người dùng tích tài liệu trong panel -> chỉ tra trong đúng những tài liệu đó.
+    # Nhận DANH SÁCH ngay từ đầu dù giao diện hiện chỉ cho chọn một: Qdrant lọc
+    # bằng `MatchAny`, nên cho chọn nhiều là việc của giao diện, backend không đổi.
+    doc_ids: list[str] = Field(
+        default_factory=list,
+        description="Giới hạn tra cứu trong các doc_id này; bỏ trống = toàn kho",
+    )
+    sources: list[str] = Field(
+        default_factory=list,
+        description="Giới hạn theo TÊN FILE, dùng khi phía gọi không có doc_id",
+    )
     inputs: dict[str, Any] = Field(
         default_factory=dict, description="Người ký, số ký hiệu, nơi nhận... nếu đã biết"
     )

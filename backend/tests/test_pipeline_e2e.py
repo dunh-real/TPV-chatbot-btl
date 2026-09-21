@@ -247,3 +247,54 @@ async def test_workflow_tra_loi_an_toan_khi_ngoai_pham_vi(retriever, monkeypatch
     assert "không tìm thấy thông tin" in result["answer"].lower()
     assert result["used_citations"] == []
     assert result["trace"]["no_context"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Định danh tài liệu: cùng file thì phải cùng id
+# --------------------------------------------------------------------------- #
+def test_id_tai_lieu_bam_theo_file_khong_bam_theo_chu_trich_ra(tmp_path):
+    """Chữ trích ra không tái lập được (OCR), nên không được dùng làm định danh."""
+    from app.rag.ingestion import make_doc_id, make_doc_id_file
+
+    f = tmp_path / "cong_van.pdf"
+    f.write_bytes(b"%PDF-1.4 noi dung nhi phan")
+
+    assert make_doc_id_file(f.name, f) == make_doc_id_file(f.name, f)
+
+    # Cùng file nhưng OCR đọc lệch vài ký tự -> cách cũ ra hai id khác nhau.
+    assert make_doc_id(f.name, "Kính gửi: các đơn vị") != make_doc_id(f.name, "Kính gửi: cac đơn vị")
+
+    # Đổi bytes thì đổi id; đổi tên cũng đổi id.
+    khac = tmp_path / "cong_van_2.pdf"
+    khac.write_bytes(b"%PDF-1.4 noi dung nhi phan khac")
+    assert make_doc_id_file(f.name, f) != make_doc_id_file(khac.name, khac)
+    assert make_doc_id_file("ten_khac.pdf", f) != make_doc_id_file(f.name, f)
+
+
+async def test_nap_lai_cung_mot_file_thi_ghi_de_chu_khong_sinh_ban_thu_hai(tmp_path, monkeypatch):
+    """Nạp lại cùng file -> cùng doc_id -> đè bản cũ, kho không phình thêm."""
+    from app.rag.ingestion import IngestionPipeline, make_doc_id_file
+
+    f = tmp_path / "bao_cao.md"
+    f.write_text("# Báo cáo\n\nNội dung kiểm kê trang thiết bị.", encoding="utf-8")
+    mong_doi = make_doc_id_file(f.name, f)
+
+    da_ghi: list[str] = []
+    da_xoa: list[str] = []
+
+    class _KhoGia:
+        async def ensure_collection(self, recreate=False): ...
+        async def upsert_chunks(self, points, **kw): da_ghi.append(points[0].doc_id)
+        async def delete_document(self, doc_id): da_xoa.append(doc_id)
+        async def delete_extra_chunks(self, doc_id, keep, **kw): ...
+        async def count(self): return len(da_ghi)
+
+    pipeline = IngestionPipeline(store=_KhoGia())
+    monkeypatch.setattr("app.rag.ingestion.embed_documents",
+                        lambda texts, **kw: [([0.0] * 4, {}, {}) for _ in texts])
+
+    for _ in range(2):
+        await pipeline.ingest_file(f)
+    assert da_ghi == [mong_doi, mong_doi], "hai lần nạp phải ra cùng một doc_id"
+    # Cùng id nên lần hai xoá đúng bản cũ rồi ghi đè, không đẻ ra bản thứ hai.
+    assert da_xoa == [mong_doi, mong_doi]

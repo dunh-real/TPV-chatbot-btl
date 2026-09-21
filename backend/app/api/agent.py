@@ -11,10 +11,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from collections.abc import AsyncIterator
+from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app.agents import progress
@@ -31,6 +33,8 @@ from app.schemas.agent import (
     UploadResponse,
 )
 from app.api.files import output_file_response
+from app.rag.converter import SUPPORTED_SUFFIXES
+from app.rag.ingestion import get_ingestion_pipeline
 from app.services import storage
 from app.tools.registry import catalog
 
@@ -53,6 +57,8 @@ async def chat(request: AgentRequest) -> AgentResponse:
         request=request.request,
         conversation_id=request.conversation_id,
         file_id=request.file_id,
+        doc_ids=request.doc_ids,
+        sources=request.sources,
         ma_don_vi=request.ma_don_vi,
         inputs=request.inputs,
     )
@@ -119,6 +125,8 @@ async def chat_stream(request: AgentRequest) -> StreamingResponse:
                     request=request.request,
                     conversation_id=request.conversation_id,
                     file_id=request.file_id,
+                    doc_ids=request.doc_ids,
+                    sources=request.sources,
                     ma_don_vi=request.ma_don_vi,
                     inputs=request.inputs,
                 )
@@ -154,8 +162,40 @@ async def chat_stream(request: AgentRequest) -> StreamingResponse:
     )
 
 
+# Hậu tố GUID mà phía gọi gắn thêm để hai lượt tải cùng một file không đè nhau:
+# "Em_Day_A_4b3fba0179e741dc851f404932d6b7e5.pdf". Nó là chuyện lưu trữ, không
+# phải tên tài liệu - gỡ ra trước khi đem đi làm nhãn trích dẫn.
+_HAU_TO_GUID = re.compile(r"_[0-9a-fA-F]{32}(?=\.[^.]+$)")
+
+
+def ten_that(ten_tren_dia: str) -> str:
+    """Tên người dùng nhìn thấy, gỡ hậu tố GUID nếu có."""
+    return _HAU_TO_GUID.sub("", ten_tren_dia)
+
+
 @router.post("/upload", response_model=UploadResponse, summary="Tải file cho agent xử lý")
-async def upload(file: UploadFile = File(...), kind: str = Form(default="upload")) -> UploadResponse:
+async def upload(background: BackgroundTasks, file: UploadFile = File(...),
+                 kind: str = Form(default="upload")) -> UploadResponse:
+    """Lưu file cho agent, ĐỒNG THỜI nạp nó vào kho tri thức.
+
+    Hai việc này từng nằm ở hai cửa: cửa này lưu file để soát/trích dẫn, còn
+    `/api/documents/upload` mới nạp vào kho. Phía gọi phải nhớ gọi cả hai, và
+    quên một cái thì hỏng lặng lẽ - tài liệu nằm trên đĩa, giao diện hiện tên nó
+    đang được chọn, nhưng hỏi gì cũng ra "không tìm thấy trong kho". Đã xảy ra
+    thật nhiều lần trong một buổi, mỗi lần đều mất công truy mới ra.
+
+    Nạp kèm ở đây không sinh bản trùng: `doc_id` băm theo TÊN THẬT (đã gỡ GUID)
+    cộng bytes file, nên gọi cả hai cửa vẫn ra đúng một bản.
+
+    Nạp chạy SAU khi đã trả lời, không bắt người dùng đợi. Tài liệu scan phải qua
+    OCR: một bản 5 trang mất 16 giây, mà trước đây cửa này trả về trong một phần
+    mười giây vì chỉ ghi file. Giao diện đã quen với tốc độ đó - bắt nó đợi thêm
+    16 giây là mời một cơn hết giờ chờ, và lượt hỏi kèm theo file không bao giờ
+    được gửi đi.
+
+    Nạp hỏng KHÔNG làm hỏng lượt tải: nhánh soát văn bản chỉ cần file trên đĩa,
+    và chặn cả việc đính kèm chỉ vì kho không ghi được là thiệt hơn.
+    """
     if kind not in storage.KINDS:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"kind phải là một trong {list(storage.KINDS)}")
@@ -163,7 +203,20 @@ async def upload(file: UploadFile = File(...), kind: str = Form(default="upload"
         ref = storage.save_upload(file.file, file.filename or "file", kind=kind)  # type: ignore[arg-type]
     finally:
         await file.close()
+
+    ten = ten_that(ref.path.name)
+    if Path(ten).suffix.lower() in SUPPORTED_SUFFIXES:
+        background.add_task(nap_vao_kho, ref.path, ten)
     return UploadResponse(**ref.as_dict())
+
+
+async def nap_vao_kho(path: Path, ten: str) -> None:
+    """Nạp file vừa tải lên vào kho tri thức. Chạy nền, nuốt mọi lỗi."""
+    try:
+        ket = await get_ingestion_pipeline().ingest_file(path, source=ten)
+        logger.info("Đã nạp %s vào kho: %s (%d chunk)", ten, ket.doc_id, ket.chunk_count)
+    except Exception:  # noqa: BLE001 - kho hỏng không được chặn việc đính kèm
+        logger.exception("Không nạp được %s vào kho, file vẫn dùng được để soát", ten)
 
 
 @router.get("/accounts", summary="Tài khoản ERP để giao diện demo chọn danh tính")

@@ -33,6 +33,7 @@ __all__ = [
     "contextualize",
     "get_ingestion_pipeline",
     "make_doc_id",
+    "make_doc_id_file",
 ]
 
 
@@ -64,9 +65,31 @@ def contextualize(doc_title: str, chunk_text: str) -> str:
 
 
 def make_doc_id(source: str, text: str) -> str:
-    """Id ổn định theo nguồn + nội dung: cùng file, cùng nội dung -> cùng id."""
+    """Id theo nguồn + CHỮ ĐÃ TRÍCH. Chỉ dùng khi không có file để băm.
+
+    Đường `ingest_text` nhận chữ trần, không có file nào - đành băm chữ. Có file
+    thì dùng `make_doc_id_file`, xem docstring ở đó để biết vì sao.
+    """
     digest = hashlib.sha256(f"{source}|{text[:4096]}".encode("utf-8")).hexdigest()[:16]
     return digest
+
+
+def make_doc_id_file(source: str, path: Path) -> str:
+    """Id theo nguồn + BYTES CỦA FILE: cùng file thì luôn cùng id.
+
+    Không băm chữ đã trích, vì chữ đã trích không tái lập được. Tài liệu scan đi
+    qua OCR, mà OCR chạy trên vLLM: greedy chỉ tất định khi batch giống nhau, còn
+    batch thì đổi theo tải lúc đó. Cùng một file scan nạp hai lần lệch vài ký tự
+    là đủ ra hai `doc_id`, và kho có hai bản gần giống nhau tranh nhau chỗ trong
+    kết quả tra cứu - đã gặp thật, cùng một file ra ba id trong một buổi tối.
+
+    Băm theo file còn gỡ một cái bẫy thứ hai: mọi thay đổi ở `app.rag.converter`
+    đều đổi chữ trích ra, tức đổi id của TOÀN BỘ tài liệu đã nạp. Nạp lại sinh
+    bản mới, bản cũ nằm lại làm mồ côi, phải xoá tay từng cái. Băm theo file thì
+    nạp lại là ghi đè đúng chỗ.
+    """
+    digest = hashlib.sha256(source.encode("utf-8") + b"|" + path.read_bytes()).hexdigest()
+    return digest[:16]
 
 
 # --------------------------------------------------------------------------- #
@@ -199,16 +222,24 @@ class IngestionPipeline:
         doc_id: str | None = None,
         doc_type: str = "",
         metadata: dict[str, Any] | None = None,
+        source: str = "",
     ) -> IngestResult:
+        """`source` ghi đè tên dùng làm nhãn và làm khoá băm `doc_id`.
+
+        Cần khi tên file TRÊN ĐĨA không phải tên người dùng nhìn thấy: cửa
+        `/api/agent/upload` lưu kèm hậu tố GUID để hai lượt tải cùng một file
+        không đè nhau, nhưng trích dẫn thì phải hiện tên thật.
+        """
         path = Path(path)
+        ten = source or path.name
         document = await anyio.to_thread.run_sync(lambda: get_converter().convert(path))
         if not document.text.strip():
             raise ValueError(f"Không trích xuất được nội dung từ {path.name}")
         return await self.ingest_text(
             text=document.text,
-            doc_title=path.stem,
-            doc_id=doc_id,
-            source=path.name,
+            doc_title=Path(ten).stem,
+            doc_id=doc_id or make_doc_id_file(ten, path),
+            source=ten,
             doc_type=doc_type or path.suffix.lstrip("."),
             metadata=metadata,
             page_offsets=document.page_offsets,

@@ -251,8 +251,13 @@ class HybridRetriever:
         query_filter: models.Filter | None = None,
         top_n: int | None = None,
         rerank: bool = True,
+        score_threshold: float | None = None,
     ) -> RetrievalResult:
-        """Pipeline đầy đủ: hybrid -> RRF -> rerank."""
+        """Pipeline đầy đủ: hybrid -> RRF -> rerank.
+
+        `score_threshold` ghi đè ngưỡng cấu hình. Dùng khi người gọi đã tự thu hẹp
+        phạm vi - lúc đó ngưỡng không còn việc gì để làm, xem `retrieve_node`.
+        """
         cfg = self.settings
         # Truy vấn gốc luôn đứng đầu, biến thể trùng lặp bị loại.
         queries = [query, *[q for q in (query_variants or []) if q and q != query]]
@@ -290,7 +295,8 @@ class HybridRetriever:
         timings["rerank"] = (time.perf_counter() - t0) * 1000
 
         limit = top_n or cfg.rerank_top_n
-        ranked = [r for r in scored if r.score >= cfg.rerank_score_threshold][:limit]
+        nguong = cfg.rerank_score_threshold if score_threshold is None else score_threshold
+        ranked = [r for r in scored if r.score >= nguong][:limit]
 
         chunks = [
             RetrievedChunk(
