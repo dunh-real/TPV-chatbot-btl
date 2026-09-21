@@ -5,7 +5,13 @@ from __future__ import annotations
 import pytest
 
 from app.core.config import Settings
-from app.rag.converter import DocumentConverter, cleanup_markdown, fix_broken_bold
+from app.rag.converter import (
+    DocumentConverter,
+    bo_tieu_de_chay,
+    cleanup_markdown,
+    fix_broken_bold,
+    go_markup_cong_thuc,
+)
 from app.rag.ocr import OCRService
 
 
@@ -29,6 +35,40 @@ def test_chuan_hoa_tieu_de_ngam():
     cleaned = cleanup_markdown("QUY ĐỊNH CHUNG\nNội dung.\n**Điều khoản thi hành**")
     assert "## QUY ĐỊNH CHUNG" in cleaned
     assert "### Điều khoản thi hành" in cleaned
+
+
+def test_go_vo_markup_quanh_ky_hieu_toan():
+    # PDF LaTeX in nghiêng mọi ký hiệu toán và bê nguyên thẻ <sup> sang Markdown.
+    assert go_markup_cong_thuc("còn _H_<sup>¯</sup> _i_ là") == "còn H¯ i là"
+    assert go_markup_cong_thuc("Sau _L_ bước boosting") == "Sau L bước boosting"
+    assert go_markup_cong_thuc("learning rate 10<sup>_−_3</sup>") == "learning rate 10−3"
+
+
+def test_khong_dung_vao_gach_duoi_trong_ten_bien():
+    # "_" dính hai đầu vào chữ là một phần của tên, không phải dấu in nghiêng.
+    assert go_markup_cong_thuc("biến ten_bien_nay") == "biến ten_bien_nay"
+
+
+def test_bo_tieu_de_chay_lap_o_mep_moi_trang():
+    trang = [f"Tên bài báo\n\nNội dung trang {i}." for i in range(1, 6)]
+    ra = bo_tieu_de_chay(trang)
+    assert all("Tên bài báo" not in t for t in ra)
+    assert ra[0] == "Nội dung trang 1."
+
+
+def test_cung_dong_do_nam_GIUA_trang_thi_la_noi_dung():
+    # Chỉ mép trang mới là khuôn; lặp lại ở giữa trang là chữ thật của tài liệu.
+    trang = [
+        "\n\n".join([f"Mở đầu {i}", f"Câu A {i}", "Tên bài báo",
+                      f"Câu B {i}", f"Kết {i}"])
+        for i in range(1, 6)
+    ]
+    assert all("Tên bài báo" in t for t in bo_tieu_de_chay(trang))
+
+
+def test_it_trang_qua_thi_khong_doan_tieu_de_chay():
+    trang = ["Tên bài báo\n\nA", "Tên bài báo\n\nB"]
+    assert bo_tieu_de_chay(trang) == trang
 
 
 def test_giu_nguyen_can_cot_trong_bang():

@@ -16,11 +16,13 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.core.config import Settings, get_settings
 from app.rag.ocr import IMAGE_SUFFIXES, OCRService, get_ocr_service
+from app.rag.tieng_viet import sua_dinh_chu, von_tu_cua
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,14 @@ def _la_chu_khuon(dong: str) -> bool:
 _BOLD_LINE = re.compile(r"^\*\*(?P<inner>[^*]{3,150})\*\*[:.]?$")
 _TABLE_LINE = re.compile(r"^\s*\|")
 
+# Thẻ mũ/chỉ số dưới mà bộ trích xuất bê nguyên từ PDF LaTeX sang Markdown.
+_THE_MU = re.compile(r"</?su[pb]>")
+# Nhấn mạnh bằng MỘT gạch dưới - LaTeX in nghiêng mọi ký hiệu toán, nên công thức
+# tới đây thành "_L_", "_αi_", "_H_<sup>¯</sup>". Hai neo âm chặn hai đầu dính chữ
+# cái, để tên biến "ten_bien_nay" không bị gỡ mất gạch dưới; chữ số thì vẫn cho
+# qua vì "10<sup>_−_3</sup>" phải về được thành "10−3".
+_NGHIENG_GACH = re.compile(r"(?<![^\W\d_])_([^_\n]{1,80})_(?![^\W\d_])")
+
 
 @dataclass(slots=True)
 class LoadedDocument:
@@ -81,12 +91,25 @@ def fix_broken_bold(line: str) -> str:
     return line
 
 
+def go_markup_cong_thuc(line: str) -> str:
+    """Gỡ vỏ Markdown/HTML mà PDF LaTeX để lại quanh ký hiệu toán.
+
+        "_H_<sup>¯</sup> _i_"  ->  "H¯ i"
+        "Sau _L_ bước"         ->  "Sau L bước"
+
+    Không phải chuyện thẩm mỹ. Ngữ cảnh gửi cho model là chữ này y nguyên, và
+    model chép lại y nguyên: màn hình người dùng hiện ra "H_<sup>ˉ</sup> _i_"
+    giữa một câu tiếng Việt. Ở đây không cần in nghiêng - chunk chỉ cần chữ.
+    """
+    return _NGHIENG_GACH.sub(r"\1", _THE_MU.sub("", line))
+
+
 def cleanup_markdown(text: str) -> str:
     """Bỏ rác của khâu trích xuất và chuẩn hoá tiêu đề, giữ nguyên khối bảng."""
     lines_out: list[str] = []
     trong_khoi_bo_cuc = False
     for raw_line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
-        line = fix_broken_bold(raw_line).rstrip()
+        line = go_markup_cong_thuc(fix_broken_bold(raw_line)).rstrip()
         stripped = line.strip()
 
         # Khối bố cục đi qua nguyên vẹn. Bên trong nó chữ đã được xếp đúng chỗ
@@ -137,6 +160,52 @@ def cleanup_markdown(text: str) -> str:
 
     cleaned = "\n".join(lines_out)
     return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+
+
+# Tỷ lệ trang phải cùng mang một dòng thì mới coi là tiêu đề chạy.
+TY_LE_TIEU_DE_CHAY = 0.6
+# Số trang tối thiểu để phép đếm có nghĩa.
+TRANG_TOI_THIEU = 3
+# Dòng dài hơn mức này là nội dung, không phải tiêu đề chạy.
+DAI_TIEU_DE_CHAY = 120
+# Chỉ soi vài dòng sát mép trên và mép dưới mỗi trang.
+SO_DONG_MEP = 2
+
+
+def _dong_mep(trang: str) -> list[str]:
+    """Vài dòng không rỗng sát mép trên và mép dưới của một trang."""
+    dong = [d.strip() for d in trang.split("\n") if d.strip()]
+    return dong[:SO_DONG_MEP] + dong[-SO_DONG_MEP:]
+
+
+def bo_tieu_de_chay(page_texts: list[str]) -> list[str]:
+    """Bỏ dòng tiêu đề/chân trang lặp lại ở mép mọi trang.
+
+    Tên bài, tên tác giả, tên cơ quan in lại ở đầu mỗi trang là chữ của KHUÔN
+    trang, không phải của nội dung. Giữ chúng thì mỗi chunk mở đầu bằng cùng một
+    dòng, nên đoạn trích dẫn nào cũng khoe tên tài liệu trước khi tới ý chính -
+    đúng thứ người dùng nhìn thấy trong ô "Nguồn tham khảo". Tệ hơn: dòng lặp
+    đó vào cả embedding, kéo mọi chunk của tài liệu xích lại gần nhau.
+    """
+    if len(page_texts) < TRANG_TOI_THIEU:
+        return page_texts
+
+    dem: Counter[str] = Counter()
+    for trang in page_texts:
+        dem.update(set(_dong_mep(trang)))
+    nguong = max(TRANG_TOI_THIEU, int(len(page_texts) * TY_LE_TIEU_DE_CHAY))
+    lap = {dong for dong, so in dem.items()
+           if so >= nguong and len(dong) <= DAI_TIEU_DE_CHAY}
+    if not lap:
+        return page_texts
+
+    ra: list[str] = []
+    for trang in page_texts:
+        # Chỉ bỏ ở MÉP trang. Cùng một dòng nằm giữa trang là nội dung thật.
+        mep = set(_dong_mep(trang)) & lap
+        giu = [d for d in trang.split("\n") if d.strip() not in mep]
+        ra.append(re.sub(r"\n{3,}", "\n\n", "\n".join(giu)).strip())
+    return ra
 
 
 # --------------------------------------------------------------------------- #
@@ -199,10 +268,10 @@ class DocumentConverter:
         if suffix == ".pdf" or suffix in IMAGE_SUFFIXES:
             return self._convert_pdf(path)
         if suffix in OFFICE_SUFFIXES:
-            return LoadedDocument(text=cleanup_markdown(self._convert_office(path)))
+            return LoadedDocument(text=sua_dinh_chu(cleanup_markdown(self._convert_office(path))))
         if suffix in TEXT_SUFFIXES:
             raw = path.read_text(encoding="utf-8", errors="ignore")
-            return LoadedDocument(text=cleanup_markdown(raw))
+            return LoadedDocument(text=sua_dinh_chu(cleanup_markdown(raw)))
 
         raise ValueError(
             f"Định dạng chưa hỗ trợ: {path.suffix} "
@@ -242,8 +311,12 @@ class DocumentConverter:
                     path.name, len(scan_pages),
                 )
 
-        cleaned = [cleanup_markdown(text) for text in page_texts]
-        return self._join_pages(cleaned)
+        cleaned = bo_tieu_de_chay([cleanup_markdown(text) for text in page_texts])
+        # Vốn từ phải lấy từ CẢ tài liệu chứ không riêng từng trang: chữ dính ở
+        # trang này gần như luôn đứng rời ở trang khác, và đó là bằng chứng để
+        # chọn đúng chỗ cắt. Sửa vẫn theo từng trang để mốc trang không lệch.
+        von = von_tu_cua("\n".join(cleaned))
+        return self._join_pages([sua_dinh_chu(page, von) for page in cleaned])
 
     @staticmethod
     def _join_pages(page_texts: list[str]) -> LoadedDocument:
