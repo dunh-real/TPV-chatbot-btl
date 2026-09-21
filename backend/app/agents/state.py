@@ -2,9 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Annotated, Any, TypedDict
 
 from app.rag.retrieval import RetrievalResult, RetrievedChunk
+
+
+def gop_trace(cu: dict[str, Any] | None, moi: dict[str, Any] | None) -> dict[str, Any]:
+    """Gộp `trace` của các nhánh chạy song song thay vì để chúng đè nhau.
+
+    Không có reducer thì LangGraph coi hai nhánh cùng ghi một khoá trong cùng một
+    nhịp là xung đột và ném `InvalidUpdateError` - cả workflow chết chỉ vì hai
+    nhánh muốn ghi lại số đo của mình. Mà `trace` sinh ra đúng để chứa số đo của
+    mọi nhánh, nên gộp mới là nghĩa đúng của nó.
+    """
+    return {**(cu or {}), **(moi or {})}
 
 
 class Citation(TypedDict):
@@ -63,6 +74,8 @@ class DocumentState(TypedDict, total=False):
     structure: Any                        # app.documents.parser.DocumentStructure
     outline: Any                          # app.documents.outline.Outline
     rule_result: Any                      # app.documents.rules.RuleCheckResult
+    typo_findings: list[dict[str, Any]]   # lỗi máy móc tất định, có vị trí ký tự
+    spell_findings: list[dict[str, Any]]  # chính tả do LLM soát, đã xác minh trích dẫn
     llm_findings: list[dict[str, Any]]
     classification: dict[str, Any] | None
     summary: str
@@ -73,7 +86,7 @@ class DocumentState(TypedDict, total=False):
 
     # --- đầu ra ---
     result: dict[str, Any]
-    trace: dict[str, Any]
+    trace: Annotated[dict[str, Any], gop_trace]
     error: str
 
 

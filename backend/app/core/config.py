@@ -84,13 +84,31 @@ class Settings(BaseSettings):
     ocr_api_key: str = "EMPTY"
     ocr_model: str = "Qwen/Qwen3-VL-8B-Instruct"
     ocr_max_concurrency: int = 8
-    ocr_render_scale: float = 3.0
+    ocr_render_scale: float = 4.1667
+    ocr_image_max_side: int = 1568
     ocr_timeout: float = 180.0
-    ocr_max_tokens: int = 4096
+    ocr_max_tokens: int = 6000
+    # 0.0 chứ không phải 0.05 như OCR_HVKS: OCR chỉ có một đáp án đúng, lấy
+    # argmax là xong. Đo trên trang viết tay nhập nhằng, 0.05 làm ba lần chạy
+    # cùng một trang lệch nhau ~0.1% ("Chấn" thành "Chẳn"); 0.0 tái lập 100%.
+    # Nạp lại cùng một tài liệu ra cùng một text thì Qdrant không churn vô cớ,
+    # và lỗi OCR nào tái hiện được thì mới gỡ được.
+    ocr_temperature: float = 0.0
+    ocr_top_p: float = 0.8
+    # Phạt lặp token, chặn model kẹt vòng trên vùng ảnh mờ. 1.0 = tắt hẳn.
+    # OCR_HVKS tắt phạt lặp; bật lại chỉ khi thấy model kẹt vòng trên ảnh mờ.
+    ocr_repetition_penalty: float = 1.0
+    # Số lần gọi lại một trang khi VLM lỗi. Trang hỏng giữa một bản án là mất
+    # hẳn một đoạn lập luận, nên thà chờ thêm vài giây còn hơn trả về thiếu.
+    ocr_max_retries: int = 3
     # Ngưỡng phân loại trang scan (cần >= 2/3 tín hiệu đồng thuận)
     ocr_char_threshold_abs: int = 100
     ocr_char_threshold_ratio: float = 0.3
     ocr_min_fonts: int = 1
+    # Tỉ lệ diện tích trang bị một ảnh phủ kín để coi trang đó là ảnh chụp.
+    # Trang scan luôn là một ảnh phủ trọn khổ giấy; trang digital chỉ chèn ảnh
+    # minh hoạ nhỏ. 0.7 chừa chỗ cho lề trắng bị cắt khi quét.
+    ocr_scan_image_coverage: float = 0.7
 
     # ----------------------------------------------------------- Chunking ---
     # Đo bằng token của tokenizer embedding.
@@ -191,7 +209,18 @@ class Settings(BaseSettings):
     presenton_url: str = "http://127.0.0.1:5002"
     presenton_username: str = ""
     presenton_password: str = ""
-    presenton_template: str = "general"
+    # "modern": xanh dương #234cd9 trên nền trắng #f5f8fe, có layout bảng và
+    # biểu đồ + số liệu. Mặc định cũ "general" là tông TÍM (#9333ea) - đó là lý
+    # do bộ slide trông lạc tông với báo cáo.
+    #
+    # CHỈ được dùng 4 tên: general, modern, standard, swift. Image còn 13 thư mục
+    # template khác (neo-modern, report...) và endpoint đọc layout trả về chúng
+    # bình thường, NHƯNG endpoint sinh slide chặn cứng theo `DEFAULT_TEMPLATES`
+    # và trả 400 cho mọi tên khác không có tiền tố "custom-".
+    presenton_template: str = "modern"
+    # Ép lại font cho file .pptx sau khi Presenton xuất ra. Presenton không cho
+    # chọn font (xem app/documents/font_slide.py). Để trống = giữ font template.
+    presenton_font: str = "Times New Roman"
     # 0 = code tự tính theo lượng số liệu thật sự có.
     presenton_n_slides: int = 0
     presenton_max_wait_seconds: float = 900.0
@@ -210,6 +239,23 @@ class Settings(BaseSettings):
 
     upload_dir: str = "./data/uploads"
     output_dir: str = "./data/output"
+    # Cây sơ đồ tư duy đã dựng, lưu thành JSON theo thuê bao. Không nằm trong
+    # Qdrant vì nó không phải nội dung để truy hồi, mà là kết quả đã chốt của một
+    # lần đọc cả tài liệu - dựng lại tốn vài lượt LLM nên phải giữ được qua các
+    # lần khởi động lại.
+    mindmap_dir: str = "./data/mindmaps"
+
+    # ------------------------------------------------------- Sơ đồ tư duy ---
+    # Pha MAP đọc từng mẻ chunk, pha REDUCE gộp lại thành một cây. Hạn mức token
+    # tách riêng vì hai pha sinh ra lượng chữ rất khác nhau: MAP chỉ liệt kê tiêu
+    # đề của một mẻ, REDUCE phải viết lại cả cây.
+    mindmap_map_max_tokens: int = 2000
+    mindmap_reduce_max_tokens: int = 4096
+    mindmap_node_max_tokens: int = 1200
+    # Trần cứng số node, chặn ở code chứ không tin lời dặn trong prompt: cắt theo
+    # BFS nên các mục cấp cao được giữ lại trước.
+    mindmap_max_nodes: int = 60
+    mindmap_timeout: float = 300.0
 
     # NoDecode: không để pydantic-settings tự json.loads giá trị từ .env, vì
     # CORS_ORIGINS viết dạng "a,b" chứ không phải JSON. Tách chuỗi ở validator dưới.

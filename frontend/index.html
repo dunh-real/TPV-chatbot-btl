@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20260920g" />
+<link rel="stylesheet" href="styles.css?v=20260920l" />
 </head>
 <body>
 <div class="app" id="app">
@@ -54,6 +54,16 @@
       <button class="nav-item" data-view="slides">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg>
         <span>Tạo slide</span><em class="nav-hint">WF5</em>
+      </button>
+
+      <button class="nav-item" data-view="mindmap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9.5" width="7" height="5" rx="1.5"/><rect x="15" y="3" width="7" height="5" rx="1.5"/><rect x="15" y="16" width="7" height="5" rx="1.5"/><path d="M9 12h3.5V5.5H15M12.5 12v6.5H15"/></svg>
+        <span>Sơ đồ tư duy</span><em class="nav-hint">từ tài liệu</em>
+      </button>
+
+      <button class="nav-item" data-view="ocr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7.5 10h9M7.5 13.5h5.5"/></svg>
+        <span>OCR tài liệu</span><em class="nav-hint">ảnh → chữ</em>
       </button>
 
       <div class="nav-label">Hệ thống</div>
@@ -167,7 +177,7 @@
       <div class="panel">
         <div class="panel-inner">
           <h2 class="panel-title">Soát tài liệu</h2>
-          <p class="panel-sub">Nhận mọi loại tài liệu. Rule engine đọc cách tổ chức và định dạng thật của file (dàn ý, đánh số, phông chữ, lề trang), LLM chỉ soát chữ nghĩa và phân rã nhiệm vụ.</p>
+          <p class="panel-sub">Nhận mọi loại tài liệu. Kết quả hiện thành bản dựng lại của chính tài liệu, lỗi khoanh ngay tại chỗ. Chính tả và dấu câu soát bằng đối chiếu từ điển (chắc chắn), ngữ pháp và diễn đạt do LLM gợi ý (cần xác nhận); phông chữ, canh lề và lề trang do rule engine đo từ file.</p>
           <div class="dropzone" id="reviewDrop">
             <input type="file" id="reviewFile" accept=".docx,.pdf,.txt,.md" hidden />
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -181,7 +191,7 @@
           <label class="field">
             <span>Bộ tiêu chí</span>
             <select id="reviewRuleSet"><option value="">Đang tải…</option></select>
-            <em>Mỗi file YAML trong <code>config/rules</code> là một bộ; nơi nào có quy định riêng thì thêm bộ của mình.</em>
+            <em>Mỗi file YAML trong <code>config/rules</code> là một bộ; nơi nào có quy định riêng thì thêm bộ của mình. Bảng chính tả nằm riêng ở <code>config/chinh_ta.yaml</code>, luôn chạy.</em>
           </label>
           <button class="primary-btn" id="reviewRun">Soát tài liệu</button>
         </div>
@@ -260,6 +270,61 @@
         </div>
       </div>
       <div class="result" id="slideResult"><div class="result-empty">Liên kết tải .pptx, trình sửa Presenton và bản số liệu đã gửi sẽ hiện ở đây.</div></div>
+    </section>
+
+    <!-- ========== VIEW: MINDMAP ========== -->
+    <section class="view view-split" id="view-mindmap">
+      <div class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">Sơ đồ tư duy từ tài liệu</h2>
+          <p class="panel-sub">Thả một tài liệu vào đây: hệ thống nạp nó vào kho, đọc cả tài liệu theo từng mẻ rồi gộp thành một cây chủ đề (MAP-REDUCE). Cây chỉ có tiêu đề; bấm vào mục nào thì mục đó mới đi truy hồi và viết nội dung — nên dựng cây không tốn một lượt LLM nào cho phần bạn không mở ra xem.</p>
+
+          <div class="dropzone" id="mmDrop">
+            <input type="file" id="mmFile" hidden />
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <b>Kéo thả hoặc bấm để chọn file</b>
+            <small>.pdf .docx .xlsx .pptx .csv .json .txt .md · ảnh</small>
+          </div>
+          <button class="primary-btn" id="mmRun" disabled>Dựng sơ đồ tư duy</button>
+          <p class="mm-note">Bấm nút mới chạy: file được nạp vào kho như mọi tài liệu khác (sau đó hỏi đáp và soát tài liệu đều dùng được), rồi mới dựng cây. Nạp lại đúng file cũ thì mở lại sơ đồ đã dựng, không tốn lượt LLM nào.</p>
+
+          <div class="mm-actions" id="mmActions" hidden>
+            <button class="ghost-btn" id="mmRebuild">Dựng lại từ đầu</button>
+            <button class="ghost-btn danger" id="mmDelete">Xoá sơ đồ đã lưu</button>
+          </div>
+        </div>
+      </div>
+      <div class="result" id="mmResult"><div class="result-empty">Thả một tài liệu vào ô bên trái để bắt đầu.</div></div>
+    </section>
+
+    <!-- ========== VIEW: OCR TÀI LIỆU ========== -->
+    <section class="view view-split" id="view-ocr">
+      <div class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">OCR tài liệu</h2>
+          <p class="panel-sub">Đọc chữ trong ảnh trang bằng <b id="ocrModel">chính model đang chạy</b> — không nạp thêm mô hình nào lên card. Kết quả là Markdown: tiêu đề, danh sách và bảng biểu giữ nguyên cấu trúc, hiện ngay bên phải và tải về được.</p>
+
+          <div class="dropzone" id="ocrDrop">
+            <input type="file" id="ocrFile" accept=".pdf,.jpg,.jpeg,.png,.bmp,.tiff,.webp" hidden />
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <b>Kéo thả hoặc bấm để chọn file</b>
+            <small>.pdf · ảnh chụp, ảnh scan</small>
+          </div>
+
+          <label class="field">
+            <span>Trang nào đi qua mô hình</span>
+            <select id="ocrCheDo">
+              <option value="auto">Chỉ trang scan — trang có sẵn chữ thì đọc thẳng</option>
+              <option value="tat_ca">Mọi trang — ép cả tài liệu qua mô hình</option>
+            </select>
+            <em>Trang xuất từ Word có sẵn lớp text: đọc thẳng vừa nhanh vừa đúng từng dấu, không việc gì phải nhờ mô hình. Chọn <b>mọi trang</b> khi lớp text có mà sai — PDF scan kèm OCR cũ là trường hợp hay gặp nhất.</em>
+          </label>
+
+          <button class="primary-btn" id="ocrRun" disabled>Đọc tài liệu</button>
+          <p class="mm-note">File chỉ được đọc, <b>không</b> nạp vào kho tri thức. Trang hiện dần theo tốc độ đọc của mô hình, không phải đợi xong cả tài liệu.</p>
+        </div>
+      </div>
+      <div class="result" id="ocrResult"><div class="result-empty">Thả một tài liệu vào ô bên trái để bắt đầu.</div></div>
     </section>
 
     <!-- ========== VIEW: CORPUS ========== -->
@@ -360,8 +425,8 @@
 <!-- citation popover -->
 <div class="popover" id="popover" hidden></div>
 
-<script src="js/markdown.js?v=20260920g"></script>
-<script src="js/api.js?v=20260920g"></script>
-<script src="js/app.js?v=20260920g"></script>
+<script src="js/markdown.js?v=20260920l"></script>
+<script src="js/api.js?v=20260920l"></script>
+<script src="js/app.js?v=20260920l"></script>
 </body>
 </html>

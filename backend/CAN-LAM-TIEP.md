@@ -2,10 +2,108 @@
 
 Ghi cho người tiếp tục sửa backend (Tiến Anh và đội dev khi nối giao diện).
 
-Trạng thái: **447 test mặc định xanh** + 31 test `live` (chạy trên ERP, vLLM và
+Trạng thái: **523 test mặc định xanh** + 31 test `live` (chạy trên ERP, vLLM và
 Presenton thật, không nằm trong lần chạy mặc định).
 
-Phiên 20/09 dọn bốn thứ, tất cả đều nhắm vào buổi demo:
+---
+
+## 0a. WORKFLOW 2 LÀM LẠI (phiên 20/09, đợt sau)
+
+Bốn việc, xuất phát từ một nhận xét: **bản soát báo oan thì người dùng mất lòng
+tin vào cả bản soát**, kể cả những lỗi nó báo đúng.
+
+### Bỏ kiểm đánh số — vì nó báo sai trên văn bản soạn ĐÚNG
+
+Tái hiện được hai lỗi oan, cả hai đều trên cách đánh số chuẩn Nghị định 30:
+
+| Văn bản | Máy nói | Vì sao |
+|---|---|---|
+| `a) b) c) d) đ) e) g)` | "e nhảy sang g" | `LETTERS` trong `outline.py` có chữ **"f"**. Tiếng Việt không có f/j/w/z, nên "g" bị tính là chữ thứ 8 thay vì thứ 7. |
+| `A. B. C. D. Đ.` | "B nhảy sang Đ" | "C" và "D" khớp pattern số La Mã TRƯỚC (100 và 500), vượt `MAX_ORDINAL = 99` nên bị **bỏ hẳn** — mất luôn khỏi dàn ý. |
+
+Cả hai đã vá trong `outline.py` (bảng chữ cái đúng; ngoài khoảng thì `continue`
+xuống pattern sau thay vì `return None`). **Nhưng tiêu chí vẫn tắt** — bỏ khoá
+`numbering` trong `config/rules/chung.yaml`, lý do ghi ngay tại đó. Còn những chỗ
+mơ hồ không vá được: "L." trong dãy chữ cái vẫn là số La Mã 50, "I." vừa là số 1
+vừa là chữ thứ chín. Một tiêu chí chỉ đúng phần lớn thời gian còn hại hơn không
+có. Bật lại = bỏ dấu `#` của ba dòng trong YAML.
+
+### Chính tả: LLM soát, prompt riêng
+
+Hai nhánh LLM tách bạch, cùng chạy song song:
+
+| Nhánh | Prompt | Lo việc |
+|---|---|---|
+| `chinh_ta_llm` | `DOC_SPELL_SYSTEM` | chính tả |
+| `llm_review` | `DOC_REVIEW_SYSTEM` | ngữ pháp, diễn đạt, logic, thiếu ý |
+
+Không gộp làm một: prompt chính tả phải dành gần hết chỗ cho bẫy "hai từ đúng đứng
+cạnh nhau" cùng bảng lỗi hay gặp, mà đó là phần quyết định bản soát có báo oan hay
+không. Nhét chung vào một prompt lo năm việc thì phần đó bị loãng.
+
+**Đường đã đi qua, để khỏi ai đi lại:**
+
+1. Ban đầu LLM soát chính tả trong cùng prompt với ngữ pháp → không đáng tin.
+2. Thay bằng bảng cặp sai→đúng dò từ điển (215 cặp) → **26 cặp báo oan**. Tiếng
+   Việt viết rời từng âm tiết nên hễ cả hai vế đều là từ có thật thì luôn có câu
+   ĐÚNG đặt chúng cạnh nhau: *"Đơn vị **cũng cố** gắng hoàn thành"*, *"**Hồ sơ
+   xuất** khẩu đã duyệt"*, *"Thành **tựu chung** của đơn vị"*. Không vá được.
+3. Thêm cổng gác LLM (bảng tìm ứng viên, LLM phán ngữ cảnh) → 2/20 báo oan, nhưng
+   phải nuôi thêm một node, một prompt và 215 dòng bảng mà **vẫn cần LLM**.
+4. Bỏ hẳn bảng, giao chính tả cho LLM với prompt riêng → **0/23 báo oan, 0/14 bỏ
+   sót**, ổn định qua 3 lượt đo.
+
+**Ba thứ trong prompt làm nên khác biệt** (bỏ cái nào là báo oan quay lại):
+
+- **Bẫy "hai từ đứng cạnh nhau"** với 16 cặp ví dụ BÁO/BỎ QUA đặt sát nhau.
+- **Dạy tìm ranh giới từ ở CẢ HAI BÊN.** Không có phần này thì model tách đôi ngay
+  hai chữ bị nghi rồi kết luận "vô nghĩa": nó tách `nổ | lực` trong *"sau vụ nổ
+  lực lượng cứu hộ"* thay vì `vụ nổ | lực lượng`.
+- **Bắt model KHAI phép thử ra** (`tach_roi`, `van_xuoi`), `loc_tach_roi` thi hành
+  lời khai đó. Phải viết phép thử ra thì mới thật sự làm phép thử, và khi nó báo
+  oan thì đọc `tach_roi` là biết ngay nó nghĩ sai ở đâu.
+
+**Bốn van chặn trong `verify_findings`** — lọc thứ model trả về, không tin thẳng:
+
+| Van | Chặn cái gì |
+|---|---|
+| trích được nguyên văn | lỗi bịa (van cũ, vẫn giữ) |
+| `quote` ≤ 240 ký tự | model chép cả đoạn rồi "gợi ý" viết lại nguyên đoạn - khoanh vùng kiểu đó thì khung ôm trọn đoạn, vô dụng |
+| `quote` phải có chữ | rác của khâu đọc file: số trang, số hiệu rời ("1516 11" ở chân trang) |
+| `suggest` ≠ `quote` (bỏ qua khoảng trắng) | **riêng PDF**: khâu đọc file làm mất dấu xuống dòng, model tưởng câu chạy liền rồi "sửa" bằng cách thêm xuống dòng. Đó là vá lỗi của máy đọc file, không phải lỗi văn bản |
+
+Đo trên công văn PDF thật của Sở GD Quảng Ngãi (27 khối, 3 trang): 9 phát hiện,
+8 cái dài dưới 35 ký tự, tất cả đều là lỗi thật - trong đó có `NÐ` viết bằng chữ
+Eth Latin thay cho `Đ` (mắt người gần như không thấy) và `Công căn` → `Công văn`.
+
+**`config/chinh_ta.yaml` giờ chỉ còn `co_hoc` là chạy.** Bảng 215 cặp vẫn nằm đó
+làm tư liệu soạn prompt - code không đọc. Thêm cặp vào bảng KHÔNG có tác dụng gì;
+muốn model để ý lỗi mới thì sửa prompt.
+
+### Trace của workflow 2 cần reducer
+
+`DocumentState.trace` là `Annotated[dict, gop_trace]`. Không có reducer thì hai
+nhánh song song cùng ghi `trace` trong một nhịp bị LangGraph coi là xung đột và
+ném `InvalidUpdateError` - cả workflow chết chỉ vì hai nhánh muốn ghi số đo của
+mình. Thêm nhánh song song nào có ghi `trace` thì nhớ chỗ này.
+
+### Phản hồi mang theo tài liệu và vị trí ký tự
+
+`blocks[]` (định dạng thật từng khối), `findings[]` (phẳng, có `start`/`end` và
+`source`), `document.geometry`. Giao diện dựng lại trang rồi khoanh đúng chỗ thay
+vì bắt người đọc dò lại danh sách phẳng. `llm_review` giữ nguyên tên nhưng giờ
+chứa cả lỗi `source: "rule"` — xem ghi chú trong `HUONG-DAN-TICH-HOP-API.md`.
+
+### Bảng phân công xuất ra văn bản trình ký
+
+`POST /api/documents/giao-viec` → `.docx`, hai mẫu `cong_van` / `quyet_dinh`.
+Không gọi LLM. `giao_viec_goi_y` trong phản hồi `/review` là mẫu nên chọn sẵn.
+Trường thể thức để trống thì in dấu chấm lửng — **không tự đặt số ký hiệu hay tên
+người ký**, vì một số văn bản bịa trông y như số thật.
+
+---
+
+Phiên 20/09 (đợt đầu) dọn bốn thứ, tất cả đều nhắm vào buổi demo:
 
 1. Ô chờ của các workflow dài có **đồng hồ đếm giây thật** (§1) — 76-90 giây mà
    màn hình đứng im thì người xem tưởng treo.

@@ -1,0 +1,388 @@
+# Cấu hình soát mặt chữ của workflow 2.
+#
+# ⚠️ ĐỌC TRƯỚC KHI SỬA - file này có hai phần, CODE CHỈ ĐỌC MỘT.
+#
+#   `co_hoc`              ĐANG CHẠY. Lỗi đo được bằng vị trí ký tự: thừa dấu cách,
+#                         thiếu dấu cách sau dấu câu, dấu cách trước dấu câu, lặp
+#                         từ, ngoặc đơn không khớp. Hoàn toàn tất định.
+#
+#   `tu_sai`, `chuan_hoa` CODE KHÔNG ĐỌC NỮA (20/09/2026). Giữ lại làm tư liệu -
+#                         xem bên dưới.
+#
+# ---------------------------------------------------------------------------
+# VÌ SAO BỎ BẢNG CẶP SAI->ĐÚNG
+#
+# Bảng cặp không kết luận được một mình. Tiếng Việt viết rời từng âm tiết, nên hễ
+# CẢ HAI VẾ đều là từ có thật thì luôn tồn tại câu ĐÚNG đặt chúng cạnh nhau. Dựng
+# câu chạy thử thì 26 cặp báo oan, kể cả những cặp trông chắc chắn nhất:
+#
+#     "Đơn vị CŨNG CỐ gắng hoàn thành."        cũng + cố gắng
+#     "Việc phân CHIA SẼ được thực hiện."      chia + sẽ được
+#     "HỒ SƠ XUẤT khẩu đã được phê duyệt."     hồ sơ + xuất khẩu
+#     "Thành TỰU CHUNG của đơn vị năm 2026."   thành tựu + chung
+#     "Phòng giám SÁT NHẬP khẩu thiết bị."     giám sát + nhập khẩu
+#     "Thuốc BỔ XUNG quanh khu vực."           thuốc bổ + xung quanh
+#
+# Đã thử vá bằng một cổng gác LLM (bảng tìm ứng viên, LLM phán ngữ cảnh): xuống
+# còn 2/20 báo oan, nhưng phải nuôi thêm một node, một prompt và 215 dòng bảng -
+# mà vẫn cần LLM. Nay giao hẳn chính tả cho LLM với prompt riêng
+# (`DOC_SPELL_SYSTEM`), đo lại: 0/23 báo oan, 0/14 bỏ sót, ổn định qua 3 lượt.
+#
+# Bảng vẫn nằm đây vì nó là TƯ LIỆU SOẠN PROMPT: phần "những lỗi hay gặp nhất
+# trong văn bản hành chính" của `DOC_SPELL_SYSTEM` rút ra từ chính bảng này. Thêm
+# cặp vào đây không làm gì cả - muốn model để ý lỗi mới thì sửa prompt.
+#
+# ---------------------------------------------------------------------------
+# `co_hoc` THÌ KHÔNG GIAO CHO LLM, và sẽ không giao:
+#
+# Bộ tách từ của model nuốt mất khoảng trắng nên nó không "nhìn" thấy hai dấu cách
+# liền nhau, còn regex thì thấy chính xác. Prompt của cả hai nhánh LLM đều có câu
+# dặn đừng đụng vào dấu cách và dấu câu, để không báo trùng.
+#
+# Khối BẢNG được bỏ qua ở cả ba tiêu chí: ô bảng vốn căn chỉnh bằng dấu cách, và
+# hai ô cạnh nhau trùng nội dung là chuyện bình thường.
+#
+# ---------------------------------------------------------------------------
+# Ghi chú của người soạn bảng (giữ nguyên, vẫn đúng):
+#
+# - `tu_sai`: chỉ chứa các cách viết có độ chắc chắn cao.
+# - `chuan_hoa`: biến thể nên ưu tiên trong văn bản hành chính, không phải lỗi cứng.
+# - Những cặp sau KHÔNG giải quyết an toàn được chỉ bằng cặp sai->đúng:
+#   dành/giành, dấu/giấu, chở/trở, s/x và hỏi/ngã khi cả hai đều thành từ có nghĩa,
+#   bàng quan/bàng quang, giả thiết/giả thuyết, truyện/chuyện.
+#   -> Đã đo: cổng gác LLM cũng chỉ đúng 5/8 trên nhóm này. Nhận định này vẫn đúng.
+
+meta:
+  name: "Chính tả tiếng Việt"
+  version: "2026-09-20.2"
+
+# --------------------------------------------------------------------------- #
+# 1. Cặp sai -> đúng.
+# --------------------------------------------------------------------------- #
+tu_sai:
+  severity: error
+  message: "Sai chính tả"
+  cap:
+
+    # ----------------------------------------------------------------------- #
+    # s / x
+    # ----------------------------------------------------------------------- #
+    "bổ xung": "bổ sung"
+    "xử dụng": "sử dụng"
+    "sử lý": "xử lý"
+    "sử phạt": "xử phạt"
+    "sử sự": "xử sự"
+    "xuất xắc": "xuất sắc"
+    "suất sắc": "xuất sắc"
+    "xúc tích": "súc tích"
+    "chia xẽ": "chia sẻ"
+    "chia sẽ": "chia sẻ"
+    "chia xẻ": "chia sẻ"
+    "cọ sát": "cọ xát"
+    "sáng lạn": "xán lạn"
+    "sáng lạng": "xán lạn"
+    "sáng xuốt": "sáng suốt"
+    "xâu sắc": "sâu sắc"
+    "sơ xuất": "sơ suất"
+    "sai xót": "sai sót"
+    "thiếu xót": "thiếu sót"
+    "đường xá": "đường sá"
+    "xáp nhập": "sáp nhập"
+    "suông sẻ": "suôn sẻ"
+    "sắp sếp": "sắp xếp"
+    "sao xuyến": "xao xuyến"
+    "xôn sao": "xôn xao"
+    "xúi dục": "xúi giục"
+    "xúc miệng": "súc miệng"
+    "sa sỉ": "xa xỉ"
+    "xuất sứ": "xuất xứ"
+    "sác suất": "xác suất"
+    "xác xuất": "xác suất"
+    "sác xuất": "xác suất"
+    "đề suất": "đề xuất"
+    "đột suất": "đột xuất"
+    "suất hiện": "xuất hiện"
+    "suất phát": "xuất phát"
+    "suất bản": "xuất bản"
+    "suất khẩu": "xuất khẩu"
+    "kiểm xoát": "kiểm soát"
+    "giám xát": "giám sát"
+    "quan xát": "quan sát"
+    "sát xao": "sát sao"
+    "xoát xét": "soát xét"
+    "rà xoát": "rà soát"
+    "xoạn thảo": "soạn thảo"
+    "xo sánh": "so sánh"
+    "chính sác": "chính xác"
+    "sác nhận": "xác nhận"
+    "sác định": "xác định"
+    "sác minh": "xác minh"
+    "sác thực": "xác thực"
+    "sác lập": "xác lập"
+    "sắc xảo": "sắc sảo"
+    "gian sảo": "gian xảo"
+    "hàm xúc": "hàm súc"
+
+    # ----------------------------------------------------------------------- #
+    # ch / tr
+    # ----------------------------------------------------------------------- #
+    "chăn trở": "trăn trở"
+    "trăn chở": "trăn trở"
+    "chuẩn đoán": "chẩn đoán"
+    "tựu chung": "tựu trung"
+    "vô hình chung": "vô hình trung"
+    "trau truốt": "trau chuốt"
+    "trau chuốc": "trau chuốt"
+    "chau chuốt": "trau chuốt"
+    "khúc triết": "khúc chiết"
+    "bắt trước": "bắt chước"
+    "trân thành": "chân thành"
+    "chân trọng": "trân trọng"
+    "trỉnh sửa": "chỉnh sửa"
+    "chỉnh sữa": "chỉnh sửa"
+    "trở che": "chở che"
+    "chở ngại": "trở ngại"
+    "chở nên": "trở nên"
+    "chật tự": "trật tự"
+    "trật chội": "chật chội"
+    "chuyền thống": "truyền thống"
+    "chuyền đạt": "truyền đạt"
+    "chung thực": "trung thực"
+    "chình bày": "trình bày"
+    "trương trình": "chương trình"
+    "chính chắn": "chín chắn"
+    "trật vật": "chật vật"
+    "chằn chọc": "trằn trọc"
+    "chăn chối": "trăn trối"
+    "chậm chễ": "chậm trễ"
+    "chống trọi": "chống chọi"
+    "trạm trán": "chạm trán"
+    "va trạm": "va chạm"
+    "trậm chạp": "chậm chạp"
+
+    # ----------------------------------------------------------------------- #
+    # d / gi / r
+    # ----------------------------------------------------------------------- #
+    "dấu diếm": "giấu giếm"
+    "giấu diếm": "giấu giếm"
+    "dấu giếm": "giấu giếm"
+    "dành giật": "giành giật"
+    "dữ nguyên": "giữ nguyên"
+    "rữ nguyên": "giữ nguyên"
+    "dữ gìn": "giữ gìn"
+    "rữ gìn": "giữ gìn"
+    "dư giả": "dư dả"
+    "dải quyết": "giải quyết"
+    "giãi quyết": "giải quyết"
+    "dải thích": "giải thích"
+    "dải pháp": "giải pháp"
+    "dải thưởng": "giải thưởng"
+    "dải trí": "giải trí"
+    "dải tỏa": "giải tỏa"
+    "dãi bày": "giãi bày"
+    "giãi bầy": "giãi bày"
+    "dục giã": "giục giã"
+    "giục dã": "giục giã"
+    "dục dã": "giục giã"
+    "thúc dục": "thúc giục"
+    "dằng co": "giằng co"
+    "dằng xé": "giằng xé"
+    "da nhập": "gia nhập"
+    "dành mạch": "rành mạch"
+
+    # ----------------------------------------------------------------------- #
+    # hỏi / ngã và dấu thanh hay nhầm
+    # ----------------------------------------------------------------------- #
+    "cũng cố": "củng cố"
+    "nổ lực": "nỗ lực"
+    "sữa chữa": "sửa chữa"
+    "trãi qua": "trải qua"
+    "đãm bảo": "đảm bảo"
+    "lãng mạng": "lãng mạn"
+    "mạnh mẻ": "mạnh mẽ"
+    "vất vã": "vất vả"
+    "sạch sẻ": "sạch sẽ"
+    "vổ về": "vỗ về"
+    "vổ tay": "vỗ tay"
+    "vổ vai": "vỗ vai"
+    "giúp đở": "giúp đỡ"
+    "đở đần": "đỡ đần"
+    "đở đầu": "đỡ đầu"
+    "bở ngỡ": "bỡ ngỡ"
+    "ngở ngàng": "ngỡ ngàng"
+    "ngở rằng": "ngỡ rằng"
+    "rực rở": "rực rỡ"
+    "mỷ mãn": "mỹ mãn"
+    "mỉ mãn": "mỹ mãn"
+    "thoãi mái": "thoải mái"
+    "chử ký": "chữ ký"
+    "chử viết": "chữ viết"
+    "chử cái": "chữ cái"
+    "mâu thuẩn": "mâu thuẫn"
+    "phẩn nộ": "phẫn nộ"
+    "phẩn uất": "phẫn uất"
+    "đỉnh đạc": "đĩnh đạc"
+    "bản lỉnh": "bản lĩnh"
+    "bản lảnh": "bản lĩnh"
+    "lảnh vực": "lĩnh vực"
+    "lỉnh vực": "lĩnh vực"
+    "vỉnh viễn": "vĩnh viễn"
+    "vĩnh viển": "vĩnh viễn"
+    "miển phí": "miễn phí"
+    "miễn cưởng": "miễn cưỡng"
+    "cưởng ép": "cưỡng ép"
+    "khủng hoản": "khủng hoảng"
+    "hoản loạn": "hoảng loạn"
+    "hoản hốt": "hoảng hốt"
+    "quản cáo": "quảng cáo"
+    "quãng cáo": "quảng cáo"
+    "ảnh hưỡng": "ảnh hưởng"
+    "hưỡng ứng": "hưởng ứng"
+    "thụ hưỡng": "thụ hưởng"
+    "tận hưỡng": "tận hưởng"
+    "khả nẵng": "khả năng"
+    "chức nẵng": "chức năng"
+    "năng nỗ": "năng nổ"
+    "lặng lẻ": "lặng lẽ"
+    "lẳng lặn": "lẳng lặng"
+    "lẽ loi": "lẻ loi"
+    "lẽ tẻ": "lẻ tẻ"
+    "độc giã": "độc giả"
+    "khán giã": "khán giả"
+    "tác giã": "tác giả"
+    "thính giã": "thính giả"
+    "diễn giã": "diễn giả"
+    "giã định": "giả định"
+    "giã thuyết": "giả thuyết"
+    "giã sử": "giả sử"
+    "giã mạo": "giả mạo"
+    "giã tạo": "giả tạo"
+
+    # ----------------------------------------------------------------------- #
+    # thiếu / thừa / sai phụ âm, vần
+    # ----------------------------------------------------------------------- #
+    "nghành": "ngành"
+    "ngiên cứu": "nghiên cứu"
+    "ngỉ ngơi": "nghỉ ngơi"
+    "ngỉ phép": "nghỉ phép"
+    "ngị định": "nghị định"
+    "ngị quyết": "nghị quyết"
+    "ngề nghiệp": "nghề nghiệp"
+    "ngèo khó": "nghèo khó"
+    "ngĩa vụ": "nghĩa vụ"
+    "ngĩ rằng": "nghĩ rằng"
+    "ngịch lý": "nghịch lý"
+    "ngượng ngịu": "ngượng nghịu"
+    "cập nhập": "cập nhật"
+    "nghiêm trúc": "nghiêm túc"
+    "thẳn thắng": "thẳng thắn"
+    "trính trực": "chính trực"
+    "dè xẻn": "dè sẻn"
+    "khắc khe": "khắt khe"
+    "khẳng khái": "khảng khái"
+    "điểm xuyến": "điểm xuyết"
+    "ngoằn nghèo": "ngoằn ngoèo"
+    "mực thướt": "mực thước"
+    "phỉ bảng": "phỉ báng"
+    "quá dang": "quá giang"
+    "tài khoảng": "tài khoản"
+    "vô vàng": "vô vàn"
+    "luyên thuyên": "huyên thuyên"
+    "lượm thượm": "luộm thuộm"
+    "luộm thượm": "luộm thuộm"
+    "lượm thuộm": "luộm thuộm"
+    "xề xòa": "xuề xòa"
+    "khúc khủy": "khúc khuỷu"
+    "khủy tay": "khuỷu tay"
+    "bàng hoàn": "bàng hoàng"
+    "bàn hoàng": "bàng hoàng"
+    "chấp vá": "chắp vá"
+    "chắp bút": "chấp bút"
+
+# --------------------------------------------------------------------------- #
+# 2. Chuẩn hoá / biến thể.
+#
+# Đây KHÔNG phải lỗi cứng. Chỉ nên hiện `info`.
+# --------------------------------------------------------------------------- #
+chuan_hoa:
+  severity: info
+  message: "Văn bản hành chính thường viết"
+  cap:
+    # i / y
+    "qui định": "quy định"
+    "qui trình": "quy trình"
+    "qui chế": "quy chế"
+    "qui hoạch": "quy hoạch"
+    "kỉ luật": "kỷ luật"
+    "kỉ niệm": "kỷ niệm"
+    "lí do": "lý do"
+    "quản lí": "quản lý"
+    "xử lí": "xử lý"
+    "kĩ thuật": "kỹ thuật"
+    "kĩ năng": "kỹ năng"
+    "mĩ thuật": "mỹ thuật"
+    "thẩm mĩ": "thẩm mỹ"
+    "vật lí": "vật lý"
+    "địa lí": "địa lý"
+    "tâm lí": "tâm lý"
+    "sinh lí": "sinh lý"
+    "lí luận": "lý luận"
+    "lí thuyết": "lý thuyết"
+
+    # Biến thể / cách dùng phổ biến nhưng nên ưu tiên dạng bên phải
+    # Không nâng lên `error` nếu mục tiêu là tránh báo oan.
+    "sát nhập": "sáp nhập"
+    "chỉnh chu": "chỉn chu"
+
+# --------------------------------------------------------------------------- #
+# 3. Lỗi máy móc.
+# --------------------------------------------------------------------------- #
+co_hoc:
+  thua_dau_cach:
+    severity: warning
+    message: "Thừa dấu cách"
+
+  cach_truoc_dau_cau:
+    severity: warning
+    message: "Thừa dấu cách trước dấu câu"
+
+  thieu_cach_sau_dau_cau:
+    severity: warning
+    message: "Thiếu dấu cách sau dấu câu"
+
+  ngoac_khong_dong:
+    severity: warning
+    message: "Ngoặc đơn mở mà không đóng"
+
+  lap_tu:
+    severity: warning
+    message: "Lặp từ"
+    cho_phep: [luôn, dần, thường, ngày, đêm, đều, mãi, rất, nhanh, khe, nhè, xa]
+
+# --------------------------------------------------------------------------- #
+# GHI CHÚ TRIỂN KHAI
+#
+# 1) Không dùng `.replace()` trên toàn chuỗi.
+#    Tối thiểu phải match theo token boundary và ưu tiên longest-match.
+#
+# 2) Những lỗi sau KHÔNG thể giải quyết an toàn chỉ bằng cặp sai->đúng:
+#      dành / giành
+#      dấu / giấu
+#      chở / trở
+#      s / x khi cả hai tạo thành từ có nghĩa
+#      hỏi / ngã khi cả hai từ đều tồn tại
+#      bàng quan / bàng quang
+#      giả thiết / giả thuyết
+#      khuyến mãi / khuyến mại
+#      phong thanh / phong phanh
+#      truyện / chuyện
+#
+# 3) Muốn phủ "mọi lỗi có thể" mà vẫn deterministic:
+#    - lexicon từ chuẩn
+#    - bộ kiểm tra cấu trúc âm tiết tiếng Việt
+#    - confusion sets (s/x, ch/tr, d/gi/r, hỏi/ngã...)
+#    - edit distance chỉ để SINH ứng viên
+#    - chỉ báo lỗi khi ứng viên đúng là duy nhất hoặc rule có ngữ cảnh xác định
+#
+# 4) Tên riêng, mã sản phẩm, URL, email, code, path, số hiệu văn bản nên được
+#    mask trước khi chạy spell-check.

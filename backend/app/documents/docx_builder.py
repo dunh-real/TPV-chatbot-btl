@@ -206,6 +206,32 @@ def fill_template(payload: DocumentPayload, template_path: Path, output_path: Pa
 # --------------------------------------------------------------------------- #
 # Dựng từ code (khi template chưa có file mẫu)
 # --------------------------------------------------------------------------- #
+def append_table(document, table: RenderedTable):
+    """Bảng kẻ lưới ở cuối tài liệu, phông và cỡ chữ đồng bộ với phần thân.
+
+    Dùng chung cho mục có bảng của báo cáo và cho bảng phân công của văn bản giao
+    việc - hai chỗ đó phải ra cùng một kiểu bảng, không thì cùng một hệ thống lại
+    sinh ra hai phong cách.
+    """
+    from docx.shared import Pt
+
+    word_table = document.add_table(rows=1, cols=len(table.columns))
+    word_table.style = "Table Grid"
+    for index, column in enumerate(table.columns):
+        cell = word_table.rows[0].cells[index]
+        cell.text = ""
+        run = cell.paragraphs[0].add_run(str(column))
+        run.font.name, run.font.size, run.font.bold = FONT, Pt(SIZE_PT), True
+
+    for row in table.rows:
+        cells = word_table.add_row().cells
+        for index, value in enumerate(row[: len(table.columns)]):
+            cells[index].text = ""
+            run = cells[index].paragraphs[0].add_run(str(value))
+            run.font.name, run.font.size = FONT, Pt(SIZE_PT)
+    return word_table
+
+
 def _append_sections(document, sections: list[RenderedSection]) -> None:
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Pt
@@ -239,19 +265,7 @@ def _append_sections(document, sections: list[RenderedSection]) -> None:
                 run.font.name, run.font.size, run.font.italic = FONT, Pt(SIZE_PT), True
 
         if section.table is not None:
-            word_table = document.add_table(rows=1, cols=len(section.table.columns))
-            word_table.style = "Table Grid"
-            for index, column in enumerate(section.table.columns):
-                cell = word_table.rows[0].cells[index]
-                cell.text = ""
-                run = cell.paragraphs[0].add_run(str(column))
-                run.font.name, run.font.size, run.font.bold = FONT, Pt(SIZE_PT), True
-            for row in section.table.rows:
-                cells = word_table.add_row().cells
-                for index, value in enumerate(row[: len(section.table.columns)]):
-                    cells[index].text = ""
-                    run = cells[index].paragraphs[0].add_run(str(value))
-                    run.font.name, run.font.size = FONT, Pt(SIZE_PT)
+            append_table(document, section.table)
             document.add_paragraph()
 
 

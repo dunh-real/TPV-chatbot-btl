@@ -207,6 +207,8 @@
       fd.append('rule_set', opts.ruleSet || '');
       return postForm('/api/documents/review', fd, signal);
     },
+    giaoViec: function (body, signal) { return postJSON('/api/documents/giao-viec', body, signal); },
+    giaoViecDownload: function (fileName) { return url('/api/documents/download/' + encodeURIComponent(fileName)); },
     stats: function () { return request('/api/documents/stats'); },
     deleteDoc: function (docId) { return request('/api/documents/' + encodeURIComponent(docId), { method: 'DELETE' }); },
 
@@ -215,6 +217,32 @@
     draft: function (body, signal) { return postJSON('/api/reports/draft', body, signal); },
     aggregate: function (body, signal) { return postJSON('/api/reports/aggregate', body, signal); },
     reportDownload: function (fileName) { return url('/api/reports/download/' + encodeURIComponent(fileName)); },
+
+    // sơ đồ tư duy
+    mindmapSources: function () { return request('/api/mindmap/sources'); },
+    mindmapList: function () { return request('/api/mindmap/documents'); },
+    mindmapGenerate: function (body, signal) { return postJSON('/api/mindmap/generate', body, signal); },
+    mindmapTree: function (docId) { return request('/api/mindmap/' + encodeURIComponent(docId)); },
+    mindmapSection: function (docId, nodeId, signal) {
+      return postJSON('/api/mindmap/' + encodeURIComponent(docId) + '/section', { node_id: nodeId }, signal);
+    },
+    mindmapDelete: function (docId) {
+      return request('/api/mindmap/' + encodeURIComponent(docId), { method: 'DELETE' });
+    },
+
+    // OCR tài liệu
+    ocrStatus: function () { return request('/api/ocr/status'); },
+    /* Tải file lên trước (dùng chung cửa upload của agent) rồi mới mở stream:
+       SSE đi qua POST JSON, không đính kèm được multipart. */
+    ocrStream: function (body, handlers, signal) {
+      return postSSE('/api/ocr/extract/stream', body, handlers, signal);
+    },
+    ocrExtract: function (file, cheDo, signal) {
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('che_do', cheDo || 'auto');
+      return postForm('/api/ocr/extract', fd, signal);
+    },
 
     // workflow 5
     presentation: function (body, signal) { return postJSON('/api/presentations/create', body, signal); },

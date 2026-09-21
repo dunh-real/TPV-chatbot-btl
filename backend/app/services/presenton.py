@@ -37,6 +37,7 @@ from typing import Any
 import httpx
 
 from app.core.config import Settings, get_settings
+from app.documents.font_slide import doi_font
 
 logger = logging.getLogger(__name__)
 
@@ -138,9 +139,16 @@ class PresentonClient:
         if not remote_path:
             raise PresentonError("Presenton báo xong nhưng không trả về đường dẫn file.")
 
+        # Ép font ngay sau khi tải: Presenton không có tham số font, và file
+        # xuống đây đã là .pptx thật nên sửa ở đây là chỗ rẻ nhất.
+        noi_dung = await self._download(remote_path)
+        if self.settings.presenton_font:
+            noi_dung = await asyncio.to_thread(
+                doi_font, noi_dung, self.settings.presenton_font)
+
         return Deck(
             presentation_id=str(result.get("presentation_id") or ""),
-            content=await self._download(remote_path),
+            content=noi_dung,
             remote_path=remote_path,
             edit_path=str(result.get("edit_path") or ""),
             elapsed_seconds=round(time.monotonic() - started, 1),

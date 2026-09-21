@@ -24,6 +24,8 @@ from app.agents.nodes.qa import (
 )
 from app.agents.nodes.document import (
     assemble_node,
+    chinh_ta_llm_node,
+    chinh_ta_node,
     classify_node,
     llm_review_node,
     parse_node,
@@ -137,22 +139,40 @@ async def build_initial_state(
 # --------------------------------------------------------------------------- #
 # Workflow 2: xử lý văn bản
 # --------------------------------------------------------------------------- #
-def build_document_graph():
-    """Ba nhánh phân tích chạy song song sau khi parse xong.
+PHAN_TICH = ("rule_check", "chinh_ta", "chinh_ta_llm", "llm_review", "classify", "tasks")
 
-    Chúng độc lập nhau (rule đọc định dạng, ba nhánh LLM đọc text) nên không có
-    lý do gì phải chờ nhau; mỗi node ghi vào một khoá riêng của state.
+
+def build_document_graph():
+    """Sáu nhánh phân tích chạy song song sau khi parse xong.
+
+        parse ─┬─> rule_check    tất định: dàn ý, thứ bậc mục, phông, lề
+               ├─> chinh_ta      tất định: dấu cách, dấu câu, lặp từ, ngoặc
+               ├─> chinh_ta_llm  LLM: chính tả                    ─┐ hai prompt
+               ├─> llm_review    LLM: ngữ pháp, diễn đạt, logic   ─┘ tách riêng
+               ├─> classify      định tuyến, dùng danh mục phòng ban
+               └─> tasks         tóm tắt + phân rã nhiệm vụ
+                                                └─> assemble -> ReviewResult
+
+    Chúng độc lập nhau nên không có lý do gì phải chờ nhau; mỗi node ghi vào một
+    khoá riêng của state.
+
+    Chính tả và chữ nghĩa là HAI nhánh LLM riêng, không gộp: prompt chính tả phải
+    dành gần hết chỗ cho bẫy "hai từ đúng đứng cạnh nhau trông như một từ sai" cùng
+    bảng lỗi hay gặp, mà đó là phần quyết định bản soát có báo oan hay không. Nhét
+    chung vào một prompt lo năm việc thì phần đó bị loãng.
     """
     graph = StateGraph(DocumentState)
     graph.add_node("parse", parse_node)
     graph.add_node("rule_check", rule_check_node)
+    graph.add_node("chinh_ta", chinh_ta_node)
+    graph.add_node("chinh_ta_llm", chinh_ta_llm_node)
     graph.add_node("llm_review", llm_review_node)
     graph.add_node("classify", classify_node)
     graph.add_node("tasks", tasks_node)
     graph.add_node("assemble", assemble_node)
 
     graph.set_entry_point("parse")
-    for node in ("rule_check", "llm_review", "classify", "tasks"):
+    for node in PHAN_TICH:
         graph.add_edge("parse", node)
         graph.add_edge(node, "assemble")
     graph.add_edge("assemble", END)

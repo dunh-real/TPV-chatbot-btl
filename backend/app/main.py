@@ -12,7 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import agent, chat, documents, presenton_proxy, presentations, reports
+from app.api import (agent, chat, documents, mindmap, ocr, presenton_proxy,
+                     presentations, reports)
 from app.api.identity import IdentityMiddleware
 from app.core.config import get_settings
 from app.agents.quyen import ThieuQuyen
@@ -180,6 +181,8 @@ app.include_router(chat.router)
 app.include_router(documents.router)
 app.include_router(reports.router)
 app.include_router(presentations.router)
+app.include_router(mindmap.router)
+app.include_router(ocr.router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])

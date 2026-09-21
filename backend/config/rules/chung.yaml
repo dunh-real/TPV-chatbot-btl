@@ -48,9 +48,23 @@ structure:
     severity: info
     message: "Hai mục trùng tên"
 
-  numbering:
-    severity: warning
-    message: "Đánh số mục không liên tục"
+  # ĐÃ TẮT (20/09/2026) - bỏ khoá này đi là tiêu chí không chạy nữa.
+  #
+  # Kiểm tính liên tục của đánh số nghe thì tất định, nhưng nó phải ĐOÁN kiểu đánh
+  # số trước khi so được, mà đoán thì sai. Hai lần báo oan gặp thật:
+  #   - "... d) đ) e) g)" là dãy đúng chuẩn Nghị định 30, máy đọc "g" thành chữ
+  #     thứ 8 (bảng chữ cái trong code có "f") rồi kêu đứt quãng;
+  #   - "C." và "D." khớp pattern số La Mã trước (100 và 500), vượt ngưỡng nên bị
+  #     bỏ hẳn, làm dãy "A. B. C. D." trông như nhảy từ B sang Đ.
+  # Cả hai đã vá trong outline.py, nhưng còn những chỗ mơ hồ không vá được: "L."
+  # trong dãy chữ cái vẫn là số La Mã 50, "I." vừa là số 1 vừa là chữ thứ chín.
+  #
+  # Người soạn văn bản đánh số đúng mà máy kêu sai thì họ mất lòng tin vào CẢ bản
+  # soát, kể cả những lỗi báo đúng. Một tiêu chí chỉ đúng phần lớn thời gian còn
+  # hại hơn không có. Cần bật lại thì bỏ dấu # của ba dòng dưới:
+  # numbering:
+  #   severity: info
+  #   message: "Đánh số mục không liên tục"
 
   paragraph_length:
     max_chars: 1500

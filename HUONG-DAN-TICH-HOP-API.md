@@ -692,6 +692,8 @@ endpoint dưới đây gọi thẳng workflow, bỏ qua bước định tuyến:
 | `POST /api/chat/qa/stream` | Như trên, dạng SSE | `Ai.AiChatbot` |
 | `POST /api/chat/search` | Tìm kiếm thuần, không sinh câu trả lời | `Ai.AiChatbot` |
 | `POST /api/documents/review` | Soát tài liệu (multipart) | `Ai.AiChatbot` |
+| `POST /api/documents/giao-viec` | Soạn công văn / quyết định giao nhiệm vụ | `Ai.AiChatbot` |
+| `GET /api/documents/download/{filename}` | Tải văn bản giao nhiệm vụ đã sinh | — |
 | `GET /api/documents/rule-sets` | Danh sách bộ tiêu chí soát | — |
 | `GET /api/documents/stats` | Thống kê kho tri thức | `Ai.AiChatbot` |
 | `POST /api/documents/upload` | Nạp file tài liệu vào kho (multipart) | `Ai.ReportSummary.Create` |
@@ -701,6 +703,15 @@ endpoint dưới đây gọi thẳng workflow, bỏ qua bước định tuyến:
 | `POST /api/reports/aggregate` | Tổng hợp nhiều đơn vị | `Ai.ReportSummary.Create` |
 | `GET /api/reports/templates` | Danh sách mẫu báo cáo | — |
 | `POST /api/presentations/create` | Tạo slide | `Ai.Slide.Create` |
+| `GET /api/mindmap/sources` | Tài liệu trong kho, kèm cờ đã có sơ đồ chưa | `Ai.AiChatbot` |
+| `POST /api/mindmap/generate` | Dựng sơ đồ tư duy từ một tài liệu | `Ai.AiChatbot` |
+| `GET /api/mindmap/{doc_id}` | Đọc lại sơ đồ đã dựng | `Ai.AiChatbot` |
+| `POST /api/mindmap/{doc_id}/section` | Nội dung chi tiết của một mục | `Ai.AiChatbot` |
+| `GET /api/mindmap/documents` | Các sơ đồ đã dựng của thuê bao | `Ai.AiChatbot` |
+| `DELETE /api/mindmap/{doc_id}` | Xoá sơ đồ đã dựng | `Ai.AiChatbot` |
+| `GET /api/ocr/status` | Cấu hình OCR: model nào đang đọc, có bật không | `Ai.AiChatbot` |
+| `POST /api/ocr/extract` | OCR một tài liệu, trả cả bản Markdown (multipart) | `Ai.AiChatbot` |
+| `POST /api/ocr/extract/stream` | Như trên, trả từng trang qua SSE | `Ai.AiChatbot` |
 | `GET /api/reports/download/{filename}` | Tải file do `draft` / `aggregate` sinh ra |
 | `GET /api/presentations/download/{filename}` | Tải file .pptx do `create` sinh ra |
 | `GET /api/agent/tools` | Danh sách công cụ agent có, kèm mô tả và tham số |
@@ -777,6 +788,61 @@ một bộ: `{"id":"chung","label":"Cấu trúc & trình bày (mọi loại tài
 trống `rule_set` là dùng bộ mặc định — **hãy đọc danh sách qua API**, các bộ mới
 được thêm bằng file YAML phía server mà không đổi API.
 
+**Phản hồi của `/review` — ba khoá cần biết để dựng giao diện khoanh vùng lỗi:**
+
+| Khoá | Là gì |
+|---|---|
+| `blocks[]` | Nội dung + định dạng THẬT của từng khối: `text`, `kind`, `font`, `size_pt`, `bold`, `alignment`, `line_spacing`, `space_before_pt`, `space_after_pt`, `page`. Đủ để dựng lại trang trông như tài liệu gốc. `blocks_truncated: true` nghĩa là tài liệu quá dài nên đã cắt bớt. |
+| `findings[]` | Lỗi nội dung, **danh sách phẳng theo thứ tự đọc**, mỗi mục có `block_id` + `start`/`end` là **chỉ số ký tự trong `blocks[].text`** — cắt đúng đoạn đó ra là được chỗ cần khoanh. |
+| `document.geometry` | Khổ giấy và lề quy về mm. `measured: true` nghĩa là lề suy từ vùng chữ của PDF chứ không đọc được, đừng hiển thị như số chính xác. |
+
+> ⚠️ **`findings[].source` quyết định cách vẽ.** `"rule"` là lỗi đối chiếu được
+> bằng chuỗi (từ điển chính tả, dấu cách, dấu câu, lặp từ) — máy chắc chắn đúng.
+> `"llm"` là phán đoán của model (ngữ pháp, diễn đạt, logic) — cần người xác
+> nhận. **Hiển thị hai loại này giống nhau là nói sai về mức bảo đảm**; giao diện
+> mẫu vẽ khung liền nét cho loại đầu và khung đứt nét cho loại sau.
+>
+> `findings[].source` quyết định cách vẽ: `"rule"` là lỗi **đo được bằng vị trí
+> ký tự** (thừa dấu cách, thiếu dấu cách sau dấu câu, lặp từ, ngoặc không khớp) —
+> chắc chắn đúng. `"llm"` là **phán đoán của model** (chính tả, ngữ pháp, diễn
+> đạt, logic) — đã lọc qua bốn van (trích được nguyên văn, trích không quá 240 ký
+> tự, trích phải có chữ, sửa phải khác chữ gốc) nhưng vẫn cần người xác nhận.
+>
+> `start`/`end` có thể là `null` ở một số phát hiện của LLM (câu trích khớp kiểu
+> chuẩn hoá nhưng không khớp kiểu khoảng trắng co giãn). Gặp `null` thì tô cả
+> khối thay vì bỏ qua.
+>
+> `findings[].bbox` chỉ có ở PDF: `[x0, y0, x1, y1]` theo điểm in, là vị trí thật
+> của khối trên trang. PDF **không** lưu canh lề của đoạn (`alignment` luôn
+> `null`), nên muốn dựng lại cho giống bản gốc thì đặt khối theo `bbox` — văn bản
+> hành chính xếp phần đầu thành hai cột, đoán canh lề thì hỏng ngay chỗ đó.
+>
+> `llm_review` là **cùng dữ liệu đó gom theo `block_id`**, giữ lại cho bên đã
+> tích hợp. Từ 20/09/2026 nó chứa cả lỗi `source: "rule"`, không chỉ lỗi LLM như
+> tên gọi — nếu bạn đang đọc khoá này thì chuyển sang `findings` sẽ rõ hơn.
+
+**`POST /api/documents/giao-viec`** — đổ bảng phân công ra văn bản trình ký.
+Không gọi LLM: lời văn là văn khuôn, bảng lấy nguyên từ `tasks` gửi lên.
+
+```json
+{ "loai": "cong_van",
+  "tasks": [ /* nguyên phần `tasks` của /review, có thể đã sửa tay */ ],
+  "co_quan": "Công ty TPV", "co_quan_chu_quan": "", "so_ky_hieu": "",
+  "dia_danh": "Hà Nội", "ngay": "", "trich_yeu": "rà soát nhân sự",
+  "can_cu": [], "nguoi_ky": "", "chuc_vu_ky": "Giám đốc",
+  "deadline": "25/9/2026", "mo_dau": "" }
+```
+
+`loai` nhận `cong_van` hoặc `quyet_dinh`. Phản hồi `/review` có sẵn
+`giao_viec_goi_y` — mẫu nên chọn sẵn theo loại văn bản đến; đó là **gợi ý**, người
+dùng đổi được. `tasks` phải có ít nhất một mục, không thì trả `422`.
+
+Trả về `{"loai","file_name","download_url","task_count"}`.
+
+> **Trường thể thức để trống thì file in dấu chấm lửng**, hệ thống KHÔNG tự đặt số
+> ký hiệu hay tên người ký. Một số văn bản bịa trông y như số thật là thứ nguy
+> hiểm nhất có thể nhét vào bản trình ký — đừng tự điền hộ ở phía client.
+
 **`POST /api/documents/upload`** — `multipart/form-data`: `file` (bắt buộc), `doc_type`.
 
 **`POST /api/documents/ingest-text`** — nạp văn bản thuần
@@ -801,6 +867,11 @@ trống `rule_set` là dùng bộ mặc định — **hãy đọc danh sách qua
 trong Presenton), `slide_count` đếm từ chính file .pptx, và `engine` cho biết
 slide do Presenton dựng hay do đường lùi nội bộ dựng.
 
+> **File tải về và bản xem trong `edit_url` KHÁC FONT nhau.** Bộ chữ được ép lại
+> trên chính file .pptx sau khi dựng xong, còn `edit_url` mở bản gốc nằm trong
+> Presenton nên vẫn hiện font của template. Nội dung và bố cục giống hệt — chỉ
+> khác mặt chữ. Bản để gửi đi là file tải về.
+
 > **Lấy danh sách mẫu báo cáo qua API, đừng hardcode.** Mẫu được thêm bớt theo
 > nhu cầu nghiệp vụ — hiện có `BC_NHANSU`, `BC_THIETBI`, `BC_TAINGUYEN`,
 > `BC_TONGHOP`, nhưng danh sách này sẽ đổi.
@@ -808,6 +879,126 @@ slide do Presenton dựng hay do đường lùi nội bộ dựng.
 > ⚠️ `DELETE /api/documents/{doc_id}` xoá thật khỏi kho tri thức, không lấy lại
 > được. Giờ chỉ vai trò `Admin` gọi được — nhưng **chỉ khi bạn gửi `X-User-Id`**.
 > Không gửi danh tính thì không có gì chặn, vì backend không biết bạn là ai.
+
+**Sơ đồ tư duy** — `POST /api/mindmap/generate`
+
+```json
+{ "doc_id": "bf19a21ec174476a", "regenerate": false }
+```
+
+`doc_id` lấy từ `GET /api/mindmap/sources` (hoặc từ phản hồi lúc nạp tài liệu).
+Trả về `{doc_id, doc_title, node_count, tree, saved_at, cached}`; `tree` là cây
+`{id, title, has_content, children[]}`.
+
+> **Dựng sơ đồ và xem nội dung là HAI lời gọi khác nhau — đừng chờ một lời gọi
+> trả về tất cả.** `/generate` chỉ trả về TIÊU ĐỀ các mục: nó đọc cả tài liệu
+> bằng MAP-REDUCE, mất 5-9 lượt LLM. Nội dung từng mục sinh khi người dùng bấm
+> vào, qua `POST /api/mindmap/{doc_id}/section` với `{"node_id": "node_2_1"}` —
+> trả `{title, summary, key_points[], sources[], cached}`.
+>
+> Sinh sẵn nội dung cho cả cây là 30-60 lượt LLM cho thứ người dùng phần lớn
+> không mở ra xem, nên API cố ý không làm vậy.
+
+`cached: true` nghĩa là lấy từ bản đã lưu, không tốn lượt LLM nào: `/generate`
+mặc định mở lại bản cũ (gửi `regenerate: true` mới dựng lại), còn `/section` thì
+mục nào đã sinh một lần là ghi thẳng vào cây. Cờ `has_content` trên mỗi node cho
+biết bấm vào mục đó sẽ trả về ngay hay phải chờ.
+
+**OCR tài liệu** — `POST /api/ocr/extract` (multipart) hoặc `/extract/stream` (SSE)
+
+```
+file=@scan.pdf        # .pdf hoặc ảnh (.jpg .png .bmp .tiff .webp)
+che_do=auto           # auto | tat_ca
+```
+
+Chỉ nhận thứ **có ảnh trang để đọc**. `.docx/.xlsx/.txt` đã có sẵn chữ, gửi vào
+đây trả về 415 — nạp thẳng qua `/api/documents/upload`.
+
+Trả về `{file_name, che_do, model, so_trang, so_trang_ocr, so_trang_digital,
+so_trang_loi, giay, markdown, trang[]}`. Mỗi phần tử `trang[]` là
+`{so_trang, nguon, so_ky_tu, markdown}`, `so_trang` đánh số **từ 1**.
+
+`nguon` nói rõ chữ ở đâu ra, và bạn nên hiện nó lên:
+
+| `nguon` | Nghĩa |
+|---|---|
+| `ocr` | mô hình thị giác đọc từ ảnh trang |
+| `digital` | lấy thẳng lớp text có sẵn, không qua mô hình |
+| `trong` | trang không có chữ nào |
+| `loi` | trang phải OCR nhưng đọc hỏng — **chữ bị thiếu, đừng coi là trang trắng** |
+
+> **`che_do=auto` không OCR mọi trang, và đó là chủ ý.** Trang xuất từ Word có
+> sẵn lớp text: đọc thẳng vừa nhanh hơn nhiều vừa đúng từng dấu. Chỉ trang scan
+> mới đi qua mô hình.
+>
+> PDF scan đã bị chạy qua Tesseract rồi đóng lại kèm một lớp chữ **vô hình** sai
+> be bét là trường hợp hay gặp nhất — `auto` **tự nhận ra và OCR lại** những
+> trang đó, không cần bạn làm gì. Nhận bằng bố cục trang (một ảnh phủ kín, bên
+> trên không chữ nào nhìn thấy được) chứ không bằng đếm ký tự, vì lớp chữ rác đó
+> trích ra vài nghìn ký tự mỗi trang nên đếm chữ không phân biệt nổi.
+>
+> `tat_ca` giờ chỉ còn cần khi bạn **không tin lớp text của một PDF digital thật**
+> — chữ nhìn thấy được nhưng nội dung sai, chẳng hạn file xuất từ phần mềm lỗi
+> font.
+
+### Marker bố cục trong `markdown`
+
+Trường `markdown` của **màn OCR** (không phải `answer` của `/api/agent/chat`) có
+thể chứa ba khối đánh dấu cách chữ được căn trên trang giấy. Chúng xuất hiện khi
+nhận ra đây là văn bản hành chính Việt Nam; tài liệu khác thì không có.
+
+```
+::: dau                         ← chữ trong con dấu
+TÒA ÁN NHÂN DÂN T. QUẢNG NAM
+Số: 21/
+:::
+
+::: tieu-ngu                    ← phần đầu hai cột, `|||` ngăn cột trái / phải
+NHNo&PTNT TỈNH QUẢNG NAM ||| CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Chi nhánh Tam Đàn        ||| Độc lập - Tự do - Hạnh phúc
+:::
+
+::: giua                        ← căn giữa; dòng ĐẦU là tên văn bản, sau là phụ đề
+ĐƠN KHỞI KIỆN
+Đòi tiền nợ vay tại chi nhánh NHNo&PTNT Tam Đàn
+:::
+```
+
+> 🚨 **Đây không phải Markdown chuẩn.** `marked`, `markdown-it` và hầu hết trình
+> render khác sẽ hiện nguyên chuỗi `::: tieu-ngu` và `|||` ra màn hình. Bạn phải
+> xử lý, chọn một trong hai:
+>
+> - **Dựng lại bố cục** — `::: tieu-ngu` thành lưới hai cột (tách mỗi dòng bằng
+>   `|||`), `::: giua` thành khối căn giữa, `::: dau` thành ô đóng khung.
+> - **Bỏ đi** — xoá mọi dòng khớp `^:::` và thay `|||` bằng khoảng trắng. Nội
+>   dung còn nguyên, chỉ mất phần căn lề.
+>
+> Trình render mẫu ở `https://chatbot-demo.tpvtech.vn/ui/js/markdown.js` đã xử lý
+> sẵn cả ba khối — đọc phần `KHOI_BO_CUC` nếu muốn dựng lại cho nhanh.
+
+Ngoài ba khối trên, `markdown` là Markdown thường: tiêu đề `##`, gạch đầu dòng,
+mục đánh số, bảng. Chữ bị ngắt giữa câu trên bản gốc đã được nối lại thành đoạn
+liền, nên đoạn văn tự xuống dòng theo bề ngang khung của bạn.
+
+> 🚨 **Tài liệu dài thì dùng `/extract/stream`.** 30 trang scan mất vài phút, mà
+> đường công khai qua Cloudflare cắt mọi request im lặng quá 125 giây (xem mục
+> 11). Stream trả từng trang nên không chạm trần đó.
+>
+> Stream nhận `{"file_id": "upload:scan.pdf", "che_do": "auto"}` — tải file lên
+> trước qua `POST /api/agent/upload`, vì SSE đi bằng POST JSON nên không đính
+> kèm multipart được. Sự kiện: `start` (đã biết tài liệu dày bao nhiêu, trang nào
+> phải OCR) → nhiều `trang` → `done`, hoặc `error`.
+>
+> **Sự kiện `trang` KHÔNG về theo thứ tự trang** — các trang chạy song song, xong
+> trước về trước. Dựng sẵn đủ ô ngay từ `start` rồi điền theo `so_trang`, đừng
+> cứ nhận được là nối vào cuối.
+
+`done` cố ý **không** kèm lại bản Markdown gộp: client đã nhận đủ từng trang rồi.
+Muốn cả tài liệu thành một chuỗi thì ghép `markdown` của các trang theo thứ tự,
+ngăn bằng `\n\n---\n\n` — đúng như trường `markdown` của `/extract` trả về.
+
+Model đọc là **chính model đang phục vụ cả hệ thống** (`GET /api/ocr/status` cho
+biết tên). Không có server riêng cho OCR, nên không tốn thêm VRAM.
 
 ---
 
@@ -940,6 +1131,14 @@ chung một hàm ánh xạ cho cả hai.
 khác là kết quả thô của workflow, hữu ích lúc gỡ lỗi nhưng không phải hợp đồng
 ổn định. `result.validation` thì có mặt ở mọi nghiệp vụ và **bắt buộc phải hiện**
 (mục 9).
+
+**Mục đánh số bị nội dung chen vào giữa sẽ hiện sai số.** Backend trả `1.` `2.`
+`3.` nhưng nếu giữa chúng có đoạn văn hay bảng, trình render tạo một `<ol>` RIÊNG
+cho mỗi mục — mà `<ol>` luôn đếm lại từ 1, nên màn hình hiện `1.` `1.` `1.`.
+Người đọc thấy số khác hẳn số trên tài liệu, và với văn bản pháp lý hay hợp đồng
+thì đó là sai nội dung chứ không phải sai trình bày. Cách chữa: lấy số của mục
+đầu mỗi cụm rồi phát `<ol start="N">`. Chúng tôi vấp đúng cái này trên một giấy
+đăng ký kinh doanh có mục 1, 2, 3 cách nhau bởi bảng.
 
 **Số liệu hiển thị đúng như backend trả về.** Mọi con số đã qua van đối chiếu
 với nguồn gốc. **Đừng tự cộng trừ hay tính lại tỷ lệ ở phía giao diện** — các

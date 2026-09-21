@@ -15,11 +15,12 @@ from __future__ import annotations
 
 import logging
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from app.core.config import Settings, get_settings
-from app.rag.ocr import IMAGE_SUFFIXES, get_ocr_service
+from app.rag.ocr import IMAGE_SUFFIXES, OCRService, get_ocr_service
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,27 @@ PAGE_SEPARATOR = "\n\n"
 _PAGE_NUMBER_LINE = re.compile(r"^[-_\s]*\d{1,4}[-_\s]*$")
 _SEPARATOR_LINE = re.compile(r"^[_=*\-]{3,}$")        # không khớp "|---|---|" của bảng
 _UPPERCASE_HEADING = re.compile(r"^[A-ZÀ-Ỹ][A-ZÀ-Ỹ\s\d,./()-]{4,}$")
+# Dòng mở/đóng khối bố cục do `app.documents.bo_cuc_hanh_chinh` sinh ra.
+_DONG_BO_CUC = re.compile(r"^:::(\s|$)")
+# Chữ khuôn của văn bản hành chính: viết hoa nhưng KHÔNG phải tiêu đề mục. Quốc
+# hiệu và tiêu ngữ là phần đầu thư, ngang hàng với tên cơ quan ban hành - gán
+# chúng thành `##` thì con dấu và quốc hiệu to ngang tên văn bản, và tệ hơn:
+# `app.rag.chunking` cắt chunk theo heading nên mỗi tờ công văn bị cắt bậy ngay
+# tại quốc hiệu, rồi lấy chính dòng đó làm nhãn chương cho nội dung bên dưới.
+_CHU_KHUON = (
+    "cong hoa xa hoi chu nghia viet nam",
+    "doc lap - tu do - hanh phuc",
+    "doc lap – tu do – hanh phuc",
+    "cong van den",
+)
+
+
+def _la_chu_khuon(dong: str) -> bool:
+    """Dòng khuôn của văn bản hành chính, so khớp sau khi bỏ dấu."""
+    bo_dau = unicodedata.normalize("NFD", dong.lower())
+    bo_dau = "".join(c for c in bo_dau if unicodedata.category(c) != "Mn")
+    bo_dau = bo_dau.replace("đ", "d").strip()
+    return any(mau in bo_dau for mau in _CHU_KHUON)
 _BOLD_LINE = re.compile(r"^\*\*(?P<inner>[^*]{3,150})\*\*[:.]?$")
 _TABLE_LINE = re.compile(r"^\s*\|")
 
@@ -62,9 +84,22 @@ def fix_broken_bold(line: str) -> str:
 def cleanup_markdown(text: str) -> str:
     """Bỏ rác của khâu trích xuất và chuẩn hoá tiêu đề, giữ nguyên khối bảng."""
     lines_out: list[str] = []
+    trong_khoi_bo_cuc = False
     for raw_line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
         line = fix_broken_bold(raw_line).rstrip()
         stripped = line.strip()
+
+        # Khối bố cục đi qua nguyên vẹn. Bên trong nó chữ đã được xếp đúng chỗ
+        # rồi; chuẩn hoá thêm lần nữa chỉ phá - "ĐƠN KHỞI KIỆN" nằm trong khối
+        # căn giữa mà bị gán `##` thì vừa hỏng khối, vừa mất căn giữa.
+        if _DONG_BO_CUC.match(stripped):
+            # "::: <tên>" mở khối, ":::" trơn đóng khối.
+            trong_khoi_bo_cuc = stripped != ":::"
+            lines_out.append(stripped)
+            continue
+        if trong_khoi_bo_cuc:
+            lines_out.append(stripped)
+            continue
 
         # Dòng trống: giữ tối đa một dòng trống liên tiếp (ranh giới đoạn).
         if not stripped:
@@ -81,11 +116,16 @@ def cleanup_markdown(text: str) -> str:
             continue
 
         if stripped.startswith("#"):
-            lines_out.append(stripped.replace("**", ""))
+            khong_rao = stripped.replace("**", "")
+            # Bộ trích xuất PDF cũng tự gắn `#` cho chữ to/đậm, nên quốc hiệu có
+            # thể tới đây khi ĐÃ là heading - hạ nó xuống, cùng lý do như dưới.
+            if _la_chu_khuon(khong_rao):
+                khong_rao = khong_rao.lstrip("#").strip()
+            lines_out.append(khong_rao)
             continue
 
         # Tiêu đề ngầm: dòng ngắn viết hoa toàn bộ, hoặc dòng chỉ gồm **in đậm**.
-        if len(stripped) < 200:
+        if len(stripped) < 200 and not _la_chu_khuon(stripped):
             if _UPPERCASE_HEADING.match(stripped):
                 lines_out.append(f"## {stripped}")
                 continue
@@ -100,12 +140,57 @@ def cleanup_markdown(text: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Trích xuất trang digital
+# --------------------------------------------------------------------------- #
+def extract_digital_pages(path: Path, page_count: int) -> list[str]:
+    """Markdown của từng trang PDF, lấy thẳng từ lớp text có sẵn (không OCR).
+
+    Trả về đúng `page_count` phần tử: trang nào không lấy được thì là chuỗi rỗng,
+    để chỉ số trong danh sách luôn khớp số trang thật.
+    """
+    if path.suffix.lower() in IMAGE_SUFFIXES:
+        return [""]
+    try:
+        import pymupdf4llm
+
+        pages = pymupdf4llm.to_markdown(
+            str(path), page_chunks=True, show_progress=False, table_strategy="lines_strict"
+        )
+    except Exception as exc:  # noqa: BLE001 - còn đường lùi là OCR
+        logger.warning("pymupdf4llm lỗi trên %s: %s", path.name, exc)
+        return [""] * page_count
+
+    texts = [""] * page_count
+    for index, page in enumerate(pages[:page_count]):
+        texts[index] = (page.get("text") or "").strip()
+    return texts
+
+
+# --------------------------------------------------------------------------- #
 # Converter
 # --------------------------------------------------------------------------- #
 class DocumentConverter:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
         self._markitdown = None
+        self._ocr: OCRService | None = None
+
+    @property
+    def ocr(self) -> OCRService:
+        """Dịch vụ OCR ĐÚNG theo cấu hình của converter này.
+
+        Trước đây chỗ này gọi thẳng `get_ocr_service()`, tức singleton đọc từ .env
+        - nên `DocumentConverter(Settings(ocr_enabled=False))` vẫn gọi mô hình
+        thật. Một bài test tưởng mình chạy khép kín hoá ra phụ thuộc vào chữ mà
+        model trả về hôm đó, và đỏ khi ai đó chỉnh tham số lấy mẫu.
+
+        Cấu hình toàn cục thì vẫn dùng singleton, để cả tiến trình chia chung một
+        thread pool thay vì mỗi nơi dựng một cái.
+        """
+        if self._ocr is None:
+            self._ocr = (get_ocr_service() if self.settings is get_settings()
+                         else OCRService(self.settings))
+        return self._ocr
 
     def convert(self, path: str | Path) -> LoadedDocument:
         path = Path(path)
@@ -136,12 +221,12 @@ class DocumentConverter:
     # --------------------------------------------------------------- pdf -- #
     def _convert_pdf(self, path: Path) -> LoadedDocument:
         """Trích xuất theo từng trang rồi ghép, giữ lại mốc trang cho trích dẫn."""
-        ocr = get_ocr_service()
+        ocr = self.ocr
         needs_ocr = ocr.classify_pages(path)
         if not needs_ocr:
             return LoadedDocument(text="")
 
-        page_texts = self._extract_digital(path, len(needs_ocr))
+        page_texts = extract_digital_pages(path, len(needs_ocr))
 
         scan_pages = [i for i, need in enumerate(needs_ocr) if need]
         if scan_pages:
@@ -159,24 +244,6 @@ class DocumentConverter:
 
         cleaned = [cleanup_markdown(text) for text in page_texts]
         return self._join_pages(cleaned)
-
-    def _extract_digital(self, path: Path, page_count: int) -> list[str]:
-        if path.suffix.lower() in IMAGE_SUFFIXES:
-            return [""]
-        try:
-            import pymupdf4llm
-
-            pages = pymupdf4llm.to_markdown(
-                str(path), page_chunks=True, show_progress=False, table_strategy="lines_strict"
-            )
-        except Exception as exc:  # noqa: BLE001 - còn đường lùi là OCR
-            logger.warning("pymupdf4llm lỗi trên %s: %s", path.name, exc)
-            return [""] * page_count
-
-        texts = [""] * page_count
-        for index, page in enumerate(pages[:page_count]):
-            texts[index] = (page.get("text") or "").strip()
-        return texts
 
     @staticmethod
     def _join_pages(page_texts: list[str]) -> LoadedDocument:

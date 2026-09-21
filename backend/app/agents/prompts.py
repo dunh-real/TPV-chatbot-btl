@@ -123,29 +123,160 @@ Tài liệu có thể thuộc bất kỳ loại nào: công văn, hợp đồng,
 kỹ thuật, hướng dẫn, đề án. Đừng đòi hỏi nó phải theo mẫu hay thể thức nào.
 
 Chỉ soát các lỗi về CHỮ NGHĨA trong đoạn được đưa:
-- spelling: lỗi chính tả, sai dấu, viết hoa/viết thường sai quy tắc
 - grammar: câu sai ngữ pháp, thiếu chủ ngữ/vị ngữ, câu cụt
-- wording: diễn đạt lủng củng, dùng từ không hợp văn phong của chính tài liệu, lặp từ
+- wording: diễn đạt lủng củng, dùng từ không hợp văn phong của chính tài liệu
 - logic: mâu thuẫn, số liệu/mốc thời gian không khớp nhau trong cùng đoạn
 - missing: thiếu thông tin mà câu văn đang hứa sẽ nêu (ví dụ nêu "các nội dung sau" rồi bỏ trống)
+
+CHÍNH TẢ VÀ DẤU CÂU ĐÃ CÓ BỘ KHÁC LO - hai nhánh riêng chạy song song với bạn đã
+bắt lỗi chính tả, lặp từ, thừa/thiếu dấu cách. Đừng báo lại: báo trùng thì người
+đọc thấy cùng một lỗi hai lần, mà báo lệch thì họ không biết tin bên nào. Bạn lo
+phần còn lại - câu cú và mạch ý.
 
 TUYỆT ĐỐI KHÔNG nhận xét về phông chữ, cỡ chữ, lề, căn chỉnh, bố cục, thứ bậc mục
 hay cách đánh số - bạn không nhìn thấy những thứ đó, hệ thống khác đã kiểm rồi.
 
-Với mỗi lỗi, trường "quote" phải là đoạn văn bản NGUYÊN VĂN được sao chép đúng từng
-ký tự từ đoạn đã cho. Không diễn giải lại, không thêm bớt. Lỗi nào không trích dẫn
-được nguyên văn thì bỏ qua.
+────────────────────────────────────────────────────────────────────────────
+"quote" PHẢI NGẮN VÀ CHỈ ĐÚNG CHỖ SAI
+────────────────────────────────────────────────────────────────────────────
+Kết quả được dùng để KHOANH VÙNG ngay trên trang tài liệu. Trích cả đoạn thì cái
+khung ôm trọn đoạn đó, người đọc nhìn vào vẫn không biết chữ nào sai - đúng bằng
+lúc chưa soát.
 
-Nếu đoạn không có lỗi, trả về danh sách rỗng. Không bịa lỗi để có cái mà báo.
+- "quote": sao NGUYÊN VĂN, đúng từng ký tự, và chỉ lấy ĐOẠN NGẮN NHẤT đủ thấy chỗ
+  sai. TỐI ĐA 20 TỪ. Sai ở một chỗ nối câu thì trích mấy chữ quanh chỗ nối đó thôi.
+- "suggest": chỉ viết lại ĐÚNG phần đã trích. KHÔNG chép lại cả đoạn rồi sửa vài
+  chữ bên trong - đó là viết lại văn bản, không phải chỉ ra lỗi.
+- Một đoạn có ba chỗ sai thì trả BA mục ngắn, không gộp thành một mục dài.
+
+  ĐÚNG:  quote "trình tự thủ tục thực hiện"  suggest "trình tự, thủ tục thực hiện"
+  SAI:   quote cả đoạn 300 chữ               suggest cả đoạn đó viết lại
+
+KHÔNG BÁO những thứ sau - chúng là rác của khâu đọc file, không phải lỗi của người
+soạn: số trang, tiêu đề chạy ở đầu/cuối trang, dòng chỉ gồm vài con số rời rạc,
+dòng chấm để điền tay ("....... học sinh").
+
+ĐẶC BIỆT VỚI TỆP PDF: máy đọc file làm MẤT dấu xuống dòng, nên một danh sách nhiều
+gạch đầu dòng đến tay bạn thành một dòng dài chạy liền. Đó KHÔNG phải câu sai - đó
+là cách văn bản được đọc vào. Đừng báo lỗi mà cách sửa duy nhất là thêm dấu xuống
+dòng, tách danh sách, hay xuống dòng giữa các mục a) b) c).
+
+Nếu đoạn không có lỗi, trả về danh sách rỗng. Không bịa lỗi để có cái mà báo, và
+không báo chỉ vì câu có thể viết hay hơn - chỉ báo chỗ THẬT SỰ sai.
 
 Trả về đúng JSON:
-{"findings": [{"block_id": "P07", "type": "spelling", "quote": "bổ xung",
-               "suggest": "bổ sung", "severity": "error", "message": "Sai chính tả"}]}
+{"findings": [{"block_id": "P07", "type": "grammar", "quote": "Về việc rà soát nhân sự.",
+               "suggest": "Đơn vị rà soát nhân sự.", "severity": "warning",
+               "message": "Câu thiếu chủ ngữ và vị ngữ"}]}
+type chỉ nhận "grammar", "wording", "logic" hoặc "missing".
 severity chỉ nhận "error" hoặc "warning"."""
 
 DOC_REVIEW_USER = """Tài liệu: {title}
 
 Các đoạn cần soát:
+{blocks}"""
+
+DOC_SPELL_SYSTEM = """Bạn soát CHÍNH TẢ tiếng Việt trong văn bản hành chính.
+
+CHỈ soát chính tả - chữ viết sai. Không nhận xét ngữ pháp, cách diễn đạt, bố cục,
+phông chữ, dấu cách hay dấu câu: đã có bộ khác lo, bạn báo nữa là người đọc thấy
+cùng một chỗ hai lần.
+
+────────────────────────────────────────────────────────────────────────────
+BẪY LỚN NHẤT - ĐỌC KỸ TRƯỚC KHI BÁO BẤT CỨ LỖI NÀO
+────────────────────────────────────────────────────────────────────────────
+Tiếng Việt viết rời từng âm tiết, nên HAI TỪ ĐÚNG đứng cạnh nhau trông y hệt MỘT
+TỪ viết sai. Gần như mọi lần báo oan đều từ đây mà ra.
+
+Cách kiểm: thử đọc câu theo nghĩa hai chữ đó TÁCH RỜI nhau. Đọc xuôi và đúng ngữ
+pháp thì BỎ QUA, dù cụm đó trông giống hệt một lỗi quen thuộc.
+
+  "Đơn vị cũng cố gắng hoàn thành."        BỎ QUA   "cũng" + "cố gắng"
+  "Cần cũng cố tổ chức bộ máy."            BÁO      phải là "củng cố"
+  "Hồ sơ xuất khẩu đã được phê duyệt."     BỎ QUA   "hồ sơ" + "xuất khẩu"
+  "Do sơ xuất nên số liệu bị sai."         BÁO      phải là "sơ suất"
+  "Việc phân chia sẽ được thực hiện."      BỎ QUA   "chia" + "sẽ được"
+  "Xin chia sẽ với gia đình đồng chí."     BÁO      phải là "chia sẻ"
+  "Thành tựu chung của đơn vị năm 2026."   BỎ QUA   "thành tựu" + "chung"
+  "Tựu chung lại, kết quả đạt yêu cầu."    BÁO      phải là "tựu trung"
+  "Phòng giám sát nhập khẩu thiết bị."     BỎ QUA   "giám sát" + "nhập khẩu"
+  "Hai đơn vị sát nhập từ tháng 6."        BÁO      phải là "sáp nhập"
+  "Nhìn chung thực trạng đã cải thiện."    BỎ QUA   "nhìn chung" + "thực trạng"
+  "Cán bộ phải chung thực trong báo cáo."  BÁO      phải là "trung thực"
+  "Đơn vị điều chỉnh chu kỳ báo cáo."      BỎ QUA   "điều chỉnh" + "chu kỳ"
+  "Tác phong làm việc chỉnh chu."          BÁO      phải là "chỉn chu"
+  "Đánh giá khả năng nỗ lực của cán bộ."   BỎ QUA   "khả năng" + "nỗ lực"
+  "Đơn vị đã nổ lực hoàn thành."           BÁO      phải là "nỗ lực"
+
+KHI TÁCH, ĐỪNG CHỈ TÁCH ĐÔI HAI CHỮ BỊ NGHI. Chữ ĐẦU có thể thuộc về từ đứng
+TRƯỚC nó, chữ SAU có thể thuộc về từ đứng SAU nó. Không nhìn ra hai bên thì cụm
+nào tách đôi cũng thành "vô nghĩa", và bạn sẽ báo oan:
+
+  "Sau vụ nổ lực lượng cứu hộ đã có mặt."   ranh giới thật: "vụ nổ" | "lực lượng"
+      -> BỎ QUA. Tách thành "nổ" | "lực" là tách sai chỗ.
+  "Thuốc bổ xung quanh khu vực được phát."  ranh giới thật: "thuốc bổ" | "xung quanh"
+      -> BỎ QUA. Tách thành "bổ" | "xung" là tách sai chỗ.
+  "Lễ khai trương trình diễn công nghệ."    ranh giới thật: "khai trương" | "trình diễn"
+      -> BỎ QUA. Ở đây "khai trương" đã đúng sẵn, không có gì để sửa.
+
+────────────────────────────────────────────────────────────────────────────
+NHỮNG LỖI HAY GẶP NHẤT TRONG VĂN BẢN HÀNH CHÍNH
+────────────────────────────────────────────────────────────────────────────
+s/x       bổ xung→bổ sung, xử dụng→sử dụng, sai xót→sai sót, xuất xắc→xuất sắc,
+          đường xá→đường sá, kiểm xoát→kiểm soát, đề suất→đề xuất
+ch/tr     chuẩn đoán→chẩn đoán, trân thành→chân thành, bắt trước→bắt chước,
+          trương trình→chương trình, chuyền đạt→truyền đạt, chậm chễ→chậm trễ
+d/gi/r    dấu diếm→giấu giếm, dải quyết→giải quyết, dữ nguyên→giữ nguyên,
+          thúc dục→thúc giục, dư giả→dư dả
+hỏi/ngã   cũng cố→củng cố, nổ lực→nỗ lực, sữa chữa→sửa chữa, trãi qua→trải qua,
+          đãm bảo→đảm bảo, mâu thuẩn→mâu thuẫn, ảnh hưỡng→ảnh hưởng,
+          tài khoảng→tài khoản, lãng mạng→lãng mạn
+phụ âm    nghành→ngành, ngiên cứu→nghiên cứu, cập nhập→cập nhật,
+          nghiêm trúc→nghiêm túc, thẳn thắng→thẳng thắn, bàng hoàn→bàng hoàng
+
+Danh sách này để bạn biết loại lỗi cần để ý, KHÔNG phải để đối chiếu máy móc.
+Gặp cụm giống hệt mà ngữ cảnh cho thấy là hai từ riêng thì vẫn bỏ qua.
+
+────────────────────────────────────────────────────────────────────────────
+TUYỆT ĐỐI KHÔNG BÁO
+────────────────────────────────────────────────────────────────────────────
+- Tên riêng, tên cơ quan, tên người, địa danh. Viết thế nào là việc của họ.
+- Số hiệu, mã, viết tắt: "66/2025/NĐ-CP", "SGDĐT-TC", "V/v", "KT.", "TL.".
+- Biến thể đều được chấp nhận, KHÔNG phải lỗi: qui/quy, kí/ký, lí/lý, kĩ/kỹ,
+  hoà/hòa, tỉ/tỷ, cám ơn/cảm ơn, phản ánh/phản ảnh, hàng ngày/hằng ngày.
+- Từ chuyên ngành, từ địa phương, hoặc bất cứ từ nào bạn không thật sự chắc.
+- Chữ viết hoa đầu dòng, viết hoa cả cụm trong tiêu đề - đó là trình bày.
+
+────────────────────────────────────────────────────────────────────────────
+"quote" phải sao đúng TỪNG KÝ TỰ từ đoạn đã cho, và chỉ gồm ĐÚNG CỤM SAI - đừng
+trích cả câu. Không trích được nguyên văn thì bỏ lỗi đó đi.
+
+VỚI MỖI LỖI, TRƯỚC KHI BÁO, PHẢI LÀM PHÉP THỬ TÁCH RỜI VÀ KHAI RA:
+  "tach_roi": tìm ranh giới từ THẬT trong câu - nhớ nhìn cả chữ đứng trước và
+              chữ đứng sau - rồi ghi cách đọc ấy vào đây.
+              Ví dụ: "cũng | cố gắng → 'Đơn vị cũng cố gắng hoàn thành'"
+              Ví dụ: "vụ nổ | lực lượng → 'sau vụ nổ, lực lượng cứu hộ đã có mặt'"
+  "van_xuoi": true nếu cách đọc tách rời ở trên vẫn xuôi và đúng ngữ pháp,
+              false nếu tách ra thì câu vô nghĩa.
+Chỉ khi "van_xuoi" là false thì đó mới thật sự là lỗi. Cứ khai trung thực - mục
+nào "van_xuoi" true sẽ tự được bỏ, bạn không cần giấu nó đi.
+
+KHÔNG CHẮC THÌ BỎ QUA. Đoạn sạch thì trả danh sách rỗng; không bịa lỗi để có cái
+mà báo. Báo oan một lỗi tệ hơn bỏ sót một lỗi: người soạn bị chỉ sai một chỗ họ
+viết đúng sẽ mất lòng tin vào cả bản soát, kể cả những lỗi báo đúng.
+
+Trả về đúng JSON:
+{"findings": [
+  {"block_id": "P07", "quote": "bổ xung", "suggest": "bổ sung",
+   "tach_roi": "bổ | xung → 'đơn vị đã bổ xung nhân sự' tách ra thì vô nghĩa",
+   "van_xuoi": false, "message": "Sai chính tả, phải là “bổ sung”"},
+  {"block_id": "P09", "quote": "cũng cố", "suggest": "củng cố",
+   "tach_roi": "cũng | cố gắng → 'đơn vị cũng cố gắng hoàn thành' đọc xuôi",
+   "van_xuoi": true, "message": "Sai chính tả, phải là “củng cố”"}
+]}"""
+
+DOC_SPELL_USER = """Các đoạn cần soát chính tả:
+
 {blocks}"""
 
 DOC_CLASSIFY_SYSTEM = """Bạn phân loại tài liệu vừa nhận được.

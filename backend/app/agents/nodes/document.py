@@ -5,11 +5,17 @@ suy luận thì bước soát chữ nghĩa tìm được 0 lỗi, tắt thì tì
 lỗi thật ("Chức danh | Mức" thiếu chữ "lương"). Soi lỗi chi tiết cần bám sát mặt
 chữ, còn suy luận dài khiến model tự nói mình ra khỏi những phát hiện nhỏ.
 
-                       ┌─> rule_check   (tất định: dàn ý, đánh số, trình bày)
-    parse ─> dàn ý ────┼─> llm_review   (chữ nghĩa, theo lô, có verify)
+                       ┌─> rule_check   (tất định: dàn ý, thứ bậc mục, trình bày)
+                       ├─> chinh_ta     (tất định: từ điển + dấu cách, dấu câu)
+    parse ─> dàn ý ────┼─> llm_review   (ngữ pháp/diễn đạt/logic, theo lô, có verify)
                        ├─> classify     (định tuyến, dùng danh mục phòng ban)
                        └─> tasks        (tóm tắt + phân rã nhiệm vụ)
                                          └─> assemble -> ReviewResult
+
+Hai nguồn phát hiện lỗi KHÔNG được trộn làm một khi trả về: `chinh_ta` đối chiếu
+chuỗi nên sai là sai, còn `llm_review` là phán đoán. Mỗi phát hiện mang theo
+`source` để giao diện vẽ khung liền nét cho loại thứ nhất và khung đứt nét cho
+loại thứ hai - người ký cần biết chỗ nào máy chắc chắn, chỗ nào máy chỉ gợi ý.
 
 Tài liệu đưa vào có thể thuộc bất kỳ loại nào - rule engine chỉ soi cách tổ chức
 và cách trình bày, không đòi hỏi tệp phải theo mẫu văn bản nào.
@@ -32,10 +38,14 @@ from app.agents.prompts import (
     DOC_CLASSIFY_USER,
     DOC_REVIEW_SYSTEM,
     DOC_REVIEW_USER,
+    DOC_SPELL_SYSTEM,
+    DOC_SPELL_USER,
     DOC_TASKS_SYSTEM,
     DOC_TASKS_USER,
 )
 from app.core.config import get_settings
+from app.documents.chinh_ta import soat_chinh_ta
+from app.documents.giao_viec import goi_y_mau
 from app.documents.outline import build_outline
 from app.documents.parser import parse_document
 from app.documents.rules import RuleFinding, get_rule_engine
@@ -44,6 +54,17 @@ from app.services.llm import LLMError, get_llm
 logger = logging.getLogger(__name__)
 
 VALID_SEVERITIES = {"error", "warning"}
+
+# Trích dài hơn thế thì cái khung ôm trọn cả đoạn, người đọc nhìn vào vẫn không
+# biết chữ nào sai. Prompt đã dặn tối đa 20 từ; đây là chỗ thi hành, vì model để
+# mặc thì rất hay chép cả đoạn rồi "gợi ý" viết lại nguyên đoạn.
+MAX_QUOTE_CHARS = 240
+
+# Ít nhất hai chữ cái liền nhau (kể cả chữ có dấu) thì mới coi là có từ.
+_CO_TU = re.compile(r"[^\W\d_]{2,}")
+# "spelling" vẫn nhận được: prompt đã bảo LLM đừng soát chính tả, nhưng thỉnh
+# thoảng nó vẫn bắt được một lỗi ngoài từ điển. Giữ lại thì thà thừa còn hơn mất,
+# và `source: "llm"` đã nói rõ đó là gợi ý chưa chắc chắn.
 VALID_TYPES = {"spelling", "grammar", "wording", "logic", "missing"}
 
 
@@ -93,7 +114,27 @@ async def rule_check_node(state: dict[str, Any]) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# 3. LLM soát chữ nghĩa - chia lô, có xác minh trích dẫn
+# 2b. Chính tả tất định - từ điển cặp sai/đúng, dấu cách, dấu câu, lặp từ
+# --------------------------------------------------------------------------- #
+async def chinh_ta_node(state: dict[str, Any]) -> dict[str, Any]:
+    """Chạy trước LLM và chiếm hẳn phần chính tả.
+
+    Chỉ là đối chiếu chuỗi nên tính bằng mili giây; đặt thành node riêng không
+    phải để chạy song song cho nhanh mà để một nhánh hỏng không kéo nhánh kia
+    theo, và để chỗ trả về của nó là một khoá state riêng như mọi nhánh khác.
+    """
+    if state.get("error") or "outline" not in state:
+        return {}
+    try:
+        findings = soat_chinh_ta(state["outline"].blocks)
+    except Exception as exc:  # noqa: BLE001 - mất phần chính tả còn hơn mất cả bản soát
+        logger.warning("Soát chính tả thất bại: %s", exc)
+        return {"typo_findings": []}
+    return {"typo_findings": [f.as_dict() for f in findings]}
+
+
+# --------------------------------------------------------------------------- #
+# 3b. LLM soát chữ nghĩa - ngữ pháp, diễn đạt, logic (KHÔNG chính tả)
 # --------------------------------------------------------------------------- #
 def build_review_batches(blocks, max_chars: int = 2400) -> list[list]:
     """Gom các khối nội dung thành lô vừa ngữ cảnh.
@@ -116,6 +157,23 @@ def build_review_batches(blocks, max_chars: int = 2400) -> list[list]:
     return batches
 
 
+def _tim_span(quote: str, text: str) -> tuple[int, int] | None:
+    """Vị trí ký tự của câu trích trong khối, bỏ qua khác biệt khoảng trắng.
+
+    Giao diện khoanh vùng lỗi ngay trên tài liệu, mà muốn khoanh thì phải biết
+    lỗi bắt đầu và kết thúc ở ký tự thứ mấy - câu trích không thôi thì giao diện
+    phải tự dò lại, và dò trượt ở đúng chỗ LLM đổi xuống dòng thành dấu cách.
+    Dung sai ở đây giống hệt dung sai của `_normalize`, nên tìm được span thì
+    chắc chắn khớp với kết quả xác minh.
+    """
+    parts = quote.split()
+    if not parts:
+        return None
+    pattern = re.compile(r"\s+".join(re.escape(p) for p in parts), re.IGNORECASE)
+    match = pattern.search(text)
+    return (match.start(), match.end()) if match else None
+
+
 def verify_findings(raw_findings: list[dict[str, Any]], blocks) -> list[dict[str, Any]]:
     """Giữ lại phát hiện trích dẫn được nguyên văn; phần còn lại là bịa.
 
@@ -128,6 +186,26 @@ def verify_findings(raw_findings: list[dict[str, Any]], blocks) -> list[dict[str
     for finding in raw_findings:
         quote = str(finding.get("quote", "")).strip()
         if not quote:
+            continue
+        if len(quote) > MAX_QUOTE_CHARS:
+            logger.debug("Bỏ phát hiện trích quá dài (%d ký tự): %r…", len(quote), quote[:60])
+            continue
+        # Không nói được sai ở đâu mà cũng không đưa được cách sửa thì phát hiện đó
+        # rỗng - hay gặp trên rác của khâu đọc file ("1516 11" ở chân trang).
+        suggest = str(finding.get("suggest", "")).strip()
+        if not str(finding.get("message", "")).strip() and not suggest:
+            continue
+        # Trích không có lấy một từ nào - chỉ số trang, số hiệu rời, dấu chấm điền
+        # tay. Đó là rác của khâu đọc file, không phải lỗi của người soạn văn bản.
+        if not _CO_TU.search(quote):
+            logger.debug("Bỏ phát hiện trên mẩu không có chữ: %r", quote[:40])
+            continue
+        # Sửa xong vẫn y nguyên chữ cũ, chỉ khác khoảng trắng. Gặp liên tục trên
+        # PDF: khâu đọc file làm mất dấu xuống dòng, model tưởng là câu chạy liền
+        # rồi "sửa" bằng cách thêm xuống dòng vào. Đó là vá lỗi của máy đọc file,
+        # không phải lỗi trong văn bản gốc.
+        if suggest and _normalize(suggest) == _normalize(quote):
+            logger.debug("Bỏ phát hiện chỉ đổi khoảng trắng: %r", quote[:40])
             continue
 
         block_id = str(finding.get("block_id", "")).strip()
@@ -143,6 +221,7 @@ def verify_findings(raw_findings: list[dict[str, Any]], blocks) -> list[dict[str
 
         finding_type = str(finding.get("type", "wording"))
         severity = str(finding.get("severity", "warning"))
+        span = _tim_span(quote, by_id[target])
         verified.append({
             "block_id": target,
             "type": finding_type if finding_type in VALID_TYPES else "wording",
@@ -150,8 +229,108 @@ def verify_findings(raw_findings: list[dict[str, Any]], blocks) -> list[dict[str
             "suggest": str(finding.get("suggest", "")).strip(),
             "message": str(finding.get("message", "")).strip(),
             "severity": severity if severity in VALID_SEVERITIES else "warning",
+            # Span có thể None khi câu trích khớp kiểu "chuẩn hoá" mà không khớp
+            # kiểu "khoảng trắng co giãn". Hiếm, và giao diện đã có đường lùi:
+            # không có span thì tô cả khối thay vì tô đúng đoạn.
+            "start": span[0] if span else None,
+            "end": span[1] if span else None,
+            "source": "llm",
         })
     return verified
+
+
+# --------------------------------------------------------------------------- #
+# 3a. LLM soát chính tả - pass riêng, không gộp với soát chữ nghĩa
+# --------------------------------------------------------------------------- #
+# Lô nhỏ hơn lô của nhánh chữ nghĩa: soi mặt chữ cần bám sát từng từ, đưa cả trang
+# thì model đọc lướt và bỏ sót giữa đoạn.
+SPELL_BATCH_CHARS = 1600
+
+
+def loc_tach_roi(raw: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Bỏ những lỗi mà chính model khai là "tách rời đọc vẫn xuôi".
+
+    Đây là van chặn chính của nhánh này. Gần như mọi lần báo oan chính tả tiếng
+    Việt đều cùng một dạng: hai TỪ ĐÚNG đứng cạnh nhau trông y hệt một từ viết sai
+    ("đơn vị cũng cố gắng", "hồ sơ xuất khẩu"). Prompt bắt model đọc lại câu theo
+    nghĩa tách rời rồi khai kết quả vào `van_xuoi`; ở đây chỉ việc thi hành.
+
+    Bắt model KHAI ra thay vì tự lọc trong đầu là có chủ ý: phải viết phép thử ra
+    thì mới thật sự làm phép thử, và khi nó báo oan thì đọc `tach_roi` là biết ngay
+    nó nghĩ sai ở đâu.
+    """
+    giu, bo = [], 0
+    for f in raw:
+        # Sửa thành y nguyên chữ cũ thì không phải lỗi, chỉ là model lỡ tay báo một
+        # chỗ rồi không nghĩ ra sửa gì. Gặp thật: "khai trương" -> "khai trương".
+        quote, suggest = str(f.get("quote", "")), str(f.get("suggest", ""))
+        if suggest and _normalize(suggest) == _normalize(quote):
+            logger.debug("Bỏ lỗi chính tả không đổi gì: %r", quote)
+            bo += 1
+            continue
+        if bool(f.get("van_xuoi")):
+            logger.debug("Bỏ lỗi chính tả tách rời vẫn xuôi: %r (%s)",
+                         f.get("quote"), f.get("tach_roi"))
+            bo += 1
+            continue
+        giu.append({**f, "type": "spelling", "severity": "error"})
+    return giu, bo
+
+
+async def chinh_ta_llm_node(state: dict[str, Any]) -> dict[str, Any]:
+    """Soát chính tả bằng LLM, tách hẳn khỏi nhánh soát ngữ pháp/diễn đạt.
+
+    Vì sao không nhét chung vào một prompt với ngữ pháp và logic: prompt chính tả
+    phải dành gần hết chỗ cho bẫy "hai từ đứng cạnh nhau" cùng một bảng lỗi hay
+    gặp; trộn vào một prompt lo năm việc thì phần đó bị loãng, mà đó đúng là phần
+    quyết định bản soát có báo oan hay không.
+
+    Mọi phát hiện vẫn phải qua `verify_findings`: trích được nguyên văn mới được
+    giữ, và kèm luôn vị trí ký tự cho giao diện khoanh vùng.
+    """
+    if state.get("error") or "outline" not in state:
+        return {}
+
+    blocks = state["outline"].blocks
+    if not blocks:
+        return {"spell_findings": []}
+
+    cfg = get_settings()
+    llm = get_llm()
+    batches = build_review_batches(blocks, max_chars=SPELL_BATCH_CHARS)
+    bo_tong = 0
+
+    async def soat(batch) -> list[dict[str, Any]]:
+        nonlocal bo_tong
+        rendered = "\n\n".join(f"[{b.id}] {b.text}" for b in batch)
+        try:
+            data = await llm.chat_json(
+                [
+                    {"role": "system", "content": DOC_SPELL_SYSTEM},
+                    {"role": "user", "content": DOC_SPELL_USER.format(blocks=rendered)},
+                ],
+                model=cfg.utility_model, temperature=0.0, max_tokens=1200,
+                thinking=False,
+            )
+        except (LLMError, Exception) as exc:  # noqa: BLE001
+            logger.warning("Soát chính tả lô %s thất bại: %s", [b.id for b in batch], exc)
+            return []
+        giu, bo = loc_tach_roi(data.get("findings") or [])
+        bo_tong += bo
+        return verify_findings(giu, batch)
+
+    started = time.perf_counter()
+    results = await asyncio.gather(*(soat(batch) for batch in batches))
+    findings = [item for group in results for item in group]
+
+    logger.info("Soát chính tả: %d lỗi giữ lại, %d bỏ vì tách rời vẫn xuôi",
+                len(findings), bo_tong)
+    return {
+        "spell_findings": findings,
+        "trace": {**state.get("trace", {}),
+                  "spell_batches": len(batches), "spell_bo_tach_roi": bo_tong,
+                  "spell_ms": round((time.perf_counter() - started) * 1000, 1)},
+    }
 
 
 async def llm_review_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -355,6 +534,12 @@ def _rule_findings_payload(findings: list[RuleFinding]) -> list[dict[str, Any]]:
 # chia mục thế nào, không cần từng mục con của một tài liệu 200 trang.
 MAX_OUTLINE_ITEMS = 40
 
+# Giao diện dựng lại tài liệu từ đúng những khối này. Chặn hai đầu để một tệp 300
+# trang không biến phản hồi JSON thành vài chục MB; vượt ngưỡng thì cắt và NÓI RÕ
+# là đã cắt, chứ không lặng lẽ trả về nửa tài liệu.
+MAX_VIEW_BLOCKS = 1200
+MAX_VIEW_CHARS = 400_000
+
 
 def _outline_payload(outline: Any) -> list[dict[str, Any]]:
     if outline is None:
@@ -363,11 +548,110 @@ def _outline_payload(outline: Any) -> list[dict[str, Any]]:
             for h in outline.headings[:MAX_OUTLINE_ITEMS]]
 
 
+def _blocks_payload(structure: Any) -> tuple[list[dict[str, Any]], bool]:
+    """Nội dung + định dạng thật của từng khối, đủ để giao diện dựng lại trang.
+
+    Gửi cả những thuộc tính rule engine dùng để kết luận (phông, cỡ, canh lề):
+    khoanh vùng một lỗi "lạc phông" mà trang dựng lại vẫn một phông thì người đọc
+    không thấy được cái sai, và bản dựng lại mất luôn lý do tồn tại.
+
+    `bbox` chỉ có ở PDF và chỉ để DỰNG LẠI, không để kết luận. PDF không lưu canh
+    lề của đoạn (`alignment` luôn None), nên bản dựng lại đẩy hết quốc hiệu và tiêu
+    đề về sát trái - trông không còn giống văn bản gốc. Có toạ độ thì giao diện suy
+    ra được đoạn nào căn giữa, đoạn nào căn phải.
+
+    Cố tình KHÔNG suy ngược vào `alignment` ở đây: rule engine đo sự nhất quán của
+    canh lề, cho nó ăn số liệu suy đoán là tự tạo ra một lớp lỗi oan mới trên đúng
+    loại tệp không kiểm được. Suy để vẽ thì được, suy để phán thì không.
+    """
+    if structure is None:
+        return [], False
+
+    payload: list[dict[str, Any]] = []
+    total = 0
+    for block in structure.blocks:
+        if len(payload) >= MAX_VIEW_BLOCKS or total >= MAX_VIEW_CHARS:
+            return payload, True
+        payload.append({
+            "id": block.id, "text": block.text, "kind": block.kind,
+            "font": block.font, "size_pt": block.size_pt, "bold": block.bold,
+            "alignment": block.alignment, "line_spacing": block.line_spacing,
+            "space_before_pt": block.space_before_pt,
+            "space_after_pt": block.space_after_pt,
+            "style": block.style, "page": block.page,
+            "bbox": list(block.bbox) if block.bbox else None,
+        })
+        total += len(block.text)
+    return payload, False
+
+
+def _geometry_payload(structure: Any) -> dict[str, Any] | None:
+    geo = getattr(structure, "geometry", None)
+    if geo is None:
+        return None
+    return {
+        "width_mm": round(geo.width_mm, 1), "height_mm": round(geo.height_mm, 1),
+        "top_mm": round(geo.top_mm, 1), "bottom_mm": round(geo.bottom_mm, 1),
+        "left_mm": round(geo.left_mm, 1), "right_mm": round(geo.right_mm, 1),
+        "measured": geo.measured,
+    }
+
+
+def _giao_nhau(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    """Hai phát hiện có chạm nhau trên cùng một đoạn chữ không."""
+    if a["block_id"] != b["block_id"]:
+        return False
+    if a.get("start") is None or b.get("start") is None:
+        return False
+    return a["start"] < b["end"] and b["start"] < a["end"]
+
+
+def gop_phat_hien(
+    typo: list[dict[str, Any]], llm: list[dict[str, Any]], thu_tu: list[str]
+) -> list[dict[str, Any]]:
+    """Một danh sách duy nhất, xếp theo đúng thứ tự đọc của tài liệu.
+
+    Phát hiện của LLM chồng lên phát hiện tất định thì BỎ cái của LLM: cùng một
+    chỗ chữ mà hiện hai khung với hai lời giải thích khác nhau thì người đọc phải
+    tự xử lấy, trong khi bên tất định đã chắc chắn đúng.
+    """
+    giu = [f for f in llm if not any(_giao_nhau(f, t) for t in typo)]
+    if len(giu) < len(llm):
+        logger.debug("Bỏ %d phát hiện LLM trùng chỗ với lớp tất định", len(llm) - len(giu))
+
+    # Hai nhánh LLM cũng chồng lên nhau: nhánh chính tả báo "Công căn", nhánh chữ
+    # nghĩa báo "khoản 2 Công căn này" - cùng một lỗi, hai khung lồng nhau. Giữ
+    # cái HẸP hơn: nó chỉ đúng chữ sai, còn cái rộng ôm thêm chữ không liên quan.
+    # Xét từ hẹp tới rộng nên cái hẹp luôn được vào trước.
+    khong_chong: list[dict[str, Any]] = []
+    for f in sorted(giu, key=lambda x: (x["end"] - x["start"]) if x.get("start") is not None else 10**6):
+        if any(_giao_nhau(f, g) for g in khong_chong):
+            continue
+        khong_chong.append(f)
+    if len(khong_chong) < len(giu):
+        logger.debug("Bỏ %d phát hiện LLM chồng lên nhau", len(giu) - len(khong_chong))
+    giu = khong_chong
+
+    vi_tri = {block_id: i for i, block_id in enumerate(thu_tu)}
+    return sorted(
+        typo + giu,
+        key=lambda f: (vi_tri.get(f["block_id"], len(vi_tri)),
+                       f["start"] if f.get("start") is not None else -1),
+    )
+
+
+def _dem(findings: list[dict[str, Any]], muc: str) -> int:
+    return sum(1 for f in findings if f.get("severity") == muc)
+
+
 async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
     structure = state.get("structure")
     outline = state.get("outline")
     rule_result = state.get("rule_result")
-    llm_findings = state.get("llm_findings") or []
+    # Chính tả (LLM) đi cùng phe với soát chữ nghĩa: cùng là phán đoán, cùng phải
+    # trích dẫn được, cùng vẽ khung đứt nét.
+    llm_findings = (state.get("llm_findings") or []) + (state.get("spell_findings") or [])
+    typo_findings = state.get("typo_findings") or []
 
     rule_payload: dict[str, Any] = {"status": "skipped", "findings": [], "passed": [],
                                     "skipped": [], "reason": state.get("error", "")}
@@ -381,18 +665,19 @@ async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
             "rule_set": rule_result.rule_set,
         }
 
+    thu_tu = [b.id for b in outline.blocks] if outline else []
+    findings = gop_phat_hien(typo_findings, llm_findings, thu_tu)
+
     # Gom lỗi chữ nghĩa theo khối: người đọc soát từng đoạn một, không đọc một
-    # danh sách phẳng rồi tự nhặt xem lỗi nào thuộc đoạn nào.
+    # danh sách phẳng rồi tự nhặt xem lỗi nào thuộc đoạn nào. Giữ khoá cũ
+    # `llm_review` để bên đã tích hợp không vỡ; giao diện mới đọc `findings`.
     by_block: dict[str, list[dict[str, Any]]] = {}
-    for finding in llm_findings:
+    for finding in findings:
         by_block.setdefault(finding["block_id"], []).append(finding)
 
-    errors = (rule_result.error_count if rule_result else 0) + sum(
-        1 for f in llm_findings if f["severity"] == "error"
-    )
-    warnings = (rule_result.warning_count if rule_result else 0) + sum(
-        1 for f in llm_findings if f["severity"] == "warning"
-    )
+    blocks, cat_bot = _blocks_payload(structure)
+    errors = (rule_result.error_count if rule_result else 0) + _dem(findings, "error")
+    warnings = (rule_result.warning_count if rule_result else 0) + _dem(findings, "warning")
 
     return {
         "result": {
@@ -403,7 +688,15 @@ async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
                 "has_format_info": structure.has_format_info if structure else False,
                 "title": outline.title.text if outline and outline.title else "",
                 "outline": _outline_payload(outline),
+                "default_font": getattr(structure, "default_font", None),
+                "default_size_pt": getattr(structure, "default_size_pt", None),
+                "geometry": _geometry_payload(structure),
             },
+            # Nội dung tài liệu để giao diện dựng lại trang và khoanh vùng lỗi.
+            "blocks": blocks,
+            "blocks_truncated": cat_bot,
+            # Danh sách phẳng, có vị trí ký tự và `source` - thứ bản dựng lại dùng.
+            "findings": findings,
             "rule_check": rule_payload,
             "llm_review": by_block,
             "classification": state.get("classification"),
@@ -412,7 +705,20 @@ async def assemble_node(state: dict[str, Any]) -> dict[str, Any]:
             "all_refs": state.get("all_refs", []),
             "deadline": state.get("deadline"),
             "tasks": state.get("tasks", []),
-            "totals": {"errors": errors, "warnings": warnings},
+            # Mẫu văn bản giao việc nên chọn sẵn. Chỉ là giá trị mặc định - người
+            # dùng đổi được, và đổi rồi thì không ai phải giải thích vì sao.
+            "giao_viec_goi_y": goi_y_mau(
+                (state.get("classification") or {}).get("document_type", "")),
+            # Đếm theo `source` của phát hiện CÒN LẠI, không theo độ dài danh sách
+            # nguồn: ứng viên bị cổng gác loại đã biến mất, còn ứng viên chưa duyệt
+            # được thì đã hạ xuống "llm" - đếm theo nguồn thì hai cột luôn khớp với
+            # số khung liền nét và khung đứt nét người dùng đang nhìn thấy.
+            "totals": {
+                "errors": errors,
+                "warnings": warnings,
+                "chac_chan": len([f for f in findings if f.get("source") == "rule"]),
+                "goi_y": len([f for f in findings if f.get("source") == "llm"]),
+            },
             "error": state.get("error", ""),
         }
     }

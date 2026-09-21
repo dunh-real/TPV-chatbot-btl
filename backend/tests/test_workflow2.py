@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 from app.agents.nodes import document as doc_nodes
+from app.documents.chinh_ta import load_chinh_ta, soat_chinh_ta
 from app.documents.outline import build_outline, parse_marker
 from app.documents.parser import Block, DocumentStructure, PageGeometry, parse_document
 from app.documents.rules import RuleEngine, load_rules
@@ -271,8 +272,35 @@ def test_nhay_cap_tieu_de_bi_bao(huong_dan):
     assert nhay and nhay[0].actual == "cấp 4" and nhay[0].expected == "cấp 3"
 
 
-def test_danh_so_dut_quang_bi_bao(huong_dan):
+# --------------------------------------------------------- đánh số: ĐÃ TẮT -- #
+# Bộ tiêu chí mặc định không còn kiểm tính liên tục của đánh số: nó phải đoán kiểu
+# đánh số trước khi so được, và đoán sai thì báo oan đúng vào văn bản soạn chuẩn.
+# Lý do đầy đủ nằm trong `config/rules/chung.yaml`.
+#
+# Code `_check_numbering` vẫn còn và vẫn được kiểm ở đây qua một bộ tiêu chí bật
+# tay - để bật lại được mà không phải viết lại từ đầu.
+
+NUMBERING_ON = {"structure": {"numbering": {"severity": "warning",
+                                            "message": "Đánh số mục không liên tục"}}}
+
+
+def _check_numbering(path):
+    structure = parse_document(path)
+    return RuleEngine(rules=NUMBERING_ON, name="danh_so").check(structure)
+
+
+def test_bo_tieu_chi_mac_dinh_khong_con_kiem_danh_so(huong_dan):
+    """Văn bản có đánh số đứt quãng thật cũng không bị bộ mặc định kêu nữa."""
     _, result = _check(huong_dan)
+
+    assert not [f for f in result.findings if f.rule == "structure.numbering"]
+    assert "structure.numbering" not in result.passed
+    # Cũng không kể nó vào "chưa kiểm được": bộ này vốn không có tiêu chí đó.
+    assert not [s for s in result.skipped if s.startswith("structure.numbering")]
+
+
+def test_danh_so_dut_quang_bi_bao_khi_bat_tay(huong_dan):
+    result = _check_numbering(huong_dan)
     so = [f for f in result.findings if f.rule == "structure.numbering"]
 
     assert {f.actual for f in so} >= {"4.", "d)"}
@@ -283,9 +311,8 @@ def test_moi_kieu_danh_so_la_mot_day_rieng(tmp_path):
     path = tmp_path / "vb.md"
     path.write_text("TÀI LIỆU\n\n1. Mục một\n\na) Ý nhỏ\n\nb) Ý nhỏ nữa\n\n2. Mục hai",
                     encoding="utf-8")
-    _, result = _check(path)
 
-    assert "structure.numbering" in result.passed
+    assert "structure.numbering" in _check_numbering(path).passed
 
 
 def test_danh_sach_bo_qua_chu_d_khong_bi_bao(tmp_path):
@@ -293,9 +320,32 @@ def test_danh_sach_bo_qua_chu_d_khong_bi_bao(tmp_path):
     path = tmp_path / "vb.md"
     path.write_text("TÀI LIỆU\n\n" + "\n\n".join(f"{c}) Ý thứ {c}" for c in "abcde"),
                     encoding="utf-8")
-    _, result = _check(path)
 
-    assert "structure.numbering" in result.passed
+    assert "structure.numbering" in _check_numbering(path).passed
+
+
+def test_bang_chu_cai_khong_co_f(tmp_path):
+    """"... d) đ) e) g) h)" là dãy ĐÚNG chuẩn - tiếng Việt không có chữ "f"."""
+    path = tmp_path / "vb.md"
+    path.write_text("TÀI LIỆU\n\n" + "\n\n".join(
+        f"{c}) Ý thứ {c}" for c in ["a", "b", "c", "d", "đ", "e", "g", "h"]), encoding="utf-8")
+
+    assert "structure.numbering" in _check_numbering(path).passed
+
+
+def test_chu_in_hoa_trung_so_la_ma_van_doc_duoc(tmp_path):
+    """"C." và "D." khớp pattern La Mã trước; bỏ chúng đi thì dãy A-E trông như đứt."""
+    for chu in "CDM":
+        marker = parse_marker(f"{chu}. Nội dung mục")
+        assert marker is not None and marker.kind == "letter"
+
+    path = tmp_path / "vb.md"
+    path.write_text("TÀI LIỆU\n\n" + "\n\n".join(
+        f"{c}. Phần {c}" for c in ["A", "B", "C", "D", "Đ", "E"]), encoding="utf-8")
+
+    outline = build_outline(parse_document(path))
+    assert [h.marker for h in outline.headings] == ["A.", "B.", "C.", "D.", "Đ.", "E."]
+    assert "structure.numbering" in _check_numbering(path).passed
 
 
 def test_muc_rong_va_trung_ten_bi_bao(huong_dan):
@@ -511,6 +561,226 @@ def test_tieu_chi_tat_bang_cach_bo_khoa_trong_yaml():
     assert result.skipped == []
 
 
+# ------------------------------------------- chính tả: lớp tất định ------- #
+# Lớp này thay LLM ở phần chính tả. Tiêu chí nhận việc: cái gì nó báo thì phải
+# đúng - bỏ sót còn chữa được bằng cách thêm một dòng vào YAML, chứ báo oan thì
+# người dùng mất lòng tin vào cả bản soát.
+
+def _typo(*texts):
+    return soat_chinh_ta([Block(id=f"P{i:02}", text=t) for i, t in enumerate(texts)])
+
+
+def test_so_lieu_viet_dung_khong_bi_bao():
+    """Chỗ dễ báo oan nhất: dấu phẩy thập phân, giờ giấc, ngày tháng."""
+    assert _typo("Chi phí 1,5 triệu đồng, họp lúc 12:30 ngày 5/9/2026.") == []
+
+
+def test_dinh_sau_ngay_thang_van_bi_bao():
+    """Nhưng "2026,kèm" thì chữ số bên trái mà CHỮ bên phải - dính thật."""
+    found = _typo("Báo cáo trước ngày 20/9/2026,kèm số liệu.")
+
+    assert len(found) == 1 and found[0].type == "punctuation"
+
+
+def test_nua_ngoac_cua_so_thu_tu_khong_phai_ngoac_le(tmp_path):
+    """"a)" "b)" "1)" là cách đánh số chuẩn, không phải ngoặc đơn thiếu vế mở."""
+    assert _typo("a) Rà soát nhân sự;") == []
+    assert _typo("Nội dung gồm: 1) rà soát; 2) thống kê; 3) báo cáo.") == []
+    # Ngoặc thật vẫn phải đóng.
+    assert [f.type for f in _typo("Cử cán bộ (ghi rõ họ tên.")] == ["punctuation"]
+    # Và ")" của một ngoặc đang mở thì đóng đúng ngoặc đó, không bị nhầm là số thứ tự.
+    assert _typo("Chi tiết (xem mục 1) đã nêu ở trên.") == []
+
+
+def test_tu_lay_doi_viet_roi_khong_phai_lap_tu():
+    assert _typo("Đơn vị luôn luôn chủ động triển khai.") == []
+    assert [f.type for f in _typo("Tổng hợp các các đề xuất.")] == ["duplicate"]
+
+
+def test_khoi_bang_khong_bi_do_dau_cach():
+    """Ô bảng căn chỉnh bằng dấu cách, và hai ô trùng nội dung là chuyện thường."""
+    bang = Block(id="T00", kind="table", text="Chức danh    Mức lương\nNhân viên    Nhân viên")
+
+    assert soat_chinh_ta([bang]) == []
+
+
+def test_van_ban_soan_dung_thi_khong_co_loi_nao():
+    """Van chặn quan trọng nhất: văn bản sạch phải ra kết quả sạch."""
+    assert _typo(
+        "Căn cứ Kế hoạch công tác năm 2026 của Ban Giám đốc;",
+        "Các đơn vị nghiêm túc triển khai, bổ sung nhân sự và sử dụng hiệu quả "
+        "trang thiết bị được giao.",
+        "Báo cáo gửi về Phòng Hành chính quản trị trước ngày 20/9/2026.",
+    ) == []
+
+
+def test_thieu_file_cau_hinh_thi_bo_qua_chu_khong_vo(tmp_path):
+    """Mất YAML thì phần chính tả im lặng, không kéo cả bản soát xuống."""
+    assert soat_chinh_ta([Block(id="P00", text="bổ xung")],
+                         rules=load_chinh_ta(str(tmp_path / "khong-co.yaml"))) == []
+
+
+# ------------------------------------ chính tả: LLM soát, có phép thử tách rời - #
+# Bảng cặp sai->đúng dò bằng từ điển đã bị bỏ: nó không kết luận được một mình.
+# Tiếng Việt viết rời từng âm tiết nên hai TỪ ĐÚNG đứng cạnh nhau trông y hệt một
+# từ viết sai - "Đơn vị CŨNG CỐ gắng hoàn thành", "HỒ SƠ XUẤT khẩu đã duyệt".
+# Nay LLM soát chính tả, và prompt bắt nó tự làm phép thử tách rời rồi KHAI ra;
+# `loc_tach_roi` thi hành lời khai đó. Các test dưới canh đúng cái van ấy.
+
+def test_bo_loi_ma_model_khai_la_tach_roi_van_xuoi():
+    giu, bo = doc_nodes.loc_tach_roi([
+        {"quote": "cũng cố", "suggest": "củng cố", "van_xuoi": True,
+         "tach_roi": "cũng | cố gắng → đọc xuôi"},
+        {"quote": "bổ xung", "suggest": "bổ sung", "van_xuoi": False,
+         "tach_roi": "bổ | xung → vô nghĩa"},
+    ])
+
+    assert bo == 1
+    assert [f["quote"] for f in giu] == ["bổ xung"]
+
+
+def test_loi_giu_lai_duoc_gan_dung_loai_va_muc_do():
+    """Nhánh này chỉ sinh lỗi chính tả, và chính tả sai là sai - luôn mức error."""
+    giu, _ = doc_nodes.loc_tach_roi([{"quote": "sữa chữa", "suggest": "sửa chữa"}])
+
+    assert giu[0]["type"] == "spelling" and giu[0]["severity"] == "error"
+
+
+def test_thieu_truong_van_xuoi_thi_van_giu():
+    """Model quên khai thì đừng nuốt lỗi - còn có van trích dẫn chặn phía sau."""
+    giu, bo = doc_nodes.loc_tach_roi([{"quote": "nghành", "suggest": "ngành"}])
+
+    assert bo == 0 and len(giu) == 1
+
+
+class SpellLLM:
+    """LLM giả cho nhánh chính tả; `tra` là JSON model trả về cho mỗi lô."""
+
+    def __init__(self, tra=None, hong=False) -> None:
+        self.tra = tra if tra is not None else {"findings": []}
+        self.hong = hong
+        self.messages = None
+
+    async def chat_json(self, messages, **kwargs):
+        self.messages = messages
+        if self.hong:
+            raise RuntimeError("vLLM không phản hồi")
+        return self.tra
+
+
+def _state_chinh_ta(text: str):
+    structure = DocumentStructure(blocks=[Block(id="P00", text=text)], source_format="text")
+    return {"outline": build_outline(structure), "structure": structure}
+
+
+async def test_nhanh_chinh_ta_giu_loi_trich_dan_duoc_kem_vi_tri(monkeypatch):
+    cau = "Đơn vị đã bổ xung nhân sự trong tháng 9."
+    llm = SpellLLM({"findings": [
+        {"block_id": "P00", "quote": "bổ xung", "suggest": "bổ sung",
+         "van_xuoi": False, "message": "Sai chính tả"}]})
+    monkeypatch.setattr(doc_nodes, "get_llm", lambda: llm)
+
+    ra = await doc_nodes.chinh_ta_llm_node(_state_chinh_ta(cau))
+    loi = ra["spell_findings"][0]
+
+    assert loi["type"] == "spelling" and loi["source"] == "llm"
+    assert cau[loi["start"]:loi["end"]] == "bổ xung"
+
+
+async def test_nhanh_chinh_ta_bo_loi_bia_khong_trich_dan_duoc(monkeypatch):
+    """Van chống ảo giác vẫn giữ nguyên: không trích được nguyên văn thì bỏ."""
+    llm = SpellLLM({"findings": [
+        {"block_id": "P00", "quote": "câu hoàn toàn không có trong văn bản",
+         "suggest": "x", "van_xuoi": False}]})
+    monkeypatch.setattr(doc_nodes, "get_llm", lambda: llm)
+
+    ra = await doc_nodes.chinh_ta_llm_node(_state_chinh_ta("Đơn vị đã hoàn thành."))
+
+    assert ra["spell_findings"] == []
+
+
+async def test_nhanh_chinh_ta_bo_loi_tach_roi_van_xuoi(monkeypatch):
+    """"Đơn vị cũng cố gắng..." là câu ĐÚNG - model khai xuôi thì phải biến mất."""
+    llm = SpellLLM({"findings": [
+        {"block_id": "P00", "quote": "cũng cố", "suggest": "củng cố",
+         "tach_roi": "cũng | cố gắng", "van_xuoi": True}]})
+    monkeypatch.setattr(doc_nodes, "get_llm", lambda: llm)
+
+    ra = await doc_nodes.chinh_ta_llm_node(
+        _state_chinh_ta("Đơn vị cũng cố gắng hoàn thành nhiệm vụ."))
+
+    assert ra["spell_findings"] == []
+    assert ra["trace"]["spell_bo_tach_roi"] == 1
+
+
+async def test_mat_llm_thi_mat_phan_chinh_ta_chu_khong_vo_ca_ban_soat(monkeypatch):
+    monkeypatch.setattr(doc_nodes, "get_llm", lambda: SpellLLM(hong=True))
+
+    ra = await doc_nodes.chinh_ta_llm_node(_state_chinh_ta("Đơn vị đã bổ xung nhân sự."))
+
+    assert ra["spell_findings"] == []
+
+
+async def test_prompt_chinh_ta_mang_theo_bay_hai_tu_dung_canh_nhau(monkeypatch):
+    """Phần dạy về bẫy chính là thứ quyết định có báo oan hay không - đừng để rơi."""
+    llm = SpellLLM()
+    monkeypatch.setattr(doc_nodes, "get_llm", lambda: llm)
+    await doc_nodes.chinh_ta_llm_node(_state_chinh_ta("Đơn vị đã hoàn thành."))
+
+    system = llm.messages[0]["content"]
+    assert "TÁCH RỜI" in system
+    assert "cũng cố gắng" in system and "hồ sơ xuất khẩu" in system.lower()
+    assert "van_xuoi" in system
+    # Biến thể được chấp nhận không được coi là lỗi.
+    assert "qui/quy" in system
+    # Nhánh này KHÔNG được lấn sang việc của bộ tất định.
+    assert "dấu cách" in system
+
+
+async def test_nhanh_chinh_ta_khong_cham_vao_dau_cach(monkeypatch):
+    """Lỗi máy móc là việc của `chinh_ta_node`; hai nhánh báo trùng thì rối."""
+    llm = SpellLLM()
+    monkeypatch.setattr(doc_nodes, "get_llm", lambda: llm)
+    state = _state_chinh_ta("Đơn vị đã  hoàn thành.")
+    ra = await doc_nodes.chinh_ta_llm_node(state)
+
+    assert ra["spell_findings"] == []
+    # Còn bộ tất định thì vẫn phải bắt được.
+    assert [f.type for f in soat_chinh_ta(state["structure"].blocks)] == ["spacing"]
+
+
+def test_hai_nhanh_chi_cung_mot_cho_thi_giu_cai_hep_hon():
+    """Nhánh chính tả báo "Công căn", nhánh chữ nghĩa báo "khoản 2 Công căn này".
+
+    Cùng một lỗi. Hiện hai khung lồng nhau thì người đọc tưởng hai lỗi, mà khung
+    rộng còn ôm cả chữ viết đúng vào trong.
+    """
+    hep = {"block_id": "P01", "start": 8, "end": 16, "quote": "Công căn", "source": "llm"}
+    rong = {"block_id": "P01", "start": 0, "end": 20, "quote": "khoản 2 Công căn này",
+            "source": "llm"}
+
+    gop = doc_nodes.gop_phat_hien([], [rong, hep], ["P01"])
+
+    assert [f["quote"] for f in gop] == ["Công căn"]
+
+
+def test_hai_cho_khac_nhau_trong_cung_khoi_thi_giu_ca_hai():
+    a = {"block_id": "P01", "start": 0, "end": 8, "quote": "Công căn", "source": "llm"}
+    b = {"block_id": "P01", "start": 30, "end": 38, "quote": "bổ xung", "source": "llm"}
+
+    assert len(doc_nodes.gop_phat_hien([], [a, b], ["P01"])) == 2
+
+
+def test_phat_hien_tat_dinh_thang_phat_hien_llm_cung_cho():
+    """Đo được bằng vị trí ký tự thì chắc hơn phán đoán - LLM nhường."""
+    tat_dinh = {"block_id": "P01", "start": 5, "end": 7, "quote": "  ", "source": "rule"}
+    llm = {"block_id": "P01", "start": 0, "end": 20, "quote": "cả câu", "source": "llm"}
+
+    gop = doc_nodes.gop_phat_hien([tat_dinh], [llm], ["P01"])
+
+    assert [f["source"] for f in gop] == ["rule"]
+
+
 # ----------------------------------------------- LLM: xác minh trích dẫn -- #
 def test_loai_bo_phat_hien_khong_trich_dan_duoc():
     blocks = [Block(id="P01", text="Đề nghị bổ xung 02 nhân sự cho phòng.")]
@@ -528,7 +798,8 @@ def test_loai_bo_phat_hien_khong_trich_dan_duoc():
 def test_sua_lai_block_id_khi_model_ghi_nham():
     blocks = [Block(id="P01", text="Đoạn một."), Block(id="P02", text="Hạn nộp là ngày 20/9.")]
     verified = doc_nodes.verify_findings(
-        [{"block_id": "P99", "type": "missing", "quote": "ngày 20/9", "severity": "warning"}],
+        [{"block_id": "P99", "type": "missing", "quote": "ngày 20/9", "severity": "warning",
+          "message": "Thiếu tháng và năm"}],
         blocks,
     )
     assert verified[0]["block_id"] == "P02"
@@ -538,10 +809,65 @@ def test_chuan_hoa_loai_va_muc_do_la():
     blocks = [Block(id="P01", text="Nội dung mẫu.")]
     verified = doc_nodes.verify_findings(
         [{"block_id": "P01", "type": "bịa_loại", "severity": "critical",
-          "quote": "Nội dung mẫu"}],
+          "quote": "Nội dung mẫu", "message": "Nhận xét gì đó"}],
         blocks,
     )
     assert verified[0]["type"] == "wording" and verified[0]["severity"] == "warning"
+
+
+def test_bo_phat_hien_trich_ca_doan():
+    """Kết quả dùng để KHOANH VÙNG trên trang. Trích cả đoạn thì khung ôm trọn
+    đoạn đó, người đọc nhìn vào vẫn không biết chữ nào sai - bằng lúc chưa soát.
+    Model để mặc thì rất hay chép cả đoạn rồi "gợi ý" viết lại nguyên đoạn."""
+    doan = "Đơn vị đã hoàn thành nhiệm vụ được giao. " * 12
+    blocks = [Block(id="P01", text=doan)]
+    verified = doc_nodes.verify_findings(
+        [{"block_id": "P01", "type": "grammar", "quote": doan.strip(),
+          "suggest": doan.strip(), "message": "Viết lại cả đoạn"}],
+        blocks,
+    )
+
+    assert verified == []
+
+
+def test_giu_phat_hien_trich_ngan_dung_cho():
+    blocks = [Block(id="P01", text="Thực hiện trình tự thủ tục thực hiện xét duyệt.")]
+    verified = doc_nodes.verify_findings(
+        [{"block_id": "P01", "type": "wording", "quote": "trình tự thủ tục",
+          "suggest": "trình tự, thủ tục", "message": "Thiếu dấu phẩy giữa hai danh từ"}],
+        blocks,
+    )
+
+    assert len(verified) == 1
+    assert blocks[0].text[verified[0]["start"]:verified[0]["end"]] == "trình tự thủ tục"
+
+
+def test_bo_phat_hien_chi_doi_khoang_trang():
+    """Gặp liên tục trên PDF: khâu đọc file làm mất dấu xuống dòng, model tưởng
+    câu chạy liền rồi "sửa" bằng cách thêm xuống dòng. Đó là vá lỗi của máy đọc
+    file, không phải lỗi trong văn bản gốc."""
+    text = "b) Danh sách đính kèm, gồm: (1) Mẫu số 06; (2) Mẫu số 07;"
+    verified = doc_nodes.verify_findings(
+        [{"block_id": "P01", "type": "grammar", "quote": text,
+          "suggest": "b) Danh sách đính kèm, gồm:\n(1) Mẫu số 06;\n(2) Mẫu số 07;",
+          "message": "Nên tách dòng"}],
+        [Block(id="P01", text=text)],
+    )
+
+    assert verified == []
+
+
+def test_bo_phat_hien_khong_noi_duoc_gi():
+    """Rác của khâu đọc file ("1516 11" ở chân trang) hay ra dạng này: có trích
+    dẫn, nhưng không nói được sai ở đâu mà cũng không đưa được cách sửa."""
+    blocks = [Block(id="P01", text="1516 11")]
+    verified = doc_nodes.verify_findings(
+        [{"block_id": "P01", "type": "missing", "quote": "1516 11",
+          "suggest": "", "message": ""}],
+        blocks,
+    )
+
+    assert verified == []
 
 
 def test_chia_lo_theo_kich_thuoc():
@@ -567,6 +893,8 @@ class FakeLLM:
 
     def __init__(self) -> None:
         self.calls: list[str] = []
+        # Lỗi chính tả nhánh LLM trả về; mặc định không có.
+        self.spell: list[dict] = []
 
     async def chat_json(self, messages, **kwargs):
         system = messages[0]["content"]
@@ -574,11 +902,16 @@ class FakeLLM:
 
         if "rà soát CHỮ NGHĨA" in system:
             return {"findings": [
-                {"block_id": "P00", "type": "spelling", "quote": "rà soát nhân sự",
-                 "suggest": "rà soát nhân sự", "severity": "warning", "message": "ví dụ"},
+                {"block_id": "P00", "type": "wording", "quote": "rà soát nhân sự",
+                 "suggest": "rà soát lại nhân sự", "severity": "warning", "message": "ví dụ"},
                 {"block_id": "P00", "type": "logic", "quote": "câu hoàn toàn bịa",
                  "suggest": "x", "severity": "error"},
             ]}
+        if "CỔNG GÁC" in system:
+            import re as _re
+            cum = _re.findall(r'Cụm bị nghi: "([^"]+)"', messages[1]["content"])
+            return {"ket_qua": [{"id": i + 1, "mot_tu": self.gate.get(c, True)}
+                                for i, c in enumerate(cum)]}
         if "phân loại tài liệu" in system:
             return {"document_type": "cong_van_den", "topic": "trang_thiet_bi",
                     "confidence": 0.91, "reason": "Yêu cầu tổng hợp báo cáo trang thiết bị."}

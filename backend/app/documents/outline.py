@@ -27,10 +27,12 @@ from app.documents.parser import Block, DocumentStructure
 
 _STYLE_LEVEL = re.compile(r"heading\s*(\d)", re.I)
 
-# Bảng chữ cái tiếng Việt cho danh sách "a) b) c)". Có "đ" vì văn bản tiếng Việt
-# dùng nó, nhưng rất nhiều danh sách lại nhảy thẳng từ d) sang e) - chỗ kiểm tính
-# liên tục chấp nhận cả hai.
-LETTERS = "abcdđefghiklmnopqrstuvxy"
+# Bảng chữ cái tiếng Việt cho danh sách "a) b) c)", đúng 23 chữ dùng làm số thứ tự
+# trong văn bản hành chính: có "đ", KHÔNG có f/j/w/z. Để lọt "f" vào đây thì danh
+# sách đúng chuẩn "... e) g) h)" bị đọc thành 6, 8, 9 và bị kết luận là đứt quãng -
+# lỗi oan trên đúng thứ mà Nghị định 30 quy định. Vẫn giữ "đ" dù nhiều danh sách
+# nhảy thẳng từ d) sang e): chỗ kiểm tính liên tục chấp nhận cả hai.
+LETTERS = "abcdđeghiklmnopqrstuvxy"
 
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
@@ -114,8 +116,12 @@ def parse_marker(text: str) -> Marker | None:
         else:
             ordinal = int(raw.rsplit(".", 1)[-1])
 
+        # Ngoài khoảng thì THỬ TIẾP kiểu sau, đừng bỏ hẳn khối. "C." và "D." khớp
+        # pattern La Mã trước (100 và 500), quá MAX_ORDINAL, mà bỏ ở đây thì mục
+        # "C." "D." biến mất khỏi dàn ý và dãy A) B) C) D) trông như bị đứt.
+        # Rơi xuống pattern "letter" là đọc được đúng chữ cái.
         if not 1 <= ordinal <= MAX_ORDINAL:
-            return None
+            continue
 
         if kind == "digit":
             key = f"digit:{raw.count('.') + 1}"

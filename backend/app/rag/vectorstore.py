@@ -177,6 +177,40 @@ class QdrantVectorStore:
                 break
         return sorted(payloads, key=lambda p: p.get("chunk_index", 0))
 
+    async def list_documents(self, page_size: int = 512) -> list[dict[str, Any]]:
+        """Các tài liệu đang có trong kho, gộp từ chunk về theo doc_id.
+
+        Qdrant không có khái niệm "tài liệu" - chỉ có point. Nên phải quét cả
+        collection rồi gộp, và chỉ lấy đúng vài trường payload cần cho danh sách
+        chứ không kéo cả `text` về: trường đó là toàn bộ nội dung kho.
+        """
+        docs: dict[str, dict[str, Any]] = {}
+        offset = None
+        while True:
+            points, offset = await self._client.scroll(
+                collection_name=self.collection,
+                limit=page_size,
+                offset=offset,
+                with_payload=["doc_id", "doc_title", "source", "doc_type", "ingested_at"],
+                with_vectors=False,
+            )
+            for point in points:
+                payload = point.payload or {}
+                doc_id = str(payload.get("doc_id") or "")
+                if not doc_id:
+                    continue
+                entry = docs.setdefault(doc_id, {
+                    "doc_id": doc_id,
+                    "doc_title": str(payload.get("doc_title") or payload.get("source") or doc_id),
+                    "doc_type": str(payload.get("doc_type") or ""),
+                    "chunk_count": 0,
+                    "ingested_at": payload.get("ingested_at"),
+                })
+                entry["chunk_count"] += 1
+            if offset is None:
+                break
+        return sorted(docs.values(), key=lambda d: d["doc_title"].lower())
+
     # ------------------------------------------------------- tìm kiếm ---- #
     async def search_dense(
         self, vector: list[float], limit: int, query_filter: models.Filter | None = None

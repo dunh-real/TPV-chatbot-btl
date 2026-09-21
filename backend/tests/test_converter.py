@@ -113,6 +113,49 @@ def test_trang_trang_rong_bi_coi_la_scan(tmp_path):
     assert OCRService(Settings()).classify_pages(path) == [True]
 
 
+def _pdf_scan_co_lop_tesseract(path, pymupdf, *, chu_vo_hinh: bool = True):
+    """Dựng đúng hình dạng PDF scan đã chạy qua Tesseract: một ảnh phủ trọn
+    trang, bên trên là lớp chữ vô hình (render mode 3)."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    anh = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 1240, 1754), False)
+    anh.set_rect(anh.irect, (255, 255, 255))
+    page.insert_image(page.rect, pixmap=anh)
+    page.insert_text(
+        (72, 100), "Noi dung Tesseract doc sai be bet " * 20, fontsize=11,
+        render_mode=3 if chu_vo_hinh else 0,
+    )
+    doc.save(path)
+    doc.close()
+
+
+def test_scan_co_lop_chu_vo_hinh_van_phai_ocr(tmp_path):
+    """Lớp chữ Tesseract đủ dày để mọi tín hiệu đếm chữ báo "digital".
+
+    Đây là ca đã lọt lưới: trang trích ra hàng nghìn ký tự nên không phiếu nào
+    trong 3 tín hiệu đếm chữ chịu bầu, tài liệu trượt khỏi OCR và hệ thống đọc
+    thẳng bản Tesseract sai. Bố cục trang mới là thứ nói đúng sự thật.
+    """
+    pymupdf = pytest.importorskip("pymupdf")
+    path = tmp_path / "scan_tesseract.pdf"
+    _pdf_scan_co_lop_tesseract(path, pymupdf)
+
+    assert OCRService(Settings()).classify_pages(path) == [True]
+
+
+def test_anh_lon_nhung_chu_nhin_thay_duoc_thi_khong_ocr(tmp_path):
+    """Trang digital có ảnh nền to vẫn là trang digital - đừng OCR phí.
+
+    Phân biệt với ca trên chỉ bằng một điều: ở đây chữ được vẽ để người đọc
+    nhìn thấy, nên nó là chữ thật chứ không phải lớp OCR chồng lên ảnh.
+    """
+    pymupdf = pytest.importorskip("pymupdf")
+    path = tmp_path / "digital_co_anh_nen.pdf"
+    _pdf_scan_co_lop_tesseract(path, pymupdf, chu_vo_hinh=False)
+
+    assert OCRService(Settings()).classify_pages(path) == [False]
+
+
 def test_ocr_tat_thi_khong_goi_api(tmp_path):
     service = OCRService(Settings(ocr_enabled=False))
     assert service.enabled is False

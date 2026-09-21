@@ -122,6 +122,8 @@
     draft: ['Soạn báo cáo', 'Workflow 3 · đọc một tài liệu tải lên, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
     slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
+    mindmap: ['Sơ đồ tư duy', 'Đọc cả tài liệu bằng MAP-REDUCE rồi dựng cây chủ đề; nội dung từng mục sinh khi bấm vào'],
+    ocr: ['OCR tài liệu', 'Mô hình thị giác đọc chữ trong ảnh trang, trả về Markdown giữ nguyên cấu trúc'],
     corpus: ['Kho tri thức', 'Nạp tài liệu vào Qdrant và xem thống kê collection'],
     retrieval: ['Truy hồi (debug)', 'Xem hạng từng nhánh, điểm RRF và điểm rerank'],
     tools: ['Công cụ & hệ thống', 'Danh mục tool của agent và trạng thái hạ tầng'],
@@ -140,6 +142,7 @@
     if (name === 'tools') loadToolsPage();
     if (name === 'corpus') loadStats();
     if (name === 'review' && !ruleSetsLoaded) loadRuleSets();
+    if (name === 'ocr') ocrLoadStatus();
   }
   $$('.nav-item').forEach(function (b) {
     b.addEventListener('click', function () { showView(b.dataset.view); });
@@ -1009,6 +1012,14 @@
 
   /* ══════════════════════════════════════════════════════════════════════
      VIEW: SOÁT VĂN BẢN (workflow 2)
+
+     Thứ chính trên màn này là BẢN DỰNG LẠI TÀI LIỆU, không phải danh sách lỗi.
+     Một danh sách phẳng bắt người đọc cầm từng dòng đi dò lại trong file gốc -
+     xong bản soát thì mệt hơn lúc chưa soát. Ở đây tài liệu hiện đúng phông, cỡ
+     chữ, canh lề và lề trang đọc được từ file, lỗi khoanh ngay tại chỗ, bấm vào
+     khung là ra lời giải thích và chỗ sửa.
+
+     Danh sách vẫn còn nhưng gập lại - nó để đối chiếu và đếm, không để đọc.
      ══════════════════════════════════════════════════════════════════ */
   var reviewFile = null;
   var ruleSetsLoaded = false;
@@ -1032,6 +1043,14 @@
   }
 
   var SEVERITY = { error: 'err', warning: 'warn', info: 'info' };
+  var SEV_OK = { error: 1, warning: 1, info: 1 };
+  var ALIGN_CSS = { LEFT: 'left', CENTER: 'center', RIGHT: 'right', JUSTIFY: 'justify' };
+
+  var TYPE_VI = {
+    spelling: 'chính tả', spacing: 'dấu cách', punctuation: 'dấu câu',
+    duplicate: 'lặp từ', grammar: 'ngữ pháp', wording: 'diễn đạt',
+    logic: 'logic', missing: 'thiếu ý',
+  };
 
   // Tên tiếng Việt của từng tiêu chí; mã nào chưa có tên thì hiện nguyên mã.
   var RULE_VI = {
@@ -1051,6 +1070,305 @@
     return (RULE_VI[id] || id) + (cut === -1 ? '' : item.slice(cut));
   }
 
+  /* ─────────────── dựng lại tài liệu ───────────────
+     Mọi giá trị dưới đây đọc từ file người dùng tải lên, tức là dữ liệu KHÔNG
+     tin được y như chuỗi LLM sinh. Một tệp .docx dựng có chủ đích đặt được tên
+     phông kiểu `x;background:url(...)`; ghép thẳng vào thuộc tính style là mở
+     đúng cái cửa mà `MD.escape` đang đóng ở chỗ khác. Nên: tên phông lọc còn
+     chữ-số-cách-gạch, còn số thì ép về number và chặn hai đầu.                */
+  function safeFont(name) {
+    return String(name || '').replace(/[^A-Za-z0-9 \-]/g, '').trim().slice(0, 48);
+  }
+
+  function safeNum(value, min, max) {
+    var n = Number(value);
+    return (isFinite(n) && n >= min && n <= max) ? n : null;
+  }
+
+  var PT_PER_MM = 72 / 25.4;
+
+  // PDF không lưu canh lề của đoạn (`alignment` luôn null), nên nếu chỉ dựa vào
+  // nó thì quốc hiệu, số ký hiệu và nơi nhận bị dồn hết về sát trái - văn bản hành
+  // chính vốn xếp phần đầu thành hai cột, dựng lại một cột là trông khác hẳn bản gốc.
+  //
+  // PDF lại có toạ độ thật của từng khối. Dùng nó đặt ĐÚNG VỊ TRÍ NGANG còn chắc
+  // hơn là đoán "căn giữa hay căn phải": đoán thì phải dò ra cột chữ trước, mà
+  // trang hai cột làm phép dò đó sai ngay từ đầu.
+  function hopChu(b, doc) {
+    var geo = doc.geometry, bb = b.bbox;
+    if (!geo || !bb || bb.length < 4) return null;
+    var trai = safeNum(geo.left_mm, 0, 200), rong = safeNum(geo.width_mm, 50, 600);
+    var phai = safeNum(geo.right_mm, 0, 200);
+    if (trai == null || rong == null || phai == null) return null;
+
+    var mepTrai = trai * PT_PER_MM;
+    var vungRong = (rong - trai - phai) * PT_PER_MM;
+    var lui = safeNum(bb[0] - mepTrai, -20, vungRong);
+    var w = safeNum(bb[2] - bb[0], 1, vungRong * 1.5);
+    if (lui == null || w == null) return null;
+
+    // Nới 4%: phông trình duyệt không khớp phông trong PDF từng phần nghìn, khít
+    // quá thì chữ cuối rớt xuống dòng. Vẫn kẹp trong vùng chữ để không tràn trang.
+    return { lui: Math.max(0, lui), rong: Math.min(w * 1.04, vungRong - Math.max(0, lui)) };
+  }
+
+  function blockStyle(b, doc) {
+    var css = [];
+    var font = safeFont(b.font || doc.default_font);
+    // Nháy ĐƠN quanh tên phông. Nháy kép đóng sớm thuộc tính style="..." khi chuỗi
+    // này được ghép vào HTML, làm vỡ thẻ và mất hết phần định dạng phía sau -
+    // đúng chỗ bản dựng lại mất lý do tồn tại.
+    if (font) css.push("font-family:'" + font + "',serif");
+    var size = safeNum(b.size_pt != null ? b.size_pt : doc.default_size_pt, 4, 96);
+    if (size) css.push('font-size:' + size + 'pt');
+    if (b.bold) css.push('font-weight:700');
+    if (ALIGN_CSS[b.alignment]) css.push('text-align:' + ALIGN_CSS[b.alignment]);
+    var lh = safeNum(b.line_spacing, 0.5, 5);
+    if (lh) css.push('line-height:' + lh);
+    var before = safeNum(b.space_before_pt, 0, 200);
+    var after = safeNum(b.space_after_pt, 0, 200);
+    var hop = hopChu(b, doc);
+    css.push('margin:' + (before || 0) + 'pt 0 ' + (after || 0) + 'pt ' +
+      (hop ? hop.lui.toFixed(1) : '0') + 'pt');
+    if (hop) css.push('width:' + hop.rong.toFixed(1) + 'pt');
+    return css.join(';');
+  }
+
+  function pageStyle(geo) {
+    if (!geo) return '';
+    var v = function (x, lo, hi, d) { var n = safeNum(x, lo, hi); return (n == null ? d : n) + 'mm'; };
+    return '--pg-w:' + v(geo.width_mm, 50, 600, 210) + ';--pg-h:' + v(geo.height_mm, 50, 900, 297) +
+      ';--pg-t:' + v(geo.top_mm, 0, 100, 20) + ';--pg-b:' + v(geo.bottom_mm, 0, 100, 20) +
+      ';--pg-l:' + v(geo.left_mm, 0, 100, 30) + ';--pg-r:' + v(geo.right_mm, 0, 100, 20);
+  }
+
+  function markText(text, items) {
+    var out = '', pos = 0;
+    items.forEach(function (f) {
+      // Bỏ tô khi span không dùng được hoặc chồng lên span trước: lỗi vẫn còn
+      // trong danh sách, chỉ là không khoanh được. Tô chồng thì vỡ cả thẻ HTML.
+      if (f.start == null || f.start < pos || f.end > text.length || f.end <= f.start) return;
+      out += esc(text.slice(pos, f.start));
+      out += '<mark class="loi s-' + (SEV_OK[f.severity] ? f.severity : 'warning') +
+        (f.source === 'llm' ? ' src-llm' : '') + '" data-fid="' + f._i + '">' +
+        esc(text.slice(f.start, f.end)) + '</mark>';
+      pos = f.end;
+    });
+    return out + esc(text.slice(pos));
+  }
+
+  function docViewNode(data) {
+    var doc = data.document || {};
+    var blocks = data.blocks || [];
+    var findings = (data.findings || []).map(function (f, i) { f._i = i; return f; });
+
+    var card = el('div', { class: 'card' });
+    card.innerHTML = '<div class="card-head"><h3>Tài liệu &amp; vùng lỗi</h3>' +
+      '<span class="pill">' + findings.length + ' chỗ</span>' +
+      (data.blocks_truncated ? '<span class="pill warn">tài liệu dài, đã cắt bớt</span>' : '') + '</div>';
+
+    if (!blocks.length) {
+      card.appendChild(el('div', { class: 'doc-empty' },
+        esc('Không đọc được nội dung nào để dựng lại.')));
+      return card;
+    }
+
+    var bar = el('div', { class: 'doc-bar' });
+    bar.innerHTML = '<div class="legend">' +
+      '<span class="l-rule"><i></i>đối chiếu được — chắc chắn</span>' +
+      '<span class="l-llm"><i></i>LLM gợi ý — cần xác nhận</span></div><div class="spacer"></div>';
+    var zoom = el('div', { class: 'doc-zoom' });
+    bar.appendChild(zoom);
+    card.appendChild(bar);
+
+    // Lỗi cấu trúc/trình bày không chỉ được ký tự nào (lạc phông, mục rỗng…) nên
+    // đánh dấu cả khối - bỏ qua thì người đọc không thấy chúng trên bản dựng lại.
+    var caKhoi = {};
+    (data.rule_check && data.rule_check.findings || []).forEach(function (f) {
+      if (!f.block_id) return;
+      if (caKhoi[f.block_id] !== 'error') caKhoi[f.block_id] = f.severity;
+    });
+
+    var theoKhoi = {};
+    findings.forEach(function (f) { (theoKhoi[f.block_id] = theoKhoi[f.block_id] || []).push(f); });
+    Object.keys(theoKhoi).forEach(function (k) {
+      theoKhoi[k].sort(function (a, b) { return (a.start || 0) - (b.start || 0); });
+    });
+
+    var html = blocks.map(function (b) {
+      var cls = 'doc-block' + (b.kind === 'table' ? ' tbl' : '');
+      if (caKhoi[b.id]) cls += caKhoi[b.id] === 'error' ? ' whole' : ' whole whole-warn';
+      var body = markText(b.text, theoKhoi[b.id] || []);
+      // `esc` cả chuỗi style: `safeFont`/`safeNum` đã lọc từng giá trị rồi, nhưng
+      // chỗ ghép vào HTML thì không được tin vào bước lọc ở xa.
+      return '<p class="' + cls + '" style="' + esc(blockStyle(b, doc)) + '" data-bid="' +
+        esc(b.id) + '">' + (body || '&nbsp;') + '</p>';
+    }).join('');
+
+    var stage = el('div', { class: 'doc-stage' });
+    var scaler = el('div', { class: 'doc-scaler' });
+    var page = el('div', { class: 'doc-page', style: pageStyle(doc.geometry) }, html);
+    scaler.appendChild(page);
+    stage.appendChild(scaler);
+    card.appendChild(stage);
+
+    // Thu phóng: bản dựng lại rộng đúng khổ giấy thật (A4 ≈ 794px) nên gần như
+    // luôn rộng hơn cột kết quả. `transform` không đổi chiều cao chiếm chỗ, phải
+    // tự đặt lại, không thì khung cuộn thừa ra đúng phần đã thu nhỏ.
+    var scale = 1;
+    function apply(v) {
+      scale = v;
+      scaler.style.transform = 'scale(' + v + ')';
+      scaler.style.height = (page.offsetHeight * v) + 'px';
+      $$('button', zoom).forEach(function (btn) {
+        btn.classList.toggle('on', Math.abs(Number(btn.dataset.z) - v) < 0.005);
+      });
+    }
+    function vuaKhung() {
+      var rong = stage.clientWidth - 24;
+      return Math.min(1, Math.max(0.35, rong / (page.offsetWidth || 794)));
+    }
+    [['vừa khung', 0], ['100%', 1], ['125%', 1.25]].forEach(function (pair) {
+      var v = pair[1] || vuaKhung();
+      var btn = el('button', { type: 'button', dataset: { z: v } }, esc(pair[0]));
+      btn.addEventListener('click', function () { apply(Number(btn.dataset.z)); });
+      zoom.appendChild(btn);
+    });
+    // offsetHeight chỉ đúng sau khi node vào DOM, nên đo ở nhịp vẽ kế tiếp.
+    requestAnimationFrame(function () {
+      var fit = vuaKhung();
+      $$('button', zoom)[0].dataset.z = fit;
+      apply(fit);
+    });
+
+    stage.addEventListener('click', function (ev) {
+      var mark = ev.target.closest('mark.loi');
+      if (!mark) {
+        var pop = stage.querySelector('.loi-pop');
+        if (pop && !ev.target.closest('.loi-pop')) { pop.remove(); boCham(stage); }
+        return;
+      }
+      moPop(stage, mark, findings[Number(mark.dataset.fid)]);
+    });
+    return card;
+  }
+
+  function boCham(stage) { $$('mark.loi.on', stage).forEach(function (m) { m.classList.remove('on'); }); }
+
+  function moPop(stage, mark, f) {
+    if (!f) return;
+    var cu = stage.querySelector('.loi-pop');
+    if (cu) cu.remove();
+    boCham(stage);
+    mark.classList.add('on');
+
+    // Nói đúng kết luận này ở đâu ra: người ký hỏi lại thì phải trả lời được là
+    // máy dựa vào đâu, chứ không chỉ "máy bảo thế".
+    var nhan = f.source === 'llm' ? 'LLM soát, cần xác nhận' : 'đo được, chắc chắn';
+    var pop = el('div', { class: 'loi-pop' },
+      '<button class="pop-close" type="button" aria-label="Đóng">×</button>' +
+      '<div class="pop-top"><span class="pill ' + (SEVERITY[f.severity] || 'warn') + '">' +
+      esc(TYPE_VI[f.type] || f.type) + '</span><span class="pill">' + esc(nhan) + '</span>' +
+      '<span class="pill">khối ' + esc(f.block_id) + '</span></div>' +
+      '<div class="pop-msg">' + esc(f.message || '(không có mô tả)') + '</div>' +
+      (f.suggest ? '<div class="pop-fix">Sửa thành: ' + esc(f.suggest) + '</div>' : ''));
+    pop.querySelector('.pop-close').addEventListener('click', function () { pop.remove(); boCham(stage); });
+    stage.appendChild(pop);
+
+    var sr = stage.getBoundingClientRect(), mr = mark.getBoundingClientRect();
+    var top = mr.bottom - sr.top + stage.scrollTop + 6;
+    var left = mr.left - sr.left + stage.scrollLeft;
+    pop.style.top = top + 'px';
+    pop.style.left = Math.max(8, Math.min(left, stage.scrollLeft + stage.clientWidth - pop.offsetWidth - 8)) + 'px';
+  }
+
+  /* ─────────────── bảng phân công + văn bản giao việc ─────────────── */
+  function taskTableNode(tasks) {
+    var wrap = el('div', { class: 'table-scroll' });
+    var html = '<table class="task-table"><thead><tr>' +
+      '<th>TT</th><th>Đơn vị thực hiện</th><th>Nội dung nhiệm vụ</th>' +
+      '<th>Số liệu cần chuẩn bị</th><th>Thời hạn</th></tr></thead><tbody>';
+    tasks.forEach(function (t, i) {
+      html += '<tr class="' + (t.in_catalog === false ? 'ngoai' : '') + '">' +
+        '<td class="stt">' + (i + 1) + '</td>' +
+        '<td class="dept">' + esc(t.department_name || t.department || 'Ngoài danh mục') +
+        (t.department ? '<br><small class="muted">' + esc(t.department) + '</small>' : '') +
+        (t.in_catalog === false ? '<br><small class="muted">ngoài danh mục</small>' : '') + '</td>' +
+        '<td data-mid="task-' + i + '">' + MD.render(t.task || '') + '</td>' +
+        '<td>' + ((t.data_needed || []).length
+          ? (t.data_needed || []).map(function (d) { return esc(d); }).join('<br>') : '—') + '</td>' +
+        '<td class="dl">' + (t.deadline ? esc(t.deadline) : '—') + '</td></tr>';
+      sourceRegistry.set('task-' + i, t.refs || []);
+    });
+    wrap.innerHTML = html + '</tbody></table>';
+    return wrap;
+  }
+
+  // Marker trích dẫn "[3]" là thứ của màn hình, không phải của văn bản trình ký.
+  function boMarker(text) {
+    return String(text || '').replace(/\[\d+\]/g, '').replace(/\s{2,}/g, ' ').trim();
+  }
+
+  function giaoViecNode(data) {
+    var tasks = data.tasks || [];
+    var box = el('div', { class: 'card' });
+    box.innerHTML = '<div class="card-head"><h3>Soạn văn bản giao nhiệm vụ</h3>' +
+      '<span class="pill">' + tasks.length + ' nơi nhận</span></div>' +
+      '<div class="card-sub">Đổ đúng bảng trên ra .docx theo thể thức Nghị định 30 để sửa rồi trình ký. ' +
+      'Không gọi LLM - lời văn là văn khuôn, bảng lấy nguyên từ trên. ' +
+      'Ô để trống thì file in dấu chấm lửng, không tự đặt số ký hiệu hay tên người ký.</div>';
+
+    var form = el('div', { class: 'gv-form' });
+    var goiY = data.giao_viec_goi_y === 'quyet_dinh' ? 'quyet_dinh' : 'cong_van';
+    form.innerHTML =
+      '<label class="wide"><span>Mẫu văn bản</span><select data-f="loai">' +
+      '<option value="cong_van"' + (goiY === 'cong_van' ? ' selected' : '') + '>Công văn giao nhiệm vụ' +
+      (goiY === 'cong_van' ? ' — gợi ý' : '') + '</option>' +
+      '<option value="quyet_dinh"' + (goiY === 'quyet_dinh' ? ' selected' : '') + '>Quyết định giao nhiệm vụ' +
+      (goiY === 'quyet_dinh' ? ' — gợi ý' : '') + '</option></select></label>' +
+      '<label><span>Cơ quan ban hành</span><input data-f="co_quan" placeholder="VD: Công ty TPV" /></label>' +
+      '<label><span>Địa danh</span><input data-f="dia_danh" placeholder="VD: Hà Nội" /></label>' +
+      '<label class="wide"><span>Trích yếu (V/v…)</span><input data-f="trich_yeu" /></label>' +
+      '<label><span>Số ký hiệu</span><input data-f="so_ky_hieu" placeholder="để trống = …/CV-…" /></label>' +
+      '<label><span>Chức vụ người ký</span><input data-f="chuc_vu_ky" placeholder="VD: Giám đốc" /></label>' +
+      '<label><span>Họ tên người ký</span><input data-f="nguoi_ky" /></label>' +
+      '<label><span>Hạn chung</span><input data-f="deadline" /></label>';
+    box.appendChild(form);
+
+    var cls = data.classification;
+    $('[data-f="trich_yeu"]', form).value = cls && cls.topic ? String(cls.topic).replace(/_/g, ' ') : '';
+    $('[data-f="deadline"]', form).value = data.deadline || '';
+
+    var nut = el('button', { class: 'primary-btn', type: 'button' }, 'Soạn văn bản giao nhiệm vụ');
+    nut.style.marginTop = '12px';
+    var ra = el('div');
+    box.appendChild(nut);
+    box.appendChild(ra);
+
+    nut.addEventListener('click', async function () {
+      var body = { tasks: tasks, mo_dau: boMarker(data.summary) };
+      $$('[data-f]', form).forEach(function (input) { body[input.dataset.f] = input.value.trim(); });
+      if (!body.deadline) body.deadline = null;
+
+      nut.disabled = true;
+      var chu = nut.textContent;
+      nut.textContent = 'Đang soạn…';
+      try {
+        var res = await API.giaoViec(body);
+        ra.innerHTML = '';
+        ra.appendChild(artifactsNode([{ file_name: res.file_name, download_url: res.download_url }]));
+        toast('Đã soạn xong — tải về rồi sửa lại phần để trống', 'ok');
+      } catch (e) {
+        toast(errText(e), 'err');
+      } finally {
+        nut.disabled = false;
+        nut.textContent = chu;
+      }
+    });
+    return box;
+  }
+
+  /* ─────────────── ghép cả màn hình ─────────────── */
   function renderReview(data) {
     var box = $('#reviewResult');
     box.innerHTML = '';
@@ -1072,17 +1390,25 @@
       '<div class="stat ' + (totals.errors ? 'err' : 'ok') + '"><div class="stat-label">Lỗi</div><div class="stat-value">' + fmtNum(totals.errors || 0) + '</div></div>' +
       '<div class="stat ' + (totals.warnings ? 'warn' : '') + '"><div class="stat-label">Cảnh báo</div><div class="stat-value">' + fmtNum(totals.warnings || 0) + '</div></div>' +
       '</div>' +
-      (doc.title ? '<div class="card-sub" style="margin-top:10px">Tiêu đề</div><div class="sm">' + esc(doc.title) + '</div>' : '') +
-      (doc.outline && doc.outline.length
-        ? '<div class="card-sub" style="margin-top:10px">Dàn ý dò được (' + doc.outline.length + ' mục)</div>' +
-          '<div class="outline">' + doc.outline.map(function (h) {
-            return '<div class="outline-item" style="padding-left:' + ((h.level - 1) * 14) + 'px" title="' + esc(h.text) + '">' +
-              '<b>' + esc(h.block_id) + '</b>' + esc(h.text) + '</div>';
-          }).join('') + '</div>'
-        : '<div class="muted sm" style="margin-top:10px">Không dò được mục nào - tài liệu không chia mục hoặc không đánh số.</div>');
+      '<div class="card-sub" style="margin-top:8px">Trong đó <b>' + fmtNum(totals.chac_chan || 0) +
+      '</b> chỗ đối chiếu được (chắc chắn) và <b>' + fmtNum(totals.goi_y || 0) + '</b> chỗ LLM gợi ý (cần xác nhận).</div>' +
+      (doc.title ? '<div class="card-sub" style="margin-top:10px">Tiêu đề</div><div class="sm">' + esc(doc.title) + '</div>' : '');
+    if (doc.outline && doc.outline.length) {
+      head.appendChild(block('Dàn ý dò được', doc.outline.length,
+        '<div class="outline">' + doc.outline.map(function (h) {
+          return '<div class="outline-item" style="padding-left:' + ((h.level - 1) * 14) + 'px" title="' + esc(h.text) + '">' +
+            '<b>' + esc(h.block_id) + '</b>' + esc(h.text) + '</div>';
+        }).join('') + '</div>', false));
+    } else {
+      head.appendChild(el('div', { class: 'muted sm' },
+        esc('Không dò được mục nào - tài liệu không chia mục hoặc không đánh số.')));
+    }
     box.appendChild(head);
 
-    // rule check
+    // Thứ chính: tài liệu dựng lại, khoanh sẵn vùng lỗi.
+    box.appendChild(docViewNode(data));
+
+    // rule check - lỗi cấu trúc và trình bày, không chỉ được ký tự nào
     var rc = data.rule_check || {};
     var rcCard = el('div', { class: 'card' });
     var statusPill = rc.status === 'done' ? 'ok' : (rc.status === 'partial' ? 'warn' : '');
@@ -1114,28 +1440,30 @@
     }
     box.appendChild(rcCard);
 
-    // llm review
-    var review = data.llm_review || {};
-    var keys = Object.keys(review).filter(function (k) { return (review[k] || []).length; });
+    // Danh sách lỗi nội dung: gập lại, để đối chiếu và đếm chứ không để đọc.
+    var findings = data.findings || [];
     var lrCard = el('div', { class: 'card' });
-    lrCard.innerHTML = '<div class="card-head"><h3>Chữ nghĩa (LLM, mọi lỗi phải trích nguyên văn)</h3>' +
-      '<span class="pill">' + keys.length + ' khối</span></div>';
-    if (!keys.length) {
-      lrCard.innerHTML += '<div class="muted sm">Không phát hiện lỗi chữ nghĩa.</div>';
+    lrCard.innerHTML = '<div class="card-head"><h3>Lỗi nội dung, liệt kê theo khối</h3>' +
+      '<span class="pill">' + findings.length + '</span></div>';
+    if (!findings.length) {
+      lrCard.innerHTML += '<div class="muted sm">Không phát hiện lỗi nội dung nào.</div>';
     } else {
-      keys.forEach(function (k) {
-        var items = review[k];
-        lrCard.appendChild(block('Khối ' + k, items.length, items.map(function (f) {
-          return '<div class="finding"><span class="finding-badge pill ' + (SEVERITY[f.severity] || 'warn') + '">' + esc(f.type) + '</span>' +
-            '<div class="finding-body"><div class="finding-msg">' + esc(f.message || '') + '</div>' +
+      var theoKhoi = {};
+      findings.forEach(function (f) { (theoKhoi[f.block_id] = theoKhoi[f.block_id] || []).push(f); });
+      Object.keys(theoKhoi).forEach(function (k) {
+        lrCard.appendChild(block('Khối ' + k, theoKhoi[k].length, theoKhoi[k].map(function (f) {
+          return '<div class="finding"><span class="finding-badge pill ' + (SEVERITY[f.severity] || 'warn') + '">' +
+            esc(TYPE_VI[f.type] || f.type) + '</span>' +
+            '<div class="finding-body"><div class="finding-msg">' + esc(f.message || '') +
+            (f.source === 'llm' ? ' <span class="pill">LLM gợi ý</span>' : '') + '</div>' +
             '<div class="quote">' + esc(f.quote) + '</div>' +
             (f.suggest ? '<div class="suggest">→ ' + esc(f.suggest) + '</div>' : '') + '</div></div>';
-        }).join(''), true));
+        }).join(''), false));
       });
     }
     box.appendChild(lrCard);
 
-    // nội dung + phân công
+    // nội dung + định tuyến
     var cls = data.classification;
     var sumCard = el('div', { class: 'card' });
     sumCard.innerHTML = '<div class="card-head"><h3>Nội dung &amp; định tuyến</h3>' +
@@ -1154,22 +1482,12 @@
 
     if ((data.tasks || []).length) {
       var taskCard = el('div', { class: 'card' });
-      taskCard.innerHTML = '<div class="card-head"><h3>Phân rã nhiệm vụ</h3><span class="pill">' + data.tasks.length + '</span></div>';
-      data.tasks.forEach(function (t, i) {
-        var row = el('div', { class: 'task-row', dataset: { mid: 'task-' + i } });
-        sourceRegistry.set('task-' + i, t.refs || []);
-        row.innerHTML = '<div class="task-head"><span class="task-dept">' + esc(t.department_name || t.department || 'Ngoài danh mục') + '</span>' +
-          (t.department ? '<span class="pill">' + esc(t.department) + '</span>' : '') +
-          (t.in_catalog ? '' : '<span class="pill warn">không có trong danh mục</span>') +
-          (t.deadline ? '<span class="pill info">hạn ' + esc(t.deadline) + '</span>' : '') + '</div>' +
-          '<div class="prose" style="font-size:13.4px">' + MD.render(t.task) + '</div>' +
-          ((t.data_needed || []).length ? '<div class="tag-row" style="margin-top:6px">' +
-            t.data_needed.map(function (d) { return '<span class="pill">' + esc(d) + '</span>'; }).join('') + '</div>' : '');
-        var rb = sourcesBlock('Căn cứ trong văn bản', t.refs);
-        if (rb) { rb.style.marginTop = '8px'; row.appendChild(rb); }
-        taskCard.appendChild(row);
-      });
+      taskCard.innerHTML = '<div class="card-head"><h3>Phân công nhiệm vụ</h3>' +
+        '<span class="pill">' + data.tasks.length + '</span></div>' +
+        '<div class="card-sub">Bấm vào marker [n] trong ô nhiệm vụ để xem nguyên văn đoạn sinh ra nó.</div>';
+      taskCard.appendChild(taskTableNode(data.tasks));
       box.appendChild(taskCard);
+      box.appendChild(giaoViecNode(data));
     }
 
     box.appendChild(el('div', { class: 'card' })).appendChild(
@@ -1181,7 +1499,7 @@
     runWorkflow({
       button: this,
       box: $('#reviewResult'),
-      label: 'Đang parse file, dựng dàn ý, chạy rule engine và soát chữ nghĩa theo lô…',
+      label: 'Đang parse file, dựng dàn ý, soát chính tả và chạy rule engine…',
       hint: { text: 'thường 10-30 giây, tuỳ độ dài văn bản', slowAfter: 40 },
       call: function (signal) {
         return API.review(reviewFile, {
@@ -1975,6 +2293,812 @@
   kvRow('draftInputs', 'chuc_vu_ky', prefs.inputs.chuc_vu_ky || '');
   kvRow('aggInputs', 'nguoi_ky', prefs.inputs.nguoi_ky || '');
   kvRow('slideInputs', 'nguoi_trinh_bay', '');
+
+  /* ═══════════════════════ VIEW: SƠ ĐỒ TƯ DUY ════════════════════════
+   * Một tài liệu, một đường đi: thả file vào là nạp kho rồi dựng cây.
+   *
+   * Hai nhịp, đúng như backend: dựng cây (chỉ tiêu đề) rồi bấm từng mục
+   * mới xin nội dung. Nội dung đã xin một lần thì giữ trong `mm.sections`,
+   * bấm lại là mở ngay - backend cũng cache, nhưng không việc gì phải đi
+   * một vòng mạng để nhận lại đúng thứ vừa nhận.
+   * ================================================================= */
+  var mm = {
+    selected: '',    // doc_id của tài liệu đang xem
+    title: '',       // tên tài liệu, để hỏi lại trước khi xoá
+    data: null,      // phản hồi /generate gần nhất, để vẽ lại khi đổi chế độ
+    sections: {},    // node_id -> nội dung đã xin
+    collapsed: {},   // node_id -> nhánh người dùng thu lại, ở chế độ danh sách
+    view: 'list',    // 'list' | 'graph'
+    gclosed: {},     // như trên nhưng của chế độ đồ thị - hai chế độ gập khác nhau
+    gInit: '',       // doc_id đã khởi tạo trạng thái gập cho đồ thị
+    cam: null,       // {x, y, k} góc nhìn của đồ thị
+  };
+
+  /** Hai nút chỉ có nghĩa khi đã có một sơ đồ trên màn hình. */
+  function mmSyncControls() {
+    $('#mmActions').hidden = !mm.selected;
+  }
+
+  /* ── cây ─────────────────────────────────────────────────────────── */
+  function mmNodeEl(node, depth) {
+    var item = el('li', { class: 'mm-item', dataset: { id: node.id } });
+    var kids = node.children || [];
+    var head = el('div', { class: 'mm-node lv' + Math.min(depth, 4) });
+
+    if (kids.length) {
+      var caret = el('button', {
+        class: 'mm-caret', type: 'button',
+        'aria-label': 'Thu gọn / mở nhánh',
+      }, '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" ' +
+         'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>');
+      caret.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        mm.collapsed[node.id] = !mm.collapsed[node.id];
+        item.classList.toggle('is-collapsed', !!mm.collapsed[node.id]);
+      });
+      head.appendChild(caret);
+    } else {
+      head.appendChild(el('span', { class: 'mm-caret placeholder' }));
+    }
+
+    var label = el('button', { class: 'mm-label', type: 'button' },
+      '<span class="mm-text">' + esc(node.title) + '</span>' +
+      (kids.length ? '<span class="mm-count">' + kids.length + '</span>' : '') +
+      (node.has_content ? '<span class="mm-dot" title="Đã có nội dung"></span>' : ''));
+    label.addEventListener('click', function () { mmToggleSection(node, item, label); });
+    head.appendChild(label);
+
+    item.appendChild(head);
+
+    if (kids.length) {
+      var sub = el('ul', { class: 'mm-children' });
+      kids.forEach(function (child) { sub.appendChild(mmNodeEl(child, depth + 1)); });
+      item.appendChild(sub);
+    }
+    if (mm.collapsed[node.id]) item.classList.add('is-collapsed');
+    return item;
+  }
+
+  function mmRender(data) {
+    mm.data = data;
+    // Chế độ đồ thị mở sẵn gốc + cấp 1, các cấp sâu hơn gập lại: cây 32 mục bung
+    // hết một lượt thì không còn là sơ đồ nữa, mà là một bức tường chữ.
+    if (mm.gInit !== data.doc_id) {
+      mm.gclosed = {};
+      (function gap(node, depth) {
+        if (depth >= 1 && (node.children || []).length) mm.gclosed[node.id] = true;
+        (node.children || []).forEach(function (c) { gap(c, depth + 1); });
+      })(data.tree, 0);
+      mm.gInit = data.doc_id;
+      mm.cam = null;
+    }
+    mmPaint();
+  }
+
+  /** Vẽ lại cả khung kết quả theo chế độ đang chọn. */
+  function mmPaint() {
+    var data = mm.data;
+    if (!data) return;
+    var box = $('#mmResult');
+    box.innerHTML = '';
+
+    var head = el('div', { class: 'card mm-head' },
+      '<div class="card-head"><h3>' + esc(data.doc_title) + '</h3>' +
+      '<span class="pill accent">' + fmtNum(data.node_count) + ' mục</span>' +
+      (data.cached ? '<span class="pill">bản đã lưu</span>' : '<span class="pill ok">vừa dựng</span>') +
+      '</div>' +
+      '<div class="mm-modes" role="group" aria-label="Kiểu hiển thị">' +
+        '<button type="button" class="mm-mode' + (mm.view === 'graph' ? '' : ' is-active') + '" data-mode="list">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>' +
+          'Danh sách</button>' +
+        '<button type="button" class="mm-mode' + (mm.view === 'graph' ? ' is-active' : '') + '" data-mode="graph">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9.5" width="6.5" height="5" rx="1.5"/><rect x="15.5" y="3" width="6.5" height="5" rx="1.5"/><rect x="15.5" y="16" width="6.5" height="5" rx="1.5"/><path d="M8.5 12h2.5c.8 0 1.5-.7 1.5-1.5v-3c0-.8.7-1.5 1.5-1.5h1M8.5 12h2.5c.8 0 1.5.7 1.5 1.5v3c0 .8.7 1.5 1.5 1.5h1"/></svg>' +
+          'Đồ thị</button>' +
+      '</div>' +
+      '<div class="card-sub">' + (mm.view === 'graph'
+        ? 'Bấm một nhánh để mở các mục bên trong nó. Lăn chuột để phóng to, kéo nền để di chuyển.'
+        : 'Bấm vào một mục để hệ thống truy hồi trong đúng tài liệu này rồi viết nội dung. ') +
+      (data.saved_at ? 'Lưu lúc ' + esc(data.saved_at.replace('T', ' ')) + '.' : '') + '</div>');
+    box.appendChild(head);
+
+    $$('.mm-mode', head).forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (mm.view === b.dataset.mode) return;
+        mm.view = b.dataset.mode;
+        mmPaint();
+      });
+    });
+
+    if (mm.view === 'graph') mmPaintGraph(box);
+    else {
+      var canvas = el('div', { class: 'mm-canvas' });
+      var root = el('ul', { class: 'mm-tree' });
+      root.appendChild(mmNodeEl(data.tree, 0));
+      canvas.appendChild(root);
+      box.appendChild(canvas);
+    }
+  }
+
+  /* ── chế độ đồ thị ───────────────────────────────────────────────────
+   * Bố cục cây nằm ngang, tự tính chứ không kéo thư viện về: trang này phải
+   * chạy được cả khi máy không ra được Internet, mà phần việc thì gọn - một
+   * lượt hậu thứ tự gán chỗ cho từng nhánh.
+   *
+   * Hộp là <div> thật chứ không phải <text> trong SVG: tiêu đề tiếng Việt cần
+   * xuống dòng, mà SVG thì không tự ngắt dòng. SVG chỉ nằm dưới để vẽ cạnh.
+   * ================================================================= */
+  var G_W = [230, 205, 185, 172, 165];   // bề rộng hộp theo cấp
+  var G_HGAP = 58;                       // cách ngang giữa hai cấp
+  var G_VGAP = 13;                       // cách dọc giữa hai nhánh cùng cha
+  var G_PAD = 26;
+
+  function gWidth(depth) { return G_W[Math.min(depth, G_W.length - 1)]; }
+  function gLeft(depth) {
+    var x = G_PAD;
+    for (var d = 0; d < depth; d++) x += gWidth(d) + G_HGAP;
+    return x;
+  }
+
+  function svgEl(tag, attrs) {
+    var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+
+  function mmPaintGraph(box) {
+    var host = el('div', { class: 'mm-graph' });
+    host.appendChild(el('div', { class: 'mm-graph-tools' },
+      '<button type="button" class="icon-btn" data-zoom="out" title="Thu nhỏ" aria-label="Thu nhỏ">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>' +
+      '<button type="button" class="icon-btn" data-zoom="in" title="Phóng to" aria-label="Phóng to">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>' +
+      '<button type="button" class="icon-btn" data-zoom="fit" title="Vừa khung" aria-label="Vừa khung">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>'));
+
+    var stage = el('div', { class: 'mm-stage' });
+    host.appendChild(stage);
+    box.appendChild(host);
+
+    // Mỗi lần vào lại chế độ đồ thị thì canh cho vừa khung. Còn khi chỉ mở/đóng
+    // một nhánh thì `mmDrawGraph` giữ nguyên góc nhìn - đang xem kỹ một nhánh mà
+    // sơ đồ tự nhảy về vị trí khác là mất chỗ đang đọc.
+    mm.cam = null;
+    mmDrawGraph(host, stage);
+    mmWireCamera(host, stage);
+  }
+
+  /** Dựng lại hộp + cạnh. Giữ nguyên góc nhìn hiện tại (mm.cam). */
+  function mmDrawGraph(host, stage) {
+    stage.innerHTML = '';
+    var svg = svgEl('svg', { class: 'mm-edges' });
+    stage.appendChild(svg);
+
+    // 1. Những mục đang nhìn thấy, theo đúng quan hệ cha-con.
+    var items = [];
+    (function walk(node, depth, parent) {
+      var item = { node: node, depth: depth, kids: [] };
+      items.push(item);
+      if (parent) parent.kids.push(item);
+      if ((node.children || []).length && !mm.gclosed[node.id]) {
+        node.children.forEach(function (c) { walk(c, depth + 1, item); });
+      }
+    })(mm.data.tree, 0, null);
+
+    // 2. Dựng hộp trước để ĐO được chiều cao thật - tiêu đề dài ngắn khác nhau
+    //    thì hộp cao thấp khác nhau, gán chỗ theo chiều cao đoán mò là chồng nhau.
+    items.forEach(function (it) {
+      var con = (it.node.children || []).length;
+      var dong = con && mm.gclosed[it.node.id];
+      var box2 = el('button', {
+        class: 'mm-gnode lv' + Math.min(it.depth, 3) + (con ? ' has-kids' : '') + (dong ? ' is-closed' : ''),
+        type: 'button',
+        title: it.node.title,
+      },
+        '<span class="mm-gtext">' + esc(it.node.title) + '</span>' +
+        (con ? '<span class="mm-gbadge">' + (dong ? '+' : '−') + con + '</span>' : ''));
+      box2.style.width = gWidth(it.depth) + 'px';
+      box2.style.left = gLeft(it.depth) + 'px';
+      if (con) {
+        box2.addEventListener('click', function () {
+          mm.gclosed[it.node.id] = !mm.gclosed[it.node.id];
+          mmDrawGraph(host, stage);
+        });
+      }
+      stage.appendChild(box2);
+      it.el = box2;
+      it.w = gWidth(it.depth);
+    });
+    items.forEach(function (it) { it.h = it.el.offsetHeight; });
+
+    // 3. Gán chỗ theo chiều dọc: lá xếp nối nhau, cha đứng giữa đàn con.
+    mmLayout(items[0], G_PAD);
+
+    // 4. Đặt hộp và vẽ cạnh.
+    var maxX = 0, maxY = 0;
+    items.forEach(function (it) {
+      it.el.style.top = Math.round(it.y - it.h / 2) + 'px';
+      maxX = Math.max(maxX, gLeft(it.depth) + it.w);
+      maxY = Math.max(maxY, it.y + it.h / 2);
+    });
+
+    items.forEach(function (it) {
+      it.kids.forEach(function (kid) {
+        var x1 = gLeft(it.depth) + it.w, y1 = it.y;
+        var x2 = gLeft(kid.depth), y2 = kid.y;
+        // Bezier với hai tay nắm nằm ngang: cạnh rời hộp cha theo phương ngang
+        // và cắm vào hộp con cũng theo phương ngang, nên chỗ nối không gãy góc.
+        var dx = Math.max(22, (x2 - x1) * 0.5);
+        svg.appendChild(svgEl('path', {
+          class: 'mm-edge lv' + Math.min(it.depth, 3),
+          d: 'M' + x1 + ' ' + y1 + ' C' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2,
+        }));
+      });
+    });
+
+    var W = maxX + G_PAD, H = maxY + G_PAD;
+    stage.style.width = W + 'px';
+    stage.style.height = H + 'px';
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    stage.dataset.w = W;
+    stage.dataset.h = H;
+
+    if (!mm.cam) mmFit(host, stage);
+    else mmApplyCam(stage);
+  }
+
+  /** Lá xếp nối nhau; cha đứng giữa con đầu và con cuối. Trả về chiều cao khối. */
+  function mmLayout(item, top) {
+    if (!item.kids.length) {
+      item.y = top + item.h / 2;
+      return item.h;
+    }
+    var cur = top;
+    item.kids.forEach(function (kid) { cur += mmLayout(kid, cur) + G_VGAP; });
+    var span = cur - G_VGAP - top;
+    item.y = (item.kids[0].y + item.kids[item.kids.length - 1].y) / 2;
+
+    // Cha cao hơn cả đàn con (tiêu đề dài, con thì một mục ngắn): đẩy con xuống
+    // cho cân, không thì hộp cha thò ra ngoài khối của chính nó và đè hàng xóm.
+    if (item.h > span) {
+      var dy = (item.h - span) / 2;
+      item.kids.forEach(function (kid) { mmShift(kid, dy); });
+      item.y += dy;
+      return item.h;
+    }
+    return span;
+  }
+
+  function mmShift(item, dy) {
+    item.y += dy;
+    item.kids.forEach(function (kid) { mmShift(kid, dy); });
+  }
+
+  /* ── phóng to / kéo nền ─────────────────────────────────────────────── */
+  function mmApplyCam(stage) {
+    stage.style.transform = 'translate(' + mm.cam.x + 'px,' + mm.cam.y + 'px) scale(' + mm.cam.k + ')';
+  }
+
+  function mmFit(host, stage) {
+    var W = Number(stage.dataset.w) || 1, H = Number(stage.dataset.h) || 1;
+    var k = Math.min(1, (host.clientWidth - 16) / W, (host.clientHeight - 16) / H);
+    k = Math.max(k, 0.25);
+    mm.cam = { k: k, x: Math.max(0, (host.clientWidth - W * k) / 2), y: Math.max(0, (host.clientHeight - H * k) / 2) };
+    mmApplyCam(stage);
+  }
+
+  function mmWireCamera(host, stage) {
+    $$('[data-zoom]', host).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var kind = btn.dataset.zoom;
+        if (kind === 'fit') { mmFit(host, stage); return; }
+        // Phóng quanh TÂM khung nhìn, không phải quanh gốc toạ độ - nếu không
+        // thì mỗi lần bấm + là sơ đồ trôi ra khỏi màn hình.
+        mmZoomAt(stage, host.clientWidth / 2, host.clientHeight / 2, kind === 'in' ? 1.2 : 1 / 1.2);
+      });
+    });
+
+    host.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var r = host.getBoundingClientRect();
+      mmZoomAt(stage, e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.1 : 1 / 1.1);
+    }, { passive: false });
+
+    var keo = null;
+    host.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('.mm-gnode, .mm-graph-tools')) return;
+      keo = { x: e.clientX - mm.cam.x, y: e.clientY - mm.cam.y };
+      host.classList.add('is-panning');
+      host.setPointerCapture(e.pointerId);
+    });
+    host.addEventListener('pointermove', function (e) {
+      if (!keo) return;
+      mm.cam.x = e.clientX - keo.x;
+      mm.cam.y = e.clientY - keo.y;
+      mmApplyCam(stage);
+    });
+    ['pointerup', 'pointercancel'].forEach(function (evt) {
+      host.addEventListener(evt, function () { keo = null; host.classList.remove('is-panning'); });
+    });
+  }
+
+  function mmZoomAt(stage, px, py, factor) {
+    var k = Math.min(2.5, Math.max(0.2, mm.cam.k * factor));
+    // Giữ nguyên điểm đang nằm dưới con trỏ: quy nó về toạ độ sơ đồ rồi đặt lại.
+    var gx = (px - mm.cam.x) / mm.cam.k;
+    var gy = (py - mm.cam.y) / mm.cam.k;
+    mm.cam = { k: k, x: px - gx * k, y: py - gy * k };
+    mmApplyCam(stage);
+  }
+
+  /* ── nội dung một mục ────────────────────────────────────────────── */
+  function mmSectionHTML(section) {
+    return '<div class="mm-detail-head">' + esc(section.title) +
+        (section.cached ? '<span class="pill">đã lưu</span>' : '<span class="pill ok">vừa viết</span>') +
+      '</div>' +
+      '<div class="prose">' + MD.render(section.summary || '') + '</div>' +
+      ((section.key_points || []).length
+        ? '<ul class="mm-points">' + section.key_points.map(function (p) {
+            return '<li>' + MD.inline(p) + '</li>';
+          }).join('') + '</ul>'
+        : '') +
+      ((section.sources || []).length
+        ? '<div class="mm-sources"><span class="mm-sources-label">Nguồn</span>' +
+          section.sources.map(function (s) {
+            return '<span class="pill">' + esc(s) + '</span>';
+          }).join('') + '</div>'
+        : '');
+  }
+
+  async function mmToggleSection(node, item, label) {
+    var open = $('.mm-detail', item);
+    // Chỉ lấy khối chi tiết của CHÍNH mục này: `$` tìm cả trong nhánh con, nên
+    // phải kiểm tra cha trực tiếp, không thì bấm mục cha lại đóng mục con.
+    if (open && open.parentNode !== item) open = null;
+    if (open) {
+      open.remove();
+      label.classList.remove('is-open');
+      return;
+    }
+
+    label.classList.add('is-open');
+    var detail = el('div', { class: 'mm-detail' });
+    // Chèn ngay sau tiêu đề, trước danh sách con - nội dung thuộc về mục này.
+    item.insertBefore(detail, item.children[1] || null);
+
+    if (mm.sections[node.id]) {
+      // Mở lại từ bộ nhớ của trang: nhãn phải là "đã lưu", không phải "vừa viết"
+      // của lần xin đầu tiên - lần này có gọi backend đâu.
+      detail.innerHTML = mmSectionHTML(Object.assign({}, mm.sections[node.id], { cached: true }));
+      return;
+    }
+
+    var loader = loaderNode('Đang truy hồi và viết nội dung cho “' + node.title + '”…');
+    detail.appendChild(loader);
+    try {
+      var section = await API.mindmapSection(mm.selected, node.id);
+      mm.sections[node.id] = section;
+      loader.stop();
+      detail.innerHTML = mmSectionHTML(section);
+      // Chấm xanh: lần sau bấm vào mục này là mở ngay, không phải chờ.
+      if (!$('.mm-dot', label)) label.appendChild(el('span', { class: 'mm-dot', title: 'Đã có nội dung' }));
+    } catch (e) {
+      loader.stop();
+      detail.innerHTML = '<div class="mm-detail-err">' + esc(errText(e)) + '</div>';
+    }
+  }
+
+  /* ── hành động ───────────────────────────────────────────────────── */
+
+  /* Thả file chỉ là CHỌN file - không gọi mạng. Nạp kho và dựng cây đều nằm sau
+     nút, giống mọi màn khác trên giao diện này (Soát tài liệu, Kho tri thức):
+     chọn file xong còn kịp đổi ý, và không có lượt LLM nào chạy vì một cú thả
+     nhầm tay. */
+  var mmFile = null;
+  wireDropzone('#mmDrop', '#mmFile', function (file) {
+    mmFile = file;
+    markDropzone('#mmDrop', file);
+    $('#mmRun').disabled = false;
+    $('#mmResult').innerHTML = '<div class="result-empty">Đã chọn <b>' + esc(file.name) +
+      '</b>. Bấm <b>Dựng sơ đồ tư duy</b> để nạp vào kho rồi dựng cây.</div>';
+  });
+
+  $('#mmRun').addEventListener('click', async function () {
+    if (!mmFile) { toast('Chọn file trước đã', 'err'); return; }
+    var btn = this;
+    var box = $('#mmResult');
+    box.innerHTML = '';
+    var card = el('div', { class: 'card' }, '');
+    var loader = loaderNode(
+      'Đang nạp “' + mmFile.name + '” vào kho…', null,
+      { text: 'Quy về Markdown → chunk → nhúng vector. File scan phải OCR nên lâu hơn.',
+        slowAfter: 120 });
+    card.appendChild(loader);
+    box.appendChild(card);
+    btn.disabled = true;
+    $('#mmActions').hidden = true;
+
+    try {
+      var nap = await API.corpusUpload(mmFile, '');
+      loader.stop();
+      toast('Đã nạp ' + nap.chunk_count + ' chunk', 'ok');
+      mm.selected = nap.doc_id;
+      mm.title = nap.doc_title || mmFile.name;
+      mm.sections = {};
+      mm.collapsed = {};
+      // doc_id băm từ nội dung: nạp lại đúng file cũ ra đúng id cũ, nên nếu đã
+      // dựng sơ đồ lần trước thì lời gọi dưới trả luôn bản đã lưu, không tốn
+      // lượt LLM nào. Vì thế ở đây KHÔNG dựng lại.
+      mmBuild(false, btn);
+    } catch (e) {
+      loader.stop();
+      btn.disabled = false;
+      mmErrorCard('Không nạp được tài liệu', e);
+    }
+  });
+
+  function mmErrorCard(tieu_de, e) {
+    $('#mmResult').innerHTML = '<div class="card" style="border-color:var(--err)">' +
+      '<div class="card-head"><h3>' + esc(tieu_de) + '</h3><span class="pill err">lỗi</span></div>' +
+      '<div class="muted sm">' + esc(errText(e)) + '</div></div>';
+    toast(errText(e), 'err');
+    mmSyncControls();
+  }
+
+  function mmBuild(again, button) {
+    if (!mm.selected) return;
+    runWorkflow({
+      button: button || $('#mmRebuild'),
+      box: $('#mmResult'),
+      // Dựng cây là 5-9 lượt LLM chạy nối nhau, vài chục giây là bình thường -
+      // nói trước để không ai tưởng màn hình treo.
+      label: 'Đang đọc cả tài liệu theo từng mẻ rồi gộp thành cây chủ đề…',
+      hint: { text: 'MAP từng mẻ → REDUCE thành một cây', slowAfter: 120 },
+      call: function (signal) {
+        return API.mindmapGenerate({ doc_id: mm.selected, regenerate: !!again }, signal);
+      },
+      render: function (data) {
+        mm.sections = {};
+        mm.collapsed = {};
+        mm.title = data.doc_title || mm.title;
+        mmRender(data);
+        mmSyncControls();
+        toast(data.cached ? 'Mở sơ đồ đã lưu' : ('Đã dựng sơ đồ ' + data.node_count + ' mục'), 'ok');
+      },
+    });
+  }
+
+  $('#mmRebuild').addEventListener('click', function () {
+    if (!confirm('Dựng lại sơ đồ của "' + mm.title + '" từ đầu? Bản đang có sẽ bị thay, và việc này tốn 5-9 lượt LLM.')) return;
+    mmBuild(true, this);
+  });
+
+  $('#mmDelete').addEventListener('click', async function () {
+    if (!mm.selected) return;
+    if (!confirm('Xoá sơ đồ tư duy của "' + mm.title + '"? Dựng lại sẽ tốn lượt LLM.')) return;
+    try {
+      await API.mindmapDelete(mm.selected);
+      mm.selected = '';
+      mm.sections = {};
+      mm.collapsed = {};
+      mmSyncControls();
+      $('#mmResult').innerHTML = '<div class="result-empty">Đã xoá sơ đồ.' +
+        (mmFile ? ' Bấm <b>Dựng sơ đồ tư duy</b> để dựng lại từ file đang chọn.' :
+                  ' Thả tài liệu vào ô bên trái để dựng lại.') + '</div>';
+      toast('Đã xoá sơ đồ', 'ok');
+    } catch (e) {
+      toast(errText(e), 'err');
+    }
+  });
+
+  /* ═══════════════════════ VIEW: OCR TÀI LIỆU ════════════════════════
+   * Ảnh trang -> Markdown, đọc bằng chính model đang phục vụ cả hệ thống.
+   *
+   * Màn này nhận trang qua SSE chứ không đợi một phản hồi duy nhất: tài
+   * liệu 30 trang scan mất vài phút, và đường công khai qua Cloudflare cắt
+   * mọi request im lặng quá 125 giây. Ô trang được dựng sẵn đủ số ngay khi
+   * biết tài liệu dày bao nhiêu, rồi điền dần - nên trang về không đúng thứ
+   * tự cũng không làm nhảy bố cục.
+   * ================================================================= */
+  var ocr = {
+    file: null,
+    tong: 0,        // số trang của tài liệu
+    trang: {},      // so_trang -> payload từ backend
+    xong: 0,        // số trang đã điền
+    meta: null,     // payload của `done`
+    fileId: '',     // file đã nằm trên server - đọc lại khỏi tải lên lần nữa
+    cheDo: 'auto',  // chế độ của lần chạy đang hiện trên màn hình
+    tho: false,     // đang xem Markdown thô thay vì bản dựng
+    ctrl: null,
+    daNapStatus: false,
+  };
+
+  /** Cấu hình OCR: chủ yếu để nói rõ MODEL NÀO đang đọc, và báo sớm nếu tắt. */
+  async function ocrLoadStatus() {
+    if (ocr.daNapStatus) return;
+    ocr.daNapStatus = true;
+    try {
+      var st = await API.ocrStatus();
+      $('#ocrModel').textContent = st.model || 'model đang chạy';
+      if (!st.enabled) {
+        $('#ocrRun').disabled = true;
+        $('#ocrResult').innerHTML = '<div class="card" style="border-color:var(--warn)">' +
+          '<div class="card-head"><h3>OCR đang tắt</h3><span class="pill warn">không chạy được</span></div>' +
+          '<div class="muted sm">Backend đang đặt <code>OCR_ENABLED=false</code>. Bật lại trong ' +
+          '<code>backend/.env</code> rồi khởi động lại uvicorn.</div></div>';
+      }
+    } catch (e) {
+      // Không chặn màn hình vì một dòng chú thích: nút vẫn bấm được, lỗi thật
+      // (nếu có) sẽ hiện ra lúc chạy, kèm thông điệp của chính backend.
+      ocr.daNapStatus = false;
+    }
+  }
+
+  var OCR_NGUON = {
+    ocr: ['mô hình đọc', 'ok'],
+    digital: ['lớp text', ''],
+    trong: ['trang trắng', 'muted'],
+    loi: ['đọc hỏng', 'err'],
+  };
+
+  /** Markdown của cả tài liệu, ghép đúng thứ tự trang - dùng để chép và tải về. */
+  function ocrMarkdown() {
+    var phan = [];
+    for (var i = 1; i <= ocr.tong; i++) {
+      var t = ocr.trang[i];
+      phan.push(t && t.markdown ? t.markdown.trim() : '');
+    }
+    if (phan.length <= 1) return phan[0] || '';
+    return phan.join('\n\n---\n\n').trim();
+  }
+
+  function ocrPageNode(so) {
+    var node = el('article', { class: 'ocr-page', dataset: { page: String(so) } });
+    node.appendChild(el('header', { class: 'ocr-page-head' },
+      '<span class="ocr-page-no">Trang ' + so + '</span><span class="ocr-page-src"></span>'));
+    node.appendChild(el('div', { class: 'prose ocr-page-body' },
+      '<div class="ocr-waiting"><span class="spinner sm"></span>đang đọc…</div>'));
+    return node;
+  }
+
+  function ocrFillPage(payload) {
+    var node = $('.ocr-page[data-page="' + payload.so_trang + '"]', $('#ocrPages'));
+    if (!node) return;
+    var nguon = OCR_NGUON[payload.nguon] || [payload.nguon, ''];
+    node.classList.add('is-done');
+    node.classList.toggle('is-empty', !payload.markdown);
+    $('.ocr-page-src', node).innerHTML =
+      '<span class="pill ' + nguon[1] + '">' + esc(nguon[0]) + '</span>' +
+      (payload.so_ky_tu ? '<span class="ocr-chars">' + fmtNum(payload.so_ky_tu) + ' ký tự</span>' : '');
+
+    var body = $('.ocr-page-body', node);
+    if (!payload.markdown) {
+      body.innerHTML = '<div class="ocr-waiting is-empty">' +
+        (payload.nguon === 'loi'
+          ? 'Mô hình không đọc được trang này — thử chạy lại, hoặc chọn “mọi trang”.'
+          : 'Trang không có chữ nào.') + '</div>';
+      return;
+    }
+    /* citations:false — chuỗi kiểu "[1]" trong văn bản gốc là nội dung của tài
+       liệu, không phải marker trích dẫn của hệ thống. Để nguyên mặc định thì
+       một điều khoản "khoản [2]" biến thành nút bấm dẫn đi đâu không ai biết. */
+    body.innerHTML = MD.render(payload.markdown, { citations: false });
+  }
+
+  function ocrSyncProgress() {
+    var bar = $('#ocrBar');
+    if (!bar) return;
+    var pct = ocr.tong ? Math.round((ocr.xong / ocr.tong) * 100) : 0;
+    $('i', bar).style.width = pct + '%';
+    $('#ocrProgressText').textContent = ocr.xong + '/' + ocr.tong + ' trang';
+  }
+
+  /** Chuyển giữa bản dựng và Markdown thô mà không gọi lại backend. */
+  function ocrPaint() {
+    var host = $('#ocrPages');
+    if (!host || !ocr.tho) return;
+    host.innerHTML = '';
+    host.appendChild(el('pre', { class: 'ocr-raw' }, esc(ocrMarkdown())));
+  }
+
+  function ocrRebuildPages() {
+    var host = $('#ocrPages');
+    host.innerHTML = '';
+    for (var i = 1; i <= ocr.tong; i++) host.appendChild(ocrPageNode(i));
+    Object.keys(ocr.trang).forEach(function (so) { ocrFillPage(ocr.trang[so]); });
+  }
+
+  function ocrHeadNode(start) {
+    var card = el('div', { class: 'card ocr-head' });
+    card.appendChild(el('div', { class: 'card-head' },
+      '<h3>' + esc(start.file_name) + '</h3>' +
+      '<span class="pill">' + esc(start.model) + '</span>'));
+
+    var stats = [
+      ['Số trang', fmtNum(start.so_trang)],
+      ['Mô hình đọc', fmtNum(start.so_trang_ocr) + ' trang'],
+      ['Lấy thẳng lớp text', fmtNum(start.so_trang_digital) + ' trang'],
+    ];
+    card.appendChild(el('div', { class: 'ocr-stats' }, stats.map(function (s) {
+      return '<div class="ocr-stat"><span>' + esc(s[0]) + '</span><b>' + esc(s[1]) + '</b></div>';
+    }).join('')));
+
+    card.appendChild(el('div', { class: 'ocr-progress', id: 'ocrBar' },
+      '<i></i><span id="ocrProgressText">0/' + start.so_trang + ' trang</span>'));
+
+    var tools = el('div', { class: 'ocr-tools' });
+    var seg = el('div', { class: 'seg' });
+    [['Văn bản có cấu trúc', false], ['Markdown thô', true]].forEach(function (mode) {
+      var b = el('button', { class: 'seg-btn' + (ocr.tho === mode[1] ? ' is-on' : '') }, mode[0]);
+      b.addEventListener('click', function () {
+        if (ocr.tho === mode[1]) return;
+        ocr.tho = mode[1];
+        $$('.seg-btn', seg).forEach(function (x) { x.classList.remove('is-on'); });
+        b.classList.add('is-on');
+        if (ocr.tho) ocrPaint(); else { ocrRebuildPages(); ocrSyncProgress(); }
+      });
+      seg.appendChild(b);
+    });
+    tools.appendChild(seg);
+
+    var chep = el('button', { class: 'ghost-btn sm' }, 'Sao chép Markdown');
+    chep.addEventListener('click', function () {
+      navigator.clipboard.writeText(ocrMarkdown()).then(
+        function () { toast('Đã sao chép', 'ok', 1600); },
+        function () { toast('Trình duyệt chặn clipboard', 'err'); });
+    });
+    tools.appendChild(chep);
+
+    var tai = el('button', { class: 'ghost-btn sm' }, 'Tải .md');
+    tai.addEventListener('click', function () {
+      /* Dựng file ngay tại trình duyệt: chữ đã nằm sẵn trên trang, đi một vòng
+         xuống backend để xin lại đúng thứ đó là thừa. */
+      var blob = new Blob([ocrMarkdown()], { type: 'text/markdown;charset=utf-8' });
+      var href = URL.createObjectURL(blob);
+      var a = el('a', { href: href, download: start.file_name.replace(/\.[^.]+$/, '') + '.md' });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(href); }, 1000);
+    });
+    tools.appendChild(tai);
+
+    /* Lớp text có sẵn không đồng nghĩa với lớp text ĐÚNG: bản scan kèm OCR cũ
+       vẫn thừa ký tự và thừa font nhúng nên qua hết ba tín hiệu phân loại, rồi
+       trả về chữ sai. Không có ngưỡng nào tách được bản tốt với bản hỏng, nên
+       thay vì đoán hộ thì để người đọc - người duy nhất nhìn ra chữ sai - bấm
+       một nút. File đã nằm trên server, đọc lại không phải tải lên lần nữa. */
+    if (ocr.cheDo === 'auto' && start.so_trang_digital > 0) {
+      var lai = el('button', { class: 'ghost-btn sm' }, 'Chữ sai? Đọc lại bằng mô hình');
+      lai.title = 'Bỏ lớp text có sẵn, ép cả ' + start.so_trang + ' trang qua mô hình';
+      lai.addEventListener('click', function () {
+        $('#ocrCheDo').value = 'tat_ca';
+        ocrDoc(ocr.fileId, 'tat_ca');
+      });
+      tools.appendChild(lai);
+    }
+
+    card.appendChild(tools);
+    return card;
+  }
+
+  function ocrSetBusy(busy) {
+    var btn = $('#ocrRun');
+    btn.disabled = busy || !ocr.file;
+    btn.textContent = busy ? 'Đang đọc…' : 'Đọc tài liệu';
+    $('#ocrCheDo').disabled = busy;
+  }
+
+  wireDropzone('#ocrDrop', '#ocrFile', function (file) {
+    ocr.file = file;
+    markDropzone('#ocrDrop', file);
+    $('#ocrRun').disabled = false;
+    $('#ocrResult').innerHTML = '<div class="result-empty">Đã chọn <b>' + esc(file.name) +
+      '</b>. Bấm <b>Đọc tài liệu</b> để bắt đầu.</div>';
+  });
+
+  /** Tải file lên rồi đọc. Đọc lại đi thẳng vào `ocrDoc`, khỏi tải lên lần nữa. */
+  async function ocrChay() {
+    if (!ocr.file) { toast('Chọn file trước đã', 'err'); return; }
+    var box = $('#ocrResult');
+    ocrSetBusy(true);
+    box.innerHTML = '';
+    var loader = loaderNode('Đang tải “' + ocr.file.name + '” lên…');
+    box.appendChild(loader);
+    try {
+      var up = await API.agentUpload(ocr.file, 'upload');
+      ocr.fileId = up.file_id;
+      loader.stop();
+    } catch (e) {
+      loader.stop();
+      ocrSetBusy(false);
+      box.innerHTML = '<div class="card" style="border-color:var(--err)">' +
+        '<div class="card-head"><h3>Không tải được file lên</h3><span class="pill err">lỗi</span></div>' +
+        '<div class="muted sm">' + esc(errText(e)) + '</div></div>';
+      toast(errText(e), 'err');
+      return;
+    }
+    ocrDoc(ocr.fileId, $('#ocrCheDo').value);
+  }
+
+  async function ocrDoc(fileId, cheDo) {
+    if (!fileId) { toast('Chưa có file nào trên máy chủ', 'err'); return; }
+
+    var box = $('#ocrResult');
+    ocr.tong = 0;
+    ocr.trang = {};
+    ocr.xong = 0;
+    ocr.meta = null;
+    ocr.tho = false;
+    ocr.cheDo = cheDo;
+    ocr.ctrl = new AbortController();
+    ocrSetBusy(true);
+
+    box.innerHTML = '';
+    var loader = loaderNode(
+      cheDo === 'tat_ca' ? 'Đang ép cả tài liệu qua mô hình…' : 'Đang phân loại trang…',
+      function () { ocr.ctrl.abort(); },
+      { text: 'Trang scan đi qua mô hình thị giác, trang có sẵn chữ thì đọc thẳng.',
+        slowAfter: 90 });
+    box.appendChild(loader);
+
+    try {
+      var loi = null;
+
+      await API.ocrStream({ file_id: fileId, che_do: cheDo }, {
+        start: function (p) {
+          loader.stop();
+          box.innerHTML = '';
+          ocr.tong = p.so_trang;
+          box.appendChild(ocrHeadNode(p));
+          box.appendChild(el('div', { class: 'ocr-pages', id: 'ocrPages' }));
+          ocrRebuildPages();
+          ocrSyncProgress();
+        },
+        trang: function (p) {
+          ocr.trang[p.so_trang] = p;
+          ocr.xong += 1;
+          /* Đang xem Markdown thô thì phải dựng lại cả khối: nó là một chuỗi
+             ghép từ mọi trang, không có ô riêng để điền vào như bản dựng. */
+          if (ocr.tho) ocrPaint(); else ocrFillPage(p);
+          ocrSyncProgress();
+        },
+        done: function (p) { ocr.meta = p; },
+        error: function (p) { loi = p && p.detail; },
+      }, ocr.ctrl.signal);
+
+      loader.stop();
+      if (loi) throw new API.ApiError(loi, 500, '');
+      if (!ocr.meta) throw new API.ApiError('Kết nối đứt giữa chừng, tài liệu chưa đọc xong.', 0, '');
+
+      var bar = $('#ocrBar');
+      if (bar) {
+        bar.classList.add('is-done');
+        $('#ocrProgressText').textContent = ocr.meta.so_trang + ' trang · ' + ocr.meta.giay + 's' +
+          (ocr.meta.so_trang_loi ? ' · ' + ocr.meta.so_trang_loi + ' trang đọc hỏng' : '');
+      }
+      toast('Đã đọc xong ' + ocr.meta.so_trang + ' trang', ocr.meta.so_trang_loi ? 'warn' : 'ok');
+    } catch (e) {
+      loader.stop();
+      if (e && e.name === 'AbortError') {
+        /* Đã dừng giữa chừng: giữ lại những trang đã đọc được thay vì xoá sạch -
+           chúng vẫn là chữ thật của tài liệu, và đọc lại tốn đúng ngần ấy thời gian. */
+        if (!ocr.tong) box.innerHTML = '<div class="result-empty">Đã dừng.</div>';
+        else toast('Đã dừng — giữ lại ' + ocr.xong + ' trang đã đọc', '', 2600);
+      } else {
+        box.innerHTML = '<div class="card" style="border-color:var(--err)">' +
+          '<div class="card-head"><h3>Không đọc được tài liệu</h3><span class="pill err">lỗi</span></div>' +
+          '<div class="muted sm">' + esc(errText(e)) + '</div></div>';
+        toast(errText(e), 'err');
+      }
+    } finally {
+      ocr.ctrl = null;
+      ocrSetBusy(false);
+    }
+  }
+
+  $('#ocrRun').addEventListener('click', ocrChay);
 
   /* ─────────────────────────────── khởi động ─────────────────────────── */
   renderConvos();

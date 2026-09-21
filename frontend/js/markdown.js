@@ -51,6 +51,19 @@
   }
 
   // --- block -------------------------------------------------------------
+  /* Khối bố cục do backend sinh (app/documents/bo_cuc_hanh_chinh.py):
+     "::: tieu-ngu" hai cột, "::: giua" căn giữa, "::: dau" con dấu, ":::" đóng.
+     Chỉ backend sinh ra được, không phải LLM - nội dung bên trong vẫn escape
+     như mọi chỗ khác nên không mở đường chèn HTML. */
+  var KHOI_BO_CUC = { 'tieu-ngu': 'vb-tieu-ngu', 'giua': 'vb-giua', 'dau': 'vb-dau' };
+  var NGAN_COT = '|||';
+
+  function moKhoiBoCuc(line) {
+    var m = line.match(/^\s*:::\s+([a-z-]+)\s*$/);
+    return m && KHOI_BO_CUC[m[1]] ? KHOI_BO_CUC[m[1]] : null;
+  }
+  function dongKhoiBoCuc(line) { return /^\s*:::\s*$/.test(line); }
+
   function isTableRow(line) { return /^\s*\|.*\|\s*$/.test(line); }
   function isDivider(line) { return /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/.test(line) && line.indexOf('-') >= 0; }
 
@@ -64,14 +77,51 @@
     var html = [];
     var i = 0;
 
-    function flushList(type, items) {
-      html.push('<' + type + '>' + items.map(function (it) {
+    /* `bat` = số của mục đầu tiên. Danh sách đánh số trong tài liệu thường bị
+       nội dung khác chen vào giữa ("2. Địa chỉ..." cách "1. Tên công ty..." bởi
+       một đoạn văn), nên mỗi mục thành một <ol> riêng - mà <ol> thì luôn đếm
+       lại từ 1. Không giữ mốc thì văn bản ghi 1, 2, 3 hiện ra 1, 1, 1: người
+       đọc thấy số khác hẳn số trên giấy. */
+    function flushList(type, items, bat) {
+      var mo = '<' + type + (type === 'ol' && bat > 1 ? ' start="' + bat + '"' : '') + '>';
+      html.push(mo + items.map(function (it) {
         return '<li>' + inline(it, opts) + '</li>';
       }).join('') + '</' + type + '>');
     }
 
     while (i < lines.length) {
       var line = lines[i];
+
+      // khối bố cục văn bản hành chính
+      var lop = moKhoiBoCuc(line);
+      if (lop) {
+        var than = [];
+        i++;
+        while (i < lines.length && !dongKhoiBoCuc(lines[i])) { than.push(lines[i]); i++; }
+        i++;
+        if (lop === 'vb-tieu-ngu') {
+          html.push('<div class="vb-tieu-ngu">' + than.map(function (r) {
+            var o = r.split(NGAN_COT);
+            return '<div class="vb-cot">' + inline((o[0] || '').trim(), opts) + '</div>' +
+                   '<div class="vb-cot">' + inline((o[1] || '').trim(), opts) + '</div>';
+          }).join('') + '</div>');
+        } else if (lop === 'vb-giua') {
+          /* Dòng đầu là tên văn bản, phần còn lại là phụ đề - tách bằng cấu
+             trúc chứ không bằng nth-child, vì số dòng phụ đề thay đổi. */
+          html.push('<div class="vb-giua">' +
+            '<div class="vb-ten">' + inline((than[0] || '').trim(), opts) + '</div>' +
+            (than.length > 1
+              ? '<div class="vb-phu">' + than.slice(1).map(function (r) {
+                  return inline(r.trim(), opts);
+                }).join('<br />') + '</div>'
+              : '') + '</div>');
+        } else {
+          html.push('<div class="' + lop + '">' + than.map(function (r) {
+            return inline(r.trim(), opts);
+          }).join('<br />') + '</div>');
+        }
+        continue;
+      }
 
       // khối code
       if (/^\s*```/.test(line)) {
@@ -127,24 +177,25 @@
         while (i < lines.length && /^\s*[-*+•–]\s+/.test(lines[i])) {
           ul.push(lines[i].replace(/^\s*[-*+•–]\s+/, '')); i++;
         }
-        flushList('ul', ul);
+        flushList('ul', ul, 1);
         continue;
       }
 
       // danh sách có thứ tự
       if (/^\s*\d+[.)]\s+/.test(line)) {
         var ol = [];
+        var bat = parseInt((line.match(/^\s*(\d+)/) || [])[1], 10) || 1;
         while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) {
           ol.push(lines[i].replace(/^\s*\d+[.)]\s+/, '')); i++;
         }
-        flushList('ol', ol);
+        flushList('ol', ol, bat);
         continue;
       }
 
       // đoạn văn: gom tới dòng trắng; xuống dòng đơn giữ bằng <br>
       var para = [];
       while (i < lines.length && lines[i].trim() &&
-             !/^\s*(#{1,6}\s|>|```|[-*+•–]\s|\d+[.)]\s)/.test(lines[i]) &&
+             !/^\s*(#{1,6}\s|>|```|:::|[-*+•–]\s|\d+[.)]\s)/.test(lines[i]) &&
              !(isTableRow(lines[i]) && i + 1 < lines.length && isDivider(lines[i + 1]))) {
         para.push(lines[i]); i++;
       }

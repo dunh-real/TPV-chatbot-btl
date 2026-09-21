@@ -55,6 +55,12 @@
 }
 
 * { box-sizing: border-box; }
+
+/* `hidden` phải thật sự là ẩn. Quy tắc `[hidden]{display:none}` của trình duyệt
+   là của UA, nên bất kỳ khai báo nào của mình đặt `display` cũng đè được nó -
+   `.ghost-btn{display:inline-flex}` từng làm nút đã gắn `hidden` vẫn hiện nguyên
+   trên màn hình. Chốt lại một lần ở đây thay vì nhớ né ở từng chỗ dùng. */
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0;
@@ -735,3 +741,440 @@ pre.json {
 }
 @keyframes live-caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .live-flow::after { animation: none; } }
+
+/* ========================================================================
+   SOÁT TÀI LIỆU — bản dựng lại tài liệu kèm khung khoanh vùng lỗi
+   ---------------------------------------------------------------------
+   Danh sách lỗi phẳng bắt người đọc cầm từng dòng đi dò lại trong file gốc.
+   Ở đây tài liệu được dựng lại theo ĐÚNG phông, cỡ chữ, canh lề và lề trang
+   đọc được từ file, rồi lỗi được khoanh ngay tại chỗ.
+
+   Hai kiểu khung, cố ý KHÔNG giống nhau:
+     liền nét  đối chiếu chuỗi (từ điển, dấu cách, dấu câu) - máy chắc chắn
+     đứt nét   LLM phán đoán (ngữ pháp, diễn đạt, logic)    - cần người xác nhận
+   Vẽ giống nhau là nói dối về mức bảo đảm.
+   ===================================================================== */
+.doc-stage {
+  position: relative;
+  overflow: auto;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 0;
+}
+.doc-scaler { transform-origin: top center; }
+.doc-page {
+  /* Khổ và lề thật của tài liệu, do JS đặt từ `document.geometry`. */
+  width: var(--pg-w, 210mm);
+  min-height: var(--pg-h, 297mm);
+  padding: var(--pg-t, 20mm) var(--pg-r, 20mm) var(--pg-b, 20mm) var(--pg-l, 30mm);
+  margin: 0 auto;
+  background: #fffdf8;
+  color: #1a1a1a;
+  box-shadow: var(--shadow-md);
+  border-radius: 2px;
+}
+[data-theme="dark"] .doc-page { background: #ebe8e0; }
+
+.doc-block {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--doc-font, "Times New Roman", serif);
+}
+.doc-block.tbl {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: rgba(0,0,0,.035);
+  border-left: 2px solid rgba(0,0,0,.18);
+  padding: 5px 9px;
+  margin: 6px 0;
+}
+/* Khối có lỗi không chỉ ra được vị trí ký tự: đánh dấu cả khối thay vì bỏ qua. */
+.doc-block.whole { box-shadow: inset 3px 0 0 var(--err); padding-left: 9px; }
+.doc-block.whole-warn { box-shadow: inset 3px 0 0 var(--warn); }
+
+.doc-empty { text-align: center; color: var(--muted); padding: 30px 0; font-size: 13px; }
+
+/* ── khung khoanh vùng ─────────────────────────────────────────────── */
+mark.loi {
+  background: transparent;
+  color: inherit;
+  border: 1.5px solid;
+  border-radius: 3px;
+  padding: 0 1.5px;
+  margin: 0 -0.5px;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+mark.loi:hover, mark.loi.on { background: rgba(0,0,0,.07); }
+mark.loi.s-error   { border-color: #bb4b3f; background: rgba(187,75,63,.09); }
+mark.loi.s-warning { border-color: #b3781c; background: rgba(179,120,28,.10); }
+mark.loi.s-info    { border-color: #3d6ea8; background: rgba(61,110,168,.09); }
+/* Gợi ý của LLM: nét đứt, nền nhạt hơn - chưa chắc chắn thì đừng trông chắc chắn. */
+mark.loi.src-llm { border-style: dashed; background: transparent; }
+mark.loi.src-llm:hover, mark.loi.src-llm.on { background: rgba(0,0,0,.05); }
+
+/* ── thẻ chú giải khi bấm vào một khung ───────────────────────────── */
+.loi-pop {
+  position: absolute;
+  z-index: 40;
+  max-width: 330px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 12.8px;
+  line-height: 1.5;
+}
+.loi-pop .pop-top { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+.loi-pop .pop-msg { color: var(--text-soft); }
+.loi-pop .pop-fix {
+  margin-top: 7px; padding: 6px 8px;
+  background: var(--surface-2); border-radius: 6px;
+  border-left: 2px solid var(--ok);
+  font-family: var(--mono); font-size: 12px;
+}
+.loi-pop .pop-close {
+  position: absolute; top: 5px; right: 7px;
+  background: none; border: 0; cursor: pointer; color: var(--muted);
+  font-size: 15px; line-height: 1; padding: 2px 4px;
+}
+
+/* ── thanh công cụ trên khung tài liệu ────────────────────────────── */
+.doc-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.doc-bar .spacer { flex: 1; }
+.doc-zoom { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 7px; overflow: hidden; }
+.doc-zoom button {
+  background: var(--surface); border: 0; cursor: pointer;
+  padding: 3px 9px; font-size: 12px; color: var(--text-soft);
+}
+.doc-zoom button + button { border-left: 1px solid var(--border); }
+.doc-zoom button:hover { background: var(--surface-2); }
+.doc-zoom button.on { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 15px; height: 11px; border: 1.5px solid; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+.legend .l-rule i { border-color: #bb4b3f; background: rgba(187,75,63,.12); }
+.legend .l-llm  i { border-color: var(--muted); border-style: dashed; }
+
+/* ── bảng phân công nhiệm vụ ──────────────────────────────────────── */
+.task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.task-table th, .task-table td {
+  border: 1px solid var(--border); padding: 7px 9px;
+  text-align: left; vertical-align: top;
+}
+.task-table th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+.task-table td.stt { text-align: center; color: var(--muted); width: 34px; }
+.task-table td.dept { font-weight: 550; min-width: 132px; }
+.task-table .dl { white-space: nowrap; }
+.task-table tr.ngoai td.dept { color: var(--warn); }
+
+/* ── khối soạn văn bản giao việc ──────────────────────────────────── */
+.gv-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 9px; margin-top: 10px; }
+.gv-form label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.gv-form input, .gv-form select {
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: 7px; padding: 6px 9px; font-size: 13px;
+}
+.gv-form .wide { grid-column: 1 / -1; }
+
+/* ========================================================================
+   SƠ ĐỒ TƯ DUY
+   Cây vẽ bằng danh sách lồng nhau chứ không dùng thư viện: trang này chạy
+   được cả khi không có mạng ra ngoài, và một cái cây thì <ul>/<li> đã diễn
+   đạt đúng quan hệ cha-con - đọc bằng trình đọc màn hình vẫn ra nghĩa.
+   ===================================================================== */
+.mm-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.mm-note { font-size: 12px; color: var(--muted); line-height: 1.5; margin: -6px 0 0; }
+.mm-head .card-sub { margin-top: 6px; }
+
+/* ── nút đổi kiểu hiển thị ───────────────────────────────────────────── */
+.mm-modes { display: inline-flex; gap: 2px; margin-top: 10px; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+.mm-mode {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
+  border: 0; border-radius: 8px; background: none; color: var(--muted);
+  font: inherit; font-size: 12.6px; font-weight: 550; cursor: pointer;
+  transition: background .14s, color .14s;
+}
+.mm-mode:hover { color: var(--text); }
+.mm-mode.is-active { background: var(--surface); color: var(--accent-text); box-shadow: var(--shadow-sm); }
+
+/* ── chế độ đồ thị ───────────────────────────────────────────────────────
+   Hộp là <div> chứ không phải <text> trong SVG, vì tiêu đề tiếng Việt cần
+   xuống dòng mà SVG không tự ngắt dòng được. SVG nằm dưới, chỉ để vẽ cạnh. */
+.mm-graph {
+  position: relative; margin-top: 14px; overflow: hidden;
+  height: min(74vh, 760px);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+  /* Lưới mờ: mắt bám được vào đó để biết mình đang kéo đi bao xa. */
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 22px 22px;
+  cursor: grab; touch-action: none;
+}
+.mm-graph.is-panning { cursor: grabbing; }
+
+.mm-graph-tools {
+  position: absolute; z-index: 3; top: 10px; right: 10px; display: flex; gap: 4px;
+  padding: 3px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: var(--shadow-sm);
+}
+
+.mm-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.mm-edges { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+.mm-edge { fill: none; stroke: var(--border-strong); stroke-width: 1.6; stroke-linecap: round; }
+.mm-edge.lv0 { stroke: color-mix(in srgb, var(--accent) 55%, transparent); stroke-width: 2.1; }
+.mm-edge.lv1 { stroke: color-mix(in srgb, var(--accent) 30%, var(--border-strong)); stroke-width: 1.8; }
+
+.mm-gnode {
+  position: absolute; z-index: 2; display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; text-align: left; cursor: default;
+  border: 1px solid var(--border); border-radius: 11px;
+  background: var(--surface); color: var(--text); font: inherit; font-size: 13px;
+  line-height: 1.4; box-shadow: var(--shadow-sm);
+  transition: border-color .14s, box-shadow .14s, transform .1s;
+}
+.mm-gnode.has-kids { cursor: pointer; }
+.mm-gnode.has-kids:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+.mm-gnode.has-kids:active { transform: scale(.985); }
+.mm-gtext { flex: 1; min-width: 0; word-break: break-word; }
+
+/* Cấp càng sâu hộp càng nhỏ, để nhìn một cái là ra bộ khung của tài liệu. */
+.mm-gnode.lv0 {
+  font-size: 15.5px; font-weight: 680; padding: 13px 15px;
+  background: var(--accent-soft); color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.mm-gnode.lv1 { font-size: 13.6px; font-weight: 600; background: var(--surface-2); }
+.mm-gnode.lv3 { font-size: 12.2px; color: var(--text-soft); padding: 7px 11px; }
+
+.mm-gbadge {
+  flex: 0 0 auto; padding: 1px 7px; border-radius: 99px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--muted); font-size: 10.8px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mm-gnode.lv0 .mm-gbadge, .mm-gnode.lv1 .mm-gbadge { background: var(--surface); }
+/* Nhánh đang đóng: badge nổi lên vì nó là thứ mời người ta bấm vào. */
+.mm-gnode.is-closed .mm-gbadge {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+
+/* ── cây ─────────────────────────────────────────────────────────────── */
+.mm-canvas { margin-top: 14px; }
+.mm-tree, .mm-children { list-style: none; margin: 0; padding: 0; }
+
+/* Nhánh con thụt vào và có một đường dọc nối - đường đó là thứ cho biết các
+   mục cùng cấp thuộc về cùng một cha khi cây dài hơn một màn hình. */
+.mm-children {
+  margin-left: 15px; padding-left: 13px;
+  border-left: 1px solid var(--border-strong);
+}
+.mm-item.is-collapsed > .mm-children,
+.mm-item.is-collapsed > .mm-detail { display: none; }
+
+.mm-node { display: flex; align-items: flex-start; gap: 4px; padding: 1px 0; }
+
+.mm-caret {
+  flex: 0 0 auto; width: 20px; height: 26px; margin-top: 1px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  border-radius: 6px; transition: transform .14s, color .12s, background .12s;
+}
+.mm-caret:hover { background: var(--surface-2); color: var(--text); }
+.mm-caret.placeholder { cursor: default; }
+.mm-item:not(.is-collapsed) > .mm-node > .mm-caret:not(.placeholder) { transform: rotate(90deg); }
+
+.mm-label {
+  flex: 1; display: flex; align-items: center; gap: 7px;
+  padding: 5px 11px; text-align: left; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface); color: var(--text); font: inherit; font-size: 13.4px;
+  line-height: 1.45; transition: border-color .12s, background .12s, box-shadow .12s;
+}
+.mm-label:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.mm-label.is-open { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
+.mm-text { flex: 1; word-break: break-word; }
+
+.mm-count {
+  flex: 0 0 auto; min-width: 19px; padding: 0 5px;
+  border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--muted); font-size: 10.8px; font-weight: 600; text-align: center;
+}
+/* Chấm nhỏ = mục này đã có nội dung, bấm vào là mở ngay không phải chờ. */
+.mm-dot { flex: 0 0 auto; width: 6px; height: 6px; border-radius: 99px; background: var(--ok); }
+
+/* Cấp 1 và 2 đậm hơn để nhìn ra bộ khung của tài liệu giữa một cây dài. */
+.mm-node.lv0 > .mm-label { font-size: 15px; font-weight: 650; background: var(--surface-2); }
+.mm-node.lv1 > .mm-label { font-weight: 580; }
+.mm-node.lv3 > .mm-label, .mm-node.lv4 > .mm-label { font-size: 12.8px; color: var(--text-soft); }
+
+/* ── nội dung một mục ────────────────────────────────────────────────── */
+.mm-detail {
+  margin: 6px 0 10px 39px; padding: 13px 15px;
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 10px; background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.mm-detail-head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 13.4px; font-weight: 620; margin-bottom: 9px;
+}
+.mm-detail .prose { font-size: 14.2px; }
+.mm-detail .loader { margin: 0; }
+.mm-detail-err { color: var(--err); font-size: 13px; }
+
+.mm-points { margin: 10px 0 0; padding-left: 1.2em; font-size: 13.6px; line-height: 1.65; }
+.mm-points li + li { margin-top: 4px; }
+
+.mm-sources {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+.mm-sources-label { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+@media (max-width: 720px) {
+  .mm-children { margin-left: 8px; padding-left: 9px; }
+  .mm-detail { margin-left: 17px; }
+}
+
+/* ====================================================================== */
+/* OCR TÀI LIỆU                                                            */
+/* Mỗi trang là một thẻ riêng: đọc kết quả OCR gần như luôn đi kèm việc     */
+/* đối chiếu với bản gốc, mà bản gốc thì đánh số theo trang.                */
+/* ====================================================================== */
+.pill.muted { opacity: .62; }
+.spinner.sm { width: 12px; height: 12px; border-width: 1.8px; }
+
+.ocr-head { display: flex; flex-direction: column; gap: 12px; }
+
+.ocr-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.ocr-stat {
+  flex: 1 1 130px; display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.ocr-stat span { font-size: 11.6px; color: var(--muted); }
+.ocr-stat b { font-size: 15px; font-variant-numeric: tabular-nums; }
+
+.ocr-progress {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  height: 6px; border-radius: 99px; background: var(--bg-sunken);
+}
+.ocr-progress i {
+  position: absolute; inset: 0 auto 0 0; width: 0;
+  border-radius: 99px; background: var(--accent); transition: width .25s ease;
+}
+.ocr-progress.is-done i { background: var(--ok); }
+.ocr-progress span {
+  position: absolute; right: 0; top: 12px;
+  font-size: 11.6px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+
+.ocr-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+
+/* Nút gạt hai chế độ xem - bản dựng / Markdown thô. */
+.seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--bg-sunken);
+       border: 1px solid var(--border); border-radius: 99px; }
+.seg-btn {
+  padding: 5px 12px; border: 0; border-radius: 99px; cursor: pointer;
+  font: inherit; font-size: 12.3px; color: var(--muted); background: transparent;
+}
+.seg-btn:hover { color: var(--text); }
+.seg-btn.is-on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+.ocr-pages { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+
+.ocr-page {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); overflow: hidden;
+}
+.ocr-page-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2);
+}
+.ocr-page-no { font-size: 12.4px; font-weight: 600; color: var(--text-soft); }
+.ocr-page-src { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.ocr-chars { font-size: 11.4px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ocr-page-body { padding: 16px 18px; }
+.ocr-page.is-empty .ocr-page-body { padding: 12px 18px; }
+
+/* Trang chưa về: giữ nguyên chiều cao thẻ để danh sách không giật khi điền dần. */
+.ocr-waiting {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 13px; padding: 6px 0;
+}
+.ocr-waiting.is-empty { color: var(--muted); font-style: italic; }
+
+/* --- Bố cục văn bản hành chính -------------------------------------------
+   Khối do backend đánh dấu (app/documents/bo_cuc_hanh_chinh.py). Mục tiêu là
+   trang OCR đọc ra trông giống tờ giấy gốc: tiêu ngữ hai cột, tên văn bản căn
+   giữa, con dấu đóng khung ở góc phải. */
+.ocr-page-body.prose {
+  font-family: var(--doc-font, "Times New Roman", serif);
+  /* Bề ngang cỡ một cột chữ A4. Không chặn thì trên màn rộng chữ kéo dài cả
+     nghìn pixel một dòng - đọc mỏi mắt, và trang OCR hết ra dáng tờ giấy. */
+  max-width: 52rem; margin-inline: auto;
+}
+.ocr-page-body.prose > p { text-align: justify; text-justify: inter-word; }
+
+/* Trang OCR không biết đâu là tiêu đề thật. Dòng viết hoa được đoán thành
+   heading có thể chỉ là tên cơ quan hay chữ trong con dấu, nên để cỡ chữ gần
+   thân bài - đủ thấy phân cấp, không biến một phỏng đoán thành thứ to nhất
+   trang. Mọi tài liệu đều hưởng, không riêng loại nào. */
+.ocr-page-body.prose h2,
+.ocr-page-body.prose h3,
+.ocr-page-body.prose h4 {
+  font-size: 1em; font-weight: 700; letter-spacing: .01em;
+  margin-top: 1.1em; margin-bottom: -.35em;
+}
+/* Mục đánh số và gạch đầu dòng thụt vừa phải, giữ số ngay mép cột chữ. */
+.ocr-page-body.prose ul, .ocr-page-body.prose ol { padding-left: 1.6em; }
+.ocr-page-body.prose li + li { margin-top: .15em; }
+.ocr-page-body.prose > * + * { margin-top: .7em; }
+
+.vb-tieu-ngu {
+  display: grid; grid-template-columns: 1fr 1fr;
+  column-gap: 18px; row-gap: 2px;
+  margin: 2px 0 16px; text-align: center; line-height: 1.5;
+}
+/* Dòng đầu mỗi cột là tên cơ quan / quốc hiệu - in đậm như trên bản gốc.
+   Chỉ dám đậm hàng đầu: hàng đầu luôn tồn tại, còn mọi hàng sau thì số lượng
+   và ý nghĩa thay đổi theo từng loại văn bản nên không nth-child được. */
+.vb-tieu-ngu .vb-cot:nth-child(1), .vb-tieu-ngu .vb-cot:nth-child(2) { font-weight: 600; }
+.vb-cot:empty { min-height: 1px; }
+
+.vb-giua {
+  text-align: center; margin: 18px 0 14px; line-height: 1.5;
+  font-size: 1.12em; letter-spacing: .01em;
+}
+.vb-giua .vb-ten { font-weight: 700; }
+/* Phụ đề dưới tên văn bản: nhỏ hơn, nghiêng, không đậm. */
+.vb-giua .vb-phu { font-weight: 400; font-style: italic; font-size: .9em; margin-top: 3px; }
+
+.vb-dau {
+  float: right; max-width: 46%; margin: 0 0 10px 14px;
+  padding: 6px 10px; border: 1px solid var(--err); border-radius: 4px;
+  color: var(--err); font-size: .86em; line-height: 1.45; text-align: center;
+}
+
+@media (max-width: 640px) {
+  .vb-tieu-ngu { grid-template-columns: 1fr; row-gap: 0; }
+  .vb-tieu-ngu .vb-cot:empty { display: none; }
+  .vb-dau { float: none; max-width: 100%; margin: 0 0 10px; }
+}
+
+.ocr-raw {
+  margin-top: 12px; padding: 16px 18px; white-space: pre-wrap; word-break: break-word;
+  font-family: var(--mono); font-size: 12.9px; line-height: 1.65;
+  background: var(--surface); color: var(--text-soft);
+  border: 1px solid var(--border); border-radius: var(--radius);
+}
