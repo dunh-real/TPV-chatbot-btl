@@ -222,3 +222,26 @@ async def test_no_context_truy_hoi_hong_thi_noi_that_khong_tan_gau(monkeypatch):
     assert "connection refused" in out["answer"]
     assert llm.calls == []
     assert out["trace"]["retrieval_failed"] is True
+
+
+async def test_da_chon_tai_lieu_thi_bo_nguong_rerank(monkeypatch):
+    """Ngưỡng gạt tài liệu lẫn từ cả kho; đã chọn rồi thì không còn gì để lẫn.
+
+    Giữ ngưỡng ở đây ra đúng cảnh vô lý: người dùng bấm chọn một công văn, hỏi
+    "văn bản này nói gì", rồi nhận "chưa rõ bạn hỏi tài liệu nào".
+    """
+    ghi = {}
+
+    class _Retriever:
+        async def retrieve(self, **kw):
+            ghi.update(kw)
+            raise RuntimeError("dung o day, chi can xem tham so")
+
+    monkeypatch.setattr(qa_mod, "get_retriever", lambda: _Retriever())
+
+    await qa_mod.retrieve_node({"question": "văn bản này nói gì", "doc_ids": ["cv1516"]})
+    assert ghi["score_threshold"] == 0.0
+
+    ghi.clear()
+    await qa_mod.retrieve_node({"question": "văn bản này nói gì", "doc_ids": []})
+    assert ghi["score_threshold"] is None, "chưa chọn thì giữ nguyên ngưỡng cấu hình"

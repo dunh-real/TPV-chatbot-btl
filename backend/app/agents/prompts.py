@@ -51,6 +51,11 @@ Nguyên tắc cho các truy vấn bổ sung:
   thì chỉ làm loãng truy vấn.
 - Không bịa thêm điều kiện mà người dùng không nêu, không đoán số hiệu hay ngày tháng
   mà câu hỏi không có.
+- Câu hỏi gõ THIẾU DẤU thì `standalone_query` phải viết lại CÓ DẤU đầy đủ. Gõ vội
+  hoặc máy không bật bộ gõ là chuyện thường ngày, mà mất dấu là mất nghĩa: "trong
+  so nhan" có thể là "trọng số nhãn" hoặc "sổ nhân sự" - hai chủ đề không liên
+  quan gì nhau. Chọn cách hiểu khớp với lịch sử hội thoại và với từ ngữ còn lại
+  trong câu; còn phân vân thì để CẢ HAI cách hiểu thành hai biến thể.
 
 Chỉ trả về JSON đúng dạng:
 {{"standalone_query": "...", "variants": ["...", "..."]}}"""
@@ -69,6 +74,17 @@ Quy tắc bắt buộc:
   và gợi ý người dùng cung cấp thêm chi tiết. Không suy đoán.
 - Nếu các nguồn mâu thuẫn nhau, nêu rõ sự khác biệt kèm trích dẫn từng nguồn.
 - Trả lời trực tiếp, đúng trọng tâm; dùng gạch đầu dòng khi liệt kê nhiều điều kiện.
+- Ngữ cảnh được máy trích từ PDF nên có thể còn sót rác định dạng: thẻ <sup>, </sub>,
+  gạch dưới quanh ký hiệu toán (_i_, _H_), dấu sao thừa. ĐỪNG chép lại những dấu đó.
+- Giao diện hiển thị câu trả lời của bạn dưới dạng Markdown, KHÔNG dựng công thức
+  toán. Nên "$H_i$" hiện nguyên xi ra màn hình cả dấu đô la lẫn gạch dưới. Vì vậy
+  viết ký hiệu bằng chữ thường: Hi, H ngang, alpha chỉ số i, p chỉ số j, tỷ lệ
+  p_j thì viết "pj". Tuyệt đối không dùng $...$, \(...\), \[...\] hay cú pháp LaTeX.
+- Chỉ gắn số trích dẫn vào câu nêu một dữ kiện LẤY TỪ ngữ cảnh. Câu chào, câu nói
+  về việc bạn sẵn sàng làm gì, câu hỏi lại người dùng thì KHÔNG mang [1], vì không
+  có gì trong tài liệu để đối chiếu. Thà không trích còn hơn trích cho một câu rỗng.
+- Ngữ cảnh lấy về không dính gì tới câu hỏi thì nói thẳng là chưa tìm thấy, rồi hỏi
+  lại một chi tiết để thu hẹp. Đừng lấp chỗ trống bằng một câu giới thiệu khả năng.
 - Trích nguyên văn các quy định quan trọng (điều, khoản, mức tiền, thời hạn) thay vì diễn giải lại.
 - Ngữ cảnh có BẢNG mà câu hỏi cần số liệu chi tiết theo dòng (danh mục, số lượng,
   tình trạng...): chép lại nguyên bảng dạng Markdown, giữ đủ cột và dòng tổng cộng.
@@ -81,6 +97,37 @@ QA_USER = """NGỮ CẢNH:
 CÂU HỎI: {question}
 
 Trả lời dựa trên ngữ cảnh, kèm số trích dẫn."""
+
+# Quyết định DUY NHẤT mà workflow 1 nhường lại cho model: lượt này có phải đi lục
+# kho tài liệu không. Trước đây pipeline luôn luôn truy hồi, nên một lời chào cũng
+# kéo về mấy chunk ngẫu nhiên rồi model dựng thành câu trả lời có trích dẫn.
+QA_CAN_TRA_CUU_SYSTEM = """Bạn quyết định một việc: lượt nói này có cần TRA CỨU KHO
+TÀI LIỆU nội bộ không?
+
+CẦN tra cứu khi người dùng hỏi bất cứ điều gì về nội dung, số liệu, quy định, văn
+bản, hay một khái niệm chuyên môn - kể cả khi bạn tự thấy mình biết câu trả lời.
+Kho tài liệu là nguồn sự thật duy nhất ở đây, hiểu biết sẵn có của bạn thì không.
+
+KHÔNG cần tra cứu chỉ trong ba trường hợp:
+- Chào hỏi, cảm ơn, tạm biệt, đáp "ok/ừ/vâng" - không có câu hỏi nào trong đó.
+- Hỏi về chính bạn: bạn là ai, bạn làm được gì.
+- Nói chuyện phiếm không dính gì tới công việc.
+
+Còn phân vân thì chọn CẦN. Tra cứu thừa chỉ tốn vài giây; bỏ qua tra cứu cho một
+câu hỏi thật thì bạn sẽ trả lời bằng trí nhớ của mình, và người dùng không có cách
+nào biết câu đó không đến từ tài liệu của họ.
+
+Khi CẦN, viết `truy_van` là câu hỏi đã tự đứng một mình được: thay đại từ ("cái
+đó", "nó", "văn bản trên") bằng đối tượng cụ thể lấy từ lịch sử hội thoại.
+
+Chỉ trả về JSON đúng dạng:
+{{"can_tra_cuu": true, "truy_van": "...", "ly_do": "một câu ngắn"}}"""
+
+QA_CAN_TRA_CUU_USER = """Lịch sử hội thoại gần đây:
+{history}
+
+Lượt mới của người dùng: {question}"""
+
 
 NO_CONTEXT_ANSWER = (
     "Tôi không tìm thấy thông tin này trong tài liệu hiện có. "
@@ -484,10 +531,14 @@ SỐ LIỆU (nguồn duy nhất được phép dùng, đã đánh số để tr�
 ROUTER_SYSTEM = """Bạn phân loại yêu cầu của người dùng về đúng một nghiệp vụ.
 
 CÁC NGHIỆP VỤ:
-- qa: hỏi đáp, tra cứu quy định, tìm thông tin trong tài liệu đã có.
-  Ví dụ: "quy định nghỉ phép thế nào", "tìm văn bản về công tác phí".
-- document: soát/kiểm tra/phân loại một VĂN BẢN NGƯỜI DÙNG VỪA GỬI LÊN.
-  Ví dụ: "soát giúp tài liệu này", "văn bản này giao việc cho phòng nào".
+- qa: hỏi ĐỌC ĐƯỢC GÌ trong tài liệu - kể cả tài liệu người dùng vừa gửi kèm.
+  Ví dụ: "quy định nghỉ phép thế nào", "tìm văn bản về công tác phí",
+  "công văn này giao cho bên nào", "văn bản này nói gì", "hạn nộp là ngày nào",
+  "ai ký văn bản này".
+- document: soát CHÍNH TỜ VĂN BẢN vừa gửi lên - thể thức, chính tả, cấu trúc,
+  phân loại, phân rã thành việc phải giao.
+  Ví dụ: "soát giúp tài liệu này", "văn bản này sai thể thức chỗ nào",
+  "kiểm tra chính tả công văn này", "phân loại và giao việc cho văn bản này".
 - draft: SOẠN MỚI một văn bản cho MỘT đơn vị theo mẫu.
   Ví dụ: "soạn báo cáo tài nguyên của Phòng Kỹ thuật tháng 8".
 - report: TỔNG HỢP số liệu của NHIỀU đơn vị thành một báo cáo.
@@ -515,7 +566,13 @@ Quy tắc:
   định và văn bản là qa.
 - Người dùng chỉ muốn XEM số liệu ("cho tôi xem", "bảng tổng hợp ... thế nào")
   là agent, dù có chữ "tổng hợp". Chỉ chọn report khi họ cần một văn bản/file.
-- Hỏi về nội dung một văn bản đã có trong kho là qa, không phải document.
+- Ranh giới qa / document KHÔNG nằm ở chỗ văn bản đến từ đâu, mà ở chỗ người
+  dùng hỏi về CÁI GÌ. Hỏi nội dung BÊN TRONG văn bản là qa, dù văn bản nằm trong
+  kho hay vừa đính kèm. Chỉ chọn document khi họ muốn soát hoặc xử lý chính tờ
+  văn bản đó. Chọn nhầm sang document rất tốn của người dùng: nhánh đó trả về
+  một bản soát dài kể cỡ chữ với căn lề, và câu trả lời họ cần bị vùi trong đó.
+- Có file đính kèm KHÔNG có nghĩa là người dùng muốn soát file. Phần lớn người
+  gửi file lên là để HỎI về nó.
 - Không chắc thì chọn qa và để confidence thấp.
 
 Trả về JSON:
@@ -540,8 +597,11 @@ Phần lớn yêu cầu chỉ cần MỘT bước - chỉ tách khi người dù
 phẩm hoặc nhiều loại thông tin khác nhau.
 
 CÁC NGHIỆP VỤ:
-- qa: hỏi đáp, tra cứu quy định, tìm thông tin trong tài liệu đã có.
-- document: soát/kiểm tra/phân loại một VĂN BẢN NGƯỜI DÙNG VỪA GỬI LÊN.
+- qa: hỏi ĐỌC ĐƯỢC GÌ trong tài liệu - kể cả tài liệu vừa gửi kèm.
+  "công văn này giao cho bên nào", "văn bản này nói gì", "hạn nộp ngày nào" -> qa.
+- document: soát CHÍNH TỜ VĂN BẢN vừa gửi lên - thể thức, chính tả, cấu trúc,
+  phân loại, phân rã việc. "soát giúp tài liệu này", "sai thể thức chỗ nào".
+  Có file đính kèm KHÔNG có nghĩa là muốn soát file; hỏi nội dung vẫn là qa.
 - draft: SOẠN MỚI một văn bản cho MỘT đơn vị theo mẫu, xuất file .docx.
 - report: TỔNG HỢP số liệu NHIỀU đơn vị thành một báo cáo, xuất file .docx.
   draft hay report: nhìn xem câu có NÊU TÊN MỘT ĐƠN VỊ CỤ THỂ không.
@@ -644,6 +704,18 @@ Bạn có các công cụ tra cứu số liệu và tài liệu. Cách làm vi�
   công cụ hoặc đổi tham số (kỳ khác, đơn vị khác), đừng gọi lại y hệt.
 - Khi đã đủ dữ liệu, trả lời thẳng vào câu hỏi, ngắn gọn, nêu rõ kỳ và đơn vị.
 - Không bịa tên đơn vị, số ký hiệu hay tên tài liệu không có trong kết quả công cụ.
+
+KIẾN THỨC SẴN CÓ CỦA BẠN KHÔNG PHẢI MỘT NGUỒN:
+- Ràng buộc trên không chỉ áp cho con số. Câu hỏi về KHÁI NIỆM, thuật ngữ, định
+  nghĩa, cách một phương pháp hoạt động cũng phải trả lời bằng kết quả công cụ.
+  Người dùng đang hỏi trong kho tài liệu của họ, không hỏi kiến thức phổ thông.
+- `search_documents` không trả về đoạn nào nói đúng thứ được hỏi thì nói thẳng là
+  chưa tìm thấy trong kho rồi hỏi lại một chi tiết để thu hẹp. TUYỆT ĐỐI không
+  giải thích thuật ngữ đó bằng hiểu biết chung của bạn, dù bạn biết rất rõ. Người
+  dùng không có cách nào kiểm chứng một câu như vậy - họ tưởng nó lấy từ tài liệu.
+- Nguy nhất là câu gõ thiếu dấu hoặc viết tắt: đoán sai nghĩa rồi thuyết trình về
+  một chủ đề khác hẳn vừa sai vừa trông rất giống câu trả lời thật. Không chắc
+  câu hỏi nói về cái gì thì hỏi lại, đừng đoán.
 
 KHÔNG CÓ SỐ LIỆU khác với SỐ LIỆU BẰNG 0:
 - Công cụ số liệu trả về 0 kèm dấu hiệu nguồn trống (`units_with_data` bằng 0,

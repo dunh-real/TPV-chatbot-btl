@@ -30,6 +30,7 @@ from app.agents import progress
 from app.agents.history import format_history
 from app.agents.prompts import PLANNER_SYSTEM, PLANNER_USER
 from app.agents.router import INTENTS, MIN_CONFIDENCE, Intent, classify_intent
+from app.agents.xa_giao import la_xa_giao
 from app.core.config import get_settings
 from app.services.llm import LLMError, get_llm
 from app.tools.registry import describe_tools
@@ -138,7 +139,7 @@ async def _fallback(request: str, has_file: bool, history: list[dict[str, str]] 
     routed = await classify_intent(request, has_file=has_file, history=history)
     plan = single_step(routed.intent, request, routed.confidence, routed.reason,
                        routed.clarify, source=routed.source)
-    plan.steps = _uu_tien_file_dinh_kem(plan.steps, has_file)
+    plan.steps = _uu_tien_file_dinh_kem(plan.steps, has_file, request)
     return plan
 
 
@@ -180,7 +181,7 @@ def _validate(raw_steps: Any, request: str, has_file: bool) -> list[PlanStep]:
                               depends_on=depends, reason=str(item.get("reason") or "")))
 
     steps = _bo_buoc_lay_so_lieu_thua(steps)
-    steps = _uu_tien_file_dinh_kem(steps, has_file)
+    steps = _uu_tien_file_dinh_kem(steps, has_file, request)
 
     # Kế hoạch chỉ có một bước thì câu của người dùng ĐÃ tự đứng một mình được -
     # không cần model viết lại, và mỗi lần viết lại là một dịp rụng chữ. Đã có ca
@@ -201,7 +202,8 @@ _DONG_TU_SOAN = ("soạn", "dự thảo", "lập báo cáo", "viết báo cáo",
 _BO_QUA_FILE = frozenset({"report", "agent", "qa"})
 
 
-def _uu_tien_file_dinh_kem(steps: list[PlanStep], has_file: bool) -> list[PlanStep]:
+def _uu_tien_file_dinh_kem(steps: list[PlanStep], has_file: bool,
+                           cau_goc: str = "") -> list[PlanStep]:
     """Có file đính kèm + đòi một văn bản => soạn TỪ FILE ĐÓ.
 
     `report`, `agent`, `qa` đều không đọc file đính kèm: chúng lấy số từ CSDL hoặc
@@ -213,14 +215,23 @@ def _uu_tien_file_dinh_kem(steps: list[PlanStep], has_file: bool) -> list[PlanSt
     thế nào" vẫn là `qa` - file lúc đó chỉ là thứ còn sót lại của lượt trước, và
     biến câu hỏi đó thành lệnh soạn văn bản mới là sai.
 
+    Động từ đó phải tìm trong CÂU NGƯỜI DÙNG GÕ (`cau_goc`), không phải trong câu
+    con model viết lại. Model diễn giải "tổng hợp nhân sự toàn công ty tháng 8"
+    thành "SOẠN báo cáo tổng hợp nhân sự toàn công ty" - chữ "soạn" là của model,
+    người dùng không hề gõ. Đọc câu con thì luật này thấy động từ soạn ở gần như
+    mọi yêu cầu báo cáo, và mọi bản tổng hợp toàn cơ quan bị thu về một đơn vị
+    mỗi khi có file đính kèm. `_validate` có khôi phục câu gốc, nhưng ở cuối hàm,
+    tức là SAU khi luật này đã chạy.
+
     Nhắc trong prompt không dứt được: model lúc chọn `report` vì câu có chữ "báo
     cáo", lúc chọn `agent` vì nghĩ chỉ cần tra số. Nên chặn ở đây.
     """
     if not has_file:
         return steps
+    cau = (cau_goc or "").lower()
     doi = [s for s in steps
            if s.intent in _BO_QUA_FILE
-           and any(v in s.request.lower() for v in _DONG_TU_SOAN)]
+           and any(v in (cau or s.request.lower()) for v in _DONG_TU_SOAN)]
     if not doi:
         return steps
     can_doi = {s.id for s in doi}
@@ -301,6 +312,15 @@ async def make_plan(
     if not request:
         return Plan(steps=[], confidence=0.0, clarify="Bạn muốn hỏi hoặc làm gì?",
                     reason="Yêu cầu rỗng", source="rule")
+
+    # Chào hỏi / cảm ơn: không có việc nghiệp vụ nào để tách bước, nên hỏi model
+    # là tiêu hai lượt gọi LLM để nhận về đúng thứ đã biết trước. Vẫn đi qua `qa`
+    # để dùng lại `NO_CONTEXT_SYSTEM` - nơi DUY NHẤT biết cách đối đáp xã giao;
+    # `retrieve_node` sẽ tự bỏ bước truy hồi nên không có trích dẫn nào.
+    if la_xa_giao(request):
+        return Plan(steps=[PlanStep(id="1", intent="qa", request=request)],
+                    confidence=1.0, reason="Chào hỏi, không có yêu cầu nghiệp vụ",
+                    source="rule")
 
     try:
         data = await get_llm().chat_json(

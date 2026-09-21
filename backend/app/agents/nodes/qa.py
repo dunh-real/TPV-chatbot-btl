@@ -19,6 +19,8 @@ from app.services import errors
 from app.agents.prompts import (
     NO_CONTEXT_ANSWER,
     NO_CONTEXT_SYSTEM,
+    QA_CAN_TRA_CUU_SYSTEM,
+    QA_CAN_TRA_CUU_USER,
     QA_SYSTEM,
     QA_USER,
     QUERY_REWRITE_SYSTEM,
@@ -26,6 +28,7 @@ from app.agents.prompts import (
 )
 from app.agents.history import format_history
 from app.agents.state import Citation, QAState
+from app.agents.xa_giao import la_xa_giao
 from app.core.config import get_settings
 from app.rag.retrieval import RetrievedChunk, get_retriever
 from app.rag.vectorstore import build_filter
@@ -35,6 +38,66 @@ from app.services.llm import LLMError, get_llm
 logger = logging.getLogger(__name__)
 
 _CITATION_RE = re.compile(r"\[(\d{1,2})\]")
+
+
+# --------------------------------------------------------------------------- #
+# 0. Có cần tra cứu không - quyết định của MODEL, không phải của pipeline
+# --------------------------------------------------------------------------- #
+async def quyet_dinh_tra_cuu_node(state: QAState) -> dict[str, Any]:
+    """Hỏi model: lượt này có cần lục kho tài liệu không.
+
+    Trước đây pipeline `qa` LUÔN truy hồi - không có bước nào để quyết định cả.
+    Nên một lời chào cũng kéo về mấy chunk ngẫu nhiên, và model dựng chúng thành
+    một câu trả lời có trích dẫn đàng hoàng. Ngưỡng điểm không chữa được: "Hi"
+    không giống đoạn nào, nhưng cũng không giống đoạn nào theo kiểu đều đều.
+
+    Việc cần làm là nhận ra "lượt này không phải câu hỏi", và đó là chuyện hiểu
+    câu chữ - việc của model, không phải của một bảng từ khoá. `la_xa_giao` vẫn
+    còn, nhưng lùi xuống làm ĐƯỜNG LÙI khi model hỏng, đúng như mọi tầng khác
+    trong agent này.
+
+    Cán cân lệch hẳn về phía tra cứu: tra thừa chỉ tốn vài giây, còn bỏ qua tra
+    cứu cho một câu hỏi thật thì model trả lời bằng trí nhớ của nó và người dùng
+    không có cách nào biết câu đó không đến từ tài liệu của mình.
+    """
+    question = state["question"].strip()
+    if not question:
+        return {"can_tra_cuu": False,
+                "trace": {**state.get("trace", {}), "can_tra_cuu": False,
+                          "xa_giao": True, "nguon_quyet_dinh": "rỗng"}}
+
+    cfg = get_settings()
+    try:
+        data = await get_llm().chat_json(
+            [
+                {"role": "system", "content": QA_CAN_TRA_CUU_SYSTEM},
+                {"role": "user", "content": QA_CAN_TRA_CUU_USER.format(
+                    history=format_history(state.get("history", []), 2), question=question)},
+            ],
+            model=cfg.utility_model, temperature=0.0, max_tokens=200, thinking=False,
+        )
+    except (LLMError, Exception) as exc:  # noqa: BLE001 - luôn phải có đường lùi
+        logger.warning("Không quyết được có tra cứu không, dùng từ khoá: %s", exc)
+        can = not la_xa_giao(question)
+        return {"can_tra_cuu": can,
+                "trace": {**state.get("trace", {}), "can_tra_cuu": can,
+                          "xa_giao": not can, "nguon_quyet_dinh": "từ khoá"}}
+
+    can = bool(data.get("can_tra_cuu", True))
+    truy_van = str(data.get("truy_van") or "").strip()
+    logger.info("Cần tra cứu: %s (%s)", can, str(data.get("ly_do") or "")[:80])
+    ra: dict[str, Any] = {
+        "can_tra_cuu": can,
+        # `xa_giao` là cờ mà `graph._step_is_empty` đọc để KHÔNG coi lượt này là
+        # tra cứu hụt. Thiếu nó, `RETRY_AS` đẩy lời chào sang vòng lặp công cụ
+        # ERP - chạy vài giây, gọi vài tool, để nói lại đúng câu "chào bạn".
+        "trace": {**state.get("trace", {}), "can_tra_cuu": can, "xa_giao": not can,
+                  "nguon_quyet_dinh": "llm", "ly_do_tra_cuu": str(data.get("ly_do") or "")},
+    }
+    # Model đã giải đại từ sẵn khi quyết định; dùng lại, khỏi gọi thêm một lượt.
+    if can and truy_van:
+        ra["standalone_query"] = truy_van
+    return ra
 
 
 # --------------------------------------------------------------------------- #
@@ -49,8 +112,11 @@ async def rewrite_query_node(state: QAState) -> dict[str, Any]:
     question = state["question"].strip()
     history = state.get("history", [])
 
+    # Bước quyết định đã giải đại từ và viết sẵn `standalone_query` rồi; viết lại
+    # lần nữa chỉ tốn một lượt gọi và thêm một dịp rụng chữ.
     if not cfg.query_rewrite_enabled:
-        return {"standalone_query": question, "query_variants": []}
+        return {"standalone_query": state.get("standalone_query") or question,
+                "query_variants": []}
 
     history_text = format_history(history, cfg.query_rewrite_history_turns)
     cache = get_cache()
@@ -103,6 +169,10 @@ async def rewrite_query_node(state: QAState) -> dict[str, Any]:
 async def retrieve_node(state: QAState) -> dict[str, Any]:
     cfg = get_settings()
     question = state["question"].strip()
+    # Model đã quyết là không cần tra cứu -> không chunk nào, đồ thị rẽ sang
+    # `no_context`, nơi nó được đối đáp bình thường mà không có nguồn để trỏ tới.
+    if not state.get("can_tra_cuu", True):
+        return {"chunks": [], "trace": {**state.get("trace", {}), "xa_giao": True}}
     query = state.get("standalone_query") or question
     # Câu GỐC của người dùng luôn phải nằm trong tập đem đi chấm điểm, kể cả khi
     # đã có bản viết lại. Bản viết lại và các biến thể đều do máy sinh: chúng có
@@ -119,6 +189,13 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
         doc_types=state.get("doc_types"),
     )
 
+    # Người dùng đã tự chọn tài liệu thì NGƯỠNG hết việc. Ngưỡng sinh ra để gạt
+    # tài liệu không liên quan lẫn vào từ cả kho; ở đây không còn kho nào để lẫn,
+    # chỉ còn đúng thứ họ bấm chọn. Giữ ngưỡng thì gặp đúng cảnh vô lý: chọn một
+    # công văn, hỏi "văn bản này nói gì", rồi nhận về "chưa rõ bạn hỏi tài liệu
+    # nào" - trong khi tên tài liệu đang hiện ngay trên đầu màn hình.
+    da_chon = bool(state.get("doc_ids") or state.get("sources"))
+
     try:
         result = await get_retriever().retrieve(
             query=query,
@@ -126,6 +203,7 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
             query_filter=query_filter,
             top_n=state.get("top_n") or cfg.rerank_top_n,
             rerank=state.get("use_rerank", True),
+            score_threshold=0.0 if da_chon else None,
         )
     except Exception as exc:  # noqa: BLE001 - Qdrant chết thì trả lời có kiểm soát
         logger.exception("Truy hồi thất bại")
@@ -144,8 +222,30 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # 3. Dựng ngữ cảnh + danh sách trích dẫn
 # --------------------------------------------------------------------------- #
+# Cú pháp Markdown trong đoạn trích dẫn. Giao diện hiện `snippet` như chữ thuần,
+# nên "**Bước 2:**" tới mắt người đọc đúng là "**Bước 2:**" - dấu sao và tất cả.
+_CU_PHAP_MARKDOWN: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"!\[[^\]]*\]\([^)]*\)"), ""),          # ảnh: bỏ hẳn
+    (re.compile(r"\[([^\]]*)\]\([^)]*\)"), r"\1"),      # liên kết: giữ chữ
+    (re.compile(r"<[^>\n]{1,40}>"), ""),                   # thẻ HTML sót lại
+    (re.compile(r"^\s{0,3}#{1,6}\s*", re.M), ""),          # tiêu đề
+    (re.compile(r"^\s{0,3}>\s?", re.M), ""),               # trích dẫn lồng
+    (re.compile(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+", re.M), ""),  # đầu dòng
+    (re.compile(r"^\s*\|?[\s:|-]{3,}\|?\s*$", re.M), ""),   # dòng kẻ bảng
+    (re.compile(r"[*_`~]+"), ""),                          # đậm / nghiêng / code
+    (re.compile(r"\s*\|\s*"), " | "),                      # ô bảng
+)
+
+
+def lam_phang_markdown(text: str) -> str:
+    """Bỏ cú pháp Markdown, giữ lại chữ - dùng cho đoạn trích hiện trên màn hình."""
+    for mau, thay in _CU_PHAP_MARKDOWN:
+        text = mau.sub(thay, text)
+    return " ".join(text.split()).strip(" |")
+
+
 def _snippet(text: str, limit: int = 240) -> str:
-    flat = " ".join(text.split())
+    flat = lam_phang_markdown(text)
     return flat if len(flat) <= limit else flat[:limit].rsplit(" ", 1)[0] + "…"
 
 

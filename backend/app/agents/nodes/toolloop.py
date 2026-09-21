@@ -100,10 +100,32 @@ def looks_empty(result: Any) -> bool:
     return False
 
 
-async def _execute(call: ToolCall) -> tuple[str, Any | None]:
+# Tool đọc kho tài liệu. Người dùng đã chọn tài liệu thì những tool này phải bị
+# giới hạn trong đó, bất kể model truyền tham số gì.
+TOOL_DOC_KHO: frozenset[str] = frozenset({"search_documents"})
+
+
+def _ep_pham_vi(call: ToolCall, pham_vi: dict[str, list[str]]) -> dict[str, Any]:
+    """Ép phạm vi tài liệu vào lời gọi, GHI ĐÈ thứ model tự nghĩ ra.
+
+    Không phải gợi ý cho model mà là chốt ở code: phạm vi do người dùng bấm chọn
+    trên giao diện, không phải thứ để model cân nhắc. Đưa vào prompt thì có lượt
+    nó nghe, có lượt nó bỏ - mà "có lượt" là đủ để câu trả lời trích từ tài liệu
+    người dùng không hề chọn.
+    """
+    if call.name not in TOOL_DOC_KHO or not any(pham_vi.values()):
+        return call.arguments
+    args = dict(call.arguments)
+    if pham_vi.get("doc_ids"):
+        args["doc_ids"] = list(pham_vi["doc_ids"])
+    return args
+
+
+async def _execute(call: ToolCall,
+                   pham_vi: dict[str, list[str]] | None = None) -> tuple[str, Any | None]:
     """Gọi một tool. Lỗi tham số được trả NGƯỢC cho model để nó tự sửa."""
     try:
-        result = await call_tool(call.name, **call.arguments)
+        result = await call_tool(call.name, **_ep_pham_vi(call, pham_vi or {}))
     except ToolError as exc:
         return f"LỖI: {exc}", None
     except Exception as exc:  # noqa: BLE001 - tool hỏng không được làm chết vòng lặp
@@ -112,27 +134,32 @@ async def _execute(call: ToolCall) -> tuple[str, Any | None]:
     return _render_result(result), result
 
 
-async def _execute_batch(calls: list[ToolCall]) -> list[tuple[str, Any | None]]:
+async def _execute_batch(calls: list[ToolCall],
+                         pham_vi: dict[str, list[str]] | None = None
+                         ) -> list[tuple[str, Any | None]]:
     """Chạy một lượt lời gọi. Tool đọc chạy song song, tool ghi chạy một mình.
 
     `return_exceptions` không cần: `_execute` đã nuốt mọi lỗi thành chuỗi "LỖI:"
     để model đọc được. Ngoại lệ lọt ra đây là lỗi lập trình, nên để nó nổ.
     """
     if len(calls) == 1:
-        return [await _execute(calls[0])]
+        return [await _execute(calls[0], pham_vi)]
     if any(is_side_effect(call.name) for call in calls):
-        return [await _execute(call) for call in calls]
+        return [await _execute(call, pham_vi) for call in calls]
     logger.info("Chạy song song %d lời gọi: %s", len(calls), [c.name for c in calls])
-    return list(await asyncio.gather(*(_execute(call) for call in calls)))
+    return list(await asyncio.gather(*(_execute(call, pham_vi) for call in calls)))
 
 
 async def run_tool_loop(
     request: str,
     history: list[dict[str, str]] | None = None,
     max_steps: int = MAX_STEPS,
+    doc_ids: list[str] | None = None,
+    sources: list[str] | None = None,
 ) -> dict[str, Any]:
     """Chạy vòng lặp tới khi model trả lời hoặc chạm một điều kiện dừng."""
     cfg = get_settings()
+    pham_vi = {"doc_ids": list(doc_ids or []), "sources": list(sources or [])}
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": AGENT_SYSTEM.format(today=date.today().strftime("%d/%m/%Y"))}
     ]
@@ -236,7 +263,8 @@ async def run_tool_loop(
                       phase="đang tra", tools=[call.name for call in to_run])
 
         # --- chạy và ghi kết quả vào hội thoại ---------------------------- #
-        for call, (content, result) in zip(to_run, await _execute_batch(to_run), strict=True):
+        for call, (content, result) in zip(
+                to_run, await _execute_batch(to_run, pham_vi), strict=True):
             # Đánh số ngay khi có kết quả: model không biết trước mình sẽ gọi bao
             # nhiêu lần, nên số phải phát dần theo thứ tự gọi.
             ref_id = len(tool_log) + 1

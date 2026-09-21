@@ -42,8 +42,12 @@ KEYWORDS: dict[Intent, tuple[str, ...]] = {
     "report": ("tổng hợp", "toàn công ty", "toàn đơn vị", "các đơn vị", "tất cả đơn vị",
                "nhiều đơn vị", "thống kê", "đối chiếu"),
     "draft": ("soạn", "dự thảo", "lập báo cáo", "viết báo cáo", "ra văn bản", "làm báo cáo"),
-    "document": ("thể thức", "cấu trúc", "soát", "rà soát", "kiểm tra văn bản", "văn bản này",
-                 "file này", "tài liệu này", "công văn này", "phân loại", "giao việc"),
+    # CHỈ chữ nói VIỆC PHẢI LÀM với tờ văn bản. Trước đây danh sách này có cả
+    # "văn bản này", "file này", "công văn này" - những cụm chỉ TRỎ TỚI tài liệu
+    # chứ không nói định làm gì với nó, nên "công văn này giao cho bên nào" (hỏi
+    # nội dung) ăn điểm y hệt "soát công văn này" (đòi soát thể thức).
+    "document": ("thể thức", "cấu trúc", "soát", "rà soát", "kiểm tra văn bản",
+                 "chính tả", "trình bày", "phân loại", "giao việc", "phân rã"),
     # Hỏi SỐ LIỆU nghiệp vụ (khác `qa` là hỏi nội dung tài liệu).
     "agent": ("nhân sự", "trang thiết bị", "thiết bị", "đã gửi", "chưa gửi", "đã nộp",
               "chưa nộp", "đơn vị nào", "kiểm kê", "vắng mặt", "bao nhiêu người"),
@@ -71,10 +75,10 @@ def score_keywords(request: str, has_file: bool = False) -> dict[Intent, int]:
         intent: sum(1 for pattern in patterns if re.search(pattern, text))
         for intent, patterns in KEYWORDS.items()
     }
-    # File đính kèm là tín hiệu mạnh nhất cho việc "xử lý văn bản này".
-    if has_file:
-        scores["document"] += 2
-    else:
+    # File đính kèm là ĐIỀU KIỆN CẦN của nhánh document, không phải bằng chứng.
+    # Cộng điểm cho nó là nói "cứ gửi file lên thì coi như muốn soát file" - mà
+    # phần lớn người gửi file lên là để HỎI về nó. Không có file thì chặn cứng.
+    if not has_file:
         scores["document"] = 0
     return scores
 

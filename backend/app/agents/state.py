@@ -46,6 +46,7 @@ class QAState(TypedDict, total=False):
     use_rerank: bool
 
     # --- trung gian ---
+    can_tra_cuu: bool                 # model quyết: lượt này có lục kho không
     standalone_query: str
     query_variants: list[str]
     retrieval: RetrievalResult
@@ -180,6 +181,8 @@ class AgentState(TypedDict, total=False):
     conversation_id: str
     history: list[dict[str, str]]
     file_id: str                      # có file đính kèm thì mới đi được nhánh document
+    doc_ids: list[str]                 # tài liệu người dùng đã tích trong panel
+    sources: list[str]                 # hoặc tên file, khi phía gọi không có doc_id
     ma_don_vi: str
     inputs: dict[str, Any]            # người ký, số ký hiệu... cho nhánh soạn văn bản
 

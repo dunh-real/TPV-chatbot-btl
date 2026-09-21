@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from contextlib import asynccontextmanager
 
+from app.agents.prompts import NO_CONTEXT_ANSWER
+
 import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -964,3 +966,209 @@ async def test_mot_buoc_hong_khong_giet_ca_ke_hoach(agent_env, monkeypatch):
     assert "Nghị định 30/2020" in result["answer"], "mất luôn kết quả của bước còn lại"
     assert "Dms_Assets" not in result["answer"] and "SELECT" not in result["answer"]
     assert "Dms_Assets" not in result["error"]
+
+
+# --------------------------------------------------------------------------- #
+# Câu nói ra khi vòng lặp công cụ dừng giữa chừng
+# --------------------------------------------------------------------------- #
+def test_khong_doc_ten_ham_ra_cho_nguoi_dung():
+    """`tool_log` giữ tên hàm; tên hàm là chữ của lập trình viên, không phải câu trả lời."""
+    cau = graph_mod._from_tool_log({"tool_log": [
+        {"tool": "get_personnel_statistics", "ok": True},
+        {"tool": "get_reporting_status", "ok": True},
+    ]})
+    assert "get_personnel_statistics" not in cau
+    assert "tra số liệu nhân sự" in cau and "tra tình hình gửi báo cáo" in cau
+
+
+def test_luc_kho_tai_lieu_khong_ra_thi_tra_loi_nhu_nhanh_qa():
+    """Chỉ chạy được công cụ đọc kho mà không kết luận nổi = tra cứu hụt.
+
+    Đó không phải sự cố của vòng lặp, nên đừng kể chuyện vòng lặp: người dùng
+    cần biết kho không có, và cần được mời nêu rõ hơn để tra lại.
+    """
+    result = {"stop_reason": "chạm trần số bước", "answer": "",
+              "tool_log": [{"tool": "search_documents", "ok": True}]}
+    cau = graph_mod._summarize_agent(result)
+
+    assert cau == NO_CONTEXT_ANSWER
+    assert "trần số bước" not in cau and "search_documents" not in cau
+
+
+def test_tra_so_lieu_do_dang_thi_van_noi_ro_la_chua_xong():
+    """Ngược lại: có chạm công cụ số liệu thật thì không được im lặng cho qua."""
+    result = {"stop_reason": "chạm trần số bước", "answer": "",
+              "tool_log": [{"tool": "get_equipment_statistics", "ok": True}]}
+    cau = graph_mod._summarize_agent(result)
+
+    assert "chưa kết luận được" in cau and "Chưa tra xong" in cau
+
+
+# --------------------------------------------------------------------------- #
+# Phạm vi tài liệu: người dùng tích tài liệu nào thì chỉ tra trong đó
+# --------------------------------------------------------------------------- #
+def test_cua_agent_nhan_duoc_pham_vi_tai_lieu():
+    """Thiếu trường này thì FE gửi lên, FastAPI nhận 200, rồi vứt đi lặng lẽ."""
+    from app.schemas.agent import AgentRequest
+
+    req = AgentRequest(request="tìm đi", doc_ids=["abc123", "def456"])
+    assert req.doc_ids == ["abc123", "def456"]
+    # Nhận danh sách dù giao diện đang chỉ cho chọn một: cho chọn nhiều là việc
+    # của giao diện, backend không phải đổi gì thêm.
+    assert AgentRequest(request="x").doc_ids == []
+
+
+async def test_nhanh_tra_cuu_loc_dung_tai_lieu_da_chon(monkeypatch):
+    ghi_nhan = {}
+
+    async def _bat(question, conversation_id=None, doc_ids=None, sources=None, **kw):
+        ghi_nhan["doc_ids"] = doc_ids
+        ghi_nhan["sources"] = sources
+        return {"question": question, "conversation_id": "c", "history": []}
+
+    async def _dothi(state):
+        return {"answer": "xong", "used_citations": [], "chunks": [1], "trace": {}}
+
+    monkeypatch.setattr(graph_mod, "build_initial_state", _bat)
+    monkeypatch.setattr(graph_mod, "get_qa_graph", lambda: type("G", (), {"ainvoke": staticmethod(_dothi)})())
+
+    await graph_mod.qa_branch(
+        {"conversation_id": "c", "history": [], "doc_ids": ["cv1516"], "sources": []},
+        "việc giao nhiệm vụ cho bên nào",
+    )
+    assert ghi_nhan["doc_ids"] == ["cv1516"]
+
+
+def test_ep_pham_vi_ghi_de_thu_model_tu_nghi():
+    """Phạm vi là thứ người dùng BẤM, không phải thứ model cân nhắc."""
+    from app.agents.nodes.toolloop import _ep_pham_vi
+    from app.agents.nodes.toolloop import ToolCall
+
+    call = ToolCall(id="1", name="search_documents",
+                    arguments={"query": "giao nhiệm vụ", "doc_ids": ["model_tu_bia"]})
+    args = _ep_pham_vi(call, {"doc_ids": ["cv1516"], "sources": []})
+    assert args["doc_ids"] == ["cv1516"], "model không được tự mở rộng phạm vi"
+    assert args["query"] == "giao nhiệm vụ", "tham số khác phải giữ nguyên"
+
+
+def test_khong_chon_gi_thi_khong_dung_vao_loi_goi():
+    from app.agents.nodes.toolloop import ToolCall, _ep_pham_vi
+
+    call = ToolCall(id="1", name="search_documents", arguments={"query": "abc"})
+    assert _ep_pham_vi(call, {"doc_ids": [], "sources": []}) == {"query": "abc"}
+
+
+def test_pham_vi_khong_dinh_vao_tool_so_lieu():
+    """`doc_ids` nhét vào tool ERP là gọi sai tham số, tool sẽ báo lỗi."""
+    from app.agents.nodes.toolloop import ToolCall, _ep_pham_vi
+
+    call = ToolCall(id="1", name="get_personnel_statistics", arguments={"ky": "2026-08"})
+    assert _ep_pham_vi(call, {"doc_ids": ["cv1516"], "sources": []}) == {"ky": "2026-08"}
+
+
+# --------------------------------------------------------------------------- #
+# Ranh giới qa / document: hỏi NỘI DUNG khác đòi SOÁT tờ văn bản
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("cau", [
+    "công văn này giao cho bên nào, nội dung là gì",
+    "văn bản này nói gì",
+    "hạn nộp trong công văn này là ngày nào",
+    "ai ký văn bản này",
+])
+def test_hoi_noi_dung_khong_bi_keo_sang_nhanh_soat(cau):
+    """Có file đính kèm KHÔNG có nghĩa là muốn soát file.
+
+    Nhánh `document` trả về một bản soát dài kể cỡ chữ với căn lề; người chỉ muốn
+    biết văn bản giao việc cho ai phải đọc hết bản soát đó để tìm câu của mình.
+    """
+    from app.agents.router import classify_by_keywords
+
+    assert classify_by_keywords(cau, has_file=True).intent != "document"
+
+
+@pytest.mark.parametrize("cau", [
+    "soát giúp tôi văn bản này",
+    "văn bản này sai thể thức chỗ nào",
+    "kiểm tra chính tả công văn này",
+    "rà soát cấu trúc tài liệu này",
+])
+def test_doi_soat_van_ve_dung_nhanh_document(cau):
+    from app.agents.router import classify_by_keywords
+
+    assert classify_by_keywords(cau, has_file=True).intent == "document"
+
+
+def test_co_file_khong_phai_bang_chung_muon_soat_file():
+    """File đính kèm là điều kiện CẦN của nhánh document, không phải bằng chứng."""
+    from app.agents.router import score_keywords
+
+    cau = "công văn này giao cho bên nào"
+    assert score_keywords(cau, has_file=True)["document"] == 0
+    # Không có file thì chặn cứng, kể cả khi câu đòi soát.
+    assert score_keywords("soát thể thức văn bản này", has_file=False)["document"] == 0
+
+
+def test_luat_soan_tu_file_doc_cau_nguoi_dung_chu_khong_doc_cau_model_viet_lai():
+    """Chữ "soạn" phải là của người dùng, không phải của model.
+
+    Model diễn giải "tổng hợp nhân sự toàn công ty tháng 8" thành bước con
+    "SOẠN báo cáo tổng hợp nhân sự toàn công ty". Đọc câu con thì luật thấy động
+    từ soạn ở gần như mọi yêu cầu báo cáo, và mọi bản tổng hợp toàn cơ quan bị
+    thu về một đơn vị mỗi khi tình cờ có file đính kèm.
+    """
+    from app.agents.planner import PlanStep, _uu_tien_file_dinh_kem
+
+    buoc = [PlanStep(id="s1", intent="report",
+                     request="Soạn báo cáo tổng hợp nhân sự toàn công ty tháng 8")]
+
+    giu = _uu_tien_file_dinh_kem(buoc, has_file=True,
+                                 cau_goc="tổng hợp nhân sự toàn công ty tháng 8")
+    assert [s.intent for s in giu] == ["report"], "người dùng không hề gõ chữ 'soạn'"
+
+    # Người dùng THẬT SỰ đòi soạn thì luật cũ vẫn phải giữ nguyên hiệu lực: đây
+    # là chốt chặn sự cố "Tổng thiết bị: 0" trong khi file ghi 79 thiết bị.
+    doi = _uu_tien_file_dinh_kem(buoc, has_file=True,
+                                 cau_goc="soạn báo cáo về trang thiết bị")
+    assert [s.intent for s in doi] == ["draft"]
+
+    # Không có file thì không đụng tới, dù câu có động từ soạn.
+    assert [s.intent for s in _uu_tien_file_dinh_kem(buoc, False, "soạn báo cáo")] == ["report"]
+
+
+# --------------------------------------------------------------------------- #
+# Đính kèm file = nạp luôn vào kho
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("tren_dia, mong_doi", [
+    ("Em_Day_A_4b3fba0179e741dc851f404932d6b7e5.pdf", "Em_Day_A.pdf"),
+    ("CV_so_1516_ND_66_c7913117e08149268ac3b5ac70a1b16f.pdf", "CV_so_1516_ND_66.pdf"),
+    ("Cong_van_chi_thi_kiem_ke.docx", "Cong_van_chi_thi_kiem_ke.docx"),
+    ("bao_cao_2026.docx", "bao_cao_2026.docx"),          # số cuối tên KHÔNG phải GUID
+])
+def test_go_hau_to_guid_de_lay_ten_that(tren_dia, mong_doi):
+    """Hậu tố GUID là chuyện lưu trữ, không phải tên tài liệu.
+
+    Giữ nó thì trích dẫn hiện tên xấu, và mỗi lượt tải lại là một `doc_id` mới -
+    đúng thứ `make_doc_id_file` sinh ra để tránh.
+    """
+    from app.api.agent import ten_that
+
+    assert ten_that(tren_dia) == mong_doi
+
+
+async def test_hai_cua_tai_len_cho_ra_cung_mot_doc_id(tmp_path):
+    """Gọi cả hai cửa không được sinh hai bản trong kho.
+
+    `/api/agent/upload` lưu kèm GUID, `/api/documents/upload` lưu tên trần. Băm
+    theo TÊN THẬT + bytes thì hai đường gặp nhau ở đúng một `doc_id`.
+    """
+    from app.api.agent import ten_that
+    from app.rag.ingestion import make_doc_id_file
+
+    noi_dung = b"%PDF-1.4 noi dung cong van"
+    qua_agent = tmp_path / "CV_1516_c7913117e08149268ac3b5ac70a1b16f.pdf"
+    qua_documents = tmp_path / "CV_1516.pdf"
+    qua_agent.write_bytes(noi_dung)
+    qua_documents.write_bytes(noi_dung)
+
+    assert (make_doc_id_file(ten_that(qua_agent.name), qua_agent)
+            == make_doc_id_file(qua_documents.name, qua_documents))

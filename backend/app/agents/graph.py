@@ -1,7 +1,11 @@
 """Lắp workflow 1 (hỏi đáp / tra cứu) thành đồ thị LangGraph.
 
-    rewrite_query -> retrieve -┬-> build_context -> generate -> END
-                               └-> no_context ----------------> END
+    quyet_dinh_tra_cuu -┬-> rewrite_query -> retrieve -┬-> build_context -> generate -> END
+                        │                              └-> no_context ---------------> END
+                        └-> no_context ------------------------------------------------> END
+
+Bước đầu là quyết định của MODEL: lượt này có cần lục kho tài liệu không. Không
+cần thì đi thẳng `no_context` - không truy hồi, không trích dẫn, không tốn gì.
 """
 
 from __future__ import annotations
@@ -15,10 +19,12 @@ from typing import Any, Literal
 
 from langgraph.graph import END, StateGraph
 
+from app.agents.prompts import NO_CONTEXT_ANSWER
 from app.agents.nodes.qa import (
     build_context_node,
     generate_node,
     no_context_node,
+    quyet_dinh_tra_cuu_node,
     retrieve_node,
     rewrite_query_node,
 )
@@ -83,15 +89,26 @@ def route_after_retrieve(state: QAState) -> Literal["build_context", "no_context
     return "build_context" if state.get("chunks") else "no_context"
 
 
+def route_after_quyet_dinh(state: QAState) -> Literal["rewrite_query", "no_context"]:
+    """Model nói không cần tra cứu -> bỏ hẳn nhánh truy hồi, không chạy cho vui."""
+    return "rewrite_query" if state.get("can_tra_cuu", True) else "no_context"
+
+
 def build_qa_graph():
     graph = StateGraph(QAState)
+    graph.add_node("quyet_dinh_tra_cuu", quyet_dinh_tra_cuu_node)
     graph.add_node("rewrite_query", rewrite_query_node)
     graph.add_node("retrieve", retrieve_node)
     graph.add_node("build_context", build_context_node)
     graph.add_node("generate", generate_node)
     graph.add_node("no_context", no_context_node)
 
-    graph.set_entry_point("rewrite_query")
+    graph.set_entry_point("quyet_dinh_tra_cuu")
+    graph.add_conditional_edges(
+        "quyet_dinh_tra_cuu",
+        route_after_quyet_dinh,
+        {"rewrite_query": "rewrite_query", "no_context": "no_context"},
+    )
     graph.add_edge("rewrite_query", "retrieve")
     graph.add_conditional_edges(
         "retrieve",
@@ -590,6 +607,11 @@ async def qa_branch(state: AgentState, request: str) -> dict[str, Any]:
     qa_state = await build_initial_state(
         question=request,
         conversation_id=state.get("conversation_id"),
+        # Người dùng đã tích tài liệu trong panel thì chỉ tra trong đó. Thiếu hai
+        # dòng này là giao diện hiện banner "đang dùng tài liệu X" mà máy vẫn lục
+        # cả kho - sai mà không ai thấy, vì câu trả lời vẫn có trích dẫn tử tế.
+        doc_ids=state.get("doc_ids"),
+        sources=state.get("sources"),
         load_history=False,
     )
     qa_state["history"] = state.get("history", [])
@@ -599,6 +621,8 @@ async def qa_branch(state: AgentState, request: str) -> dict[str, Any]:
     return {
         "answer": result.get("answer", ""),
         "citations": result.get("used_citations", []),
+        # Lượt xã giao KHÔNG phải là tra cứu hụt - xem `_step_is_empty`.
+        "xa_giao": bool(result.get("trace", {}).get("xa_giao")),
         "result": {"standalone_query": result.get("standalone_query", ""),
                    "query_variants": result.get("query_variants", []),
                    "chunk_count": len(result.get("chunks", []))},
@@ -661,7 +685,11 @@ async def agent_branch(state: AgentState, request: str) -> dict[str, Any]:
     """Nhánh duy nhất để MODEL tự chọn công cụ, thay vì code chọn hộ."""
     from app.agents.nodes.toolloop import run_tool_loop
 
-    result = await run_tool_loop(request, history=state.get("history"))
+    # Khoá cả vòng lặp công cụ: model tự gọi `search_documents` được, nên không
+    # ép phạm vi vào đây thì nó vẫn lục ra ngoài phạm vi bằng đường vòng.
+    result = await run_tool_loop(request, history=state.get("history"),
+                                 doc_ids=state.get("doc_ids"),
+                                 sources=state.get("sources"))
     return {"answer": _summarize_agent(result), "result": result,
             "refs": result.get("refs", []), "error": result.get("error", "")}
 
@@ -685,6 +713,12 @@ def _step_is_empty(intent: str, out: dict[str, Any]) -> bool:
     # lại bằng nghiệp vụ khác - tức tự đi tìm đường vòng qua chính cái chốt vừa
     # chặn, và người dùng nhận về một câu trả lời thay vì lời từ chối.
     if out.get("tu_choi_quyen"):
+        return False
+    # Chào hỏi / cảm ơn cũng KHÔNG phải là rỗng. Lượt này cố tình không truy hồi
+    # nên `chunk_count` bằng 0, mà luật của `qa` bên dưới đọc đúng con số đó và
+    # kết luận là tra hụt - rồi `RETRY_AS` đẩy lời chào sang nhánh `agent`, tức
+    # cho nó chạy trọn một vòng công cụ ERP để nói lại đúng câu "chào bạn".
+    if out.get("xa_giao"):
         return False
     # Không có lấy một chữ để đưa cho người dùng thì rỗng, bất kể nghiệp vụ nào.
     if not (out.get("answer") or "").strip():
@@ -1059,17 +1093,43 @@ def _summarize_report(result: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+# Tên công cụ nói bằng tiếng người. `tool_log` giữ tên hàm, mà tên hàm là chữ của
+# lập trình viên: "Tôi đã tra bằng get_personnel_statistics" là câu đọc lên cho
+# người dùng nghe thấy chính cấu trúc bên trong hệ thống, không phải câu trả lời.
+TOOL_VI: dict[str, str] = {
+    "search_documents": "tìm trong kho tài liệu",
+    "get_document": "đọc lại văn bản trong kho",
+    "analyze_document": "soát tài liệu đính kèm",
+    "get_template": "tra mẫu báo cáo",
+    "generate_docx": "dựng file .docx",
+    "generate_presentation": "dựng bộ slide",
+    "get_personnel_statistics": "tra số liệu nhân sự",
+    "get_equipment_statistics": "tra số liệu trang thiết bị",
+    "get_reporting_status": "tra tình hình gửi báo cáo",
+}
+
+# Công cụ chỉ đọc kho tài liệu. Vòng lặp chỉ chạy được bấy nhiêu mà không kết
+# luận nổi nghĩa là kho không có câu trả lời - đúng tình huống `NO_CONTEXT_ANSWER`.
+TOOL_TRA_TAI_LIEU: frozenset[str] = frozenset({"search_documents", "get_document"})
+
+
 def _from_tool_log(result: dict[str, Any]) -> str:
     """Nói ra đã tra được những gì khi vòng lặp dừng trước lúc model kịp viết.
 
-    Không dựng số liệu ở đây - chỉ nêu tên công cụ đã chạy. Con số nằm trong
-    `tool_log` và chưa qua van đối chiếu nào, đọc thẳng ra là bỏ qua đúng cái
-    van đang giữ cho agent không bịa.
+    Không dựng số liệu ở đây - chỉ nêu việc đã làm. Con số nằm trong `tool_log`
+    và chưa qua van đối chiếu nào, đọc thẳng ra là bỏ qua đúng cái van đang giữ
+    cho agent không bịa.
     """
-    ran = [item["tool"] for item in result.get("tool_log", []) if item.get("ok")]
+    ran = list(dict.fromkeys(
+        item["tool"] for item in result.get("tool_log", []) if item.get("ok")))
     if not ran:
         return "Tôi chưa tra được thông tin này."
-    return "Tôi đã tra bằng " + ", ".join(dict.fromkeys(ran)) + " nhưng chưa kết luận được."
+    # Chỉ lục kho tài liệu mà không ra: đây là câu hỏi tra cứu bị hụt, không phải
+    # sự cố của vòng lặp. Trả lời như nhánh `qa` vẫn trả lời, và hỏi lại cho gọn.
+    if all(tool in TOOL_TRA_TAI_LIEU for tool in ran):
+        return NO_CONTEXT_ANSWER
+    viec = [TOOL_VI.get(tool, tool) for tool in ran]
+    return "Tôi đã " + ", ".join(viec) + " nhưng chưa kết luận được."
 
 
 def _summarize_agent(result: dict[str, Any]) -> str:
@@ -1081,7 +1141,12 @@ def _summarize_agent(result: dict[str, Any]) -> str:
     answer = result.get("answer") or ""
     reason = result.get("stop_reason", "")
     if reason == "chạm trần số bước":
-        return (answer or _from_tool_log(result)) + " (Chưa tra xong: đã chạm trần số bước tra cứu.)"
+        lui = _from_tool_log(result)
+        # `NO_CONTEXT_ANSWER` đã tự là một câu hoàn chỉnh và đã mời người dùng nêu
+        # rõ hơn; nối thêm "đã chạm trần số bước tra cứu" vào là kể lể nội bộ.
+        if not answer and lui == NO_CONTEXT_ANSWER:
+            return lui
+        return (answer or lui) + " (Chưa tra xong: đã chạm trần số bước tra cứu.)"
     if reason == "gọi lặp":
         # Vòng lặp dừng trước khi model kịp viết câu trả lời, nhưng dữ liệu đã có
         # trong `tool_log` - nói ra được đã tra những gì còn hơn im lặng.
@@ -1102,9 +1167,17 @@ def _summarize_presentation(result: dict[str, Any]) -> str:
     parts = [f"Đã tạo bộ slide {result.get('slide_count', 0)} trang."]
     # Con số đáng ngờ không còn bị âm thầm xoá khỏi slide như bản cũ - Presenton
     # giữ nguyên chữ nó viết - nên phải nói ra, nếu không sẽ không ai biết.
-    if (issues := result.get("validation", {}).get("issues")):
-        parts.append(f"Có {len(issues)} chỗ chứa con số chưa đối chiếu được với dữ liệu "
+    issues = result.get("validation", {}).get("issues") or []
+    if (so := [i for i in issues if i.get("type") == "unverified_number"]):
+        parts.append(f"Có {len(so)} chỗ chứa con số chưa đối chiếu được với dữ liệu "
                      f"gốc, cần đọc lại trước khi trình bày.")
+    # Chữ lạ đếm riêng, không gộp vào câu trên: gộp lại thì người đọc đi tìm một
+    # con số sai trong khi thứ hỏng là hai ký tự chữ Hán.
+    if (la := [i for i in issues if i.get("type") == "foreign_script"]):
+        trang = sorted({str(i.get("slide")) for i in la if i.get("slide")})
+        ky_tu = sorted({c for i in la for c in i.get("characters", [])})
+        parts.append(f"Có {len(la)} chỗ lẫn chữ nước ngoài ({''.join(ky_tu)}) "
+                     f"ở slide {', '.join(trang)}, phải sửa trước khi trình bày.")
     for item in result.get("assumptions", []):
         parts.append(f"Lưu ý: {item}.")
     return " ".join(parts)
@@ -1182,6 +1255,8 @@ async def run_agent(
     request: str,
     conversation_id: str | None = None,
     file_id: str = "",
+    doc_ids: list[str] | None = None,
+    sources: list[str] | None = None,
     ma_don_vi: str = "",
     inputs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -1200,6 +1275,8 @@ async def run_agent(
         "conversation_id": conversation_id,
         "history": await get_memory().get_history(conversation_id),
         "file_id": file_id,
+        "doc_ids": list(doc_ids or []),
+        "sources": list(sources or []),
         "ma_don_vi": ma_don_vi,
         "inputs": inputs or {},
         "trace": {},
@@ -1257,7 +1334,9 @@ async def prepare_context(state: QAState, *, defer_generation: bool = False) -> 
     có `answer`, một lần nữa lúc stream.
     """
     merged: QAState = dict(state)  # type: ignore[assignment]
-    merged.update(await rewrite_query_node(merged))
+    merged.update(await quyet_dinh_tra_cuu_node(merged))
+    if merged.get("can_tra_cuu", True):
+        merged.update(await rewrite_query_node(merged))
     merged.update(await retrieve_node(merged))
     if merged.get("chunks"):
         merged.update(await build_context_node(merged))
