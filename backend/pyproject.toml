@@ -2,7 +2,6 @@
 name = "chatbot-btl-backend"
 version = "0.1.0"
 description = "TPV chatbot backend - multi-agent (LangGraph) orchestrator with RAG, structured data, document drafting, report and presentation workflows"
-readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.141.1",

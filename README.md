@@ -1,4 +1,4 @@
-# TPV Chatbot - Backend
+# TPV Chatbot
 
 Backend đa workflow (LangGraph + FastAPI). Đã hoàn thiện:
 
@@ -8,6 +8,12 @@ Backend đa workflow (LangGraph + FastAPI). Đã hoàn thiện:
 - **Workflow 4** — tổng hợp báo cáo nhiều đơn vị (data tool + biểu đồ + đối chiếu file)
 - **Workflow 5** — tạo bộ slide PowerPoint (Presenton trong Docker + bảng do code ghép)
 - **Agent tổng** — một endpoint tự lập kế hoạch rồi chạy một hoặc nhiều workflow
+
+| Thư mục | Nội dung |
+|---|---|
+| [backend/](backend/) | FastAPI + LangGraph: cả năm workflow và agent tổng. **Mọi lệnh trong tài liệu này chạy từ đây** |
+| [frontend/](frontend/) | giao diện demo HTML/CSS/JS thuần, backend phục vụ sẵn ở `/ui/` - xem [frontend/README.md](frontend/README.md) |
+| [HUONG-DAN-TICH-HOP-API.md](HUONG-DAN-TICH-HOP-API.md) | hướng dẫn tích hợp API cho đội dựng giao diện bên ngoài |
 
 ## Agent tổng: một câu yêu cầu → một kế hoạch → nhiều bước
 
@@ -42,7 +48,7 @@ Mỗi bước gọi đúng một nghiệp vụ, và nghiệp vụ nào cũng gi�
 
 **Phân rã.** "Tổng hợp nhân sự tháng 8 rồi làm slide" là hai sản phẩm, không phải một.
 Trước đây `intent_router` chỉ chọn được một nghiệp vụ nên một nửa yêu cầu rơi mất.
-[app/agents/planner.py](app/agents/planner.py) trả về danh sách bước kèm `depends_on`;
+[app/agents/planner.py](backend/app/agents/planner.py) trả về danh sách bước kèm `depends_on`;
 mọi lỗi của nó — LLM chết, JSON hỏng, ý định lạ, phụ thuộc vòng — đều quy về gọi
 `classify_intent` một bước như trước, nên thêm khả năng mà không đánh đổi độ tin cậy.
 
@@ -103,7 +109,7 @@ dọn đi.
 Payload của `done` **chính là** `AgentResponse`, nên giao diện dùng đúng một hàm dựng
 kết quả cho cả hai đường - nó không cần biết mình đang xem streaming hay không.
 
-Nối dây bằng `ContextVar` ([app/agents/progress.py](app/agents/progress.py)): node nào
+Nối dây bằng `ContextVar` ([app/agents/progress.py](backend/app/agents/progress.py)): node nào
 muốn báo thì gọi `progress.emit`, không phải nhận thêm tham số và không cần biết ai
 đang nghe. Không ai nghe thì `emit` là lệnh rỗng - `POST /api/agent/chat` không đổi một
 dòng nào và không trả giá gì. ContextVar đi theo task con khi `asyncio.gather` tạo task,
@@ -115,25 +121,25 @@ Tiến trình chỉ nói agent đang làm *gì*, còn nói số liệu *bao nhi�
 lời cuối. Hàng đợi có trần và **bỏ sự kiện** khi đầy chứ không chặn: giao diện đọc chậm
 không được làm agent đứng lại.
 
-### Tầng tool — [app/tools/](app/tools/)
+### Tầng tool — [app/tools/](backend/app/tools/)
 
 Tất cả những gì hệ thống làm được, gom vào một danh mục duy nhất
-([app/tools/registry.py](app/tools/registry.py)). Giá trị của nó không phải là gọi hộ
+([app/tools/registry.py](backend/app/tools/registry.py)). Giá trị của nó không phải là gọi hộ
 hàm, mà là ba ràng buộc đặt đúng một lần cho mọi tool: **tên tool phải có thật**,
 **tham số phải hợp lệ** (sai tên là chặn, không "đoán ý"), và **kết quả là dữ liệu
 thuần** nên mọi con số vào prompt đều đối chiếu ngược lại được.
 
 | Tool | Việc | File |
 |---|---|---|
-| `search_documents(query, document_type)` | tìm đoạn liên quan, kèm nguồn trích dẫn | [tools/rag.py](app/tools/rag.py) |
-| `get_document(document_id)` | đọc trọn một văn bản, không bỏ sót đoạn | [tools/rag.py](app/tools/rag.py) |
-| `analyze_document(file_id)` | soát cấu trúc + chữ nghĩa + phân rã nhiệm vụ | [tools/document.py](app/tools/document.py) |
-| `get_template(template_type)` | tra mẫu, kèm `required_inputs` phải hỏi người dùng | [tools/templates.py](app/tools/templates.py) |
-| `get_personnel_statistics(ky, ma_don_vi, compare_to, group_by)` | nhân sự theo kỳ, đã tính sẵn delta/tỷ lệ | [tools/data.py](app/tools/data.py) |
-| `get_equipment_statistics(ky, ma_don_vi, compare_to, group_by)` | trang thiết bị theo kỳ | [tools/data.py](app/tools/data.py) |
-| `get_reporting_status(...)` | đơn vị nào đã gửi / chưa gửi báo cáo | [tools/data.py](app/tools/data.py) |
-| `generate_docx(template_id, content)` | đổ nội dung đã chốt ra .docx | [tools/document.py](app/tools/document.py) |
-| `generate_presentation(data, template_id)` | dựng .pptx từ đặc tả JSON | [tools/presentation.py](app/tools/presentation.py) |
+| `search_documents(query, document_type)` | tìm đoạn liên quan, kèm nguồn trích dẫn | [tools/rag.py](backend/app/tools/rag.py) |
+| `get_document(document_id)` | đọc trọn một văn bản, không bỏ sót đoạn | [tools/rag.py](backend/app/tools/rag.py) |
+| `analyze_document(file_id)` | soát cấu trúc + chữ nghĩa + phân rã nhiệm vụ | [tools/document.py](backend/app/tools/document.py) |
+| `get_template(template_type)` | tra mẫu, kèm `required_inputs` phải hỏi người dùng | [tools/templates.py](backend/app/tools/templates.py) |
+| `get_personnel_statistics(ky, ma_don_vi, compare_to, group_by)` | nhân sự theo kỳ, đã tính sẵn delta/tỷ lệ | [tools/data.py](backend/app/tools/data.py) |
+| `get_equipment_statistics(ky, ma_don_vi, compare_to, group_by)` | trang thiết bị theo kỳ | [tools/data.py](backend/app/tools/data.py) |
+| `get_reporting_status(...)` | đơn vị nào đã gửi / chưa gửi báo cáo | [tools/data.py](backend/app/tools/data.py) |
+| `generate_docx(template_id, content)` | đổ nội dung đã chốt ra .docx | [tools/document.py](backend/app/tools/document.py) |
+| `generate_presentation(data, template_id)` | dựng .pptx từ đặc tả JSON | [tools/presentation.py](backend/app/tools/presentation.py) |
 
 Hai tool sinh file cố tình "ngu": chúng dựng đúng những gì được đưa, không tự thêm số
 liệu, không tự suy ra người ký. Biểu đồ không đi lọt qua JSON nên luôn là PNG do code
@@ -172,7 +178,7 @@ Cột bảng do chính tool khai (`breakdown_columns`) chứ không viết cứn
 thêm một chiều gộp mà quên sửa một trong hai chỗ dựng bảng thì file in ra nhãn "Đơn vị"
 trên cột đang chứa tên chức vụ.
 
-Định danh file đi qua [app/services/storage.py](app/services/storage.py) chứ không phải
+Định danh file đi qua [app/services/storage.py](backend/app/services/storage.py) chứ không phải
 đường dẫn trần: đó là chỗ duy nhất chặn `../../etc/passwd`.
 
 ## Ingest: file → Markdown → chunk
@@ -254,7 +260,7 @@ Tổng giám đốc?"* chỉ được **0.07** — dưới ngưỡng 0.1 nên b�
 BM25 đã xếp nó hạng 1. Hệ thống trả lời "không có trong tài liệu" về một thứ có
 thật trong tài liệu, và người dùng không có cách nào biết mình vừa bị nói dối.
 
-Nên trước khi trả về rỗng, [retrieval.py](app/rag/retrieval.py) hỏi thêm một câu:
+Nên trước khi trả về rỗng, [retrieval.py](backend/app/rag/retrieval.py) hỏi thêm một câu:
 *có chunk nào chứa nguyên văn mọi từ khoá của câu hỏi không?* Có thì giữ lại, cắm
 cờ `matched_by="keyword"` để trace và giao diện nói rõ chunk này vào bằng đường
 nào, kèm điểm rerank thật chứ không làm tròn thành 0.
@@ -313,19 +319,20 @@ không tán gẫu đè lên.
 
 | Thành phần | Lựa chọn | File |
 |---|---|---|
-| Đọc file | pymupdf4llm (PDF) + MarkItDown (Office) + OCR VLM cho trang scan | [app/rag/converter.py](app/rag/converter.py), [app/rag/ocr.py](app/rag/ocr.py) |
-| Chunking | heading/bảng/đoạn/câu, ngưỡng 200/700/1200/1500, smart merge | [app/rag/chunking.py](app/rag/chunking.py) |
-| Embedding | `AITeamVN/Vietnamese_Embedding` + `sparse_linear.pt` của `BAAI/bge-m3` (1 forward → dense + lexical) | [app/rag/embedding.py](app/rag/embedding.py) |
-| Keyword | BM25 tự cài, tokenizer tiếng Việt có bigram, IDF phía Qdrant | [app/rag/embedding.py](app/rag/embedding.py) |
-| Vector DB | Qdrant, 1 dense + 2 sparse named vectors | [app/rag/vectorstore.py](app/rag/vectorstore.py) |
-| Fusion | RRF phía client (giữ được hạng từng nhánh để debug) | [app/rag/retrieval.py](app/rag/retrieval.py) |
-| Rerank | `AITeamVN/Vietnamese_Reranker` (cross-encoder, sigmoid → [0,1]) | [app/rag/reranker.py](app/rag/reranker.py) |
-| LLM | vLLM qua API OpenAI-compatible | [app/services/llm.py](app/services/llm.py) |
-| Orchestration | LangGraph | [app/agents/graph.py](app/agents/graph.py) |
+| Đọc file | pymupdf4llm (PDF) + MarkItDown (Office) + OCR VLM cho trang scan | [app/rag/converter.py](backend/app/rag/converter.py), [app/rag/ocr.py](backend/app/rag/ocr.py) |
+| Chunking | heading/bảng/đoạn/câu, ngưỡng 200/700/1200/1500, smart merge | [app/rag/chunking.py](backend/app/rag/chunking.py) |
+| Embedding | `AITeamVN/Vietnamese_Embedding` + `sparse_linear.pt` của `BAAI/bge-m3` (1 forward → dense + lexical) | [app/rag/embedding.py](backend/app/rag/embedding.py) |
+| Keyword | BM25 tự cài, tokenizer tiếng Việt có bigram, IDF phía Qdrant | [app/rag/embedding.py](backend/app/rag/embedding.py) |
+| Vector DB | Qdrant, 1 dense + 2 sparse named vectors | [app/rag/vectorstore.py](backend/app/rag/vectorstore.py) |
+| Fusion | RRF phía client (giữ được hạng từng nhánh để debug) | [app/rag/retrieval.py](backend/app/rag/retrieval.py) |
+| Rerank | `AITeamVN/Vietnamese_Reranker` (cross-encoder, sigmoid → [0,1]) | [app/rag/reranker.py](backend/app/rag/reranker.py) |
+| LLM | vLLM qua API OpenAI-compatible | [app/services/llm.py](backend/app/services/llm.py) |
+| Orchestration | LangGraph | [app/agents/graph.py](backend/app/agents/graph.py) |
 
 ## Chạy
 
 ```bash
+cd backend
 cp .env.example .env          # sửa LLM_MODEL, QDRANT_URL nếu cần
 uv sync
 
@@ -339,7 +346,7 @@ docker run -d -p 6333:6333 -p 6334:6334 -v $PWD/qdrant_storage:/qdrant/storage q
 uv run uvicorn app.main:app --reload --port 8080
 ```
 
-Giao diện demo nằm ở [../frontend/](../frontend/) và được backend phục vụ sẵn:
+Giao diện demo nằm ở [frontend/](frontend/) và được backend phục vụ sẵn:
 mở **http://localhost:8080/ui/** (vào `/` cũng tự chuyển sang). HTML/CSS/JS
 thuần, không build, cùng origin nên không phải mở CORS.
 
@@ -364,7 +371,7 @@ done
 Thiếu cái nào thì dựng lại cái đó: Qdrant/Redis/Presenton/MSSQL bằng `docker start
 <tên>`, vLLM bằng `./scripts/serve_vllm.sh`, relay bằng `nohup .venv/bin/python
 scripts/vllm_relay.py > /tmp/relay.log 2>&1 &` (relay chỉ cần khi Presenton dùng
-vLLM local - xem đầu [scripts/vllm_relay.py](scripts/vllm_relay.py)).
+vLLM local - xem đầu [scripts/vllm_relay.py](backend/scripts/vllm_relay.py)).
 
 **2. Dừng tiến trình cũ nếu còn sót.** Lọc theo `/proc/<pid>/comm` chứ ĐỪNG
 `pkill -f uvicorn`:
@@ -573,7 +580,7 @@ với chạy trong mạng nội bộ.
 
 Có domain cố định rồi thì chuyển sang **named tunnel** (vẫn miễn phí, URL không
 đổi, bật được Cloudflare Access) - các lệnh ghi sẵn ở cuối
-[scripts/serve_public.sh](scripts/serve_public.sh).
+[scripts/serve_public.sh](backend/scripts/serve_public.sh).
 
 Model dùng cho cả sinh văn bản lẫn OCR (nó có sẵn vision encoder), nên chỉ cần một
 server vLLM trên một card. Card còn lại dành cho embedding + reranker của workflow 1
@@ -685,7 +692,7 @@ curl -X POST localhost:8080/api/documents/review -F "file=@tai_lieu.docx"
 
 ### Dàn ý dò từ đâu
 
-Hai nguồn, xếp theo độ tin cậy ([app/documents/outline.py](app/documents/outline.py)):
+Hai nguồn, xếp theo độ tin cậy ([app/documents/outline.py](backend/app/documents/outline.py)):
 
 1. **style `Heading N` của DOCX, `###` của Markdown** — người soạn khai hẳn cấp mục.
 2. **dòng ngắn mở đầu bằng đánh số**: `I.`, `1.`, `1.2.`, `a)`, `Chương II`.
@@ -718,7 +725,7 @@ và cỡ chữ thì xét cả dòng ngắn — một dòng lạc phông vẫn l�
 
 ### Tiêu chí nằm ở đâu
 
-[config/rules/chung.yaml](config/rules/chung.yaml) — ngưỡng của từng tiêu chí, mức
+[config/rules/chung.yaml](backend/config/rules/chung.yaml) — ngưỡng của từng tiêu chí, mức
 độ (`error`/`warning`/`info`) và cả câu chữ thông báo lỗi. Xoá hẳn một khối là tắt
 luôn tiêu chí đó, không phải sửa code.
 
@@ -730,7 +737,7 @@ sửa code và không khởi động lại: `GET /api/documents/rule-sets` liệ
 
 Phần thể thức văn bản hành chính (quốc hiệu, số ký hiệu, người ký) không còn ở đây.
 Nó chỉ còn phục vụ **thẻ thông tin văn bản** lúc nạp vào kho tri thức —
-[app/documents/structure.py](app/documents/structure.py), xem mục RAG ở trên.
+[app/documents/structure.py](backend/app/documents/structure.py), xem mục RAG ở trên.
 
 ## Workflow 3 — Soạn báo cáo từ MỘT nguồn
 
@@ -758,10 +765,10 @@ file tải lên
                   (viết lại tối đa 2 lần -> xuất DOCX -> ghi sổ văn bản)
 ```
 
-Ba bước cuối dùng LẠI node của nhánh CSDL ([drafting.py](app/agents/nodes/drafting.py)),
+Ba bước cuối dùng LẠI node của nhánh CSDL ([drafting.py](backend/app/agents/nodes/drafting.py)),
 nên cách cấp số ký hiệu, cách ghi sổ và van chắn số giống nhau - không có bản sao
 thứ hai để quên đồng bộ. Dàn ý được nhét vào đúng chỗ `template` mà các node đó
-vốn đã đọc. Xem [drafting_doc.py](app/agents/nodes/drafting_doc.py).
+vốn đã đọc. Xem [drafting_doc.py](backend/app/agents/nodes/drafting_doc.py).
 
 Tài liệu dài hơn `MAX_DOC_CHARS` (24.000 ký tự) bị **cắt**, không tóm tắt: tóm tắt
 là chèn thêm một lượt LLM vào giữa nguồn và van chắn, từ đó không con số nào còn
@@ -783,13 +790,13 @@ truy về nguyên văn được nữa. Phần bị cắt được ghi rõ trong 
 
 **Số liệu do SQL lấy, LLM chỉ viết văn quanh số liệu đó.** Mục `data`/`table` hoàn
 toàn do code dựng, không gọi model lần nào. Chỉ mục `llm` (nhận xét, đề xuất) mới
-qua model, và [verify.py](app/documents/verify.py) đối chiếu từng con số nó viết ra
+qua model, và [verify.py](backend/app/documents/verify.py) đối chiếu từng con số nó viết ra
 với dữ liệu gốc — bịa "70 người" hay "15.000.000 đồng" là bị chặn, trong khi "quá hạn
 12 tháng" hay "nêu tại mục 2" vẫn được cho qua.
 
 File sinh ra phải **qua được rule engine của workflow 2** — hiện 0 phát hiện, 9 tiêu
 chí đạt, phần còn lại được ghi rõ là chưa kiểm được. Ưu tiên điền vào
-[mẫu .docx](data/templates/) đã đúng thể thức; mẫu nào chưa có file thì dựng bằng
+[mẫu .docx](backend/data/templates/) đã đúng thể thức; mẫu nào chưa có file thì dựng bằng
 code với style theo NĐ 30 (quy định cho văn bản hành chính, áp cho văn bản sinh ra
 chứ không phải cho bước soát).
 
@@ -825,7 +832,7 @@ curl -X POST localhost:8080/api/reports/draft -H 'Content-Type: application/json
 
 **Không dùng RAG để lấy số liệu.** Chunking cắt bảng làm số rời khỏi nhãn cột,
 retrieval trả về thứ *gần giống* chứ không phải thứ *đúng*, và không ai kiểm chứng
-được kết quả. [tools/data.py](app/tools/data.py) là tầng duy nhất chạm vào số liệu.
+được kết quả. [tools/data.py](backend/app/tools/data.py) là tầng duy nhất chạm vào số liệu.
 
 ### Hai nguồn số liệu: CSDL hoặc chính báo cáo đơn vị gửi lên
 
@@ -849,7 +856,7 @@ curl -X POST localhost:8080/api/reports/aggregate -H 'Content-Type: application/
 File được lấy từ sổ văn bản (báo cáo đã vào sổ trong kỳ) cộng với các `file_id`
 truyền thêm ở `inputs.files`.
 
-Bảng đọc bằng code, **không hỏi LLM**: [extract_figures.py](app/documents/extract_figures.py)
+Bảng đọc bằng code, **không hỏi LLM**: [extract_figures.py](backend/app/documents/extract_figures.py)
 dò hàng tiêu đề theo tên cột (`Tổng SL`, `Hoạt động tốt`, `Cần bảo dưỡng`, `Đề xuất
 thanh lý`...), đọc từng dòng, và đọc riêng dòng `Tổng cộng`. Mỗi con số trong báo
 cáo tổng hợp đều chỉ ngược lại được về *file nào, dòng nào*, và mục **NGUỒN SỐ
@@ -907,13 +914,13 @@ này quyết, còn phần trình bày - thứ code dựng ra xấu - thì giao c
 Presenton tự nghĩ dàn ý.
 
 Presenton không nhận câu hỏi gốc của người dùng và không nối được vào CSDL. Mọi
-con số, kể cả tỷ lệ và mức tăng giảm, vẫn do [tools/data.py](app/tools/data.py)
+con số, kể cả tỷ lệ và mức tăng giảm, vẫn do [tools/data.py](backend/app/tools/data.py)
 tính sẵn.
 
 **Giới hạn layout là ràng buộc thật, không phải con số chọn cho đẹp**: bảng tối đa
 6 dòng, ô chỉ tiêu 2-3 ô mỗi slide. Vượt ngưỡng thì schema từ chối, Presenton dựng
 lại ba lần rồi trả về bộ slide RỖNG - hỏng cả bộ vì một cái bảng. Nên bảng dài
-được cắt trang tại [nodes/presentation.py](app/agents/nodes/presentation.py), và
+được cắt trang tại [nodes/presentation.py](backend/app/agents/nodes/presentation.py), và
 cắt thì cắt đủ: mỗi dòng đều lên slide, số trang ghi ngay trên tiêu đề "(2/6)".
 
 **Vẫn còn van chắn số**, chạy trên chính file .pptx đã dựng: con số nào trên slide
@@ -939,7 +946,7 @@ Cấu hình trong `.env` (`PRESENTON_*`). Vài điểm đã trả giá mới bi�
 |---|---|
 | cổng `5002`, chỉ mở `127.0.0.1` | máy dev đã có Presenton của dự án khác ở 5001; và bộ slide chứa số liệu nhân sự |
 | `DISABLE_AUTH=true` | bật đăng nhập thì bước export tự gọi API của chính nó và nhận 401, file xuất ra rỗng |
-| image có **một bản vá** | `slides_markdown` chết ở image gốc vì `to_string()` thiếu tham số `with_schema` — xem [docker/presenton/Dockerfile](docker/presenton/Dockerfile) |
+| image có **một bản vá** | `slides_markdown` chết ở image gốc vì `to_string()` thiếu tham số `with_schema` — xem [docker/presenton/Dockerfile](backend/docker/presenton/Dockerfile) |
 | `LLM=custom` + OpenRouter | sinh slide dùng model API riêng; chat/agent vẫn chạy vLLM nội bộ |
 | `DISABLE_IMAGE_GENERATION=true` | ảnh do model vẽ không phải là dữ liệu |
 
@@ -987,7 +994,7 @@ Chuyển sang SQL Server chỉ cần đổi `DATABASE_URL` trong `.env`, không 
 DATABASE_URL=mssql+aioodbc://sa:MatKhau@localhost:1433/tpv?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
 ```
 
-**Nguyên tắc bắt buộc khi sinh báo cáo:** mọi số liệu đi qua [repository.py](app/db/repository.py),
+**Nguyên tắc bắt buộc khi sinh báo cáo:** mọi số liệu đi qua [repository.py](backend/app/db/repository.py),
 LLM chỉ nhận `dict` đã truy vấn sẵn và diễn đạt thành văn. Không bao giờ để LLM tự
 sinh con số — nó sẽ ra những giá trị trông hợp lý và hoàn toàn bịa.
 

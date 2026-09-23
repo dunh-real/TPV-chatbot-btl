@@ -209,7 +209,7 @@ biết còn hạn mức.
   thì đổi chữ thành "lâu hơn thường lệ — vẫn đang chạy". Chỉ đếm thời gian THẬT,
   không vẽ thanh tiến trình giả (các endpoint này trả về một cục, không phát sự
   kiện). Đã gắn cho 4 màn: slide, soạn báo cáo, tổng hợp, soát văn bản.
-- **Cloudflare 524 — xem `README` §"Giới hạn 524 của Cloudflare".**
+- **Cloudflare 524 — xem [README](../README.md) §"Giới hạn 524 của Cloudflare".**
   Đo 20/09: **80,1 giây** qua `localhost`, **76,1 giây** qua
   `chatbot-demo.tpvtech.vn` (cả hai `200`). Trần là **125 giây** (không phải 100
   như bản ghi đầu tiên của phiên này — 100 là số cũ hay bị trích lại), nên biên
@@ -466,7 +466,7 @@ câu hỏi QA là ~9,3s nên phần tăng ~6%. Kho lớn hơn (`rrf_top_k=20`) t
 
 ## 6c. Workflow 3 có hai nguồn (thêm 20/09)
 
-`nguon=csdl` (như cũ) hoặc `nguon=tai_lieu` (mới) - xem `README` §"Workflow 3".
+`nguon=csdl` (như cũ) hoặc `nguon=tai_lieu` (mới) - xem [README](../README.md) §"Workflow 3".
 
 **Điều quan trọng nhất phải nhớ:** hai nhánh cho ra hai văn bản trông giống hệt
 nhau, nhưng bảo đảm về con số khác hẳn.
