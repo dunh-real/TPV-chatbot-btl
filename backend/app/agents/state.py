@@ -1,0 +1,231 @@
+"""State dùng chung cho các workflow LangGraph."""
+
+from __future__ import annotations
+
+from typing import Annotated, Any, TypedDict
+
+from app.rag.retrieval import RetrievalResult, RetrievedChunk
+
+
+def gop_trace(cu: dict[str, Any] | None, moi: dict[str, Any] | None) -> dict[str, Any]:
+    """Gộp `trace` của các nhánh chạy song song thay vì để chúng đè nhau.
+
+    Không có reducer thì LangGraph coi hai nhánh cùng ghi một khoá trong cùng một
+    nhịp là xung đột và ném `InvalidUpdateError` - cả workflow chết chỉ vì hai
+    nhánh muốn ghi lại số đo của mình. Mà `trace` sinh ra đúng để chứa số đo của
+    mọi nhánh, nên gộp mới là nghĩa đúng của nó.
+    """
+    return {**(cu or {}), **(moi or {})}
+
+
+class Citation(TypedDict):
+    """Một nguồn được đánh số trong câu trả lời."""
+
+    id: int
+    doc_id: str
+    doc_title: str
+    section: str
+    source: str
+    page: int | None
+    snippet: str
+    score: float
+    matched_by: str
+
+
+class QAState(TypedDict, total=False):
+    """Trạng thái của workflow 1: hỏi đáp / tra cứu (RAG)."""
+
+    # --- đầu vào ---
+    question: str
+    conversation_id: str
+    history: list[dict[str, str]]
+    doc_ids: list[str]
+    sources: list[str]
+    doc_types: list[str]
+    top_n: int
+    use_rerank: bool
+
+    # --- trung gian ---
+    can_tra_cuu: bool                 # model quyết: lượt này có lục kho không
+    standalone_query: str
+    query_variants: list[str]
+    retrieval: RetrievalResult
+    chunks: list[RetrievedChunk]
+    context: str
+    citations: list[Citation]
+
+    # --- đầu ra ---
+    answer: str
+    used_citations: list[Citation]
+    trace: dict[str, Any]
+    error: str
+
+
+class DocumentState(TypedDict, total=False):
+    """Trạng thái của workflow 2: xử lý văn bản tự động."""
+
+    # --- đầu vào ---
+    file_path: str
+    file_name: str
+    noi_gui: str
+    departments: list[dict[str, str]]     # danh mục lấy từ CSDL, không để LLM tự nghĩ
+    rule_set: str                         # tên file trong config/rules, rỗng = mặc định
+
+    # --- trung gian ---
+    structure: Any                        # app.documents.parser.DocumentStructure
+    outline: Any                          # app.documents.outline.Outline
+    rule_result: Any                      # app.documents.rules.RuleCheckResult
+    typo_findings: list[dict[str, Any]]   # lỗi máy móc tất định, có vị trí ký tự
+    spell_findings: list[dict[str, Any]]  # chính tả do LLM soát, đã xác minh trích dẫn
+    llm_findings: list[dict[str, Any]]
+    classification: dict[str, Any] | None
+    summary: str
+    summary_refs: list[dict[str, Any]]      # nguồn cho từng ý trong tóm tắt
+    all_refs: list[dict[str, Any]]          # toàn bộ nguồn, dãy số dùng chung
+    deadline: str | None
+    tasks: list[dict[str, Any]]
+
+    # --- đầu ra ---
+    result: dict[str, Any]
+    trace: Annotated[dict[str, Any], gop_trace]
+    error: str
+
+
+class DraftState(TypedDict, total=False):
+    """Trạng thái của workflow 3: soạn văn bản theo mẫu."""
+
+    # --- đầu vào ---
+    request: str
+    ma_don_vi: str
+    history: list[dict[str, str]]   # để hiểu "vẫn đơn vị đó", "cũng kỳ đó"
+    inputs: dict[str, Any]          # người ký, chức vụ, số ký hiệu... do người dùng nhập
+    # Nguồn số liệu: "csdl" (mặc định, lấy từ ERP theo mẫu) hoặc "tai_lieu"
+    # (đọc một file người dùng tải lên). Hai nhánh đi hai đồ thị khác nhau vì
+    # bảo đảm về con số của chúng khác nhau - xem `nodes/drafting_doc.py`.
+    nguon: str
+    file_id: str
+
+    # --- trung gian ---
+    params: dict[str, Any]
+    template: dict[str, Any]
+    template_choice: dict[str, Any]
+    data: dict[str, Any]            # số liệu từ SQL - nguồn sự thật duy nhất
+    data_notes: list[str]
+    source_document: dict[str, Any]  # chỉ nhánh tài liệu: file nào, đọc được gì
+    regulations: list[dict[str, Any]]
+    sections: list[dict[str, Any]]
+    validation: dict[str, Any]
+    retry_count: int
+
+    # --- đầu ra ---
+    output_path: str
+    so_ky_hieu: str                 # số cấp từ sổ văn bản lúc xuất file
+    registered_as: str
+    assumptions: list[str]
+    missing_input: list[str]
+    error: str
+
+
+class AggregateState(TypedDict, total=False):
+    """Trạng thái của workflow 4: tổng hợp báo cáo."""
+
+    # --- đầu vào ---
+    request: str
+    history: list[dict[str, str]]
+    inputs: dict[str, Any]
+
+    # --- trung gian ---
+    params: dict[str, Any]
+    data: dict[str, Any]              # kết quả các data tool - nguồn số duy nhất
+    reconciliation: list[dict[str, Any]]
+    has_discrepancy: bool
+    charts: dict[str, bytes]          # PNG do code vẽ
+    sections: list[dict[str, Any]]
+    validation: dict[str, Any]
+
+    # --- đầu ra ---
+    output_path: str
+    so_ky_hieu: str
+    registered_as: str
+    assumptions: list[str]
+    error: str
+
+
+class StepResult(TypedDict, total=False):
+    """Kết quả một bước của kế hoạch - đủ để dựng lại câu trả lời và truy vết."""
+
+    id: str
+    intent: str                       # nghiệp vụ đã chạy (khác `planned_intent` nếu đã lùi)
+    planned_intent: str               # nghiệp vụ kế hoạch định chạy
+    request: str                      # yêu cầu con của riêng bước này
+    answer: str
+    result: dict[str, Any]
+    citations: list[Citation]
+    refs: list[dict[str, Any]]
+    missing_input: list[str]
+    attempts: int                     # số lần đã chạy, kể cả lần thử lại
+    retried_as: str                   # nghiệp vụ dùng cho lần thử lại, rỗng nếu không thử lại
+    empty: bool                       # chạy xong mà không ra kết quả dùng được
+    error: str
+
+
+class AgentState(TypedDict, total=False):
+    """Trạng thái của agent tổng: lập kế hoạch rồi chạy từng bước.
+
+    Giữ đầu vào của cả năm workflow trong một state duy nhất vì người dùng chỉ gõ
+    một câu - hệ thống phải tự quyết định câu đó cần chạy những gì.
+    """
+
+    # --- đầu vào ---
+    request: str
+    conversation_id: str
+    history: list[dict[str, str]]
+    file_id: str                      # có file đính kèm thì mới đi được nhánh document
+    doc_ids: list[str]                 # tài liệu người dùng đã tích trong panel
+    sources: list[str]                 # hoặc tên file, khi phía gọi không có doc_id
+    ma_don_vi: str
+    inputs: dict[str, Any]            # người ký, số ký hiệu... cho nhánh soạn văn bản
+
+    # --- kế hoạch ---
+    plan: dict[str, Any]              # các bước đã qua kiểm tra, kèm lý do tách
+    steps: list[StepResult]           # kết quả từng bước, theo thứ tự chạy xong
+    intent: str                       # nghiệp vụ của bước chính - giữ cho hợp đồng cũ
+    routing: dict[str, Any]
+
+    # --- đầu ra ---
+    answer: str                       # câu trả lời cho người dùng
+    citations: list[Citation]         # chỉ nhánh hỏi đáp mới có
+    refs: list[dict[str, Any]]        # nguồn cho câu trả lời của các nhánh còn lại
+    result: dict[str, Any]            # kết quả thô của bước chính
+    artifacts: list[dict[str, Any]]   # file sinh ra, kèm đường dẫn tải về
+    missing_input: list[str]
+    trace: dict[str, Any]
+    error: str
+
+
+class PresentationState(TypedDict, total=False):
+    """Trạng thái của workflow 5: tạo bộ slide."""
+
+    # --- đầu vào ---
+    request: str
+    history: list[dict[str, str]]
+    inputs: dict[str, Any]
+
+    # --- trung gian (tái dùng phần lấy số liệu của workflow 4) ---
+    params: dict[str, Any]
+    data: dict[str, Any]
+    slides_markdown: list[str]        # nội dung từng slide, do code soạn
+    brief: str                        # chính các slide trên, ghép lại để xem nhanh
+    n_slides: int
+    so_cua_code: list[str]            # số do code viết ra (số trang bảng đã cắt)
+    validation: dict[str, Any]
+
+    # --- đầu ra ---
+    output_path: str
+    engine: str                       # presenton | local (đường lùi tự dựng)
+    presentation_id: str
+    edit_url: str
+    elapsed_seconds: float
+    slide_count: int
+    assumptions: list[str]
+    error: str
