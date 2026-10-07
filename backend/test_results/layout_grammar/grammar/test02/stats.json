@@ -1,0 +1,180 @@
+{
+ "lines": 186,
+ "dropped_junk_lines": 18,
+ "labels": {
+  "BODY": 53,
+  "OWN_DIEU": 1,
+  "OWN_KHOAN": 8,
+  "QUOTED": 109,
+  "OWN_DIEM": 15
+ },
+ "headings": 61,
+ "by_kind": {
+  "OWN_DIEU": 1,
+  "OWN_KHOAN": 8,
+  "QUOTED_Điểm": 15,
+  "QUOTED_Điều": 2,
+  "QUOTED_Khoản": 20,
+  "OWN_DIEM": 15
+ },
+ "by_level": {
+  "1": 1,
+  "2": 8,
+  "3": 19,
+  "4": 20,
+  "5": 13
+ },
+ "ambiguous_lines": 18,
+ "ambiguous": [
+  {
+   "index": 57,
+   "page": 2,
+   "text": "2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 64,
+   "page": 2,
+   "text": "3. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 112,
+   "page": 3,
+   "text": "4. Sửa đổi, bổ sung một số khoản của Điều 5 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 113,
+   "page": 3,
+   "text": "a) Sửa đổi khoản 3 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 120,
+   "page": 4,
+   "text": "5. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 14 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 121,
+   "page": 4,
+   "text": "a) Sửa đổi, bổ sung khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 124,
+   "page": 4,
+   "text": "b) Bãi bỏ khoản 3.",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 126,
+   "page": 4,
+   "text": "a) Sửa đổi khoản 2 và bổ sung khoản 2a vào sau khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 131,
+   "page": 4,
+   "text": "b) Bãi bỏ khoản 4.",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 133,
+   "page": 4,
+   "text": "a) Sửa đổi khoản 1, khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 142,
+   "page": 4,
+   "text": "b) Bãi bỏ khoản 3;",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 147,
+   "page": 4,
+   "text": "d) Sửa đổi, bổ sung khoản 7 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 152,
+   "page": 5,
+   "text": "đ) Sửa đổi, bổ sung khoản 8 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 159,
+   "page": 5,
+   "text": "8. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 17 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 160,
+   "page": 5,
+   "text": "a) Sửa đổi khoản 1, khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 169,
+   "page": 5,
+   "text": "b) Bãi bỏ khoản 3;",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 174,
+   "page": 5,
+   "text": "d) Sửa đổi, bổ sung khoản 7 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 179,
+   "page": 5,
+   "text": "đ) Sửa đổi, bổ sung khoản 8 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  }
+ ],
+ "seconds": 0.02,
+ "beam": 64,
+ "own_articles": [
+  "Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 20"
+ ],
+ "own_groups": []
+}

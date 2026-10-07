@@ -1,0 +1,5 @@
+Tài liệu test04 | Ground truth: unavailable | Evaluation type: so sánh mô tả
+
+rule_based: 0 tiêu đề, 0 trang | cấp {}
+    dạng: {}
+

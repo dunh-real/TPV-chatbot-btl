@@ -1,0 +1,16 @@
+Điều của chính văn bản (đọc từ OCR theo quy tắc): 13 -> ['Điều 1 (tr.1)', 'Điều 2 (tr.1)', 'Điều 3 (tr.1)', 'Điều 4 (tr.2)', 'Điều 5 (tr.2)', 'Điều 6 (tr.3)', 'Điều 7 (tr.3)', 'Điều 8 (tr.3)', 'Điều 9 (tr.4)', 'Điều 10 (tr.4)', 'Điều 11 (tr.5)', 'Điều 12 (tr.5)', 'Điều 13 (tr.5)']
+
+[rule_based] 20 tiêu đề | đơn vị: {'Chương': 2, 'Điều': 10, 'Khoản': 7, 'Điểm': 1} | trong trích dẫn: {}
+   Điều của văn bản: 10/13 (ở cấp nông nhất: 0) | thiếu: ['Điều 13', 'Điều 7', 'Điều 8']
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+
+[grammar] 86 tiêu đề | đơn vị: {'Chương': 2, 'Điều': 13, 'Khoản': 51, 'Điểm': 20} | trong trích dẫn: {}
+   Điều của văn bản: 13/13 (ở cấp nông nhất: 0) | thiếu: []
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+

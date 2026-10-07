@@ -1,0 +1,1514 @@
+# Dàn ý - grammar (1512 tiêu đề)
+
+- [L1, tr.2] Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 2019 của
+  - [L2, tr.2] 1. Sửa đổi, bổ sung điểm a khoản 2 Điều 2 như sau:
+    - [L3, tr.2] “a) Tổ chức kinh tế được thành lập theo quy định của Luật Doanh nghiệp, gồm: Doanh nghiệp tư nhân,
+  - [L2, tr.2] 2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:
+    - [L3, tr.2] “m) Buộc nộp lại Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều
+  - [L2, tr.2] 3. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+    - [L3, tr.2] “Điều 4a. Quy định về vi phạm hành chính đã kết thúc, vi phạm hành chính đang được thực hiện và
+      - [L4, tr.2] 1. Hành vi vi phạm đã kết thúc, hành vi vi phạm đang được thực hiện được xác định căn cứ quy định tại
+      - [L4, tr.2] 2. Xử phạt vi phạm hành chính đối với trường hợp vi phạm hành chính nhiều lần:
+        - [L5, tr.2] a) Cá nhân, tổ chức vi phạm hành chính nhiều lần đối với hành vi vi phạm không thuộc trường hợp quy định
+        - [L5, tr.2] b) Cá nhân, tổ chức vi phạm hành chính nhiều lần đối với hành vi vi phạm tại khoản 2 và 3 Điều 6; khoản 2,
+    - [L3, tr.3] Điều 4b. Thi hành các hình thức xử phạt, biện pháp khắc phục hậu quả và xác định số lợi bất hợp
+      - [L4, tr.3] 1. Việc thi hành quyết định xử phạt vi phạm hành chính thực hiện theo quy định tại Mục 2 Chương III Phần
+      - [L4, tr.3] 2. Biên bản, tài liệu, văn bản hoặc giấy tờ liên quan khác ghi nhận việc thi hành các hình thức xử phạt, biện
+      - [L4, tr.3] 3. Số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính theo quy định tại Nghị định này là
+        - [L5, tr.3] a) Số lợi bất hợp pháp thu được bằng tiền là toàn bộ số tiền tổ chức, cá nhân thu được từ hành vi vi phạm
+        - [L5, tr.3] b) Số lợi bất hợp pháp thu được bằng giấy tờ có giá là toàn bộ giấy tờ có giá mà tổ chức, cá nhân vi phạm
+        - [L5, tr.3] c) Số lợi bất hợp pháp là vật, tài sản khác mà tổ chức, cá nhân vi phạm thu được từ hành vi vi phạm hành
+  - [L2, tr.3] 4. Sửa đổi, bổ sung một số khoản của Điều 5 như sau:
+    - [L3, tr.3] a) Sửa đổi khoản 3 như sau:
+      - [L4, tr.3] “3. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi sử dụng bồn chứa ngoài trời không
+    - [L3, tr.3] b) Bổ sung khoản 4a vào sau khoản 4 như sau:
+      - [L4, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+      - [L4, tr.5] “8. Biện pháp khắc phục hậu quả:
+        - [L5, tr.5] a) Buộc nộp lại Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều
+        - [L5, tr.5] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2, khoản 5 và
+  - [L2, tr.5] 8. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 17 như sau:
+    - [L3, tr.5] a) Sửa đổi khoản 1, khoản 2 như sau:
+      - [L4, tr.5] “1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay
+      - [L4, tr.5] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau:
+        - [L5, tr.5] a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy phép sản xuất, kinh doanh hóa chất hạn
+        - [L5, tr.5] b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy phép sản xuất, kinh doanh hóa
+    - [L3, tr.5] b) Bãi bỏ khoản 3;
+    - [L3, tr.5] c) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.5] “5. Phạt tiền từ 15.000.000 đồng đến 20.000.000 đồng đối với hành vi sản xuất, kinh doanh không đúng địa
+    - [L3, tr.5] d) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.5] “7. Hình thức xử phạt bổ sung:
+    - [L3, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+      - [L4, tr.5] “8. Biện pháp khắc phục hậu quả:
+        - [L5, tr.5] a) Buộc nộp lại Giấy phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực công
+        - [L5, tr.5] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2, khoản 5 và
+  - [L2, tr.6] 9. Sửa đổi, bổ sung Điều 18 như sau:
+    - [L3, tr.6] “Điều 18. Vi phạm quy định về kiểm soát hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực công nghiệp
+      - [L4, tr.6] 1. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi bán hóa chất hạn chế sản xuất, kinh
+      - [L4, tr.6] 2. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi bán hóa chất hạn chế sản xuất, kinh
+      - [L4, tr.6] 3. Hình thức xử phạt bổ sung:
+      - [L4, tr.6] 4. Biện pháp khắc phục hậu quả:
+  - [L2, tr.6] 10. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 19 như sau:
+    - [L3, tr.6] a) Sửa đổi, bổ sung khoản 1 như sau:
+      - [L4, tr.6] “1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay
+    - [L3, tr.6] b) Bãi bỏ khoản 3;
+    - [L3, tr.6] c) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.6] “4. Biện pháp khắc phục hậu quả:
+        - [L5, tr.6] a) Buộc nộp lại Giấy phép xuất khẩu, nhập khẩu tiền chất công nghiệp bị viết thêm, tẩy xóa, sửa chữa làm
+        - [L5, tr.6] b) Buộc đưa ra khỏi lãnh thổ nước Cộng hòa xã hội chủ nghĩa Việt Nam hoặc tái xuất tiền chất công nghiệp
+  - [L2, tr.6] 11. Sửa đổi, bổ sung điểm b khoản 5 Điều 23 như sau:
+    - [L3, tr.6] “b) Buộc thu hồi hóa chất sản xuất trong nước hoặc nhập khẩu đã đưa vào sử dụng, lưu thông trên thị
+  - [L2, tr.6] 12. Sửa đổi, bổ sung một số khoản của Điều 24 như sau:
+    - [L3, tr.6] a) Sửa đổi, bổ sung khoản 2 như sau:
+      - [L4, tr.6] “2. Phạt tiền từ 4.000.000 đồng đến 6.000.000 đồng đối với hành vi khai báo không đúng thông tin về hóa
+    - [L3, tr.6] b) Bổ sung khoản 6a vào sau khoản 6 như sau:
+      - [L4, tr.7] “6a. Phạt tiền từ 20.000.000 đồng đến 25.000.000 đồng đối với hành vi không thực hiện khai báo hóa chất
+    - [L3, tr.7] c) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.7] “7. Hình thức xử phạt bổ sung:
+  - [L2, tr.7] 13. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 26 như sau:
+    - [L3, tr.7] a) Sửa đổi, bổ sung khoản 1 như sau:
+      - [L4, tr.7] “1. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.7] a) Tồn trữ các loại hóa chất nguy hiểm là nguyên liệu, hóa chất trung gian và hóa chất thành phẩm chưa kê
+        - [L5, tr.7] b) Lưu trữ các loại hóa chất nguy hiểm là nguyên liệu, hóa chất trung gian và hóa chất thành phẩm với khối
+    - [L3, tr.7] b) Bãi bỏ khoản 5.
+  - [L2, tr.7] 14. Sửa đổi, bổ sung Điều 27 như sau:
+    - [L3, tr.7] “Điều 27. Vi phạm quy định về xây dựng Biện pháp, Kế hoạch phòng ngừa, ứng phó sự cố hóa chất
+      - [L4, tr.7] 1. Mức phạt tiền đối với hành vi vi phạm quy định xây dựng Biện pháp phòng ngừa, ứng phó sự cố hóa chất
+        - [L5, tr.7] a) Phạt tiền từ 2.000.000 đồng đến 3.000.000 đồng đối với hành vi gửi Biện pháp phòng ngừa, ứng phó sự
+        - [L5, tr.7] b) Phạt tiền từ 3.000.000 đồng đến 4.000.000 đồng đối với hành vi xây dựng thiếu mỗi nội dung bắt buộc
+        - [L5, tr.7] c) Phạt tiền từ 4.000.000 đồng đến 5.000.000 đồng đối với hành vi không gửi Biện pháp phòng ngừa, ứng
+        - [L5, tr.7] d) Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không lưu giữ Biện pháp phòng ngừa,
+        - [L5, tr.7] đ) Phạt tiền từ 10.000.000 đồng đến 12.000.000 đồng đối với hành vi đã xây dựng Biện pháp phòng ngừa,
+        - [L5, tr.7] e) Phạt tiền từ 12.000.000 đồng đến 15.000.000 đồng đối với hành vi không thực hiện bổ sung, chỉnh sửa
+        - [L5, tr.8] g) Phạt tiền từ 15.000.000 đồng đến 20.000.000 đồng đối với hành vi không xây dựng Biện pháp phòng
+      - [L4, tr.8] 2. Mức phạt tiền đối với hành vi vi phạm quy định xây dựng Kế hoạch phòng ngừa, ứng phó sự cố hóa chất
+        - [L5, tr.8] a) Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi không lưu giữ Kế hoạch phòng ngừa,
+        - [L5, tr.8] b) Phạt tiền từ 15.000.000 đồng đến 17.000.000 đồng đối với hành vi có sự thay đổi trong quá trình đầu tư
+        - [L5, tr.8] c) Phạt tiền từ 17.000.000 đồng đến 20.000.000 đồng đối với hành vi xây dựng Kế hoạch phòng ngừa, ứng
+        - [L5, tr.8] d) Phạt tiền từ 20.000.000 đồng đến 25.000.000 đồng đối với hành vi không xây dựng Kế hoạch phòng
+      - [L4, tr.8] 3. Hình thức xử phạt bổ sung:
+  - [L2, tr.8] 15. Sửa đổi, bổ sung Điều 29 như sau:
+    - [L3, tr.8] “Điều 29. Vi phạm quy định về chế độ báo cáo
+      - [L4, tr.8] 1. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với hành vi thực hiện báo cáo tổng hợp về tình hình
+      - [L4, tr.8] 2. Phạt tiền từ 5.000.000 đồng đến 7.000.000 đồng đối với hành vi hoạt động hóa chất mà không thực hiện
+  - [L2, tr.8] 16. Sửa đổi, bổ sung khoản 4 Điều 30 như sau:
+    - [L3, tr.8] “4. Hình thức xử phạt bổ sung:
+  - [L2, tr.8] 17. Sửa đổi, bổ sung một số khoản của Điều 31 như sau:
+    - [L3, tr.8] a) Sửa đổi, bổ sung khoản 1 và khoản 2 như sau:
+      - [L4, tr.8] “1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay
+      - [L4, tr.9] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi sau đây:
+        - [L5, tr.9] a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy phép sản xuất hóa chất Bảng 1, hóa
+        - [L5, tr.9] b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy phép sản xuất hóa chất Bảng
+    - [L3, tr.9] b) Sửa đổi, bổ sung khoản 5 và khoản 6 như sau:
+      - [L4, tr.9] “5. Hình thức xử phạt bổ sung:
+        - [L5, tr.9] a) Tịch thu tang vật vi phạm hành chính là hóa chất Bảng 1, hóa chất Bảng 2, hóa chất Bảng 3 và hóa chất
+        - [L5, tr.9] b) Tước quyền sử dụng Giấy phép sản xuất hóa chất Bảng 1, hóa chất Bảng 2, hóa chất Bảng 3 và hóa chất
+      - [L4, tr.9] 6. Biện pháp khắc phục hậu quả:
+        - [L5, tr.9] a) Buộc nộp lại Giấy phép sản xuất hóa chất Bảng 1, hóa chất Bảng 2, hóa chất Bảng 3 và hóa chất DOC,
+        - [L5, tr.9] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2 và 4 Điều
+  - [L2, tr.9] 18. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 32 như sau:
+    - [L3, tr.9] a) Sửa đổi, bổ sung khoản 1 như sau:
+      - [L4, tr.9] “1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay
+    - [L3, tr.9] b) Bãi bỏ khoản 3;
+    - [L3, tr.9] c) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.9] “4. Biện pháp khắc phục hậu quả:
+        - [L5, tr.9] a) Buộc nộp lại Giấy phép xuất khẩu, nhập khẩu hóa chất Bảng 1, hóa chất Bảng 2, hóa chất Bảng 3 bị viết
+        - [L5, tr.9] b) Buộc đưa ra khỏi lãnh thổ nước Cộng hòa xã hội chủ nghĩa Việt Nam hoặc tái xuất hóa chất Bảng 1, hóa
+  - [L2, tr.9] 19. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 51 như sau:
+    - [L3, tr.9] a) Bãi bỏ điểm d khoản 5;
+    - [L3, tr.9] b) Sửa đổi, bổ sung khoản 6 như sau:
+      - [L4, tr.9] “6. Biện pháp khắc phục hậu quả:
+        - [L5, tr.10] a) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm a khoản 2 Điều này;
+        - [L5, tr.10] b) Buộc nộp lại giấy phép, giấy chứng nhận về quản lý, sử dụng vật liệu nổ công nghiệp, tiền chất thuốc nổ
+  - [L2, tr.10] 20. Sửa đổi, bổ sung một số điểm, khoản của Điều 58 như sau:
+    - [L3, tr.10] a) Sửa đổi điểm c khoản 1 như sau:
+      - [L4, tr.10] “c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 10.000.000 đồng;”;
+    - [L3, tr.10] b) Sửa đổi điểm c khoản 2 như sau:
+      - [L4, tr.10] “c) Tịch thu tang vật, phương tiện vi phạm hành chính;”.
+  - [L2, tr.10] 21. Sửa đổi, bổ sung một số điểm, khoản của Điều 59 như sau:
+    - [L3, tr.10] a) Sửa đổi điểm c khoản 1 như sau:
+      - [L4, tr.10] “c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 1.000.000 đồng;”;
+    - [L3, tr.10] b) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:
+      - [L4, tr.10] “2. Chánh Thanh tra Sở Công Thương, Chánh Thanh tra Sở Y tế, Chánh Thanh tra Sở Nông nghiệp và Phát
+    - [L3, tr.10] c) Sửa đổi điểm d khoản 2 như sau:
+      - [L4, tr.10] “d) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với
+    - [L3, tr.10] d) Sửa đổi điểm d khoản 3 như sau:
+      - [L4, tr.10] “d) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 70.000.000 đồng đối với
+    - [L3, tr.10] đ) Sửa đổi, bổ sung đoạn mở đầu khoản 4 như sau:
+      - [L4, tr.10] “4. Chánh Thanh tra các Bộ: Công Thương, Y tế, Nông nghiệp và Phát triển nông thôn, Giao thông vận tải,
+  - [L2, tr.11] 22. Sửa đổi, bổ sung một số điểm, khoản của Điều 60 như sau:
+    - [L3, tr.11] a) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:
+      - [L4, tr.11] “2. Thủ trưởng đơn vị Cảnh sát cơ động cấp đại đội, Trưởng trạm, Đội trưởng của người được quy định tại
+    - [L3, tr.11] b) Sửa đổi, bổ sung đoạn mở đầu khoản 3 như sau:
+      - [L4, tr.11] “3. Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+    - [L3, tr.11] c) Sửa đổi, bổ sung điểm c khoản 3 như sau:
+      - [L4, tr.11] “c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 5.000.000 đồng;”;
+    - [L3, tr.11] d) Sửa đổi, bổ sung đoạn mở đầu khoản 4 như sau:
+      - [L4, tr.11] “4. Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục Cảnh sát quản lý hành chính về trật tự
+    - [L3, tr.11] đ) Sửa đổi, bổ sung điểm d khoản 4 như sau:
+      - [L4, tr.11] “d) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 20.000.000 đồng đối với
+    - [L3, tr.11] e) Sửa đổi, bổ sung điểm d khoản 5 như sau:
+      - [L4, tr.11] “d) Tịch thu tang vật, phương tiện vi phạm hành chính;”;
+    - [L3, tr.11] g) Sửa đổi, bổ sung đoạn mở đầu khoản 6 như sau:
+      - [L4, tr.11] “6. Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản lý hành chính về trật tự xã hội, Cục
+  - [L2, tr.11] 23. Sửa đổi, bổ sung Điều 61 như sau:
+    - [L3, tr.12] “Điều 61. Thẩm quyền xử phạt vi phạm hành chính của Hải quan
+      - [L4, tr.12] 1. Công chức Hải quan đang thi hành công vụ có quyền:
+        - [L5, tr.12] a) Phạt cảnh cáo;
+        - [L5, tr.12] b) Phạt tiền đến 500.000 đồng.
+      - [L4, tr.12] 2. Đội trưởng, Tổ trưởng thuộc Chi cục Hải quan; Tổ trưởng thuộc Đội Kiểm soát thuộc Cục Hải quan tỉnh,
+        - [L5, tr.12] a) Phạt cảnh cáo;
+        - [L5, tr.12] b) Phạt tiền đến 5.000.000 đồng.
+      - [L4, tr.12] 3. Chi cục trưởng Chi cục Hải quan, Chi cục trưởng Chi cục Kiểm tra sau thông quan, Đội trưởng Đội kiểm
+        - [L5, tr.12] a) Phạt cảnh cáo;
+        - [L5, tr.12] b) Phạt tiền đến 25.000.000 đồng;
+        - [L5, tr.12] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;
+        - [L5, tr.12] d) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm d, đ, i khoản 1 Điều 28 của Luật Xử lý vi phạm
+      - [L4, tr.12] 4. Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+        - [L5, tr.12] a) Phạt cảnh cáo;
+        - [L5, tr.12] b) Phạt tiền đến 50.000.000 đồng;
+        - [L5, tr.12] c) Đình chỉ hoạt động có thời hạn hoặc tước quyền sử dụng có thời hạn đối với Giấy chứng nhận đủ điều
+        - [L5, tr.12] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.12] đ) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm d, đ, i khoản 1 Điều 28 của Luật Xử lý vi phạm
+      - [L4, tr.12] 5. Tổng cục trưởng Tổng cục Hải quan có quyền:
+        - [L5, tr.12] a) Phạt cảnh cáo;
+        - [L5, tr.12] b) Phạt tiền đến 50.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.12] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.13] d) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm d, đ, i khoản 1 Điều 28 của Luật Xử lý vi phạm
+  - [L2, tr.13] 24. Bổ sung Điều 61a vào sau Điều 61 như sau:
+    - [L3, tr.13] “Điều 61a. Thẩm quyền của Kiểm ngư
+      - [L4, tr.13] 1. Kiểm ngư viên đang thi hành công vụ có quyền:
+        - [L5, tr.13] a) Phạt cảnh cáo;
+        - [L5, tr.13] b) Phạt tiền đến 2.000.000 đồng;
+        - [L5, tr.13] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 4.000.000 đồng.
+      - [L4, tr.13] 2. Trạm trưởng Trạm Kiểm ngư thuộc Chi cục Kiểm ngư vùng có quyền:
+        - [L5, tr.13] a) Phạt cảnh cáo;
+        - [L5, tr.13] b) Phạt tiền đến 10.000.000 đồng;
+        - [L5, tr.13] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 20.000.000 đồng;
+        - [L5, tr.13] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a và i khoản 1 Điều 28 của Luật Xử lý vi
+      - [L4, tr.13] 3. Chi cục trưởng Chi cục Kiểm ngư vùng có quyền:
+        - [L5, tr.13] a) Phạt cảnh cáo;
+        - [L5, tr.13] b) Phạt tiền đến 50.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.13] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.13] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, d, i khoản 1 Điều 28 của Luật Xử lý vi
+      - [L4, tr.13] 4. Cục trưởng Cục Kiểm ngư có quyền:
+        - [L5, tr.13] a) Phạt cảnh cáo;
+        - [L5, tr.13] b) Phạt tiền đến 50.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.13] c) Đình chỉ hoạt động có thời hạn hoặc tước quyền sử dụng có thời hạn đối với Giấy chứng nhận đủ điều
+        - [L5, tr.13] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.13] đ) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, d, i khoản 1 Điều 28 của Luật Xử lý vi
+  - [L2, tr.13] 25. Sửa đổi, bổ sung một số điểm, khoản của Điều 62 như sau:
+    - [L3, tr.14] a) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:
+      - [L4, tr.14] “2. Đội trưởng Đội Quản lý thị trường, Trưởng phòng Nghiệp vụ thuộc Cục Nghiệp vụ quản lý thị trường có
+    - [L3, tr.14] b) Sửa đổi, bổ sung điểm c khoản 2 như sau:
+      - [L4, tr.14] “c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;”;
+    - [L3, tr.14] c) Sửa đổi, bổ sung điểm c khoản 3 như sau:
+      - [L4, tr.14] “c) Tịch thu tang vật, phương tiện vi phạm hành chính;”.
+  - [L2, tr.14] 26. Sửa đổi, bổ sung một số khoản của Điều 63 như sau:
+    - [L3, tr.14] a) Bổ sung khoản 2a vào sau khoản 2 như sau:
+      - [L4, tr.14] “2a. Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma
+        - [L5, tr.14] a) Phạt cảnh cáo;
+        - [L5, tr.14] b) Phạt tiền đến 5.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền đến
+        - [L5, tr.14] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 10.000.000 đồng đối với
+        - [L5, tr.14] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, c và đ khoản 1 Điều 28 của Luật Xử lý vi
+    - [L3, tr.14] b) Sửa đổi, bổ sung khoản 3 và bổ sung khoản 3a vào sau khoản 3 như sau:
+      - [L4, tr.14] “3. Đồn trưởng Đồn biên phòng, Hải đội trưởng Hải đội biên phòng, Chỉ huy trưởng Ban chỉ huy Biên
+        - [L5, tr.14] a) Phạt cảnh cáo;
+        - [L5, tr.14] b) Phạt tiền đến 10.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.14] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 20.000.000 đồng đối với
+        - [L5, tr.14] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, c, d, đ khoản 1 Điều 28 của Luật Xử lý vi
+      - [L4, tr.14] 3a. Đoàn trưởng Đoàn đặc nhiệm phòng chống ma túy và tội phạm thuộc Cục Phòng chống ma túy và tội
+        - [L5, tr.14] a) Phạt cảnh cáo;
+        - [L5, tr.14] b) Phạt tiền đến 25.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.15] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với
+        - [L5, tr.15] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, c, d, đ, i khoản 1 Điều 28 của Luật Xử lý
+    - [L3, tr.15] c) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.15] “4. Chỉ huy trưởng Bộ đội biên phòng cấp tỉnh; Hải đoàn trưởng Hải đoàn biên phòng, Cục trưởng Cục
+        - [L5, tr.15] a) Phạt cảnh cáo;
+        - [L5, tr.15] b) Phạt tiền đến 50.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.15] c) Đình chỉ hoạt động có thời hạn hoặc tước quyền sử dụng có thời hạn đối với Giấy chứng nhận đủ điều
+        - [L5, tr.15] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.15] đ) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, c, d, đ, i khoản 1 Điều 28 của Luật Xử lý
+  - [L2, tr.15] 27. Sửa đổi, bổ sung một số điểm, khoản của Điều 64 như sau:
+    - [L3, tr.15] a) Sửa đổi, bổ sung điểm c khoản 4 như sau:
+      - [L4, tr.15] “c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 20.000.000 đồng đối với
+    - [L3, tr.15] b) Sửa đổi, bổ sung đoạn mở đầu khoản 5 như sau:
+      - [L4, tr.15] “5. Hải đoàn trưởng Hải đoàn Cảnh sát biển; Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+    - [L3, tr.15] c) Sửa đổi, bổ sung điểm c khoản 5 như sau:
+      - [L4, tr.15] “c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 30.000.000 đồng đối với
+    - [L3, tr.15] d) Sửa đổi, bổ sung khoản 6 như sau:
+      - [L4, tr.15] “6. Tư lệnh Vùng Cảnh sát biển, Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+        - [L5, tr.15] a) Phạt cảnh cáo;
+        - [L5, tr.15] b) Phạt tiền đến 25.000.000 đồng đối với hành vi vi phạm hành chính trong lĩnh vực hóa chất và phạt tiền
+        - [L5, tr.16] c) Tước quyền sử dụng có thời hạn đối với Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản
+        - [L5, tr.16] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.16] đ) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, c, d, đ khoản 1 Điều 28 của Luật Xử lý vi
+  - [L2, tr.16] 28. Sửa đổi, bổ sung một số điểm, khoản của Điều 65 như sau:
+    - [L3, tr.16] a) Sửa đổi, bổ sung điểm a khoản 1 như sau:
+      - [L4, tr.16] “a) Chủ tịch Ủy ban nhân dân cấp xã có thẩm quyền xử phạt trong phạm vi quản lý của địa phương mình
+    - [L3, tr.16] b) Sửa đổi, bổ sung điểm b khoản 1 như sau:
+      - [L4, tr.16] “b) Chủ tịch Ủy ban nhân dân cấp huyện có thẩm quyền xử phạt trong phạm vi quản lý của địa phương
+    - [L3, tr.16] c) Sửa đổi, bổ sung điểm e khoản 2 như sau:
+      - [L4, tr.16] “e) Chánh Thanh tra Sở Nông nghiệp và Phát triển nông thôn; Chi cục trưởng Chi cục Thú y vùng, Chi cục
+    - [L3, tr.16] d) Sửa đổi, bổ sung điểm p khoản 2 như sau:
+      - [L4, tr.16] “p) Chánh Thanh tra Bộ Nông nghiệp và Phát triển nông thôn, Tổng cục trưởng Tổng cục Thủy sản, Cục
+    - [L3, tr.17] đ) Sửa đổi, bổ sung điểm q khoản 2 như sau:
+      - [L4, tr.17] “q) Chánh thanh tra các Bộ: Giao thông vận tải, Khoa học và Công nghệ, Tài nguyên và Môi trường, Thông
+    - [L3, tr.17] e) Sửa đổi, bổ sung khoản 3 như sau:
+      - [L4, tr.17] “3. Thẩm quyền xử phạt vi phạm hành chính của Công an nhân dân:
+        - [L5, tr.17] a) Chiến sĩ Công an nhân dân đang thi hành công vụ xử phạt đối với các hành vi vi phạm hành chính quy
+        - [L5, tr.17] b) Thủ trưởng đơn vị Cảnh sát cơ động cấp đại đội, Trưởng trạm, Đội trưởng của người được quy định tại
+        - [L5, tr.17] c) Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+        - [L5, tr.17] d) Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục Cảnh sát quản lý hành chính về trật tự xã
+        - [L5, tr.18] đ) Giám đốc Công an cấp tỉnh xử phạt đối với các hành vi vi phạm hành chính quy định tại Điều 5; Điều 6;
+        - [L5, tr.18] e) Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản lý hành chính về trật tự xã hội, Cục
+    - [L3, tr.18] g) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.18] “4. Thẩm quyền xử phạt vi phạm hành chính của Hải quan:
+        - [L5, tr.18] a) Đội trưởng, Tổ trưởng thuộc Chi cục Hải quan; Tổ trưởng thuộc Đội Kiểm soát thuộc Cục Hải quan tỉnh,
+        - [L5, tr.18] b) Chi cục trưởng Chi cục Hải quan, Chi cục trưởng Chi cục Kiểm tra sau thông quan, Đội trưởng Đội kiểm
+        - [L5, tr.18] c) Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+        - [L5, tr.18] d) Tổng cục trưởng Tổng cục Hải quan xử phạt đối với các hành vi vi phạm hành chính quy định tại Điều
+    - [L3, tr.18] h) Bổ sung khoản 4a vào sau khoản 4 như sau:
+      - [L4, tr.18] “4a. Thẩm quyền xử phạt vi phạm hành chính của Kiểm ngư:
+        - [L5, tr.18] a) Trạm trưởng Trạm Kiểm ngư thuộc Chi cục Kiểm ngư vùng xử phạt đối với các hành vi vi phạm hành
+        - [L5, tr.19] b) Chi cục trưởng Chi cục Kiểm ngư vùng xử phạt đối với các hành vi vi phạm hành chính quy định tại
+        - [L5, tr.19] c) Cục trưởng Cục Kiểm ngư xử phạt đối với các hành vi vi phạm hành chính quy định tại khoản 1, 2 Điều
+    - [L3, tr.19] i) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.19] “5. Thẩm quyền xử phạt vi phạm hành chính của Quản lý thị trường:
+        - [L5, tr.19] a) Kiểm soát viên thị trường đang thi hành công vụ xử phạt đối với các hành vi vi phạm hành chính quy
+        - [L5, tr.19] b) Đội trưởng Đội Quản lý thị trường, Trưởng phòng Nghiệp vụ thuộc Cục Nghiệp vụ quản lý thị trường xử
+        - [L5, tr.19] c) Cục trưởng Cục Quản lý thị trường cấp tỉnh, Cục trưởng Cục Nghiệp vụ Quản lý thị trường thuộc Tổng
+        - [L5, tr.19] d) Tổng cục trưởng Tổng cục Quản lý thị trường xử phạt đối với các hành vi vi phạm hành chính quy định
+    - [L3, tr.19] k) Sửa đổi, bổ sung khoản 6 như sau:
+      - [L4, tr.19] “6. Thẩm quyền xử phạt vi phạm hành chính của Bộ đội biên phòng:
+        - [L5, tr.19] a) Chiến sĩ Bộ đội biên phòng đang thi hành công vụ xử phạt đối với các hành vi vi phạm hành chính quy
+        - [L5, tr.19] b) Trạm trưởng, Đội trưởng của Chiến sĩ Bộ đội biên phòng xử phạt đối với các hành vi vi phạm hành chính
+        - [L5, tr.19] c) Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+        - [L5, tr.20] d) Đồn trưởng Đồn biên phòng, Hải đội trưởng Hải đội biên phòng, Chỉ huy trưởng Ban chỉ huy Biên phòng
+        - [L5, tr.20] đ) Đoàn trưởng Đoàn đặc nhiệm phòng chống ma túy và tội phạm thuộc Cục Phòng chống ma túy và tội
+        - [L5, tr.20] e) Chỉ huy trưởng Bộ đội biên phòng cấp tỉnh; Hải đoàn trưởng Hải đoàn biên phòng, Cục trưởng Cục
+    - [L3, tr.20] l) Sửa đổi, bổ sung điểm đ, điểm e, điểm g khoản 7 như sau:
+      - [L4, tr.20] “đ) Hải đoàn trưởng Hải đoàn Cảnh sát biển; Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+      - [L4, tr.20] e) Tư lệnh Vùng Cảnh sát biển, Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+      - [L4, tr.20] g) Tư lệnh Cảnh sát biển Việt Nam xử phạt đối với các hành vi vi phạm hành chính quy định tại Điều 8;
+- [L1, tr.20] Điều 2. Sửa đổi, bổ sung một số điều của Nghị định số 134/2013/NĐ-CP ngày 17 tháng 10 năm 2013 của Chính phủ quy định về xử phạt vi phạm hàn
+  - [L2, tr.20] 1. Sửa đổi tên Nghị định như sau:
+  - [L2, tr.20] 2. Sửa đổi, bổ sung Điều 1 như sau:
+    - [L3, tr.20] “Điều 1. Phạm vi điều chỉnh
+      - [L4, tr.21] 1. Quy định về giấy phép hoạt động điện lực.
+      - [L4, tr.21] 2. Quy định về thiết kế, thi công xây lắp, nghiệm thu và đưa vào vận hành công trình điện lực.
+      - [L4, tr.21] 3. Quy định về hoạt động phát điện, truyền tải điện, phân phối điện.
+      - [L4, tr.21] 4. Quy định về hoạt động mua, bán buôn điện, bán lẻ điện.
+      - [L4, tr.21] 5. Quy định về sử dụng điện.
+      - [L4, tr.21] 6. Quy định về an toàn điện: Việc thực hiện các biện pháp an toàn khi xây dựng các công trình điện; vận
+      - [L4, tr.21] 7. Quy định về điều độ hệ thống điện.
+      - [L4, tr.21] 8. Quy định về thị trường điện lực.
+      - [L4, tr.21] 9. Quy định về quản lý vận hành an toàn đập, hồ chứa thủy điện.
+      - [L4, tr.21] 10. Quy định về bảo đảm an toàn đập thủy điện và vùng hạ du.
+      - [L4, tr.21] 11. Quy định về bảo đảm an toàn vùng phụ cận bảo vệ đập thủy điện.
+      - [L4, tr.21] 12. Quy định về kiểm toán năng lượng.
+      - [L4, tr.21] 13. Quy định về sử dụng năng lượng tiết kiệm và hiệu quả trong sản xuất công nghiệp, xây dựng, giao thông
+      - [L4, tr.21] 14. Quy định về quản lý và sử dụng năng lượng tiết kiệm và hiệu quả trong cơ sở sử dụng năng lượng trọng
+      - [L4, tr.21] 15. Quy định về nhãn năng lượng trong hoạt động sản xuất, nhập khẩu, kinh doanh, phân phối phương tiện,
+      - [L4, tr.21] 16. Quy định về sản xuất, nhập khẩu, lưu thông phương tiện, thiết bị sử dụng năng lượng thuộc Danh mục
+      - [L4, tr.21] 17. Quy định về định mức sử dụng năng lượng trong sản xuất, kinh doanh.
+      - [L4, tr.21] 18. Quy định về chế độ báo cáo sử dụng năng lượng, mua sắm của đơn vị sử dụng ngân sách nhà nước.”.
+  - [L2, tr.21] 3. Bổ sung Điều 1a vào sau Điều 1 như sau:
+    - [L3, tr.21] “Điều 1a. Đối tượng áp dụng
+      - [L4, tr.21] 1. Tổ chức, cá nhân Việt Nam và tổ chức, cá nhân nước ngoài (sau đây viết tắt là tổ chức, cá nhân) thực hiện
+        - [L5, tr.21] a) Tổ chức hoạt động điện lực bao gồm: Đơn vị phát điện, Đơn vị truyền tải điện; Đơn vị phân phối điện,
+        - [L5, tr.22] b) Tổ chức hoạt động kiểm toán năng lượng; cơ sở đào tạo kiểm toán năng lượng và cấp chứng chỉ kiểm
+        - [L5, tr.22] c) Khách hàng sử dụng điện, khách hàng sử dụng năng lượng là cơ quan nhà nước có hành vi vi phạm mà
+        - [L5, tr.22] d) Các tổ chức khác được thành lập theo quy định của pháp luật có hành vi vi phạm quy định tại Nghị định
+      - [L4, tr.22] 2. Người có thẩm quyền lập biên bản, xử phạt vi phạm hành chính và cá nhân, tổ chức khác có liên quan.”.
+  - [L2, tr.22] 4. Sửa đổi, bổ sung Điều 2 như sau:
+    - [L3, tr.22] “Điều 2. Quy định về thời hiệu xử phạt, vi phạm hành chính đã kết thúc, vi phạm hành chính đang
+      - [L4, tr.22] 1. Thời hiệu xử phạt vi phạm trong lĩnh vực điện lực, sử dụng năng lượng tiết kiệm và hiệu quả là 01 năm;
+      - [L4, tr.22] 2. Hành vi vi phạm đã kết thúc, hành vi vi phạm đang được thực hiện được xác định căn cứ quy định tại
+      - [L4, tr.22] 3. Xử phạt đối với trường hợp vi phạm hành chính nhiều lần:
+        - [L5, tr.22] a) Cá nhân, tổ chức vi phạm hành chính nhiều lần thì vi phạm nhiều lần được áp dụng là tình tiết tăng nặng
+        - [L5, tr.22] b) Đối với hành vi vi phạm hành chính được Nghị định này quy định xử phạt theo giá trị, số lượng, khối
+  - [L2, tr.22] 5. Sửa đổi Điều 3 như sau:
+    - [L3, tr.22] “Điều 3. Các hình thức xử phạt vi phạm hành chính và mức phạt tiền
+      - [L4, tr.22] 1. Hình thức xử phạt chính:
+        - [L5, tr.22] a) Cảnh cáo;
+        - [L5, tr.22] b) Phạt tiền.
+      - [L4, tr.22] 2. Hình thức xử phạt bổ sung:
+        - [L5, tr.22] a) Tịch thu tang vật vi phạm hành chính, phương tiện được sử dụng để vi phạm hành chính (gọi chung là
+        - [L5, tr.23] b) Tước quyền sử dụng chứng chỉ hành nghề có thời hạn;
+        - [L5, tr.23] c) Đình chỉ hoạt động điện lực có thời hạn; đình chỉ hoạt động dán nhãn năng lượng có thời hạn.
+      - [L4, tr.23] 3. Mức phạt tiền:
+        - [L5, tr.23] a) Mức phạt tiền tối đa trong lĩnh vực điện lực là 100.000.000 đồng đối với cá nhân và 200.000.000 đồng
+        - [L5, tr.23] b) Mức phạt tiền quy định tại Chương II Nghị định này là mức phạt tiền áp dụng đối với hành vi vi phạm
+  - [L2, tr.23] 6. Sửa đổi, bổ sung Điều 4 như sau:
+    - [L3, tr.23] “Điều 4. Các biện pháp khắc phục hậu quả
+      - [L4, tr.23] 1. Buộc khôi phục lại tình trạng ban đầu.
+      - [L4, tr.23] 2. Buộc tái xuất hàng hóa, vật phẩm, phương tiện vi phạm.
+      - [L4, tr.23] 3. Buộc tiêu hủy hàng hóa, vật phẩm, phương tiện vi phạm gây hại cho sức khỏe con người, vật nuôi, cây
+      - [L4, tr.23] 4. Buộc loại bỏ yếu tố vi phạm trên hàng hóa, bao bì hàng hóa; loại bỏ tổ máy phát điện.
+      - [L4, tr.23] 5. Buộc thu hồi sản phẩm, hàng hóa không bảo đảm chất lượng đã lưu thông (bao gồm cả nhãn năng lượng
+      - [L4, tr.23] 6. Buộc thu hồi lại hoặc bán lại phần vốn đã góp hoặc cổ phần đã mua của Đơn vị phát điện.
+      - [L4, tr.23] 7. Buộc nộp lại Giấy phép hoạt động điện lực đã được cấp.
+      - [L4, tr.23] 8. Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính để sung vào ngân sách nhà
+      - [L4, tr.23] 9. Buộc phải thử nghiệm, kiểm định các thiết bị; kiểm định chất lượng công trình đối với phần công trình
+      - [L4, tr.23] 10. Buộc thay thế, lắp đặt các vật tư, thiết bị điện đáp ứng các tiêu chuẩn, quy chuẩn kỹ thuật do cơ quan
+      - [L4, tr.23] 11. Buộc đầu tư và duy trì hoạt động bình thường của các thiết bị thông tin liên lạc, SCADA/EMS, đo đếm
+      - [L4, tr.23] 12. Buộc duy trì khả năng điều chỉnh tần số sơ cấp, khả năng điều chỉnh điện áp theo quy định.
+      - [L4, tr.23] 13. Buộc phải lựa chọn tổ chức, cá nhân có đủ điều kiện, năng lực theo quy định.
+      - [L4, tr.23] 14. Buộc lắp đặt bổ sung hệ thống cảnh báo vùng hạ du.
+      - [L4, tr.24] 15. Buộc bổ sung biển báo, cảnh báo phạm vi công trình thủy điện, phao cảnh báo trong lòng hồ phạm vi
+      - [L4, tr.24] 16. Buộc thực hiện lắp đặt hệ thống giám sát vận hành, thiết bị thông tin, cảnh báo an toàn cho đập và vùng
+      - [L4, tr.24] 17. Buộc thực hiện đúng các quy định về định mức sử dụng năng lượng, quy chuẩn kỹ thuật trong thiết kế,
+      - [L4, tr.24] 18. Buộc hủy bỏ giấy chứng nhận kiểm toán viên năng lượng và công bố danh sách giấy chứng nhận vi
+      - [L4, tr.24] 19. Buộc chấm dứt lưu hành phương tiện, thiết bị, máy móc.”.
+  - [L2, tr.24] 7. Bãi bỏ tên mục 1 “Mục 1. Lĩnh vực điện lực” tại Chương II.
+  - [L2, tr.24] 8. Sửa đổi, bổ sung Điều 5 như sau:
+    - [L3, tr.24] “Điều 5. Vi phạm các quy định về Giấy phép hoạt động điện lực
+      - [L4, tr.24] 1. Phạt tiền tổ chức từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không lưu giữ bản chính Giấy
+      - [L4, tr.24] 2. Phạt tiền tổ chức từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau
+        - [L5, tr.24] a) Không thực hiện báo cáo hoặc báo cáo không đúng thời hạn chế độ báo cáo định kỳ hàng năm về tình
+        - [L5, tr.24] b) Không làm thủ tục sửa đổi, bổ sung Giấy phép hoạt động điện lực trong thời hạn 30 ngày tính từ ngày
+      - [L4, tr.24] 3. Phạt tiền tổ chức từ 50.000.000 đồng đến 70.000.000 đồng đối với một trong các hành vi vi phạm sau
+        - [L5, tr.24] a) Hoạt động điện lực trong thời gian Giấy phép hoạt động điện lực bị mất, bị thất lạc mà không báo cáo cơ
+        - [L5, tr.24] b) Không báo cáo với cơ quan cấp giấy phép chậm nhất 60 ngày trước khi ngừng hoạt động điện lực hoặc
+      - [L4, tr.24] 4. Phạt tiền tổ chức từ 90.000.000 đồng đến 120.000.000 đồng đối với một trong các hành vi vi phạm sau
+        - [L5, tr.24] a) Không làm thủ tục sửa đổi, bổ sung Giấy phép hoạt động điện lực trong thời hạn 30 ngày tính từ ngày
+        - [L5, tr.24] b) Không tuân thủ một trong các nội dung của Giấy phép hoạt động điện lực, trừ các hành vi khác quy định
+        - [L5, tr.24] c) Tự ý sửa chữa, cho thuê, cho mượn hoặc thuê, mượn Giấy phép hoạt động điện lực.
+      - [L4, tr.25] 5. Phạt tiền tổ chức từ 120.000.000 đồng đến 160.000.000 đồng đối với một trong các hành vi vi phạm sau
+        - [L5, tr.25] a) Cung cấp hồ sơ đề nghị cấp, sửa đổi, bổ sung giấy phép không chính xác, không trung thực;
+        - [L5, tr.25] b) Hoạt động điện lực khi Giấy phép hoạt động điện lực đã hết thời hạn sử dụng;
+        - [L5, tr.25] c) Không đảm bảo một trong các điều kiện hoạt động điện lực theo quy định của pháp luật trong suốt thời
+      - [L4, tr.25] 6. Phạt tiền tổ chức từ 160.000.000 đồng đến 200.000.000 đồng đối với một trong các hành vi vi phạm sau
+        - [L5, tr.25] a) Hoạt động điện lực mà không có Giấy phép hoạt động điện lực, trừ hành vi quy định tại điểm b khoản 5
+        - [L5, tr.25] b) Hoạt động điện lực trong thời gian bị cơ quan nhà nước có thẩm quyền thu hồi Giấy phép hoạt động điện
+      - [L4, tr.25] 7. Biện pháp khắc phục hậu quả:
+        - [L5, tr.25] a) Buộc nộp lại Giấy phép hoạt động điện lực đã được cấp đối với hành vi vi phạm quy định tại điểm c
+        - [L5, tr.25] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính là khoản lợi đối tượng
+  - [L2, tr.25] 9. Sửa đổi, bổ sung Điều 6 như sau:
+    - [L3, tr.25] “Điều 6. Vi phạm các quy định về xây dựng, lắp đặt công trình điện lực
+      - [L4, tr.25] 1. Phạt tiền từ 2.000.000 đồng đến 3.000.000 đồng đối với hành vi cản trở tổ chức, cá nhân thực hiện nhiệm
+      - [L4, tr.25] 2. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi lắp đặt, sửa chữa, di dời công trình
+      - [L4, tr.25] 3. Phạt tiền từ 30.000.000 đồng đến 60.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.25] a) Lắp đặt và đưa vào vận hành các vật tư, thiết bị điện không đúng theo thiết kế, không đáp ứng tiêu chuẩn,
+        - [L5, tr.25] b) Tự ý ban hành và bắt buộc áp dụng các tiêu chuẩn liên quan đến xây dựng, lắp đặt công trình điện không
+      - [L4, tr.25] 4. Phạt tiền từ 80.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.25] a) Lựa chọn các tổ chức, cá nhân không đủ điều kiện, năng lực theo quy định để thực hiện tư vấn chuyên
+        - [L5, tr.25] b) Khởi công xây dựng, thi công lắp đặt công trình điện lực không phù hợp với quy hoạch phát triển điện
+        - [L5, tr.26] c) Khởi công xây dựng, thi công công trình điện lực không có giấy phép xây dựng mà theo quy định phải có
+        - [L5, tr.26] d) Không gửi báo cáo cho các cơ quan có thẩm quyền sau khi khởi công xây dựng theo quy định;
+        - [L5, tr.26] đ) Đưa hạng mục công trình hoặc công trình điện lực vào vận hành, sử dụng khi chưa có văn bản chấp thuận
+      - [L4, tr.26] 5. Biện pháp khắc phục hậu quả:
+        - [L5, tr.26] a) Buộc khôi phục lại tình trạng ban đầu đối với hành vi vi phạm quy định tại khoản 2 và điểm b khoản 4
+        - [L5, tr.26] b) Buộc thay thế, lắp đặt các vật tư, thiết bị điện đáp ứng các tiêu chuẩn, quy chuẩn kỹ thuật do cơ quan nhà
+        - [L5, tr.26] c) Buộc phải lựa chọn tổ chức, cá nhân có đủ điều kiện, năng lực theo quy định đối với hành vi vi phạm quy
+        - [L5, tr.26] d) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính là khoản lợi đối tượng
+  - [L2, tr.26] 10. Sửa đổi, bổ sung Điều 7 như sau:
+    - [L3, tr.26] “Điều 7. Vi phạm các quy định về hoạt động phát điện
+      - [L4, tr.26] 1. Phạt tiền Đơn vị phát điện từ 20.000.000 đồng đến 40.000.000 đồng đối với hành vi không cung cấp các
+      - [L4, tr.26] 2. Phạt tiền Đơn vị phát điện từ 60.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.26] a) Không thực hiện thử nghiệm, kiểm định định kỳ các thiết bị theo quy định;
+        - [L5, tr.26] b) Sử dụng các thiết bị chưa được thử nghiệm, kiểm định theo quy định hoặc không đạt tiêu chuẩn, quy
+        - [L5, tr.26] c) Không tuân thủ các quy trình, tiêu chuẩn, quy chuẩn kỹ thuật do cơ quan nhà nước có thẩm quyền ban
+      - [L4, tr.26] 3. Phạt tiền Đơn vị phát điện từ 120.000.000 đồng đến 150.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.26] a) Cung cấp thông tin không chính xác về mức độ sẵn sàng của tổ máy và nhà máy;
+        - [L5, tr.26] b) Không thực hiện đầu tư hệ thống thông tin liên lạc, SCADA/EMS, đo đếm điện năng, các hệ thống AGC,
+        - [L5, tr.26] c) Không duy trì hoạt động bình thường của hệ thống thông tin liên lạc, SCADA/EMS, đo đếm điện năng,
+        - [L5, tr.27] d) Không duy trì khả năng điều chỉnh tần số sơ cấp theo yêu cầu bằng văn bản của Đơn vị điều độ hệ thống
+        - [L5, tr.27] đ) Không duy trì khả năng điều chỉnh điện áp của nhà máy theo yêu cầu bằng văn bản của Đơn vị điều độ
+      - [L4, tr.27] 4. Biện pháp khắc phục hậu quả:
+        - [L5, tr.27] a) Buộc phải thử nghiệm, kiểm định các thiết bị; thay thế các thiết bị không đạt tiêu chuẩn, quy chuẩn kỹ
+        - [L5, tr.27] b) Buộc đầu tư và duy trì hoạt động bình thường của các thiết bị thông tin liên lạc, SCADA/EMS, đo đếm
+        - [L5, tr.27] c) Buộc duy trì khả năng điều chỉnh tần số sơ cấp, khả năng điều chỉnh điện áp theo quy định đối với hành
+  - [L2, tr.27] 11. Sửa đổi, bổ sung Điều 8 như sau:
+    - [L3, tr.27] “Điều 8. Vi phạm các quy định về hoạt động truyền tải điện
+      - [L4, tr.27] 1. Phạt tiền Đơn vị truyền tải điện từ 20.000.000 đồng đến 40.000.000 đồng đối với hành vi không cung cấp
+      - [L4, tr.27] 2. Phạt tiền Đơn vị truyền tải điện từ 80.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.27] a) Cho phép đấu nối vào lưới truyền tải điện các thiết bị không đáp ứng tiêu chuẩn, quy chuẩn kỹ thuật do
+        - [L5, tr.27] b) Sử dụng các thiết bị đo, đếm điện năng chưa được kiểm định theo quy định hoặc không đạt tiêu chuẩn,
+      - [L4, tr.27] 3. Phạt tiền Đơn vị truyền tải điện từ 100.000.000 đồng đến 120.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.27] a) Không tuân thủ các quy trình, quy chuẩn kỹ thuật về vận hành lưới điện;
+        - [L5, tr.27] b) Không cung cấp dịch vụ truyền tải điện khi có yêu cầu của đơn vị sử dụng lưới truyền tải điện, trừ trường
+        - [L5, tr.27] c) Cung cấp thông tin không chính xác về tình trạng vận hành của lưới điện gây thiệt hại đối với hoạt động
+        - [L5, tr.27] d) Không thực hiện đầu tư hệ thống thông tin liên lạc, SCADA/EMS, đo đếm điện năng theo quy định;
+        - [L5, tr.27] đ) Không duy trì hoạt động bình thường của hệ thống thông tin liên lạc, SCADA/EMS đã đầu tư theo quy
+      - [L4, tr.28] 4. Phạt tiền Đơn vị truyền tải điện từ 120.000.000 đồng đến 160.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.28] a) Không thực hiện công tác khắc phục sự cố, khôi phục trạng thái làm việc của lưới truyền tải điện theo
+        - [L5, tr.28] b) Không thực hiện việc ngừng hoặc yêu cầu Đơn vị điều độ hệ thống điện quốc gia giảm mức truyền tải
+        - [L5, tr.28] c) Chấp thuận đấu nối phụ tải, nguồn điện gây quá tải đường dây, trạm biến áp cao áp, siêu cao áp ngay
+      - [L4, tr.28] 5. Phạt tiền Đơn vị truyền tải điện từ 160.000.000 đồng đến 200.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.28] a) Không thực hiện xây dựng hoặc trì hoãn việc xây dựng lưới điện từ điểm đầu nối của Đơn vị phát điện,
+        - [L5, tr.28] b) Cung cấp dịch vụ truyền tải không đúng quy định tại Quy định hệ thống điện truyền tải do Bộ Công
+        - [L5, tr.28] c) Góp vốn thành lập Đơn vị phát điện; mua cổ phần của Đơn vị phát điện.
+      - [L4, tr.28] 6. Biện pháp khắc phục hậu quả:
+        - [L5, tr.28] a) Buộc phải thử nghiệm, kiểm định các thiết bị và thay thế các thiết bị không đạt tiêu chuẩn, quy chuẩn kỹ
+        - [L5, tr.28] b) Buộc thu hồi lại phần vốn đã góp hoặc cổ phần đã mua của Đơn vị phát điện đối với hành vi vi phạm quy
+        - [L5, tr.28] c) Buộc đầu tư và duy trì hoạt động bình thường của các thiết bị thông tin liên lạc, SCADA/EMS, đo đếm
+  - [L2, tr.28] 12. Sửa đổi, bổ sung Điều 9 như sau:
+    - [L3, tr.28] “Điều 9. Vi phạm các quy định về phân phối điện
+      - [L4, tr.28] 1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.28] a) Tháo, lắp thiết bị đo đếm trên lưới điện khi không được giao nhiệm vụ;
+        - [L5, tr.28] b) Không có biên bản treo tháo khi lắp đặt, thay thế thiết bị đo đếm điện hoặc biên bản không có chữ ký của
+        - [L5, tr.28] c) Không có thẻ nghiệp vụ mà hiệu chỉnh thiết bị đo đếm trên lưới điện;
+        - [L5, tr.28] d) Không có Giấy chứng nhận kiểm định hoặc tem kiểm định hoặc dấu kiểm định khi kiểm định thiết bị đo
+        - [L5, tr.29] đ) Không nghiệm thu đúng thời hạn quy định sau khi lắp đặt, thay thế, sửa chữa hoặc hiệu chỉnh thiết bị đo
+      - [L4, tr.29] 2. Phạt tiền Đơn vị phân phối điện từ 10.000.000 đồng đến 30.000.000 đồng đối với hành vi không báo cáo
+      - [L4, tr.29] 3. Phạt tiền Đơn vị phân phối điện từ 40.000.000 đồng đến 60.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.29] a) Không hoàn thành kiểm tra, sửa chữa hoặc thay thế thiết bị đo đếm điện hoặc không có giải pháp thay thế
+        - [L5, tr.29] b) Không tiến hành xử lý sự cố trong thời hạn 02 giờ tính từ ngày phát hiện hoặc nhận được thông báo của
+        - [L5, tr.29] c) Thực hiện không đúng các yêu cầu chất lượng dịch vụ khách hàng theo quy định.
+      - [L4, tr.29] 4. Phạt tiền Đơn vị phân phối điện từ 60.000.000 đồng đến 80.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.29] a) Cho phép đấu nối vào lưới phân phối điện các thiết bị không phù hợp với tiêu chuẩn, quy chuẩn kỹ thuật
+        - [L5, tr.29] b) Thỏa thuận đấu nối vào lưới điện 110kV các trạm điện, nhà máy điện, đường dây không phù hợp với quy
+        - [L5, tr.29] c) Sử dụng các thiết bị đo đếm điện năng không được kiểm định theo quy định hoặc đã được kiểm định
+        - [L5, tr.29] d) Sử dụng thiết bị đo đếm điện không phù hợp với Tiêu chuẩn quốc gia (TCVN), không được cơ quan quản
+        - [L5, tr.29] đ) Thực hiện không đúng quyền hạn về ngừng, giảm mức cung cấp điện; không thông báo hoặc thực hiện
+        - [L5, tr.29] e) Ngừng, giảm mức cung cấp điện đối với khách hàng thuộc điện ưu tiên khi thiếu điện, trừ trường hợp có
+      - [L4, tr.29] 5. Phạt tiền Đơn vị phân phối điện từ 80.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.29] a) Không cung cấp dịch vụ phân phối điện cho khách hàng sử dụng điện, Đơn vị bán lẻ điện, Đơn vị bán
+        - [L5, tr.29] b) Cung cấp thông tin không chính xác gây ảnh hưởng đến an toàn, thiệt hại đối với hoạt động phân phối
+        - [L5, tr.29] c) Không thực hiện đầu tư hệ thống thông tin liên lạc, SCADA/EMS, đo đếm điện năng theo quy định;
+        - [L5, tr.30] d) Không duy trì hoạt động bình thường của hệ thống thông tin liên lạc, SCADA/EMS đã đầu tư theo quy
+      - [L4, tr.30] 6. Phạt tiền Đơn vị phân phối điện từ 100.000.000 đồng đến 120.000.000 đồng đối với một trong các hành
+        - [L5, tr.30] a) Tự ý sa thải phụ tải, nguồn điện; tiết giảm phát điện không đúng với kế hoạch được cấp có thẩm quyền
+        - [L5, tr.30] b) Tự ý sử dụng công trình điện lực không thuộc quyền quản lý của mình để cấp điện cho tổ chức, cá nhân
+        - [L5, tr.30] c) Chấp thuận đấu nối phụ tải, nguồn điện gây quá tải đường dây, trạm biến áp hạ áp, trung áp, cao áp ngay
+        - [L5, tr.30] d) Ngừng cung cấp điện vì sự cố kỹ thuật do vi phạm quy trình vận hành hoặc do thiết bị không được thử
+      - [L4, tr.30] 7. Biện pháp khắc phục hậu quả:
+        - [L5, tr.30] a) Buộc phải kiểm định các thiết bị đo đếm điện và thay thế các thiết bị không đạt tiêu chuẩn, quy chuẩn kỹ
+        - [L5, tr.30] b) Buộc đầu tư và duy trì hoạt động bình thường của các thiết bị thông tin liên lạc, SCADA/EMS, đo đếm
+  - [L2, tr.30] 13. Sửa đổi, bổ sung Điều 10 như sau:
+    - [L3, tr.30] “Điều 10. Vi phạm các quy định về mua, bán buôn điện
+      - [L4, tr.30] 1. Phạt tiền Đơn vị bán buôn điện từ 50.000.000 đồng đến 60.000.000 đồng đối với hành vi bán sai giá điện
+      - [L4, tr.30] 2. Phạt tiền Đơn vị phát điện, Đơn vị bán buôn điện, Đơn vị bán lẻ điện từ 100.000.000 đồng đến
+      - [L4, tr.30] 3. Phạt tiền Đơn vị phát điện, Đơn vị bán buôn điện, Đơn vị bán lẻ điện từ 120.000.000 đồng đến
+      - [L4, tr.30] 4. Phạt tiền Đơn vị bán buôn điện từ 150.000.000 đồng đến 180.000.000 đồng đối với hành vi xuất, nhập
+      - [L4, tr.30] 5. Biện pháp khắc phục hậu quả:
+        - [L5, tr.30] a) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính là số tiền chênh lệch do bán
+        - [L5, tr.30] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính để sung vào ngân
+  - [L2, tr.30] 14. Sửa đổi, bổ sung Điều 11 như sau:
+    - [L3, tr.31] “Điều 11. Vi phạm các quy định về bán lẻ điện
+      - [L4, tr.31] 1. Phạt tiền từ 500.000 đồng đến 1.000.000 đồng đối với hành vi không niêm yết công khai tại các địa điểm
+      - [L4, tr.31] 2. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.31] a) Hành vi vi phạm quy định tại khoản 1 Điều này trong trường hợp tái phạm;
+        - [L5, tr.31] b) Niêm yết giá không đúng giá bán lẻ điện cụ thể theo quy định.
+      - [L4, tr.31] 3. Phạt tiền từ 2.000.000 đồng đến 3.000.000 đồng đối với hành vi cản trở người thi hành công vụ đến kiểm
+      - [L4, tr.31] 4. Phạt tiền Đơn vị bán lẻ điện từ 10.000.000 đồng đến 30.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.31] a) Không ký hợp đồng mua bán điện sau 07 ngày làm việc mà không có lý do chính đáng kể từ khi bên mua
+        - [L5, tr.31] b) Sử dụng các thiết bị đo đếm điện năng không được kiểm định theo quy định hoặc đã được kiểm định
+      - [L4, tr.31] 5. Phạt tiền từ 30.000.000 đồng đến 40.000.000 đồng đối với hành vi lợi dụng nghề nghiệp để sách nhiễu
+      - [L4, tr.31] 6. Phạt tiền Đơn vị bán lẻ điện từ 40.000.000 đồng đến 50.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.31] a) Không ký hợp đồng mua bán điện ngoài mục đích sinh hoạt sau 07 ngày làm việc mà không có lý do
+        - [L5, tr.31] b) Bán điện mà không có hợp đồng mua bán điện với khách hàng sử dụng điện.
+      - [L4, tr.31] 7. Phạt tiền Đơn vị bán lẻ điện từ 50.000.000 đồng đến 60.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.31] a) Bán sai giá điện do cơ quan có thẩm quyền quy định;
+        - [L5, tr.31] b) Thực hiện không đúng quyền hạn về ngừng, giảm mức cung cấp điện; không thông báo hoặc thực hiện
+      - [L4, tr.31] 8. Phạt tiền Đơn vị bán lẻ điện từ 120.000.000 đồng đến 150.000.000 đồng đối với hành vi mua điện của
+      - [L4, tr.31] 9. Phạt tiền Đơn vị bán lẻ điện từ 150.000.000 đồng đến 180.000.000 đồng đối với hành vi xuất, nhập khẩu
+      - [L4, tr.31] 10. Biện pháp khắc phục hậu quả:
+        - [L5, tr.32] a) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính là số tiền chênh lệch do bán
+        - [L5, tr.32] b) Buộc phải kiểm định các thiết bị đo đếm điện và thay thế các thiết bị không đạt tiêu chuẩn, quy chuẩn kỹ
+        - [L5, tr.32] c) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính để sung vào ngân sách nhà
+  - [L2, tr.32] 15. Sửa đổi, bổ sung Điều 12 như sau:
+    - [L3, tr.32] “Điều 12. Vi phạm các quy định về sử dụng điện
+      - [L4, tr.32] 1. Phạt tiền từ 2.000.000 đồng đến 3.000.000 đồng đối với hành vi cản trở người có thẩm quyền kiểm tra
+      - [L4, tr.32] 2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.32] a) Vô ý gây sự cố hệ thống điện của bên bán điện;
+        - [L5, tr.32] b) Tự ý cấp điện cho tổ chức, cá nhân khác.
+      - [L4, tr.32] 3. Phạt tiền từ 5.000.000 đồng đến 8.000.000 đồng đối với hành vi tự ý lắp đặt, đóng, cắt, sửa chữa, di
+      - [L4, tr.32] 4. Phạt tiền từ 8.000.000 đồng đến 10.000.000 đồng đối với hành vi tự ý đóng điện dùng khi công trình sử
+      - [L4, tr.32] 5. Phạt tiền từ 10.000.000 đồng đến 14.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.32] a) Gây hư hại, tự ý di chuyển hệ thống đo đếm điện (kể cả tủ bảo vệ công tơ, các niêm phong và sơ đồ đấu
+        - [L5, tr.32] b) Sử dụng các thiết bị với mục đích gây nhiễu làm hư hại thiết bị truyền số liệu, đo lường, bảo vệ của hệ
+      - [L4, tr.32] 6. Phạt tiền từ 20.000.000 đồng đến 30.000.000 đồng đối với người cho thuê nhà thu tiền điện của người
+      - [L4, tr.32] 7. Phạt tiền từ 60.000.000 đồng đến 80.000.000 đồng đối với một trong các hành vi vi phạm của khách hàng
+        - [L5, tr.32] a) Không thực hiện chế độ sử dụng điện theo đúng mức yêu cầu của Đơn vị điều độ hệ thống điện quốc gia
+        - [L5, tr.32] b) Sử dụng trang thiết bị sử dụng điện, trang thiết bị đấu nối không đáp ứng các tiêu chuẩn, quy chuẩn kỹ
+        - [L5, tr.32] c) Không thực hiện các lệnh thao tác của Đơn vị điều độ hệ thống điện quốc gia;
+        - [L5, tr.33] d) Không thực hiện cắt điện, giảm mức tiêu thụ điện khi có yêu cầu của bên bán điện do sự cố bất khả
+        - [L5, tr.33] đ) Không thực hiện đầu tư hệ thống thông tin liên lạc, SCADA/EMS/ DMS, đo đếm điện năng theo quy
+        - [L5, tr.33] e) Không duy trì hoạt động bình thường của hệ thống thông tin liên lạc, SCADA/EMS/DMS, đo đếm điện
+      - [L4, tr.33] 8. Phạt tiền đối với hành vi trộm cắp điện dưới mọi hình thức như sau:
+        - [L5, tr.33] a) Phạt tiền từ 4.000.000 đồng đến 10.000.000 đồng đối với hành vi trộm cắp điện với giá trị sản lượng điện
+        - [L5, tr.33] b) Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi trộm cắp điện với giá trị sản lượng
+      - [L4, tr.33] 9. Khi phát hiện hành vi trộm cắp điện với giá trị sản lượng điện trộm cắp từ 2.000.000 đồng trở lên thì
+      - [L4, tr.33] 10. Hình thức xử phạt bổ sung:
+      - [L4, tr.33] 11. Biện pháp khắc phục hậu quả:
+        - [L5, tr.33] a) Buộc khôi phục lại tình trạng ban đầu đối với hành vi quy định tại khoản 3 và khoản 5 Điều này;
+        - [L5, tr.33] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính (bao gồm cả mọi chi phí phát
+        - [L5, tr.33] c) Buộc sử dụng các thiết bị đáp ứng đủ các tiêu chuẩn, quy chuẩn kỹ thuật do cơ quan nhà nước có thẩm
+        - [L5, tr.33] d) Buộc đầu tư và duy trì hoạt động bình thường của các thiết bị thông tin liên lạc, SCADA/EMS/DMS, đo
+  - [L2, tr.33] 16. Sửa đổi Điều 13 như sau:
+    - [L3, tr.33] “Điều 13. Vi phạm các quy định về điều độ hệ thống điện
+      - [L4, tr.33] 1. Phạt tiền Đơn vị điều độ hệ thống điện từ 20.000.000 đồng đến 30.000.000 đồng đối với hành vi điều độ
+      - [L4, tr.34] 2. Phạt tiền Đơn vị phát điện, Đơn vị truyền tải điện từ 20.000.000 đồng đến 30.000.000 đồng đối với hành
+      - [L4, tr.34] 3. Phạt tiền Đơn vị điều độ hệ thống điện từ 50.000.000 đồng đến 60.000.000 đồng đối với một trong các
+        - [L5, tr.34] a) Điều độ hệ thống điện sai kế hoạch vận hành đã được duyệt gây sự cố trên hệ thống điện mà không có lý
+        - [L5, tr.34] b) Vi phạm Quy trình thao tác hệ thống điện quốc gia do Bộ Công Thương ban hành gây sự cố trên hệ thống
+        - [L5, tr.34] c) Không tuân thủ Quy trình xử lý sự cố hệ thống điện quốc gia do Bộ Công Thương ban hành dẫn đến mở
+        - [L5, tr.34] d) Góp vốn thành lập Đơn vị phát điện; mua cổ phần của Đơn vị phát điện.
+      - [L4, tr.34] 4. Phạt tiền Đơn vị phân phối điện từ 50.000.000 đồng đến 60.000.000 đồng đối với một trong các hành vi
+        - [L5, tr.34] a) Không tuân thủ lệnh điều độ của Đơn vị điều độ hệ thống điện theo quy định tại Quy trình điều độ hệ
+        - [L5, tr.34] b) Không tuân thủ Quy trình thao tác hệ thống điện quốc gia, Quy trình vận hành thiết bị do Bộ Công
+        - [L5, tr.34] c) Không tuân thủ Quy trình xử lý sự cố hệ thống điện quốc gia do Bộ Công Thương ban hành gây mở rộng
+      - [L4, tr.34] 5. Phạt tiền Đơn vị phát điện, Đơn vị truyền tải điện từ 180.000.000 đồng đến 200.000.000 đồng đối với
+        - [L5, tr.34] a) Không tuân thủ lệnh điều độ của Đơn vị điều độ hệ thống điện theo quy định tại Quy trình Điều độ hệ
+        - [L5, tr.34] b) Không tuân thủ Quy trình thao tác hệ thống điện quốc gia, Quy trình khởi động đen, Quy trình xử lý sự
+      - [L4, tr.34] 6. Biện pháp khắc phục hậu quả:
+  - [L2, tr.34] 17. Sửa đổi, bổ sung Điều 14 như sau:
+    - [L3, tr.34] “Điều 14. Vi phạm các quy định về thị trường điện lực
+      - [L4, tr.34] 1. Phạt tiền Đơn vị truyền tải điện từ 40.000.000 đồng đến 60.000.000 đồng đối với hành vi không cung cấp
+      - [L4, tr.35] 2. Phạt tiền Đơn vị phát điện từ 40.000.000 đồng đến 60.000.000 đồng đối với một trong các hành vi sau
+        - [L5, tr.35] a) Không lập và gửi hồ sơ đăng ký tham gia thị trường điện theo Quy định về thị trường điện lực cạnh tranh
+        - [L5, tr.35] b) Không thực hiện đầu tư hệ thống đấu nối thông tin thị trường điện theo Quy định thị trường điện lực cạnh
+      - [L4, tr.35] 3. Phạt tiền Đơn vị điều hành giao dịch thị trường điện lực từ 60.000.000 đồng đến 80.000.000 đồng đối với
+        - [L5, tr.35] a) Vi phạm các quy định về công bố thông tin được quy định tại Quy định về thị trường điện lực cạnh tranh
+        - [L5, tr.35] b) Sử dụng các số liệu đầu vào và dữ liệu cho việc lập kế hoạch vận hành hệ thống điện năm mà chưa được
+      - [L4, tr.35] 4. Phạt tiền Đơn vị bán buôn điện từ 60.000.000 đồng đến 80.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.35] a) Không cung cấp thông tin hoặc cung cấp thông tin không chính xác cho việc lập kế hoạch vận hành hệ
+        - [L5, tr.35] b) Không tuân thủ quy định về trình tự, thủ tục thẩm định và phê duyệt hợp đồng mua bán điện.
+      - [L4, tr.35] 5. Phạt tiền Đơn vị điều hành giao dịch thị trường điện lực, Đơn vị điều hành hệ thống điện từ 80.000.000
+        - [L5, tr.35] a) Vi phạm các quy định về bảo mật thông tin được quy định tại Quy định về thị trường điện lực cạnh tranh
+        - [L5, tr.35] b) Cung cấp thông tin phục vụ công tác giám sát thị trường điện, giải quyết tranh chấp và xử lý vi phạm trên
+        - [L5, tr.35] c) Vi phạm trình tự, thủ tục và phương pháp tính toán sản lượng điện năm cho các Đơn vị phát điện theo
+        - [L5, tr.35] d) Làm mất dữ liệu sử dụng cho việc lập hồ sơ thanh toán điện năng giao dịch trên thị trường trong thời gian
+      - [L4, tr.35] 6. Phạt tiền Đơn vị truyền tải điện từ 100.000.000 đồng đến 120.000.000 đồng đối với hành vi không cung
+      - [L4, tr.35] 7. Phạt tiền Đơn vị phát điện từ 100.000.000 đồng đến 120.000.000 đồng đối với một trong các hành vi vi
+        - [L5, tr.36] a) Không cung cấp thông tin hoặc cung cấp thông tin không chính xác cho việc lập kế hoạch vận hành hệ
+        - [L5, tr.36] b) Thỏa thuận với các Đơn vị phát điện khác trong việc chào giá để được lập lịch huy động;
+        - [L5, tr.36] c) Thỏa thuận trực tiếp hoặc gián tiếp với các đơn vị khác trong việc hạn chế hoặc kiểm soát công suất chào
+        - [L5, tr.36] d) Thỏa thuận với Đơn vị điều hành giao dịch thị trường điện lực trong việc chào giá để được lập lịch huy
+      - [L4, tr.36] 8. Phạt tiền Đơn vị điều hành giao dịch thị trường điện lực, Đơn vị điều hành hệ thống điện từ 160.000.000
+        - [L5, tr.36] a) Can thiệp vào việc vận hành thị trường điện không tuân thủ theo quy định tại Quy định về thị trường điện
+        - [L5, tr.36] b) Không tuân thủ quy định về thực hiện lịch huy động công suất các tổ máy phát điện được quy định tại
+        - [L5, tr.36] c) Không tuân thủ quy định lập lịch huy động các tổ máy phát điện được quy định tại Quy định về thị
+        - [L5, tr.36] d) Thỏa thuận với Đơn vị phát điện trong việc chào giá để các tổ máy phát điện của Đơn vị phát điện được
+      - [L4, tr.36] 9. Biện pháp khắc phục hậu quả:
+  - [L2, tr.36] 18. Sửa đổi, bổ sung Điều 15 như sau:
+    - [L3, tr.36] “Điều 15. Vi phạm quy định về an toàn điện
+      - [L4, tr.36] 1. Phạt tiền từ 2.000.000 đồng đến 3.000.000 đồng đối với hành vi cản trở người thi hành công vụ.
+      - [L4, tr.36] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.36] a) Vào trạm điện hoặc trèo lên cột điện khi không có nhiệm vụ;
+        - [L5, tr.36] b) Trồng cây hoặc để cây vi phạm khoảng cách an toàn đối với đường dây dẫn điện trên không, trạm điện;
+        - [L5, tr.36] c) Lắp đặt ăng ten ti vi, dây phơi, giàn giáo, biển, hộp đèn quảng cáo tại vị trí khi bị đổ, rơi có thể va chạm
+        - [L5, tr.36] d) Thả diều hoặc bất kỳ vật gì gây sự cố lưới điện;
+        - [L5, tr.36] đ) Không thực hiện đúng và đầy đủ các biện pháp an toàn trước khi làm các công việc với phần không mang
+        - [L5, tr.37] e) Chặt, tỉa cây để bảo đảm an toàn lưới điện cao áp mà không thông báo cho tổ chức quản lý hoặc chủ sở
+        - [L5, tr.37] g) Cản trở đơn vị quản lý vận hành lưới điện cao áp tiến hành kiểm tra hoặc sửa chữa những hư hỏng của
+      - [L4, tr.37] 3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.37] a) Sử dụng bất kỳ bộ phận nào của lưới điện vào mục đích khác khi chưa có thỏa thuận với đơn vị quản lý
+        - [L5, tr.37] b) Đổ, đắp, sắp xếp nguyên vật liệu, vật tư, thiết bị dưới dây dẫn điện của đường dây dẫn điện trên không và
+        - [L5, tr.37] c) Sử dụng bất kỳ bộ phận nào của nhà ở, công trình được tồn tại trong hành lang bảo vệ an toàn đường dây
+        - [L5, tr.37] d) Xây dựng hoặc cải tạo nhà ở, công trình trong hành lang bảo vệ an toàn đường dây dẫn điện trên không
+        - [L5, tr.37] đ) Chất hàng hóa, nguyên liệu, vật liệu, trồng cây, thả neo tàu thuyền trong phạm vi hành lang bảo vệ an
+        - [L5, tr.37] e) Xây dựng nhà ở, công trình xâm phạm đường ra vào, cửa thông gió của trạm điện, nhà máy điện;
+        - [L5, tr.37] g) Không thực hiện đúng và đầy đủ các biện pháp tổ chức thi công khi làm việc với các hạng mục, thiết bị
+        - [L5, tr.37] h) Không xây dựng danh mục các thiết bị, dụng cụ điện phải kiểm định để theo dõi quản lý theo quy định về
+        - [L5, tr.37] i) Câu, móc, kéo điện sau công tơ của khách hàng sử dụng điện này làm nguồn điện sử dụng cho hộ tiêu thụ
+        - [L5, tr.37] k) Tự ý đấu nối, kéo điện từ sau công tơ của khách hàng sử dụng điện ra ngoài sử dụng vào mục đích khác
+        - [L5, tr.37] l) Tự ý sửa chữa, thay thế, bảo dưỡng hoặc làm thay đổi kết cấu mạch điện đã được phê duyệt trong hợp
+        - [L5, tr.37] m) Gây nổ, gây cháy, đốt rừng làm nương rẫy làm mất an toàn vận hành công trình lưới điện.
+      - [L4, tr.37] 4. Phạt tiền từ 30.000.000 đồng đến 50.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.37] a) Thi công các công trình trong đất hoặc nạo vét lòng sông, hồ, ao trong phạm vi hành lang bảo vệ an toàn
+        - [L5, tr.37] b) Không đặt biển báo an toàn hoặc biển tên, biển báo không đúng mẫu cho đường dây, trạm biến áp, nhà
+        - [L5, tr.37] c) Chặt và để cây đổ vào lưới điện;
+        - [L5, tr.38] đ) Không có phiếu công tác hoặc lệnh công tác khi làm những công việc phải thực hiện theo phiếu công tác,
+        - [L5, tr.38] e) Không lưu phiếu công tác, lệnh công tác theo quy định;
+        - [L5, tr.38] g) Thực hiện không đúng và đầy đủ các nội dung ghi trong phiếu công tác, lệnh công tác;
+        - [L5, tr.38] h) Không thực hiện đúng và đầy đủ các biện pháp an toàn trước khi làm các công việc gần với phần mang điện
+        - [L5, tr.38] i) Không thực hiện đúng và đầy đủ các biện pháp an toàn trước khi làm các công việc với phần mang điện
+        - [L5, tr.38] k) Không có đầy đủ các tài liệu thiết kế kỹ thuật, thiết kế bản vẽ thi công, các tài liệu hoàn công xây lắp và
+        - [L5, tr.38] l) Không thực hiện công tác kiểm định, hiệu chỉnh từng phần và toàn bộ hệ thống các trang thiết bị trong
+      - [L4, tr.38] 5. Phạt tiền từ 60.000.000 đồng đến 70.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.38] a) Đào hố, đóng cọc vào trong hành lang bảo vệ an toàn đường cáp điện ngầm;
+        - [L5, tr.38] b) Điều khiển thiết bị, dụng cụ, phương tiện hoặc các hoạt động khác vi phạm khoảng cách an toàn phóng
+        - [L5, tr.38] c) Tháo gỡ bất kỳ bộ phận nào của lưới điện, nhà máy điện khi không có nhiệm vụ;
+        - [L5, tr.38] d) Tung, ném, bắn, quăng bất cứ vật gì gây hư hỏng các bộ phận của lưới điện, nhà máy điện hoặc gây sự cố
+        - [L5, tr.38] đ) Sử dụng điện để bẫy, bắt động vật hoặc làm phương tiện bảo vệ trực tiếp trái quy định của pháp luật;
+        - [L5, tr.38] e) Không ban hành đầy đủ quy trình, nội quy về an toàn điện theo quy định;
+        - [L5, tr.38] g) Không thực hiện đầy đủ các biện pháp an toàn theo quy định khi làm việc theo phiếu công tác hoặc lệnh
+        - [L5, tr.38] h) Sử dụng hoặc thuê người chưa được đào tạo chuyên môn về điện hoặc chưa được huấn luyện về an toàn
+        - [L5, tr.38] i) Cho đường dây dẫn điện đi qua khu vực dân cư, nơi thường xuyên tập trung đông người hoặc mang tải
+        - [L5, tr.38] k) Không có các tài liệu về tiêu chuẩn, quy chuẩn kỹ thuật do cơ quan nhà nước có thẩm quyền quy định về
+        - [L5, tr.38] l) Không có quy trình, nội quy và biện pháp tổ chức thực hiện các quy định về an toàn điện tại cơ quan,
+        - [L5, tr.38] m) Không lập hồ sơ, lý lịch, tài liệu kỹ thuật liên quan đến thiết bị điện và tổ chức quản lý theo quy định;
+        - [L5, tr.39] n) Không thống kê, theo dõi tai nạn điện, các vi phạm đối với hành lang bảo vệ an toàn lưới điện cao áp
+      - [L4, tr.39] 6. Phạt tiền từ 70.000.000 đồng đến 80.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.39] a) Thiết kế, lắp đặt và đưa vào vận hành lưới điện, nhà máy điện không đáp ứng được các quy định về kỹ
+        - [L5, tr.39] b) Không kiểm tra, kiểm định hệ thống chống sét, nối đất của nhà máy điện, trạm điện và đường dây dẫn
+        - [L5, tr.39] c) Xếp, chứa các chất cháy, nổ, ăn mòn trong hành lang bảo vệ an toàn lưới điện;
+        - [L5, tr.39] d) Không thực hiện việc kiểm định an toàn kỹ thuật đối với các thiết bị, dụng cụ điện theo quy định;
+        - [L5, tr.39] đ) Thực hiện việc kiểm định an toàn kỹ thuật các thiết bị, dụng cụ điện khi không có Giấy chứng nhận đăng
+        - [L5, tr.39] e) Thực hiện việc kiểm định an toàn kỹ thuật các thiết bị, dụng cụ điện vượt quá phạm vi được quy định
+        - [L5, tr.39] g) Không tháo dỡ, thu hồi các kết cấu của lưới điện và hoàn trả mặt bằng trong vòng 06 tháng kể từ khi lưới
+      - [L4, tr.39] 7. Phạt tiền từ 90.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi sau đây:
+        - [L5, tr.39] a) Đào đất làm lún, nghiêng, đổ cột của đường dây dẫn điện hoặc thiết bị của trạm điện, nhà máy điện;
+        - [L5, tr.39] b) Nổ mìn gây hư hỏng bất kỳ bộ phận nào của lưới điện, nhà máy điện;
+        - [L5, tr.39] c) Sử dụng phương tiện thi công gây chấn động làm hư hỏng, sự cố lưới điện, nhà máy điện.
+      - [L4, tr.39] 8. Hình thức xử phạt bổ sung:
+      - [L4, tr.39] 9. Biện pháp khắc phục hậu quả:
+        - [L5, tr.39] a) Buộc khôi phục lại tình trạng ban đầu đối với các hành vi quy định tại điểm b và điểm c khoản 2; khoản
+        - [L5, tr.39] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính là khoản lợi đối tượng
+  - [L2, tr.39] 19. Bãi bỏ tên mục 2 “Mục 2. Lĩnh vực an toàn đập thủy điện” tại Chương II.
+  - [L2, tr.39] 20. Sửa đổi, bổ sung Điều 16 như sau:
+    - [L3, tr.39] “Điều 16. Vi phạm quy định về quản lý vận hành đập, hồ chứa thủy điện
+      - [L4, tr.40] 1. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi không thực hiện đăng ký an toàn đập,
+      - [L4, tr.40] 2. Phạt tiền từ 30.000.000 đồng đến 50.000.000 đồng đối với hành vi không có, không tổ chức thực hiện
+      - [L4, tr.40] 3. Phạt tiền từ 50.000.000 đồng đến 70.000.000 đồng đối với hành vi không báo cáo hiện trạng an toàn đập,
+      - [L4, tr.40] 4. Phạt tiền từ 70.000.000 đồng đến 90.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.40] a) Không bảo trì đập thủy điện và các thiết bị lắp đặt tại đập thủy điện theo quy định;
+        - [L5, tr.40] b) Không chuẩn bị nhân lực, vật tư, phương tiện, trang thiết bị, nhu yếu phẩm cho công tác ứng phó thiên tai
+        - [L5, tr.40] c) Hoạt động sai nội dung quy định của giấy phép hoạt động trong phạm vi bảo vệ đập, hồ chứa thủy điện,
+        - [L5, tr.40] d) Không kiểm tra, đánh giá an toàn đập, hồ chứa nước theo quy định;
+        - [L5, tr.40] đ) Không xây dựng cơ sở dữ liệu về đập, hồ chứa thủy điện theo quy định;
+        - [L5, tr.40] e) Không có nguồn điện dự phòng hoặc có nhưng không sử dụng được để vận hành các cửa van của đập
+      - [L4, tr.40] 5. Phạt tiền từ 90.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.40] a) Không thực hiện kiểm định an toàn đập thủy điện theo quy định;
+        - [L5, tr.40] b) Hoạt động không giấy phép trong phạm vi bảo vệ đập, hồ chứa phải có giấy phép;
+        - [L5, tr.40] c) Không có quy trình vận hành hồ chứa thủy điện hoặc không rà soát, điều chỉnh bổ sung theo quy định
+        - [L5, tr.40] d) Không tuân thủ trình tự, phương thức đóng, mở cửa van các công trình xả nước theo quy định đối với hồ
+      - [L4, tr.40] 6. Hình thức xử phạt bổ sung:
+  - [L2, tr.40] 21. Sửa đổi, bổ sung Điều 17 như sau:
+    - [L3, tr.40] “Điều 17. Vi phạm quy định về bảo đảm an toàn đập thủy điện và vùng hạ du
+      - [L4, tr.40] 1. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.42] b) Buộc bổ sung biển báo, cảnh báo phạm vi công trình thủy điện, phao cảnh báo trong lòng hồ phạm vi bảo
+        - [L5, tr.42] c) Buộc thực hiện lắp đặt hệ thống giám sát vận hành, thiết bị thông tin, cảnh báo an toàn cho đập và vùng
+  - [L2, tr.42] 22. Sửa đổi, bổ sung Điều 18 như sau:
+    - [L3, tr.42] “Điều 18. Vi phạm quy định về bảo đảm an toàn vùng phụ cận bảo vệ đập thủy điện
+      - [L4, tr.42] 1. Phạt tiền từ 20.000.000 đồng đến 30.000.000 đồng đối với hành vi neo đậu tàu, thuyền, bè, mảng vào đập
+      - [L4, tr.42] 2. Hình thức xử phạt bổ sung:
+  - [L2, tr.42] 23. Bãi bỏ tên mục 3 “Mục 3. Lĩnh vực sử dụng năng lượng tiết kiệm và hiệu quả” tại Chương II.
+  - [L2, tr.42] 24. Sửa đổi, bổ sung Điều 19 như sau:
+    - [L3, tr.42] “Điều 19. Vi phạm của cơ sở sử dụng năng lượng trọng điểm về kiểm toán năng lượng
+      - [L4, tr.42] 1. Phạt cảnh cáo đối với hành vi không thực hiện đầy đủ nội dung của báo cáo kiểm toán theo biểu mẫu quy
+      - [L4, tr.42] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.42] a) Không thực hiện các biện pháp khắc phục khi có yêu cầu của cơ quan nhà nước có thẩm quyền;
+        - [L5, tr.42] b) Không thực hiện chế độ báo cáo sử dụng năng lượng theo quy định.
+      - [L4, tr.42] 3. Phạt tiền từ 50.000.000 đồng đến 60.000.000 đồng đối với hành vi không thực hiện kiểm toán năng lượng
+  - [L2, tr.42] 25. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 20 như sau:
+    - [L3, tr.42] a) Bãi bỏ khoản 4;
+    - [L3, tr.42] b) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.42] “5. Biện pháp khắc phục hậu quả:
+        - [L5, tr.42] a) Buộc hủy bỏ giấy chứng nhận kiểm toán viên năng lượng và công bố danh sách giấy chứng nhận vi phạm
+        - [L5, tr.42] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính để hoàn trả cho người học
+        - [L5, tr.42] c) Buộc thu hồi chứng chỉ kiểm toán viên năng lượng đã cấp đối với hành vi vi phạm quy định tại khoản 3
+  - [L2, tr.42] 26. Sửa đổi một số khoản của Điều 21 như sau:
+    - [L3, tr.43] a) Sửa đổi khoản 2 như sau:
+      - [L4, tr.43] “2. Phạt tiền cơ sở sử dụng năng lượng trọng điểm từ 15.000.000 đồng đến 30.000.000 đồng đối với hành vi
+    - [L3, tr.43] b) Sửa đổi khoản 4 như sau:
+      - [L4, tr.43] “4. Hình thức xử phạt bổ sung:
+  - [L2, tr.43] 27. Sửa đổi, bổ sung Điều 22 như sau:
+    - [L3, tr.43] “Điều 22. Vi phạm quy định về sử dụng năng lượng tiết kiệm và hiệu quả trong sản xuất công nghiệp
+  - [L2, tr.43] 28. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 23 như sau:
+    - [L3, tr.43] a) Bãi bỏ khoản 3;
+    - [L3, tr.43] b) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.43] “4. Biện pháp khắc phục hậu quả:
+  - [L2, tr.43] 29. Sửa đổi khoản 4 Điều 24 như sau:
+    - [L3, tr.43] “4. Biện pháp khắc phục hậu quả:
+  - [L2, tr.43] 30. Sửa đổi khoản 2 Điều 25 như sau:
+    - [L3, tr.43] “2. Biện pháp khắc phục hậu quả:
+  - [L2, tr.43] 31. Sửa đổi, bổ sung Điều 26 như sau:
+    - [L3, tr.43] “Điều 26. Vi phạm quy định về sử dụng năng lượng tiết kiệm và hiệu quả đối với tổ chức, doanh
+      - [L4, tr.44] 1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi sử dụng phương tiện vận tải thuộc Danh
+      - [L4, tr.44] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không thực hiện chế độ báo cáo sử
+      - [L4, tr.44] 3. Phạt tiền từ 30.000.000 đồng đến 50.000.000 đồng đối với hành vi sản xuất thiết bị, phương tiện vận
+      - [L4, tr.44] 4. Phạt tiền từ 90.000.000 đồng đến 100.000.000 đồng đối với hành vi nhập khẩu thiết bị, phương tiện vận
+      - [L4, tr.44] 5. Biện pháp khắc phục hậu quả:
+        - [L5, tr.44] a) Buộc chấm dứt lưu hành thiết bị, phương tiện vận tải đối với hành vi vi phạm quy định tại khoản 1 Điều
+        - [L5, tr.44] b) Buộc tái xuất thiết bị, phương tiện vận tải đã nhập khẩu đối với hành vi vi phạm quy định tại khoản 4
+        - [L5, tr.44] c) Buộc tiêu hủy thiết bị, phương tiện vận tải đã nhập khẩu đối với hành vi vi phạm quy định tại khoản 4
+  - [L2, tr.44] 32. Sửa đổi khoản 3 Điều 27 như sau:
+    - [L3, tr.44] “3. Biện pháp khắc phục hậu quả:
+  - [L2, tr.44] 33. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 28 như sau:
+    - [L3, tr.44] a) Bãi bỏ khoản 3;
+    - [L3, tr.44] b) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.44] “4. Biện pháp khắc phục hậu quả:
+        - [L5, tr.44] a) Buộc thu hồi giấy chứng nhận hoàn thành khóa đào tạo quản lý năng lượng đã cấp đối với hành vi quy
+        - [L5, tr.44] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính (bao gồm cả mọi chi phí phát
+        - [L5, tr.44] c) Buộc thu hồi chứng chỉ quản lý năng lượng đã cấp đối với hành vi quy định tại khoản 2 Điều này.”.
+  - [L2, tr.44] 34. Sửa đổi, bổ sung Điều 29 như sau:
+    - [L3, tr.44] “Điều 29. Vi phạm quy định về quản lý năng lượng
+      - [L4, tr.44] 1. Phạt cảnh cáo đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.45] a) Người đứng đầu cơ sở sử dụng năng lượng trọng điểm không thực hiện đầy đủ các nội dung của mô hình
+        - [L5, tr.45] b) Người đứng đầu tổ chức sử dụng ngân sách nhà nước không thực hiện đầy đủ các quy định quản lý và sử
+      - [L4, tr.45] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không chỉ định hoặc chỉ định người
+      - [L4, tr.45] 3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi không xây dựng kế hoạch sử dụng
+      - [L4, tr.45] 4. Hình thức xử phạt bổ sung:
+  - [L2, tr.45] 35. Sửa đổi, bổ sung Điều 30 như sau:
+    - [L3, tr.45] “Điều 30. Vi phạm quy định về dán nhãn năng lượng và sử dụng nhãn năng lượng
+      - [L4, tr.45] 1. Xử phạt đối với hành vi không thực hiện dán nhãn năng lượng cho phương tiện, thiết bị phải dán nhãn
+        - [L5, tr.45] a) Phạt cảnh cáo đối với vi phạm lần đầu;
+        - [L5, tr.45] b) Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi không thực hiện dán nhãn năng lượng
+      - [L4, tr.45] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không báo cáo hoặc báo cáo không
+      - [L4, tr.45] 3. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với một trong các hành vi vi phạm quy định về sử
+        - [L5, tr.45] a) Gắn nhãn năng lượng lên phương tiện, thiết bị hoặc bao gói có kích thước không phù hợp;
+        - [L5, tr.45] b) Thay đổi kích thước nhãn năng lượng tăng hoặc giảm không theo tỷ lệ;
+        - [L5, tr.45] c) Làm che lấp, gây nhầm lẫn ảnh hưởng tới thông tin ghi trên nhãn năng lượng.
+      - [L4, tr.45] 4. Phạt tiền từ 15.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.45] a) Không thực hiện công bố hiệu suất năng lượng của phương tiện, thiết bị;
+        - [L5, tr.45] b) Tiếp tục dán nhãn năng lượng cho phương tiện, thiết bị hoặc không thực hiện công bố lại khi có thay đổi
+      - [L4, tr.45] 5. Phạt tiền từ 30.000.000 đồng đến 40.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.46] a) Không cung cấp thông tin hoặc cung cấp sai thông tin hiệu suất năng lượng trên nhãn năng lượng so với
+        - [L5, tr.46] b) Tuyên truyền, quảng cáo cung cấp thông tin về hiệu suất năng lượng không đúng sự thật về mức tiêu thụ
+      - [L4, tr.46] 6. Phạt tiền từ 50.000.000 đồng đến 60.000.000 đồng đối với hành vi dán nhãn năng lượng cho phương tiện,
+      - [L4, tr.46] 7. Hình thức xử phạt bổ sung:
+      - [L4, tr.46] 8. Biện pháp khắc phục hậu quả:
+        - [L5, tr.46] a) Buộc loại bỏ yếu tố vi phạm trên phương tiện, thiết bị hoặc bao bì đối với hành vi vi phạm quy định tại
+        - [L5, tr.46] b) Buộc thu hồi sản phẩm đã dán nhãn năng lượng đối với hành vi vi phạm quy định tại khoản 6 Điều này.”.
+  - [L2, tr.46] 36. Sửa đổi khoản 2 Điều 31 như sau:
+    - [L3, tr.46] “2. Biện pháp khắc phục hậu quả:
+      - [L4, tr.46] a) Buộc thu hồi giấy chứng nhận, kết quả thử nghiệm đã cấp đối với hành vi vi phạm quy định tại khoản 1
+      - [L4, tr.46] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện vi phạm hành chính (bao gồm cả mọi chi phí phát
+  - [L2, tr.46] 37. Sửa đổi, bổ sung Điều 32 như sau:
+    - [L3, tr.46] “Điều 32. Vi phạm các quy định về Danh mục phương tiện, thiết bị phải dán nhãn năng lượng, áp
+      - [L4, tr.46] 1. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi vi phạm quy định mức hiệu suất năng
+      - [L4, tr.46] 2. Phạt tiền từ 50.000.000 đồng đến 60.000.000 đồng đối với hành vi sản xuất, nhập khẩu các phương tiện,
+      - [L4, tr.46] 3. Hình thức xử phạt bổ sung:
+      - [L4, tr.46] 4. Biện pháp khắc phục hậu quả:
+        - [L5, tr.46] a) Buộc tái xuất phương tiện, thiết bị nhập khẩu đối với hành vi vi phạm quy định tại khoản 2 Điều này;
+        - [L5, tr.47] b) Buộc tiêu hủy phương tiện, thiết bị nhập khẩu đối với hành vi vi phạm quy định tại khoản 2 Điều này
+  - [L2, tr.47] 38. Sửa đổi, bổ sung Chương III như sau:
+    - [L3, tr.47] “Chương III
+      - [L4, tr.47] Điều 33. Thẩm quyền lập biên bản vi phạm hành chính
+        - [L5, tr.47] 1. Người có thẩm quyền xử phạt vi phạm quy định tại các điều từ Điều 34 đến Điều 37 của Nghị định này.
+        - [L5, tr.47] 2. Người thuộc lực lượng quân đội nhân dân, công an nhân dân, công chức, viên chức thuộc các cơ quan
+      - [L4, tr.47] Điều 34. Thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân các cấp
+        - [L5, tr.47] 1. Chủ tịch Ủy ban nhân dân cấp xã có quyền xử phạt đối với các hành vi vi phạm quy định tại khoản 1
+          - [L6, tr.47] a) Phạt cảnh cáo;
+          - [L6, tr.47] b) Phạt tiền đến 5.000.000 đồng đối với cá nhân và phạt tiền đến 10.000.000 đồng đối với tổ chức;
+        - [L5, tr.47] 2. Chủ tịch Ủy ban nhân dân cấp huyện có thẩm quyền xử phạt đối với các hành vi vi phạm quy định tại
+          - [L6, tr.47] a) Phạt cảnh cáo;
+          - [L6, tr.47] b) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.47] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.47] d) Tước quyền sử dụng chứng chỉ có thời hạn;
+          - [L6, tr.47] đ) Đình chỉ hoạt động dán nhãn năng lượng có thời hạn;
+          - [L6, tr.47] e) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.47] 3. Chủ tịch Ủy ban nhân dân cấp tỉnh có thẩm quyền xử phạt đối với các hành vi vi phạm quy định tại Điều
+          - [L6, tr.47] a) Phạt cảnh cáo;
+          - [L6, tr.47] b) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.48] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.48] d) Tước quyền sử dụng chứng chỉ có thời hạn;
+          - [L6, tr.48] đ) Đình chỉ hoạt động điện lực có thời hạn, đình chỉ hoạt động dán nhãn năng lượng có thời hạn;
+          - [L6, tr.48] e) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+      - [L4, tr.48] Điều 35. Thẩm quyền xử phạt vi phạm hành chính của Thanh tra
+        - [L5, tr.48] 1. Thanh tra viên, người được giao thực hiện nhiệm vụ thanh tra chuyên ngành về lĩnh vực điện lực, sử dụng
+        - [L5, tr.48] 2. Chánh Thanh tra Sở Công Thương, Trưởng đoàn thanh tra chuyên ngành cấp sở, Trưởng đoàn thanh tra
+          - [L6, tr.48] a) Phạt cảnh cáo;
+          - [L6, tr.48] b) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.48] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 100.000.000 đồng;
+          - [L6, tr.48] d) Tước quyền sử dụng chứng chỉ có thời hạn;
+          - [L6, tr.48] đ) Đình chỉ hoạt động dán nhãn năng lượng có thời hạn;
+          - [L6, tr.48] e) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.48] 3. Chánh Thanh tra Sở Xây dựng có thẩm quyền xử phạt đối với các hành vi vi phạm quy định tại điểm d và
+          - [L6, tr.48] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.48] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 100.000.000 đồng;
+          - [L6, tr.48] c) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.48] 4. Chánh Thanh tra Sở Giao thông vận tải có thẩm quyền xử phạt đối với các hành vi vi phạm quy định tại
+          - [L6, tr.48] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.48] b) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.48] 5. Trưởng đoàn thanh tra chuyên ngành cấp bộ của cơ quan quản lý nhà nước về lĩnh vực điện lực, sử dụng
+          - [L6, tr.49] a) Phạt cảnh cáo;
+          - [L6, tr.49] b) Phạt tiền đến 70.000.000 đồng đối với cá nhân và phạt tiền đến 140.000.000 đồng đối với tổ chức;
+          - [L6, tr.49] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 140.000.000 đồng;
+          - [L6, tr.49] d) Tước quyền sử dụng chứng chỉ có thời hạn;
+          - [L6, tr.49] đ) Đình chỉ hoạt động dán nhãn năng lượng có thời hạn;
+          - [L6, tr.49] e) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.49] 6. Chánh Thanh tra Bộ Công Thương có thẩm quyền xử phạt vi phạm hành chính trên phạm vi cả nước:
+          - [L6, tr.49] a) Phạt cảnh cáo;
+          - [L6, tr.49] b) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.49] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.49] d) Tước quyền sử dụng chứng chỉ có thời hạn; đình chỉ hoạt động điện lực có thời hạn; đình chỉ hoạt động
+          - [L6, tr.49] đ) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.49] 7. Chánh Thanh tra Bộ Xây dựng có thẩm quyền xử phạt đối với các hành vi quy định tại điểm d và điểm e
+          - [L6, tr.49] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.49] b) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.49] c) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.49] 8. Chánh Thanh tra Bộ Giao thông vận tải có thẩm quyền xử phạt đối với các hành vi vi phạm quy định tại
+          - [L6, tr.49] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.49] b) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.49] 9. Cục trưởng Cục Điều tiết điện lực có thẩm quyền xử phạt đối với các hành vi vi phạm quy định tại Điều 5
+          - [L6, tr.49] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.49] b) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.49] c) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+          - [L6, tr.50] b) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.50] c) Đình chỉ hoạt động điện lực có thời hạn;
+          - [L6, tr.50] d) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+      - [L4, tr.50] Điều 36. Thẩm quyền xử phạt của Công an nhân dân
+        - [L5, tr.50] 1. Trưởng Công an cấp huyện có thẩm quyền xử phạt các hành vi vi phạm theo quy định tại khoản 1 Điều 6;
+          - [L6, tr.50] a) Phạt tiền đến 20.000.000 đồng đối với cá nhân và phạt tiền đến 40.000.000 đồng đối với tổ chức;
+          - [L6, tr.50] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 40.000.000 đồng;
+          - [L6, tr.50] c) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.50] 2. Giám đốc Công an cấp tỉnh có thẩm quyền xử phạt các hành vi vi phạm theo quy định tại khoản 1 Điều 6,
+          - [L6, tr.50] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.50] b) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.50] c) Áp dụng biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.50] 3. Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản lý hành chính về trật tự xã hội có thẩm
+          - [L6, tr.50] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.50] b) Tịch thu tang vật, phương tiện vi phạm hành chính.
+      - [L4, tr.50] Điều 37. Thẩm quyền xử phạt của Quản lý thị trường
+        - [L5, tr.50] 1. Kiểm soát viên thị trường đang thi hành công vụ có thẩm quyền xử phạt cảnh cáo đối với các hành vi vi
+        - [L5, tr.50] 2. Đội trưởng Đội Quản lý thị trường, Trưởng phòng Nghiệp vụ thuộc Cục Nghiệp vụ quản lý thị trường có
+          - [L6, tr.50] a) Phạt cảnh cáo;
+          - [L6, tr.50] b) Phạt tiền đến 25.000.000 đồng đối với cá nhân và phạt tiền đến 50.000.000 đồng đối với tổ chức;
+          - [L6, tr.50] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;
+          - [L6, tr.50] d) Áp dụng các biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.50] 3. Cục trưởng Cục Quản lý thị trường cấp tỉnh, Cục trưởng Cục Nghiệp vụ quản lý thị trường thuộc Tổng
+          - [L6, tr.51] a) Phạt cảnh cáo;
+          - [L6, tr.51] b) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.51] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.51] d) Đình chỉ hoạt động dán nhãn năng lượng có thời hạn;
+          - [L6, tr.51] đ) Áp dụng các biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+        - [L5, tr.51] 4. Tổng cục trưởng Tổng cục Quản lý thị trường có thẩm quyền xử phạt đối với các hành vi vi phạm quy
+          - [L6, tr.51] a) Phạt cảnh cáo;
+          - [L6, tr.51] b) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức;
+          - [L6, tr.51] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.51] d) Đình chỉ hoạt động dán nhãn năng lượng có thời hạn;
+          - [L6, tr.51] đ) Áp dụng các biện pháp khắc phục hậu quả đối với các hành vi vi phạm thuộc thẩm quyền xử phạt.
+      - [L4, tr.51] Điều 38. Thông báo kết quả xử lý vi phạm hành chính cho cơ quan, tổ chức có liên quan
+        - [L5, tr.51] 1. Người có thẩm quyền xử phạt có trách nhiệm thông báo bằng văn bản cho cơ quan đã cấp Giấy phép hoạt
+        - [L5, tr.51] 2. Người có thẩm quyền xử phạt có trách nhiệm thông báo bằng văn bản cho bên bán điện để thực hiện
+        - [L5, tr.51] 3. Người có thẩm quyền xử phạt có trách nhiệm thông báo bằng văn bản cho cơ quan đã công nhận phòng
+        - [L5, tr.51] 4. Người có thẩm quyền xử phạt có trách nhiệm thông báo bằng văn bản cho cơ quan, tổ chức đã chuyển
+  - [L2, tr.51] 39. Sửa đổi tên Điều 46 như sau: “Điều 39. Hiệu lực thi hành”.
+  - [L2, tr.51] 40. Sửa đổi, bổ sung Điều 47 thành Điều 40 như sau:
+    - [L3, tr.51] “Điều 40. Trách nhiệm thi hành
+      - [L4, tr.51] 1. Bộ Công Thương có trách nhiệm:
+        - [L5, tr.51] a) Tổ chức thi hành Nghị định này;
+      - [L4, tr.52] 2. Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ, Chủ tịch Ủy ban
+- [L1, tr.52] Điều 3. Sửa đổi, bổ sung một số điều của Nghị định số 98/2020/NĐ-CP ngày 26 tháng 8 năm 2020 của
+  - [L2, tr.52] 1. Sửa đổi, bổ sung một số điểm, khoản của Điều 4 như sau:
+    - [L3, tr.52] a) Bổ sung điểm l vào sau điểm k khoản 3 như sau:
+      - [L4, tr.52] “l) Buộc nộp lại giấy phép kinh doanh bị tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ quan, người có
+    - [L3, tr.52] b) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.52] “a) Mức phạt tiền tối đa trong lĩnh vực thương mại là 100.000.000 đồng đối với cá nhân và 200.000.000
+      - [L4, tr.52] b) Mức phạt tiền quy định tại Chương II của Nghị định này là mức phạt tiền áp dụng đối với hành vi vi
+    - [L3, tr.52] c) Bổ sung khoản 5 vào sau khoản 4 như sau:
+      - [L4, tr.52] “5. Thẩm quyền phạt tiền của các chức danh được quy định tại Chương III Nghị định này là thẩm quyền
+  - [L2, tr.52] 2. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+    - [L3, tr.52] “Điều 4a. Quy định về vi phạm hành chính đã kết thúc, vi phạm hành chính đang được thực hiện và
+      - [L4, tr.52] 1. Hành vi vi phạm đã kết thúc, hành vi vi phạm đang được thực hiện được xác định căn cứ quy định tại
+      - [L4, tr.52] 2. Xử phạt đối với trường hợp vi phạm hành chính nhiều lần:
+        - [L5, tr.52] a) Cá nhân, tổ chức vi phạm hành chính nhiều lần thì vi phạm nhiều lần được áp dụng là tình tiết tăng nặng
+        - [L5, tr.52] b) Đối với hành vi vi phạm hành chính được Nghị định này quy định xử phạt theo giá trị, số lượng, khối
+    - [L3, tr.52] Điều 4b. Thi hành các hình thức xử phạt, biện pháp khắc phục hậu quả và xác định số lợi bất hợp
+      - [L4, tr.53] 1. Việc thi hành quyết định xử phạt vi phạm hành chính thực hiện theo quy định tại Mục 2 Chương III Phần
+      - [L4, tr.53] 2. Biên bản, tài liệu, văn bản hoặc giấy tờ liên quan khác ghi nhận việc thi hành các hình thức xử phạt, biện
+      - [L4, tr.53] 3. Số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính theo quy định tại Nghị định này là
+        - [L5, tr.53] a) Số lợi bất hợp pháp thu được bằng tiền là toàn bộ số tiền tổ chức, cá nhân thu được từ hành vi vi phạm
+        - [L5, tr.53] b) Số lợi bất hợp pháp thu được bằng giấy tờ có giá là toàn bộ giấy tờ có giá mà tổ chức, cá nhân vi phạm
+        - [L5, tr.53] c) Số lợi bất hợp pháp là vật, tài sản khác mà tổ chức, cá nhân vi phạm thu được từ hành vi vi phạm hành
+  - [L2, tr.53] 3. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 6 như sau:
+    - [L3, tr.53] a) Bãi bỏ khoản 6.
+    - [L3, tr.53] b) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.53] “7. Biện pháp khắc phục hậu quả:
+        - [L5, tr.53] a) Buộc nộp lại giấy phép kinh doanh bị tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ quan, người có
+        - [L5, tr.53] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm b khoản 1,
+        - [L5, tr.54] a) Sửa đổi điểm c như sau:
+        - [L5, tr.54] “c) Tịch thu phương tiện vận tải được sử dụng để vận chuyển hàng cấm đối với hành vi vi phạm quy định
+        - [L5, tr.54] b) Bãi bỏ điểm d.
+  - [L2, tr.54] 5. Sửa đổi điểm b khoản 3 Điều 9 như sau:
+    - [L3, tr.54] “b) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề từ 03 tháng đến 06 tháng đối với hành vi vi phạm
+  - [L2, tr.54] 6. Sửa đổi và bãi bỏ một số điểm của khoản 3 Điều 10 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+      - [L4, tr.54] “c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề hoặc đình chỉ hoạt động sản xuất vi phạm từ 12
+    - [L3, tr.54] b) Bãi bỏ điểm d.
+  - [L2, tr.54] 7. Sửa đổi điểm b khoản 3 Điều 11 như sau:
+    - [L3, tr.54] “b) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề từ 01 tháng đến 03 tháng đối với hành vi vi phạm
+  - [L2, tr.54] 8. Sửa đổi và bãi bỏ một số điểm của khoản 3 Điều 12 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+      - [L4, tr.54] “c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề hoặc đình chỉ hoạt động sản xuất vi phạm từ 03
+    - [L3, tr.54] b) Bãi bỏ điểm d.
+  - [L2, tr.54] 9. Sửa đổi điểm b khoản 3 Điều 13 như sau:
+    - [L3, tr.54] “b) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề từ 01 tháng đến 03 tháng đối với hành vi vi phạm
+  - [L2, tr.54] 10. Sửa đổi và bãi bỏ một số điểm của khoản 3 Điều 14 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+      - [L4, tr.54] “c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề hoặc đình chỉ hoạt động sản xuất vi phạm từ 03
+    - [L3, tr.54] b) Bãi bỏ điểm d.
+  - [L2, tr.54] 11. Sửa đổi điểm b khoản 4 Điều 15 như sau:
+    - [L3, tr.54] “b) Tịch thu phương tiện vận tải vi phạm đối với hành vi vi phạm quy định tại Điều này trong trường hợp
+  - [L2, tr.54] 12. Bãi bỏ điểm b khoản 3 Điều 18.
+  - [L2, tr.55] 13. Sửa đổi điểm b khoản 3 Điều 19 như sau:
+    - [L3, tr.55] “b) Tước quyền sử dụng giấy phép kinh doanh thuốc lá từ 01 tháng đến 03 tháng đối với hành vi vi phạm
+  - [L2, tr.55] 14. Sửa đổi điểm b khoản 2 Điều 20 như sau:
+    - [L3, tr.55] “b) Tước quyền sử dụng giấy phép kinh doanh thuốc lá từ 03 tháng đến 06 tháng đối với vi phạm quy định
+  - [L2, tr.55] 15. Sửa đổi khoản 3 Điều 21 như sau:
+    - [L3, tr.55] “3. Hình thức xử phạt bổ sung:
+  - [L2, tr.55] 16. Sửa đổi điểm b khoản 2 Điều 22 như sau:
+    - [L3, tr.55] “b) Tước quyền sử dụng giấy phép kinh doanh thuốc lá từ 01 tháng đến 03 tháng đối với hành vi vi phạm
+  - [L2, tr.55] 17. Bãi bỏ khoản 1, điểm a khoản 2 và khoản 3 Điều 23.
+  - [L2, tr.55] 18. Sửa đổi khoản 3 Điều 26 như sau:
+    - [L3, tr.55] “3. Hình thức xử phạt bổ sung:
+  - [L2, tr.55] 19. Sửa đổi khoản 3 Điều 27 như sau:
+    - [L3, tr.55] “3. Hình thức xử phạt bổ sung:
+  - [L2, tr.55] 20. Sửa đổi khoản 3 Điều 28 như sau:
+    - [L3, tr.55] “3. Hình thức xử phạt bổ sung:
+  - [L2, tr.55] 21. Sửa đổi, bổ sung Điều 30 như sau:
+    - [L3, tr.55] “Điều 30. Hành vi vi phạm khác về kinh doanh rượu, bia
+      - [L4, tr.55] 1. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với hành vi không báo cáo hoặc báo cáo không đúng
+      - [L4, tr.55] 2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi sau đây:
+        - [L5, tr.55] a) Bán rượu, bia bằng máy bán hàng tự động;
+        - [L5, tr.56] b) Sử dụng lao động là người chưa đủ 18 tuổi trực tiếp tham gia vào việc sản xuất, mua bán rượu, bia.
+      - [L4, tr.56] 3. Các hành vi vi phạm khác vi phạm quy định phòng chống tác hại của rượu, bia về khuyến mại, bán, cung
+      - [L4, tr.56] 4. Hình thức xử phạt bổ sung:
+      - [L4, tr.56] 5. Biện pháp khắc phục hậu quả:
+  - [L2, tr.56] 22. Sửa đổi khoản 6 Điều 31 như sau:
+    - [L3, tr.56] “6. Hình thức xử phạt bổ sung:
+      - [L4, tr.56] a) Tịch thu tang vật đối với hành vi vi phạm quy định tại Điều này;
+      - [L4, tr.56] b) Tước quyền sử dụng giấy chứng nhận đủ điều kiện kinh doanh, giấy phép kinh doanh, chứng chỉ hành
+  - [L2, tr.56] 23. Sửa đổi điểm b khoản 4 Điều 32 như sau:
+    - [L3, tr.56] “b) Tước quyền sử dụng giấy phép kinh doanh, chứng chỉ hành nghề từ 03 tháng đến 06 tháng đối với hành
+  - [L2, tr.56] 24. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 33 như sau:
+    - [L3, tr.56] a) Bổ sung khoản 1a và khoản 1b trước khoản 1 như sau:
+      - [L4, tr.56] “1a. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với hành vi báo cáo kết quả thực hiện chương trình
+      - [L4, tr.56] 1b. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi báo cáo kết quả thực hiện chương trình
+    - [L3, tr.56] b) Sửa đổi điểm d khoản 1 như sau:
+      - [L4, tr.56] “d) Không thông báo cho cơ quan quản lý nhà nước có thẩm quyền về thời gian, địa điểm thực hiện việc
+    - [L3, tr.56] c) Bổ sung điểm i khoản 1 như sau:
+      - [L4, tr.56] “i) Tổ chức thi, mở thưởng không công khai hoặc không có sự chứng kiến của đại diện khách hàng hoặc
+    - [L3, tr.57] d) Sửa đổi điểm c và điểm d khoản 2 như sau:
+      - [L4, tr.57] “c) Không thông báo, thông báo sửa đổi (gọi chung là thông báo) hoặc không đăng ký, đăng ký sửa đổi (gọi
+      - [L4, tr.57] d) Không thông báo hoặc không báo cáo kết quả thực hiện khuyến mại theo quy định hoặc thông báo, báo
+    - [L3, tr.57] đ) Bãi bỏ điểm c khoản 3, khoản 4 và điểm b khoản 6.
+  - [L2, tr.57] 25. Sửa đổi, bổ sung một số khoản của Điều 35 như sau:
+    - [L3, tr.57] a) Sửa đổi, bổ sung khoản 1 như sau:
+      - [L4, tr.57] “1. Phạt tiền từ 1.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.57] a) Kê khai không trung thực, không chính xác các nội dung trong hồ sơ khi đăng ký tổ chức hội chợ, triển
+        - [L5, tr.57] b) Báo cáo kết quả việc tổ chức hội chợ, triển lãm thương mại đến cơ quan quản lý nhà nước có thẩm quyền
+    - [L3, tr.57] b) Sửa đổi điểm c và bổ sung các điểm d, đ và e tại khoản 2 như sau:
+      - [L4, tr.57] “c) Không công bố công khai và đảm bảo quyền lợi của các thương nhân đã tham gia hội chợ, triển lãm
+      - [L4, tr.57] d) Không cung cấp hoặc cung cấp đến thương nhân tham gia hội chợ, triển lãm thương mại không đầy đủ,
+      - [L4, tr.57] đ) Không cung cấp hoặc cung cấp không đầy đủ, không chính xác thông tin về hàng hóa trưng bày cho đơn
+      - [L4, tr.57] e) Báo cáo kết quả việc tổ chức hội chợ, triển lãm thương mại đến cơ quan quản lý nhà nước có thẩm quyền
+    - [L3, tr.57] c) Bãi bỏ điểm d khoản 3.
+    - [L3, tr.57] d) Bổ sung điểm k khoản 4 như sau:
+      - [L4, tr.57] “k) Tổ chức hội chợ, triển lãm thương mại tại Việt Nam mà không đáp ứng hoặc đáp ứng không đầy đủ các
+    - [L3, tr.57] đ) Bổ sung điểm g khoản 5 như sau:
+      - [L4, tr.57] “g) Sử dụng tên, chủ đề của hội chợ, triển lãm thương mại tại Việt Nam trái với đạo đức, phong tục, tập
+  - [L2, tr.57] 26. Sửa đổi khoản 4 của Điều 38 như sau:
+    - [L3, tr.58] “4. Biện pháp khắc phục hậu quả:
+  - [L2, tr.58] 27. Bổ sung điểm c vào sau điểm b khoản 7 Điều 40 như sau:
+    - [L3, tr.58] “c) Buộc nộp lại giấy phép tạm nhập tái xuất, giấy phép tạm xuất tái nhập hàng hóa bị tẩy xóa, sửa chữa,
+  - [L2, tr.58] 28. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 41 như sau:
+    - [L3, tr.58] a) Bãi bỏ điểm b khoản 6 Điều 41;
+    - [L3, tr.58] b) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.58] “7. Biện pháp khắc phục hậu quả:
+        - [L5, tr.58] a) Buộc nộp lại giấy phép chuyển khẩu hàng hóa bị tẩy xóa, sửa chữa, sửa đổi, bổ sung, thay đổi nội dung
+        - [L5, tr.58] b) Buộc đưa ra khỏi lãnh thổ nước Cộng hoà xã hội chủ nghĩa Việt Nam hoặc tái xuất hàng hóa đối với hành
+  - [L2, tr.58] 29. Sửa đổi điểm b khoản 6 Điều 43 như sau:
+    - [L3, tr.58] “b) Tước quyền sử dụng giấy chứng nhận đủ điều kiện kinh doanh cửa hàng miễn thuế từ 01 tháng đến 03
+  - [L2, tr.58] 30. Sửa đổi, bổ sung khoản 6 Điều 44 như sau:
+    - [L3, tr.58] “6. Biện pháp khắc phục hậu quả:
+      - [L4, tr.58] a) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính quy định tại điểm a và
+      - [L4, tr.58] b) Buộc nộp lại Giấy chứng nhận xuất xứ hàng hóa hoặc văn bản chấp thuận tự chứng nhận xuất xứ hàng
+  - [L2, tr.58] 31. Sửa đổi khoản 4 Điều 47 như sau:
+    - [L3, tr.58] “4. Hình thức xử phạt bổ sung:
+  - [L2, tr.58] 32. Bãi bỏ khoản 7 Điều 61.
+  - [L2, tr.58] 33. Sửa đổi, bổ sung một số điểm, khoản của Điều 62 như sau:
+    - [L3, tr.58] a) Sửa đổi, bổ sung điểm a khoản 1 như sau:
+      - [L4, tr.59] “a) Không bổ sung hồ sơ thông báo liên quan đến website thương mại điện tử bán hàng có chức năng đặt
+    - [L3, tr.59] b) Sửa đổi, bổ sung điểm đ khoản 1 như sau:
+      - [L4, tr.59] “đ) Không công bố hoặc công bố không đầy đủ, không chính xác trên website thương mại điện tử bán hàng
+    - [L3, tr.59] c) Bổ sung điểm g khoản 1 như sau:
+      - [L4, tr.59] “g) Cung cấp thông tin về tình hình kinh doanh, báo cáo số liệu thống kê về tình hình hoạt động của website
+    - [L3, tr.59] d) Sửa đổi, bổ sung điểm a khoản 3 như sau:
+      - [L4, tr.59] “a) Không thông báo website thương mại điện tử bán hàng hoặc ứng dụng bán hàng với cơ quan quản lý
+    - [L3, tr.59] đ) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.59] “5. Hình thức xử phạt bổ sung:
+  - [L2, tr.59] 34. Sửa đổi, bổ sung một số điểm, khoản của Điều 63 như sau:
+    - [L3, tr.59] a) Sửa đổi, bổ sung điểm a khoản 1 như sau:
+      - [L4, tr.59] “a) Không có cơ chế để khách hàng đọc và bày tỏ sự đồng ý riêng với các điều kiện giao dịch chung trước
+    - [L3, tr.59] b) Bổ sung điểm c khoản 2 như sau:
+      - [L4, tr.59] “c) Cung cấp thông tin hoặc kinh doanh hàng hóa, dịch vụ không đủ điều kiện kinh doanh hoặc không đáp
+    - [L3, tr.59] c) Sửa đổi điểm đ khoản 3 như sau:
+      - [L4, tr.59] “đ) Không lưu trữ thông tin về các giao dịch hoặc dữ liệu về từng giao dịch thanh toán được thực hiện qua
+  - [L2, tr.59] 35. Sửa đổi, bổ sung một số điểm, khoản của Điều 64 như sau:
+    - [L3, tr.59] a) Sửa đổi điểm a khoản 1 như sau:
+      - [L4, tr.59] “a) Không công bố rõ trên website cung cấp dịch vụ thương mại điện tử hoặc ứng dụng dịch vụ thương mại
+    - [L3, tr.60] b) Bổ sung điểm đ khoản 1 như sau:
+      - [L4, tr.60] “đ) Không thể hiện bằng phiên âm tiếng Việt hoặc ký tự La tinh với các tên riêng của người bán nước ngoài
+    - [L3, tr.60] c) Bổ sung điểm đ khoản 2 như sau:
+      - [L4, tr.60] “đ) Cung cấp thông tin không đầy đủ hoặc sai lệch trong hồ sơ đăng ký với cơ quan quản lý nhà nước có
+    - [L3, tr.60] d) Bổ sung điểm g và điểm h vào sau điểm e khoản 3 như sau:
+      - [L4, tr.60] “g) Cung cấp dịch vụ thương mại điện tử không đúng với hồ sơ đăng ký website cung cấp dịch vụ thương
+      - [L4, tr.60] h) Không thực hiện đúng quy chế tại hồ sơ đăng ký website cung cấp dịch vụ thương mại điện tử hoặc ứng
+    - [L3, tr.60] đ) Sửa đổi điểm b khoản 5 như sau:
+      - [L4, tr.60] “b) Không hỗ trợ cơ quan quản lý nhà nước điều tra, xử lý các hành vi kinh doanh vi phạm pháp luật và giải
+  - [L2, tr.60] 36. Sửa đổi một số điểm, khoản của Điều 65 như sau:
+    - [L3, tr.60] a) Sửa đổi điểm a và điểm b khoản 1 như sau:
+      - [L4, tr.60] “a) Xây dựng chính sách bảo vệ thông tin cá nhân người tiêu dùng không đúng quy định;
+      - [L4, tr.60] b) Không xây dựng hoặc không hiển thị công khai cho người tiêu dùng chính sách bảo vệ thông tin cá nhân
+    - [L3, tr.60] b) Sửa đổi điểm a khoản 2 như sau:
+      - [L4, tr.60] “a) Không hiển thị rõ ràng cho người tiêu dùng chính sách bảo vệ thông tin cá nhân người tiêu dùng hoặc
+    - [L3, tr.60] c) Sửa đổi, bổ sung điểm c khoản 3 như sau:
+      - [L4, tr.60] “c) Không công bố chính sách về bảo mật thông tin thanh toán cho khách hàng trên website thương mại
+    - [L3, tr.60] d) Sửa đổi khoản 5 như sau:
+      - [L4, tr.60] “5. Hình thức xử phạt bổ sung:
+  - [L2, tr.60] 37. Sửa đổi, bổ sung một số điểm, khoản của Điều 66 như sau:
+    - [L3, tr.60] a) Sửa đổi điểm a khoản 3 như sau:
+      - [L4, tr.61] “a) Cung cấp dịch vụ đánh giá, giám sát và chứng thực trong thương mại điện tử không đúng với hồ sơ đăng
+    - [L3, tr.61] b) Bổ sung điểm c vào sau điểm b khoản 3 như sau:
+      - [L4, tr.61] “c) Không công bố công khai hoặc công bố quy chế khác với thông tin tại hồ sơ đăng ký cung cấp dịch vụ
+    - [L3, tr.61] c) Sửa đổi điểm a khoản 4 như sau:
+      - [L4, tr.61] “a) Cung cấp dịch vụ đánh giá, giám sát và chứng thực trong thương mại điện tử khi chưa được xác nhận
+    - [L3, tr.61] d) Sửa đổi, bổ sung điểm d khoản 4 như sau:
+      - [L4, tr.61] “d) Cung cấp dịch vụ chứng thực trong thương mại điện tử không đúng với đề án hoạt động tại hồ sơ đăng
+    - [L3, tr.61] đ) Sửa đổi điểm a khoản 6 như sau:
+      - [L4, tr.61] “a) Đình chỉ hoạt động cung cấp dịch vụ chứng thực trong thương mại điện tử từ 06 tháng đến 12 tháng đối
+  - [L2, tr.61] 38. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 67 như sau:
+    - [L3, tr.61] a) Bãi bỏ điểm a khoản 5;
+    - [L3, tr.61] b) Sửa đổi, bổ sung khoản 6 như sau:
+      - [L4, tr.61] “6. Biện pháp khắc phục hậu quả:
+        - [L5, tr.61] a) Buộc nộp lại giấy phép thành lập văn phòng đại diện bị viết thêm, tẩy xóa, sửa chữa làm thay đổi nội
+        - [L5, tr.61] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm e khoản 3 Điều
+  - [L2, tr.61] 39. Sửa đổi, bổ sung Điều 68 như sau:
+    - [L3, tr.61] “Điều 68. Hành vi vi phạm về thành lập và hoạt động văn phòng đại diện của tổ chức xúc tiến thương
+      - [L4, tr.61] 1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi báo cáo hoạt động của văn phòng đến cơ
+      - [L4, tr.61] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi báo cáo hoạt động của văn phòng đến
+      - [L4, tr.61] 3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.61] a) Kê khai không trung thực, không chính xác nội dung trong hồ sơ đề nghị cấp, sửa đổi, cấp lại, gia hạn
+        - [L5, tr.62] b) Không thực hiện thông báo công khai hoạt động của văn phòng tại Việt Nam sau khi được cấp, cấp lại,
+        - [L5, tr.62] c) Không thực hiện thủ tục sửa đổi giấy phép thành lập văn phòng trong thời hạn quy định khi thay đổi
+        - [L5, tr.62] d) Viết thêm, tẩy xóa, sửa chữa làm thay đổi nội dung ghi trong giấy phép thành lập văn phòng được cấp;
+        - [L5, tr.62] đ) Địa điểm đặt trụ sở văn phòng không đúng địa điểm ghi trong giấy phép thành lập văn phòng;
+        - [L5, tr.62] e) Cho thuê lại trụ sở văn phòng hoặc thực hiện chức năng làm đại diện cho tổ chức xúc tiến thương mại
+      - [L4, tr.62] 4. Phạt tiền từ 20.000.000 đồng đến 30.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.62] a) Không thực hiện báo cáo hoặc thực hiện báo cáo không đúng thời hạn quy định hoặc không cung cấp tài
+        - [L5, tr.62] b) Hoạt động không đúng nội dung quy định trong giấy phép thành lập văn phòng;
+        - [L5, tr.62] c) Người đứng đầu văn phòng kiêm nhiệm người đứng đầu văn phòng đại diện của thương nhân, tổ chức
+        - [L5, tr.62] d) Tiếp tục hoạt động sau khi giấy phép thành lập văn phòng bị cơ quan cấp giấy phép thu hồi hoặc hết thời
+        - [L5, tr.62] đ) Tiếp tục hoạt động sau khi tổ chức xúc tiến thương mại nước ngoài đã chấm dứt hoạt động.
+      - [L4, tr.62] 5. Phạt tiền từ 30.000.000 đồng đến 50.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+        - [L5, tr.62] a) Thành lập văn phòng đại diện trực thuộc văn phòng đại diện của tổ chức xúc tiến thương mại tại Việt
+        - [L5, tr.62] b) Tiến hành các hoạt động liên quan đến xúc tiến thương mại tại Việt Nam mà không thành lập văn phòng
+        - [L5, tr.62] c) Lập văn phòng trái phép tại Việt Nam;
+        - [L5, tr.62] d) Trực tiếp thực hiện các hoạt động nhằm sinh lời tại Việt Nam.
+      - [L4, tr.62] 6. Biện pháp khắc phục hậu quả:
+        - [L5, tr.62] a) Buộc nộp lại giấy phép thành lập văn phòng bị viết thêm, tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ
+        - [L5, tr.62] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm e khoản 3 và
+  - [L2, tr.62] 40. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 69 như sau:
+    - [L3, tr.62] a) Bãi bỏ điểm a khoản 5;
+    - [L3, tr.63] b) Sửa đổi, bổ sung khoản 6 như sau:
+      - [L4, tr.63] “6. Biện pháp khắc phục hậu quả:
+        - [L5, tr.63] a) Buộc nộp lại giấy phép thành lập chi nhánh bị viết thêm, tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ
+        - [L5, tr.63] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm đ khoản 3 và
+  - [L2, tr.63] 41. Sửa đổi, bổ sung một số điểm, khoản của Điều 73 như sau:
+    - [L3, tr.63] a) Sửa đổi, bổ sung điểm b khoản 3 như sau:
+      - [L4, tr.63] “b) Cung cấp thông tin gian dối về lợi ích của việc tham gia bán hàng đa cấp, về hoạt động của doanh
+    - [L3, tr.63] b) Thay thế cụm từ “thương nhân” bằng cụm từ “doanh nghiệp” tại điểm i khoản 6; điểm c, điểm d, điểm đ,
+    - [L3, tr.63] c) Bổ sung điểm t vào sau điểm s khoản 7 như sau:
+      - [L4, tr.63] “t) Không thực hiện đúng quy định về đảm bảo tối thiểu 20% doanh thu bán hàng đa cấp trong một năm tài
+    - [L3, tr.63] d) Thay thế cụm từ “thương nhân” bằng cụm từ “doanh nghiệp” tại điểm i khoản 6; điểm c, điểm d, điểm đ,
+    - [L3, tr.63] đ) Sửa đổi điểm e khoản 9 như sau:
+      - [L4, tr.63] “e) Cung cấp thông tin gian dối, gây nhầm lẫn về tính năng, công dụng của hàng hóa hoặc hoạt động của
+  - [L2, tr.63] 42. Sửa đổi điểm b khoản 5 Điều 74 như sau:
+    - [L3, tr.63] “b) Đình chỉ hoạt động từ 01 tháng đến 03 tháng đối với hành vi vi phạm quy định tại khoản 4 Điều này.”.
+  - [L2, tr.63] 43. Sửa đổi, bổ sung khoản 2 Điều 80 như sau:
+    - [L3, tr.63] “2. Người thuộc lực lượng Quân đội nhân dân, Công an nhân dân, công chức, viên chức thuộc cơ quan quy
+  - [L2, tr.63] 44. Sửa đổi, bổ sung Điều 81 như sau:
+    - [L3, tr.63] “Điều 81. Thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân các cấp
+      - [L4, tr.63] 1. Chủ tịch Ủy ban nhân dân cấp xã có quyền:
+        - [L5, tr.63] a) Phạt cảnh cáo;
+        - [L5, tr.64] b) Phạt tiền đến 5.000.000 đồng;
+        - [L5, tr.64] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 10.000.000 đồng;
+        - [L5, tr.64] d) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm b khoản 3 Điều 4 của Nghị định này.
+      - [L4, tr.64] 2. Chủ tịch Ủy ban nhân dân cấp huyện có quyền:
+        - [L5, tr.64] a) Phạt cảnh cáo;
+        - [L5, tr.64] b) Phạt tiền đến 100.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 và Mục 9 Chương II của
+        - [L5, tr.64] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.64] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.64] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm b, c, đ, e, g, h, i, k và l khoản 3 Điều 4
+      - [L4, tr.64] 3. Chủ tịch Ủy ban nhân dân cấp tỉnh có quyền:
+        - [L5, tr.64] a) Phạt cảnh cáo;
+        - [L5, tr.64] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.64] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.64] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.64] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.”.
+  - [L2, tr.64] 45. Sửa đổi, bổ sung Điều 82 như sau:
+    - [L3, tr.64] “Điều 82. Thẩm quyền xử phạt của Quản lý thị trường
+      - [L4, tr.64] 1. Kiểm soát viên thị trường đang thi hành công vụ có quyền:
+        - [L5, tr.64] a) Phạt cảnh cáo;
+        - [L5, tr.64] b) Phạt tiền đến 500.000 đồng.
+      - [L4, tr.64] 2. Đội trưởng Đội Quản lý thị trường, Trưởng phòng Nghiệp vụ thuộc Cục Nghiệp vụ quản lý thị trường có
+        - [L5, tr.64] a) Phạt cảnh cáo;
+        - [L5, tr.64] b) Phạt tiền đến 25.000.000 đồng;
+        - [L5, tr.64] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;
+        - [L5, tr.64] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này, trừ biện pháp quy định tại điểm a
+      - [L4, tr.64] 3. Cục trưởng Cục Quản lý thị trường cấp tỉnh, Cục trưởng Cục Nghiệp vụ quản lý thị trường thuộc Tổng
+        - [L5, tr.65] a) Phạt cảnh cáo;
+        - [L5, tr.65] b) Phạt tiền đến 50.000.000 đồng;
+        - [L5, tr.65] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.65] d) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.65] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.
+      - [L4, tr.65] 4. Tổng cục trưởng Tổng cục Quản lý thị trường có quyền:
+        - [L5, tr.65] a) Phạt cảnh cáo;
+        - [L5, tr.65] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.65] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.65] d) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.65] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.”.
+  - [L2, tr.65] 46. Sửa đổi, bổ sung Điều 83 như sau:
+    - [L3, tr.65] “Điều 83. Thẩm quyền xử phạt của Công an nhân dân
+      - [L4, tr.65] 1. Chiến sĩ Công an nhân dân đang thi hành công vụ có quyền:
+        - [L5, tr.65] a) Phạt cảnh cáo;
+        - [L5, tr.65] b) Phạt tiền đến 500.000 đồng.
+      - [L4, tr.65] 2. Thủ trưởng đơn vị Cảnh sát cơ động cấp đại đội, Trưởng trạm, Đội trưởng của người được quy định tại
+        - [L5, tr.65] a) Phạt cảnh cáo;
+        - [L5, tr.65] b) Phạt tiền đến 1.500.000 đồng.
+      - [L4, tr.65] 3. Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+        - [L5, tr.65] a) Phạt cảnh cáo;
+        - [L5, tr.65] b) Phạt tiền đến 2.500.000 đồng;
+        - [L5, tr.65] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 5.000.000 đồng;
+        - [L5, tr.65] d) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm b khoản 3 Điều 4 của Nghị định này.
+      - [L4, tr.65] 4. Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục An ninh chính trị nội bộ; Trưởng phòng
+        - [L5, tr.66] a) Phạt cảnh cáo;
+        - [L5, tr.66] b) Phạt tiền đến 25.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 và Mục 9 Chương II của
+        - [L5, tr.66] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.66] d) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với các
+        - [L5, tr.66] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm b, h, i, k và l khoản 3 Điều 4 của Nghị
+      - [L4, tr.66] 5. Giám đốc Công an cấp tỉnh có quyền:
+        - [L5, tr.66] a) Phạt cảnh cáo;
+        - [L5, tr.66] b) Phạt tiền đến 100.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 và Mục 9 Chương II của
+        - [L5, tr.66] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.66] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.66] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm b, e, h, i, k và l khoản 3 Điều 4 của Nghị
+      - [L4, tr.66] 6. Cục trưởng Cục An ninh chính trị nội bộ, Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản
+        - [L5, tr.66] a) Phạt cảnh cáo;
+        - [L5, tr.66] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.66] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.66] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.66] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm b, e, h, i, k và l khoản 3 Điều 4 của Nghị
+  - [L2, tr.66] 47. Sửa đổi, bổ sung Điều 84 như sau:
+    - [L3, tr.66] “Điều 84. Thẩm quyền xử phạt của Hải quan
+      - [L4, tr.67] 1. Công chức Hải quan đang thi hành công vụ có quyền:
+        - [L5, tr.67] a) Phạt cảnh cáo;
+        - [L5, tr.67] b) Phạt tiền đến 500.000 đồng.
+      - [L4, tr.67] 2. Đội trưởng, Tổ trưởng thuộc Chi cục Hải quan; Tổ trưởng thuộc Đội Kiểm soát thuộc Cục Hải quan tỉnh,
+        - [L5, tr.67] a) Phạt cảnh cáo;
+        - [L5, tr.67] b) Phạt tiền đến 5.000.000 đồng.
+      - [L4, tr.67] 3. Chi cục trưởng Chi cục Hải quan; Chi cục trưởng Chi cục Kiểm tra sau thông quan, Đội trưởng Đội kiểm
+        - [L5, tr.67] a) Phạt cảnh cáo;
+        - [L5, tr.67] b) Phạt tiền đến 25.000.000 đồng;
+        - [L5, tr.67] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;
+        - [L5, tr.67] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b, d, e và l khoản 3 Điều 4 của Nghị
+      - [L4, tr.67] 4. Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+        - [L5, tr.67] a) Phạt cảnh cáo;
+        - [L5, tr.67] b) Phạt tiền đến 50.000.000 đồng;
+        - [L5, tr.67] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.67] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.67] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b, d, e và l khoản 3 Điều 4 của Nghị
+      - [L4, tr.67] 5. Tổng cục trưởng Tổng cục Hải quan có quyền:
+        - [L5, tr.67] a) Phạt cảnh cáo;
+        - [L5, tr.67] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.67] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.67] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b, d, e và l khoản 3 Điều 4 của Nghị
+  - [L2, tr.67] 48. Sửa đổi, bổ sung Điều 85 như sau:
+    - [L3, tr.67] “Điều 85. Thẩm quyền xử phạt của Bộ đội Biên phòng
+      - [L4, tr.68] 1. Chiến sĩ Bộ đội biên phòng đang thi hành công vụ có quyền:
+        - [L5, tr.68] a) Phạt cảnh cáo;
+        - [L5, tr.68] b) Phạt tiền đến 500.000 đồng.
+      - [L4, tr.68] 2. Trạm trưởng, Đội trưởng của người được quy định tại khoản 1 Điều này có quyền:
+        - [L5, tr.68] a) Phạt cảnh cáo;
+        - [L5, tr.68] b) Phạt tiền đến 2.500.000 đồng.
+      - [L4, tr.68] 3. Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+        - [L5, tr.68] a) Phạt cảnh cáo;
+        - [L5, tr.68] b) Phạt tiền đến 10.000.000 đồng;
+        - [L5, tr.68] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 20.000.000 đồng;
+        - [L5, tr.68] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại điểm b khoản 3 Điều 4 của Nghị định này.
+      - [L4, tr.68] 4. Đồn trưởng Đồn biên phòng, Hải đội trưởng Hải đội biên phòng, Chỉ huy trưởng Ban chỉ huy Biên phòng
+        - [L5, tr.68] a) Phạt cảnh cáo;
+        - [L5, tr.68] b) Phạt tiền đến 25.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 Chương II của Nghị định
+        - [L5, tr.68] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với các
+        - [L5, tr.68] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b và l khoản 3 Điều 4 của Nghị định
+      - [L4, tr.68] 5. Đoàn trưởng Đoàn đặc nhiệm phòng chống ma túy và tội phạm thuộc Cục Phòng chống ma túy và tội
+        - [L5, tr.68] a) Phạt cảnh cáo;
+        - [L5, tr.68] b) Phạt tiền đến 100.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 Chương II của Nghị định
+        - [L5, tr.68] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 200.000.000 đồng đối với
+        - [L5, tr.68] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và l khoản 3 Điều 4 của Nghị
+        - [L5, tr.69] a) Phạt cảnh cáo;
+        - [L5, tr.69] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.69] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.69] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.69] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và l khoản 3 Điều 4 của Nghị
+  - [L2, tr.69] 49. Sửa đổi, bổ sung Điều 86 như sau:
+    - [L3, tr.69] “Điều 86. Thẩm quyền xử phạt của Cảnh sát biển Việt Nam
+      - [L4, tr.69] 1. Cảnh sát viên Cảnh sát biển đang thi hành công vụ có quyền:
+        - [L5, tr.69] a) Phạt cảnh cáo;
+        - [L5, tr.69] b) Phạt tiền đến 1.500.000 đồng.
+      - [L4, tr.69] 2. Tổ trưởng Tổ nghiệp vụ Cảnh sát biển có quyền:
+        - [L5, tr.69] a) Phạt cảnh cáo;
+        - [L5, tr.69] b) Phạt tiền đến 5.000.000 đồng.
+      - [L4, tr.69] 3. Đội trưởng Đội nghiệp vụ Cảnh sát biển, Trạm trưởng Trạm Cảnh sát biển có quyền:
+        - [L5, tr.69] a) Phạt cảnh cáo;
+        - [L5, tr.69] b) Phạt tiền đến 10.000.000 đồng;
+        - [L5, tr.69] c) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm b khoản 3 Điều 4 của Nghị định này.
+      - [L4, tr.69] 4. Hải đội trưởng Hải đội Cảnh sát biển có quyền:
+        - [L5, tr.69] a) Phạt cảnh cáo;
+        - [L5, tr.69] b) Phạt tiền đến 25.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 của Chương II của Nghị
+        - [L5, tr.69] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với các
+        - [L5, tr.69] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+      - [L4, tr.69] 5. Hải đoàn trưởng Hải đoàn Cảnh sát biển; Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+        - [L5, tr.69] a) Phạt cảnh cáo;
+        - [L5, tr.69] b) Phạt tiền đến 50.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 Chương II của Nghị định
+        - [L5, tr.70] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 100.000.000 đồng đối với
+        - [L5, tr.70] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+      - [L4, tr.70] 6. Tư lệnh Vùng Cảnh sát biển, Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+        - [L5, tr.70] a) Phạt cảnh cáo;
+        - [L5, tr.70] b) Phạt tiền đến 100.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 Chương II của Nghị định
+        - [L5, tr.70] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn;
+        - [L5, tr.70] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.70] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+      - [L4, tr.70] 7. Tư lệnh Cảnh sát biển Việt Nam có quyền:
+        - [L5, tr.70] a) Phạt cảnh cáo;
+        - [L5, tr.70] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.70] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.70] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.70] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+  - [L2, tr.70] 50. Sửa đổi, bổ sung Điều 87 như sau:
+    - [L3, tr.70] “Điều 87. Thẩm quyền xử phạt của Thanh tra
+      - [L4, tr.70] 1. Thanh tra viên, người được giao thực hiện nhiệm vụ thanh tra chuyên ngành đang thi hành công vụ có
+        - [L5, tr.70] a) Phạt cảnh cáo;
+        - [L5, tr.70] b) Phạt tiền đến 500.000 đồng;
+        - [L5, tr.70] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 1.000.000 đồng;
+        - [L5, tr.70] d) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm b khoản 3 Điều 4 của Nghị định này.
+      - [L4, tr.70] 2. Chánh Thanh tra sở; Chi cục trưởng Chi cục Thú y vùng, Chi cục trưởng Chi cục Kiểm dịch động vật
+        - [L5, tr.71] a) Phạt cảnh cáo;
+        - [L5, tr.71] b) Phạt tiền đến 50.000.000 đồng;
+        - [L5, tr.71] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.71] d) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 100.000.000 đồng;
+        - [L5, tr.71] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.
+      - [L4, tr.71] 3. Cục trưởng Cục Quản lý chất lượng sản phẩm, hàng hóa thuộc Tổng cục Tiêu chuẩn Đo lường Chất
+        - [L5, tr.71] a) Phạt cảnh cáo;
+        - [L5, tr.71] b) Phạt tiền đến 140.000.000 đồng đối với các hành vi vi phạm quy định tại Mục 2 và Mục 9 Chương II của
+        - [L5, tr.71] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.71] d) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 280.000.000 đồng đối với
+        - [L5, tr.71] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.
+      - [L4, tr.71] 4. Chánh Thanh tra bộ, cơ quan ngang bộ, Tổng cục trưởng Tổng cục Tiêu chuẩn Đo lường Chất lượng,
+        - [L5, tr.71] a) Phạt cảnh cáo;
+        - [L5, tr.71] b) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+        - [L5, tr.71] c) Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn;
+        - [L5, tr.71] d) Tịch thu tang vật, phương tiện vi phạm hành chính;
+        - [L5, tr.72] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.
+      - [L4, tr.72] 5. Trưởng đoàn thanh tra chuyên ngành cấp bộ có thẩm quyền xử phạt theo quy định tại khoản 3 Điều này.
+  - [L2, tr.72] 51. Bổ sung Điều 87a vào sau Điều 87 như sau:
+    - [L3, tr.72] “Điều 87a. Thẩm quyền của Ủy ban Cạnh tranh Quốc gia
+      - [L4, tr.72] 1. Phạt cảnh cáo.
+      - [L4, tr.72] 2. Phạt tiền đến mức tối đa quy định tại Nghị định này.
+      - [L4, tr.72] 3. Tước quyền sử dụng giấy phép, chứng chỉ hành nghề có thời hạn hoặc đình chỉ hoạt động có thời hạn.
+      - [L4, tr.72] 4. Tịch thu tang vật, phương tiện vi phạm hành chính.
+      - [L4, tr.72] 5. Áp dụng biện pháp khắc phục hậu quả quy định tại Nghị định này.”.
+  - [L2, tr.72] 52. Bổ sung khoản 6a vào sau khoản 6 Điều 88 như sau:
+    - [L3, tr.72] “6a. Chủ tịch Ủy ban Cạnh tranh Quốc gia có thẩm quyền xử phạt vi phạm hành chính, áp dụng các biện
+- [L1, tr.72] Điều 4. Sửa đổi, bổ sung một số điều của Nghị định số 99/2020/NĐ-CP ngày 26 tháng 8 năm 2020 của
+  - [L2, tr.72] 1. Bổ sung điểm g vào sau điểm e khoản 3 Điều 4 như sau:
+    - [L3, tr.72] “g) Buộc nộp lại Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí bị tẩy xóa, sửa chữa làm thay
+  - [L2, tr.72] 2. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+    - [L3, tr.72] “Điều 4a. Vi phạm hành chính đã kết thúc, vi phạm hành chính đang được thực hiện và xử phạt vi
+      - [L4, tr.72] 1. Hành vi vi phạm đã kết thúc, hành vi vi phạm đang được thực hiện được xác định căn cứ quy định tại
+      - [L4, tr.72] 2. Xử phạt đối với trường hợp vi phạm hành chính nhiều lần:
+        - [L5, tr.72] a) Cá nhân, tổ chức vi phạm hành chính nhiều lần thì vi phạm nhiều lần được áp dụng là tình tiết tăng nặng
+        - [L5, tr.72] b) Đối với hành vi vi phạm hành chính được Nghị định này quy định xử phạt theo giá trị, số lượng, khối
+- [L1, tr.73] Điều 4b. Thi hành các hình thức xử phạt, biện pháp khắc phục hậu quả và xác định số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hà
+  - [L2, tr.73] 1. Việc thi hành quyết định xử phạt vi phạm hành chính thực hiện theo quy định tại Mục 2 Chương III Phần
+  - [L2, tr.73] 2. Biên bản, tài liệu, văn bản hoặc giấy tờ liên quan khác ghi nhận việc thi hành các hình thức xử phạt, biện
+    - [L3, tr.73] a) Số lợi bất hợp pháp thu được bằng tiền là toàn bộ số tiền tổ chức, cá nhân thu được từ hành vi vi phạm
+    - [L3, tr.73] b) Số lợi bất hợp pháp thu được bằng giấy tờ có giá là toàn bộ giấy tờ có giá mà tổ chức, cá nhân vi phạm
+    - [L3, tr.73] c) Số lợi bất hợp pháp là vật, tài sản khác mà tổ chức, cá nhân vi phạm thu được từ hành vi vi phạm hành
+  - [L2, tr.73] 3. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 20 như sau:
+    - [L3, tr.73] a) Bãi bỏ điểm a khoản 6;
+    - [L3, tr.73] b) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.73] “7. Biện pháp khắc phục hậu quả:
+        - [L5, tr.73] a) Buộc nộp lại Giấy phép kinh doanh xăng dầu bị tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ quan,
+        - [L5, tr.75] a) Bãi bỏ điểm a khoản 4;
+        - [L5, tr.75] b) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.75] “5. Biện pháp khắc phục hậu quả:
+        - [L5, tr.75] a) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm b, c khoản 2 và
+        - [L5, tr.75] b) Buộc nộp lại Giấy phép kinh doanh khi bị tẩy xóa, sửa chữa làm sai lệch nội dung cho cơ quan, người có
+      - [L4, tr.75] 11. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 43 như sau:
+        - [L5, tr.75] a) Sửa đổi điểm a khoản 3 như sau:
+        - [L5, tr.75] “a) Tịch thu tang vật vi phạm đối với hành vi vi phạm quy định tại điểm a khoản 1 và khoản 2 Điều này;”;
+        - [L5, tr.75] b) Sửa đổi, bổ sung khoản 4 như sau:
+      - [L4, tr.75] “4. Biện pháp khắc phục hậu quả:
+        - [L5, tr.75] a) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại điểm đ khoản 1 và
+        - [L5, tr.75] b) Buộc nộp lại Giấy phép kinh doanh khi bị tẩy xóa, sửa chữa làm sai lệch nội dung cho cơ quan, người có
+      - [L4, tr.75] 12. Bãi bỏ điểm b khoản 5 Điều 44, điểm b khoản 4 Điều 45, điểm b khoản 4 Điều 46, điểm a khoản 5 Điều
+      - [L4, tr.75] 13. Sửa đổi, bổ sung Điều 56 như sau:
+      - [L4, tr.75] “Điều 56. Thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân các cấp
+        - [L5, tr.75] 1. Chủ tịch Ủy ban nhân dân cấp xã có quyền:
+          - [L6, tr.75] a) Phạt tiền đến 5.000.000 đồng đối với cá nhân và phạt tiền đến 10.000.000 đồng đối với tổ chức;
+          - [L6, tr.75] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 10.000.000 đồng;
+          - [L6, tr.75] c) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm a khoản 3 Điều 4 của Nghị định này.
+        - [L5, tr.75] 2. Chủ tịch Ủy ban nhân dân cấp huyện có quyền:
+          - [L6, tr.75] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức đối
+          - [L6, tr.75] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.75] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.75] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, c, d, đ, e và g khoản 3 Điều 4 của
+        - [L5, tr.76] 3. Chủ tịch Ủy ban nhân dân cấp tỉnh có quyền:
+          - [L6, tr.76] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.76] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.76] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.76] d) Áp dụng các biện pháp khác phục hậu quả quy định tại Nghị định này.”.
+        - [L5, tr.76] 14. Sửa đổi, bổ sung Điều 57 như sau:
+      - [L4, tr.76] “Điều 57. Thẩm quyền xử phạt của Công an nhân dân
+        - [L5, tr.76] 1. Chiến sĩ Công an nhân dân đang thi hành công vụ có quyền phạt tiền đến 500.000 đồng đối với cá nhân
+        - [L5, tr.76] 2. Thủ trưởng đơn vị Cảnh sát cơ động cấp đại đội, Trưởng trạm, Đội trưởng của người được quy định tại
+        - [L5, tr.76] 3. Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+          - [L6, tr.76] a) Phạt tiền đến 2.500.000 đồng đối với cá nhân và phạt tiền đến 5.000.000 đồng đối với tổ chức;
+          - [L6, tr.76] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 5.000.000 đồng;
+          - [L6, tr.76] c) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm a khoản 3 Điều 4 của Nghị định này.
+        - [L5, tr.76] 4. Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục An ninh chính trị nội bộ; Trưởng phòng
+          - [L6, tr.76] a) Phạt tiền đến 25.000.000 đồng đối với cá nhân và phạt tiền đến 50.000.000 đồng đối với tổ chức đối với
+          - [L6, tr.76] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.76] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với các
+          - [L6, tr.77] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, đ, e và g khoản 3 Điều 4 của Nghị
+        - [L5, tr.77] 5. Giám đốc Công an cấp tỉnh có quyền:
+          - [L6, tr.77] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức đối
+          - [L6, tr.77] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.77] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.77] d) Quyết định áp dụng hình thức xử phạt trục xuất;
+          - [L6, tr.77] đ) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, d, đ, e và g khoản 3 Điều 4 của Nghị
+        - [L5, tr.77] 6. Cục trưởng Cục An ninh chính trị nội bộ, Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản
+          - [L6, tr.77] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.77] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.77] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.77] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, d, đ, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.77] 7. Cục trưởng Cục Quản lý xuất nhập cảnh có thẩm quyền xử phạt theo quy định tại khoản 6 Điều này và có
+        - [L5, tr.77] 15. Sửa đổi, bổ sung Điều 58 như sau:
+      - [L4, tr.77] “Điều 58. Thẩm quyền xử phạt của Bộ đội Biên phòng
+        - [L5, tr.77] 1. Chiến sĩ Bộ đội biên phòng đang thi hành công vụ có quyền phạt tiền đến 500.000 đồng đối với cá nhân
+        - [L5, tr.77] 2. Trạm trưởng, Đội trưởng của người được quy định tại khoản 1 Điều này có quyền phạt tiền đến 2.500.000
+        - [L5, tr.77] 3. Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+          - [L6, tr.78] a) Phạt tiền đến 10.000.000 đồng đối với cá nhân và phạt tiền đến 20.000.000 đồng đối với tổ chức;
+          - [L6, tr.78] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 20.000.000 đồng;
+          - [L6, tr.78] c) Áp dụng các biện pháp khắc phục hậu quả quy định tại điểm a khoản 3 Điều 4 của Nghị định này.
+        - [L5, tr.78] 4. Đồn trưởng Đồn biên phòng, Hải đội trưởng Hải đội biên phòng, Chỉ huy trưởng Ban Chỉ huy Biên
+          - [L6, tr.78] a) Phạt tiền đến 25.000.000 đồng đối với cá nhân và phạt tiền đến 50.000.000 đồng đối với tổ chức đối với
+          - [L6, tr.78] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với các
+          - [L6, tr.78] c) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.78] 5. Đoàn trưởng Đoàn đặc nhiệm phòng chống ma tuý và tội phạm thuộc Cục Phòng chống ma tuý và tội
+          - [L6, tr.78] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức đối
+          - [L6, tr.78] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 200.000.000 đồng đối với
+          - [L6, tr.78] c) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, b, d, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.78] 6. Chỉ huy trưởng Bộ đội Biên phòng cấp tỉnh; Hải đoàn trưởng Hải đoàn biên phòng, Cục trưởng Cục
+          - [L6, tr.78] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.78] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.78] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.78] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a, b, d, e và g khoản 3 Điều 4 của Nghị
+        - [L5, tr.78] 16. Sửa đổi, bổ sung Điều 59 như sau:
+      - [L4, tr.78] “Điều 59. Thẩm quyền xử phạt của Cảnh sát biển Việt Nam
+        - [L5, tr.78] 1. Cảnh sát viên Cảnh sát biển đang thi hành công vụ có quyền phạt tiền đến 1.500.000 đồng đối với cá
+        - [L5, tr.79] 2. Tổ trưởng Tổ nghiệp vụ Cảnh sát biển có quyền phạt tiền đến 5.000.000 đồng đối với cá nhân và phạt tiền
+        - [L5, tr.79] 3. Đội trưởng Đội nghiệp vụ Cảnh sát biển, Trạm trưởng Trạm Cảnh sát biển có quyền phạt tiền đến
+        - [L5, tr.79] 4. Hải đội trưởng Hải đội Cảnh sát biển có quyền:
+          - [L6, tr.79] a) Phạt tiền đến 25.000.000 đồng đối với cá nhân và phạt tiền đến 50.000.000 đồng đối với tổ chức đối với
+          - [L6, tr.79] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng đối với các
+          - [L6, tr.79] c) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.79] 5. Hải đoàn trưởng Hải đoàn Cảnh sát biển; Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+          - [L6, tr.79] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức đối với
+          - [L6, tr.79] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 100.000.000 đồng đối với
+          - [L6, tr.79] c) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.79] 6. Tư lệnh Vùng Cảnh sát biển, Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+          - [L6, tr.79] a) Phạt tiền đến 100.000.000 đồng đối với cá nhân và phạt tiền đến 200.000.000 đồng đối với tổ chức đối
+          - [L6, tr.79] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn;
+          - [L6, tr.79] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.79] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.79] 7. Tư lệnh Cảnh sát biển Việt Nam có quyền:
+          - [L6, tr.79] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.79] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.80] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.80] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm a, b, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.80] 17. Sửa đổi, bổ sung Điều 60 như sau:
+      - [L4, tr.80] “Điều 60. Thẩm quyền xử phạt của Hải quan
+        - [L5, tr.80] 1. Công chức Hải quan đang thi hành công vụ có quyền phạt tiền đến 500.000 đồng đối với cá nhân và phạt
+        - [L5, tr.80] 2. Đội trưởng, Tổ trưởng thuộc Chi cục Hải quan; Tổ trưởng thuộc Đội Kiểm soát thuộc Cục Hải quan tỉnh,
+        - [L5, tr.80] 3. Chi cục trưởng Chi cục Hải quan; Chi cục trưởng Chi cục Kiểm tra sau thông quan, Đội trưởng Đội kiểm
+          - [L6, tr.80] a) Phạt tiền đến 25.000.000 đồng đối với cá nhân và phạt tiền đến 50.000.000 đồng đối với tổ chức;
+          - [L6, tr.80] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;
+          - [L6, tr.80] c) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm b, d, đ, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.80] 4. Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+          - [L6, tr.80] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.80] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.80] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.80] d) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm b, d, đ, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.80] 5. Tổng cục trưởng Tổng cục Hải quan có quyền:
+          - [L6, tr.80] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.80] b) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.80] c) Áp dụng biện pháp khắc phục hậu quả quy định tại các điểm b, d, đ, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.80] 18. Sửa đổi, bổ sung Điều 61 như sau:
+      - [L4, tr.80] “Điều 61. Thẩm quyền xử phạt của Quản lý thị trường
+        - [L5, tr.81] 1. Kiểm soát viên thị trường đang thi hành công vụ có quyền phạt tiền đến 500.000 đồng đối với cá nhân và
+        - [L5, tr.81] 2. Đội trưởng Đội Quản lý thị trường, Trưởng phòng Nghiệp vụ thuộc Cục Nghiệp vụ quản lý thị trường có
+          - [L6, tr.81] a) Phạt tiền đến 25.000.000 đồng đối với cá nhân và phạt tiền đến 50.000.000 đồng đối với tổ chức;
+          - [L6, tr.81] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 50.000.000 đồng;
+          - [L6, tr.81] c) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm a, c, d, đ, e và g khoản 3 Điều 4 của Nghị định
+        - [L5, tr.81] 3. Cục trưởng Cục Quản lý thị trường cấp tỉnh, Cục trưởng Cục Nghiệp vụ quản lý thị trường thuộc Tổng
+          - [L6, tr.81] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.81] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.81] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.81] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.
+        - [L5, tr.81] 4. Tổng cục trưởng Tổng cục Quản lý thị trường có quyền:
+          - [L6, tr.81] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.81] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.81] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.81] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.”.
+        - [L5, tr.81] 19. Sửa đổi, bổ sung Điều 62 như sau:
+      - [L4, tr.81] “Điều 62. Thẩm quyền xử phạt của Thanh tra
+        - [L5, tr.81] 1. Thanh tra viên, người được giao thực hiện nhiệm vụ thanh tra chuyên ngành đang thi hành công vụ có
+          - [L6, tr.81] a) Phạt tiền đến 500.000 đồng đối với cá nhân và phạt tiền đến 1.000.000 đồng đối với tổ chức;
+          - [L6, tr.81] b) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá mức 1.000.000 đồng;
+          - [L6, tr.81] c) Áp dụng biện pháp khắc phục hậu quả quy định tại điểm a khoản 3 Điều 4 của Nghị định này.
+        - [L5, tr.81] 2. Chánh Thanh tra Sở Công Thương, Chánh Thanh tra Sở Khoa học và Công nghệ, Chánh Thanh tra Sở Tài
+          - [L6, tr.82] a) Phạt tiền đến 50.000.000 đồng đối với cá nhân và phạt tiền đến 100.000.000 đồng đối với tổ chức;
+          - [L6, tr.82] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.82] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 100.000.000 đồng;
+          - [L6, tr.82] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại Nghị định này.
+        - [L5, tr.82] 3. Cục trưởng Cục Quản lý chất lượng sản phẩm, hàng hóa thuộc Tổng cục Tiêu chuẩn Đo lường Chất
+          - [L6, tr.82] a) Phạt tiền đến 250.000.000 đồng đối với cá nhân và phạt tiền đến 500.000.000 đồng đối với tổ chức đối
+          - [L6, tr.82] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.82] c) Tịch thu tang vật, phương tiện vi phạm hành chính có giá trị không vượt quá 500.000.000 đồng đối với
+          - [L6, tr.82] d) Áp dụng biện pháp khắc phục hậu quả quy định tại Nghị định này.
+        - [L5, tr.82] 4. Chánh Thanh tra Bộ Công Thương, Chánh Thanh tra Bộ Khoa học và Công nghệ, Chánh Thanh tra Bộ
+          - [L6, tr.82] a) Phạt tiền đến mức tối đa quy định tại Nghị định này;
+          - [L6, tr.82] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+          - [L6, tr.82] c) Tịch thu tang vật, phương tiện vi phạm hành chính;
+          - [L6, tr.82] d) Áp dụng biện pháp khắc phục hậu quả quy định tại Nghị định này.
+        - [L5, tr.82] 5. Trưởng đoàn thanh tra chuyên ngành cấp bộ có thẩm quyền xử phạt theo quy định tại khoản 3 Điều này.
+        - [L5, tr.82] 20. Sửa đổi, bổ sung Điều 63 như sau:
+      - [L4, tr.82] “Điều 63. Phân định thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân, Công an nhân dân, Hải
+        - [L5, tr.82] 1. Phân định thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân các cấp:
+          - [L6, tr.83] a) Chủ tịch Ủy ban nhân dân cấp xã có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện pháp
+          - [L6, tr.83] b) Chủ tịch Ủy ban nhân dân cấp huyện có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+          - [L6, tr.83] c) Chủ tịch Ủy ban nhân dân cấp tỉnh có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện pháp
+        - [L5, tr.83] 2. Phân định thẩm quyền xử phạt của Công an nhân dân:
+          - [L6, tr.83] a) Chiến sĩ Công an nhân dân đang thi hành công vụ có thẩm quyền xử phạt vi phạm hành chính và áp dụng
+          - [L6, tr.83] b) Thủ trưởng đơn vị Cảnh sát cơ động cấp đại đội, Trưởng trạm, Đội trưởng của người được quy định tại
+          - [L6, tr.83] c) Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+          - [L6, tr.83] d) Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục An ninh chính trị nội bộ; Trưởng phòng
+          - [L6, tr.84] đ) Giám đốc Công an cấp tỉnh có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện pháp khắc
+          - [L6, tr.84] e) Cục trưởng Cục An ninh chính trị nội bộ, Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản
+          - [L6, tr.84] g) Cục trưởng Cục Quản lý xuất nhập cảnh có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+        - [L5, tr.84] 3. Phân định thẩm quyền xử phạt của Bộ đội biên phòng:
+          - [L6, tr.84] a) Chiến sĩ Bộ đội biên phòng đang thi hành công vụ có thẩm quyền xử phạt vi phạm hành chính đối với
+          - [L6, tr.84] b) Trạm trưởng, Đội trưởng của người được quy định tại điểm a khoản này có thẩm quyền xử phạt vi phạm
+    - [L3, tr.84] c) Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+    - [L3, tr.85] d) Đồn trưởng Đồn biên phòng, Hải đội trưởng Hải đội biên phòng, Chỉ huy trưởng Ban Chỉ huy biên phòng
+    - [L3, tr.85] đ) Đoàn trưởng Đoàn đặc nhiệm phòng chống ma túy và tội phạm thuộc Cục Phòng chống ma túy và tội
+    - [L3, tr.85] e) Chỉ huy trưởng Bộ đội biên phòng cấp tỉnh; Hải đoàn trưởng Hải đoàn biên phòng, Cục trưởng Cục
+  - [L2, tr.85] 4. Phân định thẩm quyền xử phạt của Cảnh sát biển Việt Nam:
+    - [L3, tr.85] a) Tổ trưởng Tổ nghiệp vụ Cảnh sát biển có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+    - [L3, tr.85] b) Đội trưởng Đội nghiệp vụ Cảnh sát biển, Trạm trưởng Trạm Cảnh sát biển có thẩm quyền xử phạt vi
+    - [L3, tr.85] c) Hải đội trưởng Hải đội Cảnh sát biển có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+    - [L3, tr.85] d) Hải đoàn trưởng Hải đoàn Cảnh sát biển, Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+    - [L3, tr.86] đ) Tư lệnh Vùng Cảnh sát biển Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+    - [L3, tr.86] e) Tư lệnh Cảnh sát biển Việt Nam có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện pháp
+  - [L2, tr.86] 5. Phân định thẩm quyền xử phạt của Hải quan:
+    - [L3, tr.86] a) Chỉ cục trưởng Chi cục Hải quan; Chỉ cục trưởng Chi cục Kiểm tra sau thông quan, Đội trưởng Đội kiểm
+    - [L3, tr.86] b) Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+    - [L3, tr.86] c) Tổng cục trưởng Tổng cục Hải quan có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+  - [L2, tr.87] 6. Phân định thẩm quyền xử phạt của Quản lý thị trường:
+    - [L3, tr.87] a) Kiểm soát viên thị trường đang thi hành công vụ có thẩm quyền xử phạt vi phạm hành chính và áp dụng
+    - [L3, tr.87] b) Đội trưởng Đội Quản lý thị trường, Trưởng phòng Nghiệp vụ thuộc Cục Nghiệp vụ quản lý thị trường có
+    - [L3, tr.87] c) Cục trưởng Cục Quản lý thị trường cấp tỉnh, Cục trưởng Cục nghiệp vụ quản lý thị trường,thuộc Tổng
+    - [L3, tr.87] d) Tổng cục trưởng Tổng cục Quản lý thị trường có thẩm quyền xử phạt vi phạm hành chính và áp dụng các
+  - [L2, tr.87] 7. Những người có thẩm quyền của Thanh tra chuyên ngành Công Thương, Thanh tra chuyên ngành về giá,
+- [L1, tr.87] Điều 5. Điều khoản chuyển tiếp
+- [L1, tr.87] Điều 6. Hiệu lực thi hành và trách nhiệm thi hành
+  - [L2, tr.88] 1. Nghị định này có hiệu lực từ ngày ký ban hành.
+  - [L2, tr.88] 2. Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ, Chủ tịch Ủy ban

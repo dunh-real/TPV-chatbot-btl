@@ -1,0 +1,5 @@
+Tài liệu 12 | Ground truth: unavailable | Evaluation type: so sánh mô tả
+
+rule_based: 397 tiêu đề, 81 trang | cấp {1: 15, 2: 234, 3: 148}
+    dạng: {'lệnh sửa đổi …như sau:': 210, 'khoản 1. 2.': 122, 'điểm a) b)': 50, 'Điều (văn bản này)': 15}
+

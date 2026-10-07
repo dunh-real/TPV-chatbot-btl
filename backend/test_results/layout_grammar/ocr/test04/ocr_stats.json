@@ -1,0 +1,80 @@
+{
+ "source": "raw_pdf/test04.pdf",
+ "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+ "dpi": 150,
+ "pages": 3,
+ "failed_pages": [],
+ "truncated_pages": [],
+ "retried_pages": [
+  2
+ ],
+ "still_collapsed_pages": [],
+ "lines": 96,
+ "invalid_lines": 0,
+ "in_tokens": 6657,
+ "out_tokens": 4991,
+ "wall_s": 23.3,
+ "per_page": [
+  {
+   "page": 1,
+   "ok": true,
+   "lines": 39,
+   "invalid_lines": 0,
+   "latency_s": 8.61,
+   "in_tokens": 2207,
+   "out_tokens": 1686,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 39,
+    "bands": 38,
+    "mean_shift": 8.94,
+    "max_shift": 32.95
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 2,
+   "ok": true,
+   "lines": 45,
+   "invalid_lines": 0,
+   "latency_s": 13.24,
+   "in_tokens": 2243,
+   "out_tokens": 2962,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 45,
+    "bands": 44,
+    "mean_shift": 3.83,
+    "max_shift": 7.64
+   },
+   "retry_config": {
+    "dpi": 150,
+    "hint": true,
+    "schema": false
+   },
+   "collapsed": false
+  },
+  {
+   "page": 3,
+   "ok": true,
+   "lines": 12,
+   "invalid_lines": 0,
+   "latency_s": 2.59,
+   "in_tokens": 2207,
+   "out_tokens": 343,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 12,
+    "bands": 9,
+    "mean_shift": 10.82,
+    "max_shift": 42.5
+   },
+   "retry_config": null,
+   "collapsed": false
+  }
+ ]
+}

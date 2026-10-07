@@ -1,0 +1,238 @@
+{
+ "source": "tests/fixtures/layout_pdf/test06.pdf",
+ "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+ "dpi": 150,
+ "pages": 10,
+ "failed_pages": [],
+ "truncated_pages": [],
+ "retried_pages": [
+  3,
+  4,
+  7,
+  8,
+  9,
+  10
+ ],
+ "still_collapsed_pages": [],
+ "lines": 414,
+ "invalid_lines": 0,
+ "in_tokens": 30171,
+ "out_tokens": 22130,
+ "wall_s": 52.5,
+ "per_page": [
+  {
+   "page": 1,
+   "ok": true,
+   "lines": 41,
+   "invalid_lines": 0,
+   "latency_s": 12.26,
+   "in_tokens": 2207,
+   "out_tokens": 1402,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 41,
+    "bands": 35,
+    "mean_shift": 7.05,
+    "max_shift": 20.27
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 2,
+   "ok": true,
+   "lines": 40,
+   "invalid_lines": 0,
+   "latency_s": 18.23,
+   "in_tokens": 2207,
+   "out_tokens": 2597,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 40,
+    "bands": 40,
+    "mean_shift": 4.41,
+    "max_shift": 7.41
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 3,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 22.81,
+   "in_tokens": 3820,
+   "out_tokens": 2810,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 43,
+    "mean_shift": 5.51,
+    "max_shift": 13.15
+   },
+   "retry_config": {
+    "dpi": 200,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  },
+  {
+   "page": 4,
+   "ok": true,
+   "lines": 38,
+   "invalid_lines": 0,
+   "latency_s": 21.01,
+   "in_tokens": 3820,
+   "out_tokens": 2533,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 38,
+    "bands": 40,
+    "mean_shift": 6.56,
+    "max_shift": 16.58
+   },
+   "retry_config": {
+    "dpi": 200,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  },
+  {
+   "page": 5,
+   "ok": true,
+   "lines": 44,
+   "invalid_lines": 0,
+   "latency_s": 14.76,
+   "in_tokens": 2207,
+   "out_tokens": 1818,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 44,
+    "bands": 48,
+    "mean_shift": 5.79,
+    "max_shift": 17.94
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 6,
+   "ok": true,
+   "lines": 39,
+   "invalid_lines": 0,
+   "latency_s": 13.1,
+   "in_tokens": 2207,
+   "out_tokens": 1540,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 39,
+    "bands": 39,
+    "mean_shift": 6.02,
+    "max_shift": 26.36
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 7,
+   "ok": true,
+   "lines": 43,
+   "invalid_lines": 0,
+   "latency_s": 23.41,
+   "in_tokens": 3820,
+   "out_tokens": 2927,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 43,
+    "bands": 45,
+    "mean_shift": 7.54,
+    "max_shift": 23.45
+   },
+   "retry_config": {
+    "dpi": 200,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  },
+  {
+   "page": 8,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 15.23,
+   "in_tokens": 3820,
+   "out_tokens": 1749,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 48,
+    "mean_shift": 3.73,
+    "max_shift": 10.65
+   },
+   "retry_config": {
+    "dpi": 200,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  },
+  {
+   "page": 9,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 23.13,
+   "in_tokens": 3820,
+   "out_tokens": 2865,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 50,
+    "mean_shift": 5.12,
+    "max_shift": 14.86
+   },
+   "retry_config": {
+    "dpi": 200,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  },
+  {
+   "page": 10,
+   "ok": true,
+   "lines": 43,
+   "invalid_lines": 0,
+   "latency_s": 8.43,
+   "in_tokens": 2243,
+   "out_tokens": 1889,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 43,
+    "bands": 44,
+    "mean_shift": 4.8,
+    "max_shift": 15.91
+   },
+   "retry_config": {
+    "dpi": 150,
+    "hint": true,
+    "schema": false
+   },
+   "collapsed": false
+  }
+ ]
+}

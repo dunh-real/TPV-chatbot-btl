@@ -1,0 +1,58 @@
+{
+ "lines": 374,
+ "dropped_junk_lines": 40,
+ "labels": {
+  "BODY": 221,
+  "OWN_CHUONG": 2,
+  "OWN_DIEU": 16,
+  "OWN_KHOAN": 48,
+  "OWN_DIEM": 82,
+  "OWN_MUC": 5
+ },
+ "headings": 153,
+ "by_kind": {
+  "OWN_CHUONG": 2,
+  "OWN_DIEU": 16,
+  "OWN_KHOAN": 48,
+  "OWN_DIEM": 82,
+  "OWN_MUC": 5
+ },
+ "by_level": {
+  "1": 2,
+  "2": 5,
+  "3": 16,
+  "4": 48,
+  "5": 82
+ },
+ "ambiguous_lines": 0,
+ "ambiguous": [],
+ "seconds": 0.08,
+ "beam": 64,
+ "own_articles": [
+  "Điều 1. Phạm vi điều chỉnh",
+  "Điều 2. Đối tượng áp dụng",
+  "Điều 3. Căn cứ tuyển dụng công chức",
+  "Điều 4. Điều kiện đăng ký dự tuyển công chức",
+  "Điều 5. Các trường hợp thực hiện xét tuyển công chức",
+  "Điều 6. Ưu tiên trong tuyển dụng công chức",
+  "Điều 7. Cơ quan có thẩm quyền tuyển dụng công chức",
+  "Điều 8. Hội đồng tuyển dụng công chức",
+  "Điều 9. Hình thức, nội dung, thời gian thi tuyển công chức",
+  "Điều 10. Xác định người trúng tuyển trong kỳ thi tuyển công chức",
+  "Điều 11. Hình thức, nội dung xét tuyển công chức",
+  "Điều 12. Xác định người trúng tuyển trong kỳ xét tuyển công chức",
+  "Điều 13. Đối tượng, tiêu chuẩn, điều kiện, hồ sơ tiếp nhận vào làm công chức",
+  "Điều 14. Thủ tục tiếp nhận",
+  "Điều 15. Thông báo tuyển dụng và tiếp nhận Phiếu đăng ký dự tuyển",
+  "Điều 16. Trình tự tổ chức thi tuyển, xét tuyển công chức"
+ ],
+ "own_groups": [
+  "Chương I QUY ĐỊNH CHUNG",
+  "Chương II TUYỂN DỤNG CÔNG CHỨC",
+  "Mục 1. CĂN CỨ, THẨM QUYỀN, HỘI ĐỒNG TUYỂN DỤNG",
+  "Mục 2. THI TUYỂN CÔNG CHỨC",
+  "Mục 3. XÉT TUYỂN CÔNG CHỨC",
+  "Mục 4. TIẾP NHẬN VÀO LÀM CÔNG CHỨC",
+  "Mục 5. TRÌNH TỰ, THỦ TỤC THI TUYỂN, XÉT TUYỂN CÔNG CHỨC"
+ ]
+}

@@ -1,0 +1,16 @@
+Điều của chính văn bản (đọc từ OCR theo quy tắc): 15 -> ['Điều 1 (tr.2)', 'Điều 4b (tr.3)', 'Điều 2 (tr.20)', 'Điều 33 (tr.47)', 'Điều 34 (tr.47)', 'Điều 35 (tr.48)', 'Điều 36 (tr.50)', 'Điều 37 (tr.50)', 'Điều 38 (tr.51)', 'Điều 3 (tr.52)', 'Điều 4b (tr.52)', 'Điều 4 (tr.72)', 'Điều 4b (tr.73)', 'Điều 5 (tr.87)', 'Điều 6 (tr.87)']
+
+[rule_based] 397 tiêu đề | đơn vị: {'Điều': 10, 'Khoản': 234, 'Điểm': 148, 'không phải đơn vị (nhiễu)': 5} | trong trích dẫn: {}
+   Điều của văn bản: 4/6 (ở cấp nông nhất: 10) | thiếu: ['Điều 2', 'Điều 5']
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: ['Điều 5, Điều 7, Điều 8, từ khoản 2 đến khoản 6 Điều 9, Điều 10, khoản ', 'Điều 28; Điều 29; từ khoản 1 đến khoản 5 Điều 30; Điều 31; khoản 1 Điề', 'Điều 26 Nghị định này trong phạm vi quản lý:', 'Điều 26 Nghị định này trong phạm vi quản lý:']
+
+[grammar] 1512 tiêu đề | đơn vị: {'Điều': 67, 'Khoản': 513, 'Điểm': 931, 'Chương': 1} | trong trích dẫn: {'Điểm': 69, 'Điều': 52, 'Khoản': 66, 'Chương': 1}
+   Điều của văn bản: 6/6 (ở cấp nông nhất: 7) | thiếu: []
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 191
+   cùng đơn vị khác cấp: {'Điều': {1: 7, 3: 2, 4: 6}, 'Khoản': {2: 127, 4: 248, 5: 72}, 'Điểm': {5: 534, 3: 141, 4: 16, 6: 171}}
+   Điều trích dẫn: 52 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+

@@ -1,0 +1,5 @@
+Tài liệu test06 | Ground truth: unavailable | Evaluation type: so sánh mô tả
+
+rule_based: 58 tiêu đề, 10 trang | cấp {1: 2, 2: 15, 3: 17, 4: 19, 5: 5}
+    dạng: {'điểm a) b)': 19, 'khoản 1. 2.': 17, 'Điều (văn bản này)': 15, 'Mục': 5, 'Chương': 2}
+

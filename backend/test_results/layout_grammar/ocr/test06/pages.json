@@ -1,0 +1,6332 @@
+{
+ "1": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     20,
+     21.2,
+     107,
+     28.5
+    ],
+    "bbox_qwen": [
+     20,
+     20,
+     107,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     532,
+     21.2,
+     597,
+     28.5
+    ],
+    "bbox_qwen": [
+     532,
+     20,
+     597,
+     30
+    ]
+   },
+   {
+    "text": "CHÍNH PHỦ",
+    "bbox": [
+     190,
+     53.9,
+     293,
+     64.8
+    ],
+    "bbox_qwen": [
+     190,
+     50,
+     293,
+     68
+    ]
+   },
+   {
+    "text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+    "bbox": [
+     426,
+     53.9,
+     844,
+     64.8
+    ],
+    "bbox_qwen": [
+     426,
+     50,
+     844,
+     68
+    ]
+   },
+   {
+    "text": "Độc lập - Tự do - Hạnh phúc",
+    "bbox": [
+     527,
+     70.9,
+     743,
+     84.8
+    ],
+    "bbox_qwen": [
+     527,
+     68,
+     743,
+     86
+    ]
+   },
+   {
+    "text": "Số: 170/2025/NĐ-CP",
+    "bbox": [
+     158,
+     112.7,
+     325,
+     126.7
+    ],
+    "bbox_qwen": [
+     158,
+     104,
+     325,
+     122
+    ]
+   },
+   {
+    "text": "Hà Nội, ngày 30 tháng 6 năm 2025",
+    "bbox": [
+     620,
+     112.7,
+     876,
+     126.7
+    ],
+    "bbox_qwen": [
+     620,
+     104,
+     876,
+     122
+    ]
+   },
+   {
+    "text": "Hiệu lực: Đã biết",
+    "bbox": [
+     456,
+     112.7,
+     562,
+     126.7
+    ],
+    "bbox_qwen": [
+     456,
+     104,
+     562,
+     122
+    ]
+   },
+   {
+    "text": "Tình trạng: Đã biết",
+    "bbox": [
+     446,
+     112.7,
+     552,
+     126.7
+    ],
+    "bbox_qwen": [
+     446,
+     114,
+     552,
+     132
+    ]
+   },
+   {
+    "text": "THƯ VIỆN PHÁP LUẬT",
+    "bbox": [
+     532,
+     112.7,
+     638,
+     126.7
+    ],
+    "bbox_qwen": [
+     532,
+     104,
+     638,
+     122
+    ]
+   },
+   {
+    "text": "ThuVienPhapLuat.vn",
+    "bbox": [
+     436,
+     112.7,
+     542,
+     126.7
+    ],
+    "bbox_qwen": [
+     436,
+     124,
+     542,
+     142
+    ]
+   },
+   {
+    "text": "2007 - 2010",
+    "bbox": [
+     426,
+     112.7,
+     462,
+     126.7
+    ],
+    "bbox_qwen": [
+     426,
+     114,
+     462,
+     132
+    ]
+   },
+   {
+    "text": "NGHỊ ĐỊNH",
+    "bbox": [
+     466,
+     169.7,
+     572,
+     180.0
+    ],
+    "bbox_qwen": [
+     466,
+     164,
+     572,
+     182
+    ]
+   },
+   {
+    "text": "QUY ĐỊNH VỀ TUYỂN DỤNG, SỬ DỤNG VÀ QUẢN LÝ CÔNG CHỨC",
+    "bbox": [
+     216,
+     198.8,
+     822,
+     201.2
+    ],
+    "bbox_qwen": [
+     216,
+     194,
+     822,
+     212
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Tổ chức Chính phủ ngày 18 tháng 02 năm 2025;",
+    "bbox": [
+     100,
+     231.5,
+     576,
+     247.9
+    ],
+    "bbox_qwen": [
+     100,
+     224,
+     576,
+     242
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Cán bộ, công chức ngày 24 tháng 6 năm 2025;",
+    "bbox": [
+     100,
+     266.7,
+     576,
+     280.0
+    ],
+    "bbox_qwen": [
+     100,
+     254,
+     576,
+     272
+    ]
+   },
+   {
+    "text": "Theo đề nghị của Bộ trưởng Bộ Nội vụ;",
+    "bbox": [
+     100,
+     298.8,
+     396,
+     312.1
+    ],
+    "bbox_qwen": [
+     100,
+     284,
+     396,
+     302
+    ]
+   },
+   {
+    "text": "Chính phủ ban hành Nghị định quy định về tuyển dụng, sử dụng và quản lý công chức.",
+    "bbox": [
+     100,
+     330.9,
+     826,
+     344.2
+    ],
+    "bbox_qwen": [
+     100,
+     314,
+     826,
+     332
+    ]
+   },
+   {
+    "text": "Chương I",
+    "bbox": [
+     100,
+     363.0,
+     186,
+     375.2
+    ],
+    "bbox_qwen": [
+     100,
+     344,
+     186,
+     362
+    ]
+   },
+   {
+    "text": "QUY ĐỊNH CHUNG",
+    "bbox": [
+     416,
+     395.2,
+     572,
+     408.5
+    ],
+    "bbox_qwen": [
+     416,
+     384,
+     572,
+     402
+    ]
+   },
+   {
+    "text": "Điều 1. Phạm vi điều chỉnh",
+    "bbox": [
+     100,
+     424.2,
+     316,
+     426.7
+    ],
+    "bbox_qwen": [
+     100,
+     414,
+     316,
+     432
+    ]
+   },
+   {
+    "text": "Nghị định này quy định về tuyển dụng, sử dụng và quản lý công chức.",
+    "bbox": [
+     100,
+     427.3,
+     646,
+     438.2
+    ],
+    "bbox_qwen": [
+     100,
+     444,
+     646,
+     462
+    ]
+   },
+   {
+    "text": "Điều 2. Đối tượng áp dụng",
+    "bbox": [
+     100,
+     460.0,
+     306,
+     473.3
+    ],
+    "bbox_qwen": [
+     100,
+     474,
+     306,
+     492
+    ]
+   },
+   {
+    "text": "1. Công chức quy định tại khoản 2 Điều 1 Luật Cán bộ, công chức.",
+    "bbox": [
+     100,
+     492.1,
+     576,
+     505.5
+    ],
+    "bbox_qwen": [
+     100,
+     504,
+     576,
+     522
+    ]
+   },
+   {
+    "text": "2. Cơ quan quản lý công chức, bao gồm:",
+    "bbox": [
+     100,
+     524.2,
+     406,
+     537.6
+    ],
+    "bbox_qwen": [
+     100,
+     534,
+     406,
+     552
+    ]
+   },
+   {
+    "text": "a) Văn phòng Trung ương Đảng, Cơ quan Ủy ban Kiểm tra Trung ương, các Ban Đảng Trung ương, Mặt",
+    "bbox": [
+     100,
+     556.4,
+     926,
+     570.3
+    ],
+    "bbox_qwen": [
+     100,
+     564,
+     926,
+     582
+    ]
+   },
+   {
+    "text": "trận Tổ quốc Việt Nam, các tổ chức chính trị - xã hội ở Trung ương;",
+    "bbox": [
+     100,
+     589.1,
+     626,
+     602.4
+    ],
+    "bbox_qwen": [
+     100,
+     584,
+     626,
+     602
+    ]
+   },
+   {
+    "text": "b) Tỉnh ủy, thành ủy trực thuộc Trung ương;",
+    "bbox": [
+     100,
+     605.5,
+     426,
+     619.4
+    ],
+    "bbox_qwen": [
+     100,
+     614,
+     426,
+     632
+    ]
+   },
+   {
+    "text": "c) Cơ quan của Quốc hội, Văn phòng Quốc hội, Văn phòng Chủ tịch nước, Kiểm toán Nhà nước;",
+    "bbox": [
+     100,
+     638.2,
+     856,
+     651.5
+    ],
+    "bbox_qwen": [
+     100,
+     644,
+     856,
+     662
+    ]
+   },
+   {
+    "text": "d) Tòa án nhân dân tối cao, Viện kiểm sát nhân dân tối cao;",
+    "bbox": [
+     100,
+     670.3,
+     566,
+     683.6
+    ],
+    "bbox_qwen": [
+     100,
+     674,
+     566,
+     692
+    ]
+   },
+   {
+    "text": "đ) Bộ, cơ quan ngang Bộ;",
+    "bbox": [
+     100,
+     702.4,
+     286,
+     712.7
+    ],
+    "bbox_qwen": [
+     100,
+     704,
+     286,
+     722
+    ]
+   },
+   {
+    "text": "e) Tổ chức do Chính phủ, Thủ tướng Chính phủ thành lập mà không phải là đơn vị sự nghiệp công lập",
+    "bbox": [
+     100,
+     735.2,
+     926,
+     748.5
+    ],
+    "bbox_qwen": [
+     100,
+     734,
+     926,
+     752
+    ]
+   },
+   {
+    "text": "(trong trường hợp được giao thẩm quyền quản lý công chức);",
+    "bbox": [
+     100,
+     766.7,
+     606,
+     780.6
+    ],
+    "bbox_qwen": [
+     100,
+     754,
+     606,
+     772
+    ]
+   },
+   {
+    "text": "g) Ủy ban nhân dân tỉnh, thành phố trực thuộc Trung ương.",
+    "bbox": [
+     100,
+     783.6,
+     566,
+     797.6
+    ],
+    "bbox_qwen": [
+     100,
+     784,
+     566,
+     802
+    ]
+   },
+   {
+    "text": "3. Cơ quan sử dụng công chức.",
+    "bbox": [
+     100,
+     816.4,
+     316,
+     829.7
+    ],
+    "bbox_qwen": [
+     100,
+     814,
+     316,
+     832
+    ]
+   },
+   {
+    "text": "4. Bộ trưởng Bộ Quốc phòng, Bộ trưởng Bộ Công an quyết định việc áp dụng quy định tại Nghị định này để",
+    "bbox": [
+     100,
+     848.5,
+     956,
+     861.8
+    ],
+    "bbox_qwen": [
+     100,
+     844,
+     956,
+     862
+    ]
+   },
+   {
+    "text": "thực hiện tuyển dụng, sử dụng và quản lý công chức làm việc trong các cơ quan, tổ chức, đơn vị thuộc phạm",
+    "bbox": [
+     100,
+     880.6,
+     956,
+     894.5
+    ],
+    "bbox_qwen": [
+     100,
+     864,
+     956,
+     882
+    ]
+   },
+   {
+    "text": "vi quản lý.",
+    "bbox": [
+     100,
+     897.6,
+     166,
+     911.5
+    ],
+    "bbox_qwen": [
+     100,
+     884,
+     166,
+     902
+    ]
+   },
+   {
+    "text": "Chương II",
+    "bbox": [
+     100,
+     918.2,
+     196,
+     925.5
+    ],
+    "bbox_qwen": [
+     100,
+     914,
+     196,
+     932
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     20,
+     972.7,
+     85,
+     980.0
+    ],
+    "bbox_qwen": [
+     20,
+     964,
+     85,
+     974
+    ]
+   },
+   {
+    "text": "1/46",
+    "bbox": [
+     940,
+     972.7,
+     965,
+     980.0
+    ],
+    "bbox_qwen": [
+     940,
+     964,
+     965,
+     974
+    ]
+   }
+  ],
+  "latency_s": 12.26,
+  "in_tokens": 2207,
+  "out_tokens": 1402,
+  "finish_reason": "stop"
+ },
+ "2": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     35,
+     21.2,
+     135,
+     28.5
+    ],
+    "bbox_qwen": [
+     35,
+     22,
+     135,
+     33
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     535,
+     21.2,
+     590,
+     28.5
+    ],
+    "bbox_qwen": [
+     535,
+     22,
+     590,
+     33
+    ]
+   },
+   {
+    "text": "TUYỂN DỤNG CÔNG CHỨC",
+    "bbox": [
+     386,
+     35.8,
+     612,
+     49.7
+    ],
+    "bbox_qwen": [
+     386,
+     37,
+     612,
+     54
+    ]
+   },
+   {
+    "text": "Mục 1. CĂN CỨ, THẨM QUYỀN, HỘI ĐỒNG TUYỂN DỤNG",
+    "bbox": [
+     96,
+     71.5,
+     627,
+     84.2
+    ],
+    "bbox_qwen": [
+     96,
+     69,
+     627,
+     87
+    ]
+   },
+   {
+    "text": "Điều 3. Căn cứ tuyển dụng công chức",
+    "bbox": [
+     96,
+     103.0,
+     363,
+     117.0
+    ],
+    "bbox_qwen": [
+     96,
+     102,
+     363,
+     119
+    ]
+   },
+   {
+    "text": "1. Việc tuyển dụng công chức phải căn cứ vào tỷ lệ công chức cần bố trí theo vị trí việc làm, chỉ tiêu biên",
+    "bbox": [
+     96,
+     135.8,
+     926,
+     149.1
+    ],
+    "bbox_qwen": [
+     96,
+     135,
+     926,
+     152
+    ]
+   },
+   {
+    "text": "chế và yêu cầu của vị trí việc làm cần tuyển.",
+    "bbox": [
+     96,
+     152.7,
+     340,
+     163.0
+    ],
+    "bbox_qwen": [
+     96,
+     152,
+     340,
+     169
+    ]
+   },
+   {
+    "text": "2. Cơ quan có thẩm quyền tuyển dụng xây dựng kế hoạch tuyển dụng, quyết định tuyển dụng theo thẩm",
+    "bbox": [
+     96,
+     184.8,
+     906,
+     198.2
+    ],
+    "bbox_qwen": [
+     96,
+     185,
+     906,
+     202
+    ]
+   },
+   {
+    "text": "quyền. Nội dung kế hoạch tuyển dụng bao gồm:",
+    "bbox": [
+     96,
+     201.8,
+     469,
+     215.8
+    ],
+    "bbox_qwen": [
+     96,
+     202,
+     469,
+     219
+    ]
+   },
+   {
+    "text": "a) Số lượng biên chế được giao và số lượng biên chế chưa sử dụng của cơ quan sử dụng công chức; yêu cầu",
+    "bbox": [
+     96,
+     233.9,
+     946,
+     247.9
+    ],
+    "bbox_qwen": [
+     96,
+     235,
+     946,
+     252
+    ]
+   },
+   {
+    "text": "của vị trí việc làm cần tuyển;",
+    "bbox": [
+     96,
+     251.5,
+     259,
+     261.8
+    ],
+    "bbox_qwen": [
+     96,
+     252,
+     259,
+     269
+    ]
+   },
+   {
+    "text": "b) Tỷ lệ công chức cần bố trí theo từng vị trí việc làm trong cơ quan sử dụng công chức và số lượng biên",
+    "bbox": [
+     96,
+     283.6,
+     926,
+     297.0
+    ],
+    "bbox_qwen": [
+     96,
+     285,
+     926,
+     302
+    ]
+   },
+   {
+    "text": "chế cần tuyển ở từng vị trí việc làm, trong đó xác định vị trí việc làm được tuyển dụng chung cho nhiều cơ",
+    "bbox": [
+     96,
+     300.6,
+     926,
+     313.9
+    ],
+    "bbox_qwen": [
+     96,
+     302,
+     926,
+     319
+    ]
+   },
+   {
+    "text": "quan sử dụng công chức khác nhau (nếu có);",
+    "bbox": [
+     96,
+     317.6,
+     359,
+     330.9
+    ],
+    "bbox_qwen": [
+     96,
+     319,
+     359,
+     336
+    ]
+   },
+   {
+    "text": "c) Số lượng biên chế, vị trí việc làm tuyển dụng riêng đối với người dân tộc thiểu số (nếu có), trong đó xác",
+    "bbox": [
+     96,
+     349.7,
+     926,
+     364.8
+    ],
+    "bbox_qwen": [
+     96,
+     352,
+     926,
+     369
+    ]
+   },
+   {
+    "text": "định cụ thể chỉ tiêu, cơ cấu dân tộc cần tuyển;",
+    "bbox": [
+     96,
+     366.7,
+     399,
+     377.6
+    ],
+    "bbox_qwen": [
+     96,
+     369,
+     399,
+     386
+    ]
+   },
+   {
+    "text": "d) Số lượng biên chế, vị trí việc làm thực hiện xét tuyển (nếu có) đối với từng nhóm đối tượng;",
+    "bbox": [
+     96,
+     398.8,
+     846,
+     412.7
+    ],
+    "bbox_qwen": [
+     96,
+     402,
+     846,
+     419
+    ]
+   },
+   {
+    "text": "đ) Tiêu chuẩn, điều kiện đăng ký dự tuyển ở từng vị trí việc làm.",
+    "bbox": [
+     96,
+     431.5,
+     569,
+     444.8
+    ],
+    "bbox_qwen": [
+     96,
+     435,
+     569,
+     452
+    ]
+   },
+   {
+    "text": "Trường hợp cơ quan có thẩm quyền tuyển dụng quyết định tổ chức thi ngoại ngữ thì xác định rõ ngoại ngữ",
+    "bbox": [
+     96,
+     463.6,
+     926,
+     477.0
+    ],
+    "bbox_qwen": [
+     96,
+     468,
+     926,
+     485
+    ]
+   },
+   {
+    "text": "thi, nội dung, hình thức, thời gian thi, xác định điểm số đạt kết quả;",
+    "bbox": [
+     96,
+     480.6,
+     579,
+     493.9
+    ],
+    "bbox_qwen": [
+     96,
+     485,
+     579,
+     502
+    ]
+   },
+   {
+    "text": "e) Phương thức tuyển dụng (thi tuyển, xét tuyển); trường hợp tổ chức thi tuyển thì xác định cụ thể hình thức",
+    "bbox": [
+     96,
+     512.7,
+     946,
+     526.7
+    ],
+    "bbox_qwen": [
+     96,
+     518,
+     946,
+     535
+    ]
+   },
+   {
+    "text": "tổ chức thi môn nghiệp vụ chuyên ngành;",
+    "bbox": [
+     96,
+     529.7,
+     419,
+     543.6
+    ],
+    "bbox_qwen": [
+     96,
+     535,
+     419,
+     552
+    ]
+   },
+   {
+    "text": "g) Các nội dung khác (nếu có).",
+    "bbox": [
+     96,
+     562.4,
+     309,
+     575.8
+    ],
+    "bbox_qwen": [
+     96,
+     568,
+     309,
+     585
+    ]
+   },
+   {
+    "text": "Điều 4. Điều kiện đăng ký dự tuyển công chức",
+    "bbox": [
+     96,
+     594.5,
+     479,
+     607.9
+    ],
+    "bbox_qwen": [
+     96,
+     598,
+     479,
+     615
+    ]
+   },
+   {
+    "text": "Điều kiện đăng ký dự tuyển công chức thực hiện theo quy định tại Điều 19 Luật Cán bộ, công chức. Cơ",
+    "bbox": [
+     96,
+     626.7,
+     926,
+     640.0
+    ],
+    "bbox_qwen": [
+     96,
+     631,
+     926,
+     648
+    ]
+   },
+   {
+    "text": "quan sử dụng công chức xác định các điều kiện theo yêu cầu của vị trí việc làm dự tuyển quy định tại điểm",
+    "bbox": [
+     96,
+     643.6,
+     926,
+     657.0
+    ],
+    "bbox_qwen": [
+     96,
+     648,
+     926,
+     665
+    ]
+   },
+   {
+    "text": "e khoản 1 Điều 19 Luật Cán bộ, công chức, nhưng không thấp hơn các tiêu chuẩn chung, không được trái",
+    "bbox": [
+     96,
+     660.6,
+     926,
+     674.5
+    ],
+    "bbox_qwen": [
+     96,
+     665,
+     926,
+     682
+    ]
+   },
+   {
+    "text": "với quy định của pháp luật, không được phân biệt loại hình đào tạo và báo cáo bằng văn bản để cơ quan",
+    "bbox": [
+     96,
+     677.6,
+     926,
+     691.5
+    ],
+    "bbox_qwen": [
+     96,
+     682,
+     926,
+     699
+    ]
+   },
+   {
+    "text": "quản lý công chức xem xét, quyết định.",
+    "bbox": [
+     96,
+     694.5,
+     319,
+     708.5
+    ],
+    "bbox_qwen": [
+     96,
+     699,
+     319,
+     716
+    ]
+   },
+   {
+    "text": "Điều 5. Các trường hợp thực hiện xét tuyển công chức",
+    "bbox": [
+     96,
+     727.3,
+     549,
+     740.6
+    ],
+    "bbox_qwen": [
+     96,
+     729,
+     549,
+     746
+    ]
+   },
+   {
+    "text": "Việc tuyển dụng công chức thông qua hình thức xét tuyển do cơ quan có thẩm quyền tuyển dụng quyết định",
+    "bbox": [
+     96,
+     759.4,
+     936,
+     772.7
+    ],
+    "bbox_qwen": [
+     96,
+     762,
+     936,
+     779
+    ]
+   },
+   {
+    "text": "và được thực hiện riêng đối với từng nhóm đối tượng sau đây:",
+    "bbox": [
+     96,
+     776.4,
+     549,
+     789.7
+    ],
+    "bbox_qwen": [
+     96,
+     779,
+     549,
+     796
+    ]
+   },
+   {
+    "text": "1. Người cam kết tình nguyện làm việc từ đủ 05 năm trở lên ở vùng có điều kiện kinh tế - xã hội đặc biệt",
+    "bbox": [
+     96,
+     808.5,
+     916,
+     822.4
+    ],
+    "bbox_qwen": [
+     96,
+     812,
+     916,
+     829
+    ]
+   },
+   {
+    "text": "khó khăn.",
+    "bbox": [
+     96,
+     825.5,
+     149,
+     836.4
+    ],
+    "bbox_qwen": [
+     96,
+     829,
+     149,
+     846
+    ]
+   },
+   {
+    "text": "2. Người học theo chế độ cử tuyển theo quy định của Luật Giáo dục, sau khi tốt nghiệp về công tác tại địa",
+    "bbox": [
+     96,
+     857.6,
+     926,
+     871.5
+    ],
+    "bbox_qwen": [
+     96,
+     862,
+     926,
+     879
+    ]
+   },
+   {
+    "text": "phương nơi cử đi học.",
+    "bbox": [
+     96,
+     875.2,
+     259,
+     888.5
+    ],
+    "bbox_qwen": [
+     96,
+     879,
+     259,
+     896
+    ]
+   },
+   {
+    "text": "3. Sinh viên tốt nghiệp xuất sắc, nhà khoa học trẻ tài năng thuộc đối tượng thực hiện chính sách thu hút,",
+    "bbox": [
+     96,
+     907.3,
+     926,
+     920.6
+    ],
+    "bbox_qwen": [
+     96,
+     912,
+     926,
+     929
+    ]
+   },
+   {
+    "text": "trọng dụng người có tài năng.",
+    "bbox": [
+     96,
+     924.2,
+     309,
+     937.6
+    ],
+    "bbox_qwen": [
+     96,
+     929,
+     309,
+     946
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     35,
+     972.7,
+     105,
+     980.0
+    ],
+    "bbox_qwen": [
+     35,
+     967,
+     105,
+     978
+    ]
+   },
+   {
+    "text": "2/46",
+    "bbox": [
+     930,
+     972.7,
+     963,
+     980.0
+    ],
+    "bbox_qwen": [
+     930,
+     967,
+     963,
+     978
+    ]
+   }
+  ],
+  "latency_s": 18.23,
+  "in_tokens": 2207,
+  "out_tokens": 2597,
+  "finish_reason": "stop"
+ },
+ "3": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     37,
+     21.2,
+     124,
+     28.5
+    ],
+    "bbox_qwen": [
+     37,
+     21,
+     124,
+     33
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     539,
+     21.2,
+     609,
+     28.5
+    ],
+    "bbox_qwen": [
+     539,
+     21,
+     609,
+     33
+    ]
+   },
+   {
+    "text": "Điều 6. Ưu tiên trong tuyển dụng công chức",
+    "bbox": [
+     96,
+     38.8,
+     461,
+     52.7
+    ],
+    "bbox_qwen": [
+     96,
+     39,
+     461,
+     57
+    ]
+   },
+   {
+    "text": "1. Đối tượng và điểm ưu tiên trong thi tuyển hoặc xét tuyển",
+    "bbox": [
+     96,
+     70.9,
+     564,
+     84.8
+    ],
+    "bbox_qwen": [
+     96,
+     68,
+     564,
+     86
+    ]
+   },
+   {
+    "text": "a) Anh hùng Lực lượng vũ trang, Anh hùng Lao động, thương binh, người hưởng chính sách như thương",
+    "bbox": [
+     96,
+     103.6,
+     913,
+     117.0
+    ],
+    "bbox_qwen": [
+     96,
+     100,
+     913,
+     118
+    ]
+   },
+   {
+    "text": "binh, thương binh loại B: Được cộng 7,5 điểm vào kết quả điểm thi hoặc xét nghiệp vụ chuyên ngành;",
+    "bbox": [
+     96,
+     120.6,
+     893,
+     133.9
+    ],
+    "bbox_qwen": [
+     96,
+     118,
+     893,
+     136
+    ]
+   },
+   {
+    "text": "b) Người dân tộc thiểu số, sĩ quan quân đội, sĩ quan công an, quân nhân chuyên nghiệp phục viên, người",
+    "bbox": [
+     96,
+     152.7,
+     913,
+     166.1
+    ],
+    "bbox_qwen": [
+     96,
+     150,
+     913,
+     168
+    ]
+   },
+   {
+    "text": "làm công tác cơ yếu chuyên ngành, học viên tốt nghiệp đào tạo sĩ quan dự bị, tốt nghiệp đào tạo chỉ huy",
+    "bbox": [
+     96,
+     169.7,
+     913,
+     183.0
+    ],
+    "bbox_qwen": [
+     96,
+     168,
+     913,
+     186
+    ]
+   },
+   {
+    "text": "trưởng Ban chỉ huy quân sự cấp xã ngành quân sự cơ sở được phong quân hàm sĩ quan dự bị đã đăng ký",
+    "bbox": [
+     96,
+     186.7,
+     913,
+     200.6
+    ],
+    "bbox_qwen": [
+     96,
+     186,
+     913,
+     204
+    ]
+   },
+   {
+    "text": "ngạch sĩ quan dự bị, con liệt sĩ, con thương binh, con bệnh binh, con của người hưởng chính sách như",
+    "bbox": [
+     96,
+     203.6,
+     913,
+     220.0
+    ],
+    "bbox_qwen": [
+     96,
+     204,
+     913,
+     222
+    ]
+   },
+   {
+    "text": "thương binh, con của thương binh loại B, con đẻ của người hoạt động kháng chiến bị nhiễm chất độc hóa",
+    "bbox": [
+     96,
+     220.6,
+     913,
+     234.5
+    ],
+    "bbox_qwen": [
+     96,
+     222,
+     913,
+     240
+    ]
+   },
+   {
+    "text": "học, con Anh hùng Lực lượng vũ trang, con Anh hùng Lao động: Được cộng 5 điểm vào kết quả điểm thi",
+    "bbox": [
+     96,
+     237.6,
+     913,
+     251.5
+    ],
+    "bbox_qwen": [
+     96,
+     240,
+     913,
+     258
+    ]
+   },
+   {
+    "text": "hoặc xét nghiệp vụ chuyên ngành;",
+    "bbox": [
+     96,
+     255.2,
+     280,
+     268.5
+    ],
+    "bbox_qwen": [
+     96,
+     258,
+     280,
+     276
+    ]
+   },
+   {
+    "text": "c) Người hoàn thành nghĩa vụ quân sự, nghĩa vụ tham gia công an nhân dân, đội viên thanh niên xung",
+    "bbox": [
+     96,
+     287.3,
+     895,
+     300.6
+    ],
+    "bbox_qwen": [
+     96,
+     290,
+     895,
+     308
+    ]
+   },
+   {
+    "text": "phong: Được cộng 2,5 điểm vào kết quả điểm thi hoặc xét nghiệp vụ chuyên ngành;",
+    "bbox": [
+     96,
+     304.2,
+     640,
+     318.2
+    ],
+    "bbox_qwen": [
+     96,
+     308,
+     640,
+     326
+    ]
+   },
+   {
+    "text": "d) Cán bộ công đoàn trưởng thành từ cơ sở, trong phong trào công nhân theo quy định của cấp có thẩm",
+    "bbox": [
+     96,
+     336.4,
+     901,
+     352.1
+    ],
+    "bbox_qwen": [
+     96,
+     340,
+     901,
+     358
+    ]
+   },
+   {
+    "text": "quyền: Được cộng 1,5 điểm vào kết quả điểm thi hoặc xét nghiệp vụ chuyên ngành.",
+    "bbox": [
+     96,
+     353.3,
+     670,
+     367.3
+    ],
+    "bbox_qwen": [
+     96,
+     358,
+     670,
+     376
+    ]
+   },
+   {
+    "text": "2. Trường hợp người dự thi tuyển hoặc dự xét tuyển thuộc nhiều diện ưu tiên quy định tại khoản 1 Điều này",
+    "bbox": [
+     96,
+     385.5,
+     941,
+     399.4
+    ],
+    "bbox_qwen": [
+     96,
+     390,
+     941,
+     408
+    ]
+   },
+   {
+    "text": "thì chỉ được cộng điểm ưu tiên cao nhất vào kết quả điểm thi hoặc xét nghiệp vụ chuyên ngành.",
+    "bbox": [
+     96,
+     403.0,
+     710,
+     416.4
+    ],
+    "bbox_qwen": [
+     96,
+     408,
+     710,
+     426
+    ]
+   },
+   {
+    "text": "Điều 7. Cơ quan có thẩm quyền tuyển dụng công chức",
+    "bbox": [
+     96,
+     435.2,
+     461,
+     448.5
+    ],
+    "bbox_qwen": [
+     96,
+     439,
+     461,
+     457
+    ]
+   },
+   {
+    "text": "1. Cơ quan quản lý công chức.",
+    "bbox": [
+     96,
+     467.3,
+     280,
+     481.2
+    ],
+    "bbox_qwen": [
+     96,
+     471,
+     280,
+     489
+    ]
+   },
+   {
+    "text": "2. Cơ quan sử dụng công chức được giao biên chế, kinh phí hoạt động, có con dấu và tài khoản riêng, được",
+    "bbox": [
+     96,
+     499.4,
+     933,
+     515.2
+    ],
+    "bbox_qwen": [
+     96,
+     503,
+     933,
+     521
+    ]
+   },
+   {
+    "text": "phân cấp thẩm quyền hoặc ủy quyền tuyển dụng công chức.",
+    "bbox": [
+     96,
+     516.4,
+     480,
+     530.3
+    ],
+    "bbox_qwen": [
+     96,
+     521,
+     480,
+     539
+    ]
+   },
+   {
+    "text": "Điều 8. Hội đồng tuyển dụng công chức",
+    "bbox": [
+     96,
+     548.5,
+     361,
+     562.4
+    ],
+    "bbox_qwen": [
+     96,
+     553,
+     361,
+     571
+    ]
+   },
+   {
+    "text": "1. Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định thành lập Hội đồng tuyển dụng đối với",
+    "bbox": [
+     96,
+     581.2,
+     925,
+     594.5
+    ],
+    "bbox_qwen": [
+     96,
+     585,
+     925,
+     603
+    ]
+   },
+   {
+    "text": "trường hợp thi tuyển hoặc xét tuyển. Hội đồng tuyển dụng có 05 hoặc 07 thành viên bao gồm:",
+    "bbox": [
+     96,
+     598.2,
+     830,
+     611.5
+    ],
+    "bbox_qwen": [
+     96,
+     603,
+     830,
+     621
+    ]
+   },
+   {
+    "text": "a) Chủ tịch Hội đồng là người đứng đầu hoặc cấp phó của người đứng đầu cơ quan có thẩm quyền tuyển",
+    "bbox": [
+     96,
+     630.3,
+     913,
+     644.2
+    ],
+    "bbox_qwen": [
+     96,
+     635,
+     913,
+     653
+    ]
+   },
+   {
+    "text": "dụng;",
+    "bbox": [
+     96,
+     658.8,
+     124,
+     661.2
+    ],
+    "bbox_qwen": [
+     96,
+     653,
+     124,
+     671
+    ]
+   },
+   {
+    "text": "b) Phó Chủ tịch Hội đồng là đại diện lãnh đạo bộ phận tham mưu về tổ chức cán bộ của cơ quan có thẩm",
+    "bbox": [
+     96,
+     679.4,
+     913,
+     693.3
+    ],
+    "bbox_qwen": [
+     96,
+     685,
+     913,
+     703
+    ]
+   },
+   {
+    "text": "quyền tuyển dụng;",
+    "bbox": [
+     96,
+     699.4,
+     208,
+     710.3
+    ],
+    "bbox_qwen": [
+     96,
+     703,
+     208,
+     721
+    ]
+   },
+   {
+    "text": "c) Ủy viên kiêm Thư ký Hội đồng là công chức thuộc bộ phận tham mưu về tổ chức cán bộ của cơ quan có",
+    "bbox": [
+     96,
+     729.1,
+     933,
+     742.4
+    ],
+    "bbox_qwen": [
+     96,
+     735,
+     933,
+     753
+    ]
+   },
+   {
+    "text": "thẩm quyền tuyển dụng;",
+    "bbox": [
+     96,
+     746.1,
+     280,
+     759.4
+    ],
+    "bbox_qwen": [
+     96,
+     753,
+     280,
+     771
+    ]
+   },
+   {
+    "text": "d) Các ủy viên khác là đại diện lãnh đạo của một số bộ phận chuyên môn, nghiệp vụ có liên quan đến việc",
+    "bbox": [
+     96,
+     778.2,
+     927,
+     793.9
+    ],
+    "bbox_qwen": [
+     96,
+     785,
+     927,
+     803
+    ]
+   },
+   {
+    "text": "tổ chức tuyển dụng do người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định.",
+    "bbox": [
+     96,
+     795.2,
+     670,
+     809.1
+    ],
+    "bbox_qwen": [
+     96,
+     803,
+     670,
+     821
+    ]
+   },
+   {
+    "text": "2. Hội đồng tuyển dụng làm việc theo nguyên tắc tập thể, quyết định theo đa số; trường hợp biểu quyết",
+    "bbox": [
+     96,
+     827.3,
+     901,
+     843.6
+    ],
+    "bbox_qwen": [
+     96,
+     835,
+     901,
+     853
+    ]
+   },
+   {
+    "text": "ngang nhau thì thực hiện theo ý kiến mà Chủ tịch Hội đồng tuyển dụng đã biểu quyết. Hội đồng tuyển dụng",
+    "bbox": [
+     96,
+     844.2,
+     941,
+     858.2
+    ],
+    "bbox_qwen": [
+     96,
+     853,
+     941,
+     871
+    ]
+   },
+   {
+    "text": "có nhiệm vụ, quyền hạn sau đây:",
+    "bbox": [
+     96,
+     861.8,
+     280,
+     875.2
+    ],
+    "bbox_qwen": [
+     96,
+     871,
+     280,
+     889
+    ]
+   },
+   {
+    "text": "a) Căn cứ vào hình thức tuyển dụng và yêu cầu công việc quyết định việc thành lập bộ phận giúp việc phù",
+    "bbox": [
+     96,
+     893.9,
+     927,
+     907.3
+    ],
+    "bbox_qwen": [
+     96,
+     903,
+     927,
+     921
+    ]
+   },
+   {
+    "text": "hợp trong số các bộ phận sau: Ban kiểm tra Phiếu đăng ký dự tuyển, Ban đề thi, Ban coi thi, Ban phách, Ban",
+    "bbox": [
+     96,
+     910.9,
+     947,
+     927.3
+    ],
+    "bbox_qwen": [
+     96,
+     921,
+     947,
+     939
+    ]
+   },
+   {
+    "text": "chấm thi, Ban chấm phúc khảo (nếu có), Ban phỏng vấn (nếu có); Ban vấn đáp; Ban chấm đề án; quyết định",
+    "bbox": [
+     96,
+     927.9,
+     947,
+     941.8
+    ],
+    "bbox_qwen": [
+     96,
+     939,
+     947,
+     957
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     37,
+     972.7,
+     107,
+     980.0
+    ],
+    "bbox_qwen": [
+     37,
+     971,
+     107,
+     983
+    ]
+   },
+   {
+    "text": "3/46",
+    "bbox": [
+     933,
+     972.7,
+     961,
+     980.0
+    ],
+    "bbox_qwen": [
+     933,
+     971,
+     961,
+     983
+    ]
+   }
+  ],
+  "latency_s": 22.81,
+  "in_tokens": 3820,
+  "out_tokens": 2810,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 200,
+   "hint": true,
+   "schema": true
+  }
+ },
+ "4": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     32,
+     21.2,
+     124,
+     28.5
+    ],
+    "bbox_qwen": [
+     32,
+     21,
+     124,
+     33
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     530,
+     21.2,
+     586,
+     28.5
+    ],
+    "bbox_qwen": [
+     530,
+     21,
+     586,
+     33
+    ]
+   },
+   {
+    "text": "số lượng thành viên tham gia các ban phù hợp với số lượng thí sinh dự thi. Trường hợp cần thiết, Chủ tịch",
+    "bbox": [
+     107,
+     38.8,
+     926,
+     53.9
+    ],
+    "bbox_qwen": [
+     107,
+     36,
+     926,
+     52
+    ]
+   },
+   {
+    "text": "Hội đồng tuyển dụng thành lập Tổ thư ký giúp việc;",
+    "bbox": [
+     107,
+     55.8,
+     471,
+     69.7
+    ],
+    "bbox_qwen": [
+     107,
+     54,
+     471,
+     70
+    ]
+   },
+   {
+    "text": "b) Tổ chức thu phí dự tuyển và sử dụng phí dự tuyển theo quy định;",
+    "bbox": [
+     107,
+     88.5,
+     619,
+     101.8
+    ],
+    "bbox_qwen": [
+     107,
+     85,
+     619,
+     101
+    ]
+   },
+   {
+    "text": "c) Tổ chức việc kiểm tra Phiếu đăng ký dự tuyển, tổ chức thi, chấm thi, chấm phúc khảo theo quy chế;",
+    "bbox": [
+     107,
+     120.6,
+     896,
+     133.9
+    ],
+    "bbox_qwen": [
+     107,
+     116,
+     896,
+     132
+    ]
+   },
+   {
+    "text": "d) Báo cáo người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định công nhận kết quả thi tuyển, xét",
+    "bbox": [
+     107,
+     152.7,
+     933,
+     166.1
+    ],
+    "bbox_qwen": [
+     107,
+     147,
+     933,
+     163
+    ]
+   },
+   {
+    "text": "tuyển;",
+    "bbox": [
+     107,
+     173.3,
+     145,
+     180.0
+    ],
+    "bbox_qwen": [
+     107,
+     165,
+     145,
+     181
+    ]
+   },
+   {
+    "text": "đ) Giải quyết khiếu nại, tố cáo trong quá trình tổ chức thi tuyển, xét tuyển;",
+    "bbox": [
+     107,
+     201.8,
+     679,
+     215.8
+    ],
+    "bbox_qwen": [
+     107,
+     196,
+     679,
+     212
+    ]
+   },
+   {
+    "text": "e) Hội đồng tuyển dụng tự giải thể sau khi hoàn thành nhiệm vụ.",
+    "bbox": [
+     107,
+     233.9,
+     560,
+     247.9
+    ],
+    "bbox_qwen": [
+     107,
+     227,
+     560,
+     243
+    ]
+   },
+   {
+    "text": "3. Không bố trí những người có quan hệ vợ, chồng, cha đẻ, mẹ đẻ; cha, mẹ (vợ hoặc chồng), cha nuôi, mẹ",
+    "bbox": [
+     107,
+     266.7,
+     942,
+     280.0
+    ],
+    "bbox_qwen": [
+     107,
+     258,
+     942,
+     274
+    ]
+   },
+   {
+    "text": "nuôi; con đẻ, con nuôi; anh, chị, em ruột; cô, dì, chú, bác, cậu ruột; anh, chị, em ruột của vợ hoặc chồng; vợ",
+    "bbox": [
+     107,
+     283.6,
+     942,
+     297.0
+    ],
+    "bbox_qwen": [
+     107,
+     276,
+     942,
+     292
+    ]
+   },
+   {
+    "text": "hoặc chồng của anh, chị, em ruột của người dự tuyển; những người đang trong thời hạn xử lý kỷ luật hoặc",
+    "bbox": [
+     107,
+     300.6,
+     942,
+     313.9
+    ],
+    "bbox_qwen": [
+     107,
+     293,
+     942,
+     309
+    ]
+   },
+   {
+    "text": "đang thi hành quyết định kỷ luật; những người đã bị xử lý về hành vi tham nhũng, tiêu cực; người đã bị xử",
+    "bbox": [
+     107,
+     317.6,
+     942,
+     330.9
+    ],
+    "bbox_qwen": [
+     107,
+     310,
+     942,
+     326
+    ]
+   },
+   {
+    "text": "lý kỷ luật về các hành vi vi phạm trong công tác tổ chức cán bộ làm thành viên Hội đồng tuyển dụng, thành",
+    "bbox": [
+     107,
+     334.5,
+     933,
+     348.5
+    ],
+    "bbox_qwen": [
+     107,
+     327,
+     933,
+     343
+    ]
+   },
+   {
+    "text": "viên các bộ phận giúp việc của Hội đồng tuyển dụng.",
+    "bbox": [
+     107,
+     351.5,
+     511,
+     365.5
+    ],
+    "bbox_qwen": [
+     107,
+     344,
+     511,
+     360
+    ]
+   },
+   {
+    "text": "Mục 2. THI TUYỂN CÔNG CHỨC",
+    "bbox": [
+     107,
+     380.6,
+     394,
+     383.6
+    ],
+    "bbox_qwen": [
+     107,
+     375,
+     394,
+     393
+    ]
+   },
+   {
+    "text": "Điều 9. Hình thức, nội dung, thời gian thi tuyển công chức",
+    "bbox": [
+     107,
+     416.4,
+     580,
+     429.7
+    ],
+    "bbox_qwen": [
+     107,
+     409,
+     580,
+     427
+    ]
+   },
+   {
+    "text": "1. Thi tuyển công chức vào vị trí việc làm xếp ngạch nhân viên: Thi nghiệp vụ chuyên ngành",
+    "bbox": [
+     107,
+     448.5,
+     823,
+     461.8
+    ],
+    "bbox_qwen": [
+     107,
+     443,
+     823,
+     459
+    ]
+   },
+   {
+    "text": "a) Hình thức thi: Vấn đáp hoặc thực hành.",
+    "bbox": [
+     107,
+     480.6,
+     360,
+     490.9
+    ],
+    "bbox_qwen": [
+     107,
+     474,
+     360,
+     490
+    ]
+   },
+   {
+    "text": "b) Nội dung thi:",
+    "bbox": [
+     107,
+     512.7,
+     219,
+     526.7
+    ],
+    "bbox_qwen": [
+     107,
+     505,
+     219,
+     521
+    ]
+   },
+   {
+    "text": "Đối với thi vấn đáp: Đánh giá năng lực tư duy, năng lực ứng dụng kiến thức vào thực tiễn; năng lực triển",
+    "bbox": [
+     107,
+     541.8,
+     913,
+     544.2
+    ],
+    "bbox_qwen": [
+     107,
+     536,
+     913,
+     552
+    ]
+   },
+   {
+    "text": "khai các nhiệm vụ, công việc của vị trí việc làm dự tuyển; hiểu biết của thí sinh về vị trí việc làm dự tuyển.",
+    "bbox": [
+     107,
+     561.8,
+     896,
+     575.8
+    ],
+    "bbox_qwen": [
+     107,
+     554,
+     896,
+     570
+    ]
+   },
+   {
+    "text": "Đối với thi thực hành: Thực hiện công việc cụ thể theo yêu cầu của vị trí việc làm.",
+    "bbox": [
+     107,
+     594.5,
+     739,
+     604.8
+    ],
+    "bbox_qwen": [
+     107,
+     585,
+     739,
+     601
+    ]
+   },
+   {
+    "text": "Thang điểm bài thi (vấn đáp hoặc thực hành): 100 điểm.",
+    "bbox": [
+     107,
+     626.7,
+     533,
+     640.0
+    ],
+    "bbox_qwen": [
+     107,
+     616,
+     533,
+     632
+    ]
+   },
+   {
+    "text": "c) Thời gian thi 30 phút.",
+    "bbox": [
+     107,
+     658.8,
+     282,
+     672.1
+    ],
+    "bbox_qwen": [
+     107,
+     647,
+     282,
+     663
+    ]
+   },
+   {
+    "text": "2. Thi tuyển công chức vào vị trí việc làm xếp ngạch chuyên viên và tương đương, cán sự và tương đương",
+    "bbox": [
+     107,
+     690.9,
+     926,
+     704.8
+    ],
+    "bbox_qwen": [
+     107,
+     678,
+     926,
+     694
+    ]
+   },
+   {
+    "text": "Thực hiện theo 2 vòng thi như sau:",
+    "bbox": [
+     107,
+     723.0,
+     377,
+     733.9
+    ],
+    "bbox_qwen": [
+     107,
+     709,
+     377,
+     725
+    ]
+   },
+   {
+    "text": "a) Vòng 1: Môn thi điều kiện kiểm tra kiến thức, năng lực chung",
+    "bbox": [
+     107,
+     734.5,
+     597,
+     737.0
+    ],
+    "bbox_qwen": [
+     107,
+     740,
+     597,
+     756
+    ]
+   },
+   {
+    "text": "Hình thức thi: Thi trắc nghiệm trên máy vi tính.",
+    "bbox": [
+     107,
+     755.8,
+     466,
+     769.1
+    ],
+    "bbox_qwen": [
+     107,
+     771,
+     466,
+     787
+    ]
+   },
+   {
+    "text": "Nội dung thi: 60 câu hỏi đánh giá năng lực tư duy, năng lực ứng dụng kiến thức vào thực tiễn; hiểu biết",
+    "bbox": [
+     107,
+     787.9,
+     906,
+     801.2
+    ],
+    "bbox_qwen": [
+     107,
+     802,
+     906,
+     818
+    ]
+   },
+   {
+    "text": "chung, cơ bản của thí sinh về hệ thống chính trị; quản lý hành chính nhà nước; quyền, nghĩa vụ của công",
+    "bbox": [
+     107,
+     820.0,
+     913,
+     833.3
+    ],
+    "bbox_qwen": [
+     107,
+     820,
+     913,
+     836
+    ]
+   },
+   {
+    "text": "chức, đạo đức công vụ; kiến thức về xã hội, văn hóa, lịch sử.",
+    "bbox": [
+     107,
+     837.0,
+     571,
+     850.3
+    ],
+    "bbox_qwen": [
+     107,
+     837,
+     571,
+     853
+    ]
+   },
+   {
+    "text": "Thời gian thi: 60 phút.",
+    "bbox": [
+     107,
+     853.9,
+     254,
+     867.9
+    ],
+    "bbox_qwen": [
+     107,
+     868,
+     254,
+     884
+    ]
+   },
+   {
+    "text": "Người dự tuyển trả lời đúng từ 50% số câu hỏi trở lên thì được tham dự vòng 2.",
+    "bbox": [
+     107,
+     886.1,
+     718,
+     900.0
+    ],
+    "bbox_qwen": [
+     107,
+     899,
+     718,
+     915
+    ]
+   },
+   {
+    "text": "b) Vòng 2: Thi nghiệp vụ chuyên ngành",
+    "bbox": [
+     107,
+     918.8,
+     406,
+     932.1
+    ],
+    "bbox_qwen": [
+     107,
+     930,
+     406,
+     946
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     32,
+     972.7,
+     88,
+     980.0
+    ],
+    "bbox_qwen": [
+     32,
+     965,
+     88,
+     977
+    ]
+   },
+   {
+    "text": "4/46",
+    "bbox": [
+     933,
+     972.7,
+     960,
+     980.0
+    ],
+    "bbox_qwen": [
+     933,
+     965,
+     960,
+     977
+    ]
+   }
+  ],
+  "latency_s": 21.01,
+  "in_tokens": 3820,
+  "out_tokens": 2533,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 200,
+   "hint": true,
+   "schema": true
+  }
+ },
+ "5": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     38,
+     21.2,
+     133,
+     28.5
+    ],
+    "bbox_qwen": [
+     38,
+     20,
+     133,
+     31
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     540,
+     21.2,
+     607,
+     28.5
+    ],
+    "bbox_qwen": [
+     540,
+     20,
+     607,
+     31
+    ]
+   },
+   {
+    "text": "Hình thức thi: Viết hoặc kết hợp viết và phỏng vấn.",
+    "bbox": [
+     97,
+     38.8,
+     540,
+     52.1
+    ],
+    "bbox_qwen": [
+     97,
+     36,
+     540,
+     54
+    ]
+   },
+   {
+    "text": "Nội dung thi:",
+    "bbox": [
+     97,
+     70.9,
+     180,
+     81.8
+    ],
+    "bbox_qwen": [
+     97,
+     68,
+     180,
+     84
+    ]
+   },
+   {
+    "text": "Đối với bài thi viết: Nội dung thi kiểm tra kiến thức về chủ trương, đường lối của Đảng, chính sách, pháp",
+    "bbox": [
+     97,
+     103.6,
+     901,
+     117.0
+    ],
+    "bbox_qwen": [
+     97,
+     94,
+     901,
+     110
+    ]
+   },
+   {
+    "text": "luật về ngành, lĩnh vực tuyển dụng; năng lực chuyên môn, nghiệp vụ; kỹ năng thực thi công vụ của người",
+    "bbox": [
+     97,
+     120.6,
+     901,
+     133.9
+    ],
+    "bbox_qwen": [
+     97,
+     112,
+     901,
+     128
+    ]
+   },
+   {
+    "text": "dự tuyển theo yêu cầu của vị trí việc làm cần tuyển. Thời gian thi 180 phút (không kể thời gian chép đề).",
+    "bbox": [
+     97,
+     137.6,
+     750,
+     150.9
+    ],
+    "bbox_qwen": [
+     97,
+     130,
+     750,
+     146
+    ]
+   },
+   {
+    "text": "Căn cứ vào đặc thù của cơ quan, tổ chức, đơn vị, cơ quan có thẩm quyền tuyển dụng có thể tổ chức thi viết",
+    "bbox": [
+     97,
+     154.5,
+     901,
+     167.9
+    ],
+    "bbox_qwen": [
+     97,
+     148,
+     901,
+     164
+    ]
+   },
+   {
+    "text": "bằng hình thức thi trên máy vi tính, đồng thời quyết định số lượng câu hỏi phù hợp, bảo đảm số lượng tối",
+    "bbox": [
+     97,
+     171.5,
+     901,
+     187.3
+    ],
+    "bbox_qwen": [
+     97,
+     166,
+     901,
+     182
+    ]
+   },
+   {
+    "text": "thiểu 60 câu, tối đa 120 câu (theo hình thức câu hỏi trắc nghiệm). Thời gian thi tương ứng với tổng số câu",
+    "bbox": [
+     97,
+     188.5,
+     901,
+     203.6
+    ],
+    "bbox_qwen": [
+     97,
+     184,
+     901,
+     200
+    ]
+   },
+   {
+    "text": "hỏi, bảo đảm tối thiểu là 90 phút, tối đa là 180 phút.",
+    "bbox": [
+     97,
+     205.5,
+     400,
+     217.6
+    ],
+    "bbox_qwen": [
+     97,
+     202,
+     400,
+     218
+    ]
+   },
+   {
+    "text": "Đối với bài thi phỏng vấn: Nội dung thi phỏng vấn tập trung đánh giá về năng lực: tư duy, giao tiếp, phán",
+    "bbox": [
+     97,
+     237.6,
+     901,
+     251.5
+    ],
+    "bbox_qwen": [
+     97,
+     236,
+     901,
+     252
+    ]
+   },
+   {
+    "text": "đoán tình huống, học hỏi, phát triển, diễn đạt, thái độ, tính cách và các năng lực khác theo yêu cầu của vị trí",
+    "bbox": [
+     97,
+     255.2,
+     901,
+     268.5
+    ],
+    "bbox_qwen": [
+     97,
+     254,
+     901,
+     270
+    ]
+   },
+   {
+    "text": "việc làm. Thời gian thi tối đa 30 phút.",
+    "bbox": [
+     97,
+     272.1,
+     320,
+     285.5
+    ],
+    "bbox_qwen": [
+     97,
+     272,
+     320,
+     288
+    ]
+   },
+   {
+    "text": "Thang điểm bài thi viết: 100 điểm; bài thi phỏng vấn: 100 điểm.",
+    "bbox": [
+     97,
+     304.2,
+     595,
+     318.2
+    ],
+    "bbox_qwen": [
+     97,
+     306,
+     595,
+     322
+    ]
+   },
+   {
+    "text": "Trường hợp thi viết bằng hình thức thi trên máy vi tính thì Hội đồng tuyển dụng (Ban đề thi) xây dựng các",
+    "bbox": [
+     97,
+     336.4,
+     901,
+     350.3
+    ],
+    "bbox_qwen": [
+     97,
+     340,
+     901,
+     356
+    ]
+   },
+   {
+    "text": "nhóm câu hỏi có mức độ phức tạp khác nhau và quyết định mức điểm tương ứng với từng câu hỏi.",
+    "bbox": [
+     97,
+     353.3,
+     700,
+     367.3
+    ],
+    "bbox_qwen": [
+     97,
+     358,
+     700,
+     374
+    ]
+   },
+   {
+    "text": "Trường hợp lựa chọn hình thức thi kết hợp viết và phỏng vấn thì tổng điểm bài thi viết và bài thi phỏng vấn",
+    "bbox": [
+     97,
+     385.5,
+     901,
+     399.4
+    ],
+    "bbox_qwen": [
+     97,
+     392,
+     901,
+     408
+    ]
+   },
+   {
+    "text": "được quy đổi về thang điểm 100 theo tỷ lệ điểm của bài thi viết là 70%, của bài thi phỏng vấn là 30% (được",
+    "bbox": [
+     97,
+     403.0,
+     901,
+     416.4
+    ],
+    "bbox_qwen": [
+     97,
+     410,
+     901,
+     426
+    ]
+   },
+   {
+    "text": "làm tròn đến 02 chữ số thập phân).",
+    "bbox": [
+     97,
+     420.0,
+     270,
+     433.3
+    ],
+    "bbox_qwen": [
+     97,
+     428,
+     270,
+     444
+    ]
+   },
+   {
+    "text": "3. Thi tuyển vào vị trí việc làm xếp ngạch chuyên viên chính và tương đương: Thi nghiệp vụ chuyên ngành",
+    "bbox": [
+     97,
+     469.1,
+     935,
+     480.0
+    ],
+    "bbox_qwen": [
+     97,
+     462,
+     935,
+     478
+    ]
+   },
+   {
+    "text": "như quy định tại điểm b khoản 2 Điều này.",
+    "bbox": [
+     97,
+     480.6,
+     425,
+     483.0
+    ],
+    "bbox_qwen": [
+     97,
+     480,
+     425,
+     496
+    ]
+   },
+   {
+    "text": "4. Thi tuyển vào vị trí việc làm xếp ngạch chuyên viên cao cấp và tương đương, chuyên gia cao cấp: Thi",
+    "bbox": [
+     97,
+     501.2,
+     901,
+     515.2
+    ],
+    "bbox_qwen": [
+     97,
+     514,
+     901,
+     530
+    ]
+   },
+   {
+    "text": "nghiệp vụ chuyên ngành",
+    "bbox": [
+     97,
+     518.8,
+     230,
+     532.1
+    ],
+    "bbox_qwen": [
+     97,
+     532,
+     230,
+     548
+    ]
+   },
+   {
+    "text": "a) Thi Đề án;",
+    "bbox": [
+     97,
+     550.9,
+     190,
+     561.2
+    ],
+    "bbox_qwen": [
+     97,
+     566,
+     190,
+     582
+    ]
+   },
+   {
+    "text": "b) Nội dung, hình thức thi Đề án do cơ quan có thẩm quyền tuyển dụng quyết định, bảo đảm phù hợp với",
+    "bbox": [
+     97,
+     583.0,
+     901,
+     596.4
+    ],
+    "bbox_qwen": [
+     97,
+     584,
+     901,
+     600
+    ]
+   },
+   {
+    "text": "yêu cầu của vị trí việc làm và phải được xác định trong Kế hoạch tuyển dụng, công khai trong nội dung",
+    "bbox": [
+     97,
+     600.0,
+     901,
+     613.9
+    ],
+    "bbox_qwen": [
+     97,
+     602,
+     901,
+     618
+    ]
+   },
+   {
+    "text": "Thông báo tuyển dụng.",
+    "bbox": [
+     97,
+     617.6,
+     240,
+     630.9
+    ],
+    "bbox_qwen": [
+     97,
+     620,
+     240,
+     636
+    ]
+   },
+   {
+    "text": "c) Thang điểm thi Đề án: 100 điểm;",
+    "bbox": [
+     97,
+     660.6,
+     340,
+     663.0
+    ],
+    "bbox_qwen": [
+     97,
+     654,
+     340,
+     670
+    ]
+   },
+   {
+    "text": "d) Thời gian chuẩn bị và thi Đề án đối với 01 thí sinh tối đa là 90 phút do người đứng đầu cơ quan có thẩm",
+    "bbox": [
+     97,
+     681.2,
+     901,
+     695.2
+    ],
+    "bbox_qwen": [
+     97,
+     688,
+     901,
+     704
+    ]
+   },
+   {
+    "text": "quyền tuyển dụng quyết định căn cứ theo yêu cầu, đặc thù của vị trí việc làm tuyển dụng.",
+    "bbox": [
+     97,
+     698.8,
+     700,
+     712.1
+    ],
+    "bbox_qwen": [
+     97,
+     706,
+     700,
+     722
+    ]
+   },
+   {
+    "text": "5. Trường hợp cơ quan có thẩm quyền tuyển dụng có yêu cầu đặc thù cao hơn về nội dung, thời gian thi",
+    "bbox": [
+     97,
+     747.9,
+     901,
+     763.0
+    ],
+    "bbox_qwen": [
+     97,
+     740,
+     901,
+     756
+    ]
+   },
+   {
+    "text": "nghiệp vụ chuyên ngành so với quy định tại Điều này hoặc có yêu cầu đặc thù về ngoại ngữ thì phải xác",
+    "bbox": [
+     97,
+     764.8,
+     901,
+     780.6
+    ],
+    "bbox_qwen": [
+     97,
+     758,
+     901,
+     774
+    ]
+   },
+   {
+    "text": "định cụ thể trong Kế hoạch tuyển dụng, công khai trong nội dung Thông báo tuyển dụng. Cơ quan có thẩm",
+    "bbox": [
+     97,
+     781.8,
+     901,
+     797.6
+    ],
+    "bbox_qwen": [
+     97,
+     776,
+     901,
+     792
+    ]
+   },
+   {
+    "text": "quyền tuyển dụng quyết định ngoại ngữ thi, nội dung, hình thức, thời gian, xác định điểm số đạt kết quả.",
+    "bbox": [
+     97,
+     798.8,
+     901,
+     812.7
+    ],
+    "bbox_qwen": [
+     97,
+     794,
+     901,
+     810
+    ]
+   },
+   {
+    "text": "Điểm thi ngoại ngữ là điểm thi kiện và không tính vào điểm thi nghiệp vụ chuyên ngành. Việc tổ chức thi",
+    "bbox": [
+     97,
+     816.4,
+     901,
+     829.7
+    ],
+    "bbox_qwen": [
+     97,
+     812,
+     901,
+     828
+    ]
+   },
+   {
+    "text": "ngoại ngữ phải hoàn thành trước khi tổ chức thi nghiệp vụ chuyên ngành. Trường hợp đạt kết quả thi ngoại",
+    "bbox": [
+     97,
+     833.3,
+     901,
+     846.7
+    ],
+    "bbox_qwen": [
+     97,
+     830,
+     901,
+     846
+    ]
+   },
+   {
+    "text": "ngữ thì được dự thi nghiệp vụ chuyên ngành.",
+    "bbox": [
+     97,
+     865.5,
+     425,
+     878.8
+    ],
+    "bbox_qwen": [
+     97,
+     848,
+     425,
+     864
+    ]
+   },
+   {
+    "text": "Điều 10. Xác định người trúng tuyển trong kỳ thi tuyển công chức",
+    "bbox": [
+     97,
+     897.6,
+     575,
+     911.5
+    ],
+    "bbox_qwen": [
+     97,
+     882,
+     575,
+     898
+    ]
+   },
+   {
+    "text": "1. Người trúng tuyển trong kỳ thi tuyển công chức phải đáp ứng đủ các điều kiện sau:",
+    "bbox": [
+     97,
+     929.7,
+     760,
+     946.1
+    ],
+    "bbox_qwen": [
+     97,
+     916,
+     760,
+     932
+    ]
+   },
+   {
+    "text": "a) Có kết quả điểm thi nghiệp vụ chuyên ngành đạt từ 50 điểm trở lên. Trường hợp thi kết hợp viết và phỏng",
+    "bbox": [
+     97,
+     946.7,
+     901,
+     960.6
+    ],
+    "bbox_qwen": [
+     97,
+     950,
+     901,
+     966
+    ]
+   },
+   {
+    "text": "vấn thì phải dự thi đủ cả 02 bài thi (viết và phỏng vấn) và có kết quả đạt từ 50% trở lên điểm tối đa của mỗi",
+    "bbox": [
+     97,
+     972.7,
+     901,
+     980.0
+    ],
+    "bbox_qwen": [
+     97,
+     968,
+     901,
+     984
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     38,
+     972.7,
+     105,
+     980.0
+    ],
+    "bbox_qwen": [
+     38,
+     964,
+     105,
+     975
+    ]
+   },
+   {
+    "text": "5/46",
+    "bbox": [
+     935,
+     972.7,
+     960,
+     980.0
+    ],
+    "bbox_qwen": [
+     935,
+     964,
+     960,
+     975
+    ]
+   }
+  ],
+  "latency_s": 14.76,
+  "in_tokens": 2207,
+  "out_tokens": 1818,
+  "finish_reason": "stop"
+ },
+ "6": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     26,
+     21.2,
+     130,
+     28.5
+    ],
+    "bbox_qwen": [
+     26,
+     19,
+     130,
+     31
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     540,
+     21.2,
+     607,
+     28.5
+    ],
+    "bbox_qwen": [
+     540,
+     19,
+     607,
+     31
+    ]
+   },
+   {
+    "text": "bài thi;",
+    "bbox": [
+     108,
+     38.8,
+     170,
+     49.1
+    ],
+    "bbox_qwen": [
+     108,
+     38,
+     170,
+     54
+    ]
+   },
+   {
+    "text": "b) Có kết quả điểm thi nghiệp vụ chuyên ngành cộng với điểm ưu tiên quy định tại Điều 6 Nghị định này",
+    "bbox": [
+     108,
+     70.9,
+     916,
+     84.8
+    ],
+    "bbox_qwen": [
+     108,
+     60,
+     916,
+     76
+    ]
+   },
+   {
+    "text": "(nếu có) cao hơn lấy theo thứ tự điểm từ cao xuống thấp trong chỉ tiêu tuyển dụng của từng vị trí việc làm,",
+    "bbox": [
+     108,
+     88.5,
+     916,
+     101.8
+    ],
+    "bbox_qwen": [
+     108,
+     78,
+     916,
+     94
+    ]
+   },
+   {
+    "text": "kể cả đối với vị trí việc làm được tuyển dụng chung cho nhiều cơ quan sử dụng công chức khác nhau.",
+    "bbox": [
+     108,
+     105.5,
+     900,
+     118.8
+    ],
+    "bbox_qwen": [
+     108,
+     96,
+     900,
+     112
+    ]
+   },
+   {
+    "text": "2. Trường hợp có từ 02 người trở lên có tổng số điểm tính theo quy định tại điểm b khoản 1 Điều này bằng",
+    "bbox": [
+     108,
+     137.6,
+     916,
+     150.9
+    ],
+    "bbox_qwen": [
+     108,
+     132,
+     916,
+     148
+    ]
+   },
+   {
+    "text": "nhau ở chỉ tiêu cuối cùng thì việc xác định người trúng tuyển được thực hiện theo thứ tự ưu tiên như sau:",
+    "bbox": [
+     108,
+     154.5,
+     916,
+     167.9
+    ],
+    "bbox_qwen": [
+     108,
+     150,
+     916,
+     166
+    ]
+   },
+   {
+    "text": "a) Người có kết quả điểm thi nghiệp vụ chuyên ngành cao hơn;",
+    "bbox": [
+     108,
+     186.7,
+     591,
+     200.6
+    ],
+    "bbox_qwen": [
+     108,
+     186,
+     591,
+     202
+    ]
+   },
+   {
+    "text": "b) Người có số điểm của bài thi viết ở vòng 2 cao hơn trong trường hợp lựa chọn hình thức kết hợp viết và",
+    "bbox": [
+     108,
+     218.8,
+     932,
+     232.7
+    ],
+    "bbox_qwen": [
+     108,
+     222,
+     932,
+     238
+    ]
+   },
+   {
+    "text": "phỏng vấn.",
+    "bbox": [
+     108,
+     239.4,
+     170,
+     249.7
+    ],
+    "bbox_qwen": [
+     108,
+     240,
+     170,
+     256
+    ]
+   },
+   {
+    "text": "Trường hợp vẫn chưa xác định được người trúng tuyển theo thứ tự ưu tiên quy định tại khoản này thì người",
+    "bbox": [
+     108,
+     268.5,
+     932,
+     281.8
+    ],
+    "bbox_qwen": [
+     108,
+     276,
+     932,
+     292
+    ]
+   },
+   {
+    "text": "đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định người trúng tuyển.",
+    "bbox": [
+     108,
+     285.5,
+     607,
+     298.8
+    ],
+    "bbox_qwen": [
+     108,
+     294,
+     607,
+     310
+    ]
+   },
+   {
+    "text": "3. Đối với vị trí việc làm được tuyển dụng chung cho nhiều cơ quan sử dụng công chức khác nhau thì việc",
+    "bbox": [
+     108,
+     334.5,
+     932,
+     349.7
+    ],
+    "bbox_qwen": [
+     108,
+     330,
+     932,
+     346
+    ]
+   },
+   {
+    "text": "xác định cơ quan sử dụng công chức trúng tuyển thực hiện theo thứ tự ưu tiên lựa chọn trong Phiếu đăng ký",
+    "bbox": [
+     108,
+     351.5,
+     932,
+     367.3
+    ],
+    "bbox_qwen": [
+     108,
+     348,
+     932,
+     364
+    ]
+   },
+   {
+    "text": "dự tuyển của người trúng tuyển. Trường hợp số người trúng tuyển cùng đăng ký tuyển dụng vào một cơ",
+    "bbox": [
+     108,
+     368.5,
+     932,
+     384.2
+    ],
+    "bbox_qwen": [
+     108,
+     366,
+     932,
+     382
+    ]
+   },
+   {
+    "text": "quan sử dụng công chức nhiều hơn số chỉ tiêu tuyển dụng của cơ quan sử dụng công chức đó thì ưu tiên lựa",
+    "bbox": [
+     108,
+     385.5,
+     932,
+     399.4
+    ],
+    "bbox_qwen": [
+     108,
+     384,
+     932,
+     400
+    ]
+   },
+   {
+    "text": "chọn người có kết quả tuyển dụng cao hơn. Trường hợp có từ 02 người trở lên có kết quả tuyển dụng bằng",
+    "bbox": [
+     108,
+     403.0,
+     932,
+     416.4
+    ],
+    "bbox_qwen": [
+     108,
+     402,
+     932,
+     418
+    ]
+   },
+   {
+    "text": "nhau ở chỉ tiêu cuối cùng của cơ quan sử dụng công chức đó thì lựa chọn theo thứ tự ưu tiên quy định tại",
+    "bbox": [
+     108,
+     420.0,
+     932,
+     430.3
+    ],
+    "bbox_qwen": [
+     108,
+     420,
+     932,
+     436
+    ]
+   },
+   {
+    "text": "khoản 2 Điều này.",
+    "bbox": [
+     108,
+     452.1,
+     210,
+     466.7
+    ],
+    "bbox_qwen": [
+     108,
+     438,
+     210,
+     454
+    ]
+   },
+   {
+    "text": "4. Người không trúng tuyển trong kỳ thi tuyển công chức không được bảo lưu kết quả thi tuyển cho các kỳ",
+    "bbox": [
+     108,
+     469.1,
+     932,
+     480.0
+    ],
+    "bbox_qwen": [
+     108,
+     474,
+     932,
+     490
+    ]
+   },
+   {
+    "text": "thi tuyển lần sau.",
+    "bbox": [
+     108,
+     498.2,
+     202,
+     501.2
+    ],
+    "bbox_qwen": [
+     108,
+     492,
+     202,
+     508
+    ]
+   },
+   {
+    "text": "Mục 3. XÉT TUYỂN CÔNG CHỨC",
+    "bbox": [
+     108,
+     533.3,
+     400,
+     547.3
+    ],
+    "bbox_qwen": [
+     108,
+     528,
+     400,
+     544
+    ]
+   },
+   {
+    "text": "Điều 11. Hình thức, nội dung xét tuyển công chức",
+    "bbox": [
+     108,
+     566.1,
+     507,
+     579.4
+    ],
+    "bbox_qwen": [
+     108,
+     564,
+     507,
+     580
+    ]
+   },
+   {
+    "text": "Xét tuyển công chức được thực hiện theo 2 vòng như sau:",
+    "bbox": [
+     108,
+     598.2,
+     442,
+     611.5
+    ],
+    "bbox_qwen": [
+     108,
+     600,
+     442,
+     616
+    ]
+   },
+   {
+    "text": "1. Vòng 1: Kiểm tra điều kiện dự tuyển tại Phiếu đăng ký dự tuyển theo yêu cầu của vị trí việc làm cần",
+    "bbox": [
+     108,
+     615.2,
+     916,
+     629.1
+    ],
+    "bbox_qwen": [
+     108,
+     636,
+     916,
+     652
+    ]
+   },
+   {
+    "text": "tuyển, nếu đáp ứng đủ thì người dự tuyển được tham dự vòng 2.",
+    "bbox": [
+     108,
+     647.3,
+     507,
+     661.2
+    ],
+    "bbox_qwen": [
+     108,
+     654,
+     507,
+     670
+    ]
+   },
+   {
+    "text": "2. Vòng 2: Xét nghiệp vụ chuyên ngành",
+    "bbox": [
+     108,
+     680.0,
+     405,
+     690.3
+    ],
+    "bbox_qwen": [
+     108,
+     690,
+     405,
+     706
+    ]
+   },
+   {
+    "text": "a) Hình thức: Vấn đáp",
+    "bbox": [
+     108,
+     729.1,
+     242,
+     742.4
+    ],
+    "bbox_qwen": [
+     108,
+     726,
+     242,
+     742
+    ]
+   },
+   {
+    "text": "b) Nội dung: Kiểm tra về kiến thức, kỹ năng thực thi công vụ; đánh giá về năng lực: tư duy, giao tiếp, phán",
+    "bbox": [
+     108,
+     749.7,
+     932,
+     756.4
+    ],
+    "bbox_qwen": [
+     108,
+     762,
+     932,
+     778
+    ]
+   },
+   {
+    "text": "đoán tình huống, học hỏi, phát triển, diễn đạt, thái độ, tính cách và các năng lực khác theo yêu cầu của vị trí",
+    "bbox": [
+     108,
+     778.2,
+     932,
+     792.1
+    ],
+    "bbox_qwen": [
+     108,
+     780,
+     932,
+     796
+    ]
+   },
+   {
+    "text": "việc làm cần tuyển;",
+    "bbox": [
+     108,
+     810.3,
+     210,
+     821.8
+    ],
+    "bbox_qwen": [
+     108,
+     798,
+     210,
+     814
+    ]
+   },
+   {
+    "text": "c) Thời gian: 30 phút (thí sinh dự thi có không quá 15 phút chuẩn bị trước khi vấn đáp);",
+    "bbox": [
+     108,
+     842.4,
+     781,
+     856.4
+    ],
+    "bbox_qwen": [
+     108,
+     834,
+     781,
+     850
+    ]
+   },
+   {
+    "text": "d) Thang điểm: 100 điểm.",
+    "bbox": [
+     108,
+     874.5,
+     262,
+     888.5
+    ],
+    "bbox_qwen": [
+     108,
+     870,
+     262,
+     886
+    ]
+   },
+   {
+    "text": "Điều 12. Xác định người trúng tuyển trong kỳ xét tuyển công chức",
+    "bbox": [
+     108,
+     907.3,
+     648,
+     920.6
+    ],
+    "bbox_qwen": [
+     108,
+     906,
+     648,
+     922
+    ]
+   },
+   {
+    "text": "1. Người trúng tuyển trong kỳ xét tuyển công chức phải có đủ các điều kiện sau:",
+    "bbox": [
+     108,
+     972.7,
+     726,
+     980.0
+    ],
+    "bbox_qwen": [
+     108,
+     942,
+     726,
+     958
+    ]
+   },
+   {
+    "text": "a) Có kết quả điểm vòng 2 đạt từ 50 điểm trở lên;",
+    "bbox": [
+     108,
+     972.7,
+     482,
+     980.0
+    ],
+    "bbox_qwen": [
+     108,
+     978,
+     482,
+     994
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     38,
+     972.7,
+     105,
+     980.0
+    ],
+    "bbox_qwen": [
+     38,
+     974,
+     105,
+     986
+    ]
+   },
+   {
+    "text": "6/46",
+    "bbox": [
+     932,
+     972.7,
+     958,
+     980.0
+    ],
+    "bbox_qwen": [
+     932,
+     974,
+     958,
+     986
+    ]
+   }
+  ],
+  "latency_s": 13.1,
+  "in_tokens": 2207,
+  "out_tokens": 1540,
+  "finish_reason": "stop"
+ },
+ "7": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     25,
+     21.2,
+     107,
+     28.5
+    ],
+    "bbox_qwen": [
+     25,
+     22,
+     107,
+     33
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     520,
+     21.2,
+     572,
+     28.5
+    ],
+    "bbox_qwen": [
+     520,
+     22,
+     572,
+     33
+    ]
+   },
+   {
+    "text": "b) Có kết quả điểm vòng 2 cộng với điểm ưu tiên quy định tại Điều 6 Nghị định này (nếu có) cao hơn lấy",
+    "bbox": [
+     107,
+     38.8,
+     927,
+     54.5
+    ],
+    "bbox_qwen": [
+     107,
+     38,
+     927,
+     54
+    ]
+   },
+   {
+    "text": "theo thứ tự điểm từ cao xuống thấp trong phạm vi chỉ tiêu được tuyển dụng của từng vị trí việc làm.",
+    "bbox": [
+     107,
+     55.8,
+     700,
+     69.7
+    ],
+    "bbox_qwen": [
+     107,
+     54,
+     700,
+     70
+    ]
+   },
+   {
+    "text": "2. Trường hợp có từ 02 người trở lên có tổng số điểm tính theo quy định tại điểm b khoản 1 Điều này bằng",
+    "bbox": [
+     107,
+     88.5,
+     932,
+     101.8
+    ],
+    "bbox_qwen": [
+     107,
+     85,
+     932,
+     101
+    ]
+   },
+   {
+    "text": "nhau ở chỉ tiêu cuối cùng của vị trí việc làm cần tuyển thì người có kết quả điểm vòng 2 cao hơn là người",
+    "bbox": [
+     107,
+     105.5,
+     912,
+     118.8
+    ],
+    "bbox_qwen": [
+     107,
+     101,
+     912,
+     117
+    ]
+   },
+   {
+    "text": "trúng tuyển; nếu vẫn không xác định được thì người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết",
+    "bbox": [
+     107,
+     122.4,
+     912,
+     135.8
+    ],
+    "bbox_qwen": [
+     107,
+     117,
+     912,
+     133
+    ]
+   },
+   {
+    "text": "định người trúng tuyển.",
+    "bbox": [
+     107,
+     139.4,
+     254,
+     152.7
+    ],
+    "bbox_qwen": [
+     107,
+     133,
+     254,
+     149
+    ]
+   },
+   {
+    "text": "3. Đối với vị trí việc làm được tuyển dụng chung cho nhiều cơ quan sử dụng công chức khác nhau thì việc",
+    "bbox": [
+     107,
+     171.5,
+     932,
+     186.7
+    ],
+    "bbox_qwen": [
+     107,
+     164,
+     932,
+     180
+    ]
+   },
+   {
+    "text": "xác định cơ quan sử dụng công chức trúng tuyển thực hiện theo thứ tự ưu tiên lựa chọn trong Phiếu đăng ký",
+    "bbox": [
+     107,
+     188.5,
+     932,
+     202.4
+    ],
+    "bbox_qwen": [
+     107,
+     180,
+     932,
+     196
+    ]
+   },
+   {
+    "text": "dự tuyển của người trúng tuyển. Trường hợp số người trúng tuyển cùng đăng ký tuyển dụng vào một cơ",
+    "bbox": [
+     107,
+     188.5,
+     932,
+     202.4
+    ],
+    "bbox_qwen": [
+     107,
+     196,
+     932,
+     212
+    ]
+   },
+   {
+    "text": "quan sử dụng công chức nhiều hơn số chỉ tiêu tuyển dụng của cơ quan sử dụng công chức đó thì ưu tiên lựa",
+    "bbox": [
+     107,
+     205.5,
+     932,
+     220.6
+    ],
+    "bbox_qwen": [
+     107,
+     212,
+     932,
+     228
+    ]
+   },
+   {
+    "text": "chọn người có kết quả tuyển dụng cao hơn. Trường hợp có từ 02 người trở lên có kết quả tuyển dụng bằng",
+    "bbox": [
+     107,
+     222.4,
+     932,
+     236.4
+    ],
+    "bbox_qwen": [
+     107,
+     228,
+     932,
+     244
+    ]
+   },
+   {
+    "text": "nhau ở chỉ tiêu cuối cùng của cơ quan sử dụng công chức đó thì lựa chọn theo thứ tự ưu tiên quy định tại",
+    "bbox": [
+     107,
+     240.0,
+     932,
+     253.3
+    ],
+    "bbox_qwen": [
+     107,
+     244,
+     932,
+     260
+    ]
+   },
+   {
+    "text": "khoản 2 Điều này.",
+    "bbox": [
+     107,
+     257.0,
+     204,
+     270.3
+    ],
+    "bbox_qwen": [
+     107,
+     260,
+     204,
+     276
+    ]
+   },
+   {
+    "text": "4. Người không trúng tuyển trong kỳ xét tuyển công chức không được bảo lưu kết quả xét tuyển cho các kỳ",
+    "bbox": [
+     107,
+     273.9,
+     932,
+     284.2
+    ],
+    "bbox_qwen": [
+     107,
+     291,
+     932,
+     307
+    ]
+   },
+   {
+    "text": "xét tuyển lần sau.",
+    "bbox": [
+     107,
+     306.1,
+     204,
+     320.0
+    ],
+    "bbox_qwen": [
+     107,
+     307,
+     204,
+     323
+    ]
+   },
+   {
+    "text": "Mục 4. TIẾP NHẬN VÀO LÀM CÔNG CHỨC",
+    "bbox": [
+     107,
+     352.7,
+     489,
+     355.2
+    ],
+    "bbox_qwen": [
+     107,
+     338,
+     489,
+     354
+    ]
+   },
+   {
+    "text": "Điều 13. Đối tượng, tiêu chuẩn, điều kiện, hồ sơ tiếp nhận vào làm công chức",
+    "bbox": [
+     107,
+     366.7,
+     727,
+     369.1
+    ],
+    "bbox_qwen": [
+     107,
+     369,
+     727,
+     385
+    ]
+   },
+   {
+    "text": "1. Đối tượng tiếp nhận:",
+    "bbox": [
+     107,
+     387.3,
+     269,
+     401.2
+    ],
+    "bbox_qwen": [
+     107,
+     400,
+     269,
+     416
+    ]
+   },
+   {
+    "text": "a) Chuyên gia, nhà khoa học, luật gia, luật sư giỏi, doanh nhân tiêu biểu, xuất sắc đang công tác tại cơ quan,",
+    "bbox": [
+     107,
+     420.0,
+     942,
+     433.3
+    ],
+    "bbox_qwen": [
+     107,
+     431,
+     942,
+     447
+    ]
+   },
+   {
+    "text": "tổ chức, đơn vị ngoài khu vực công lập theo chính sách thu hút đối với người có tài năng;",
+    "bbox": [
+     107,
+     452.1,
+     677,
+     466.1
+    ],
+    "bbox_qwen": [
+     107,
+     447,
+     677,
+     463
+    ]
+   },
+   {
+    "text": "b) Viên chức công tác tại đơn vị sự nghiệp công lập;",
+    "bbox": [
+     107,
+     469.1,
+     499,
+     483.0
+    ],
+    "bbox_qwen": [
+     107,
+     478,
+     499,
+     494
+    ]
+   },
+   {
+    "text": "c) Người hưởng lương trong Quân đội nhân dân, Công an nhân dân, tổ chức cơ yếu mà không phải là công",
+    "bbox": [
+     107,
+     501.2,
+     932,
+     515.2
+    ],
+    "bbox_qwen": [
+     107,
+     509,
+     932,
+     525
+    ]
+   },
+   {
+    "text": "chức;",
+    "bbox": [
+     107,
+     533.3,
+     156,
+     547.3
+    ],
+    "bbox_qwen": [
+     107,
+     525,
+     156,
+     541
+    ]
+   },
+   {
+    "text": "d) Người đang giữ chức vụ, chức danh lãnh đạo, quản lý từ cấp phòng trở lên tại doanh nghiệp do Nhà nước",
+    "bbox": [
+     107,
+     553.9,
+     942,
+     561.2
+    ],
+    "bbox_qwen": [
+     107,
+     556,
+     942,
+     572
+    ]
+   },
+   {
+    "text": "nắm giữ 100% vốn điều lệ hoặc tại doanh nghiệp do Nhà nước nắm giữ trên 50% vốn điều lệ hoặc tổng số",
+    "bbox": [
+     107,
+     583.0,
+     932,
+     596.4
+    ],
+    "bbox_qwen": [
+     107,
+     572,
+     932,
+     588
+    ]
+   },
+   {
+    "text": "cổ phần có quyền biểu quyết;",
+    "bbox": [
+     107,
+     600.0,
+     299,
+     615.8
+    ],
+    "bbox_qwen": [
+     107,
+     588,
+     299,
+     604
+    ]
+   },
+   {
+    "text": "đ) Người đã từng là cán bộ, công chức sau đó được cấp có thẩm quyền điều động, luân chuyển giữ các vị trí",
+    "bbox": [
+     107,
+     617.0,
+     942,
+     630.9
+    ],
+    "bbox_qwen": [
+     107,
+     619,
+     942,
+     635
+    ]
+   },
+   {
+    "text": "công tác không phải là cán bộ, công chức tại các cơ quan, tổ chức khác;",
+    "bbox": [
+     107,
+     649.1,
+     657,
+     663.0
+    ],
+    "bbox_qwen": [
+     107,
+     635,
+     657,
+     651
+    ]
+   },
+   {
+    "text": "e) Người được tuyển dụng theo chỉ tiêu biên chế được cấp có thẩm quyền giao làm việc trong các hội do",
+    "bbox": [
+     107,
+     666.1,
+     917,
+     680.0
+    ],
+    "bbox_qwen": [
+     107,
+     666,
+     917,
+     682
+    ]
+   },
+   {
+    "text": "Đảng và Nhà nước giao nhiệm vụ;",
+    "bbox": [
+     107,
+     698.8,
+     341,
+     712.1
+    ],
+    "bbox_qwen": [
+     107,
+     682,
+     341,
+     698
+    ]
+   },
+   {
+    "text": "g) Người hoạt động không chuyên trách ở cấp xã trước ngày Nghị định này có hiệu lực thi hành;",
+    "bbox": [
+     107,
+     715.8,
+     852,
+     729.1
+    ],
+    "bbox_qwen": [
+     107,
+     713,
+     852,
+     729
+    ]
+   },
+   {
+    "text": "h) Đội viên Đề án thí điểm tuyển chọn trí thức trẻ tình nguyện về các xã tham gia phát triển nông thôn, miền",
+    "bbox": [
+     107,
+     747.9,
+     947,
+     761.8
+    ],
+    "bbox_qwen": [
+     107,
+     744,
+     947,
+     760
+    ]
+   },
+   {
+    "text": "núi giai đoạn 2013 - 2020 đăng ký hợp đồng lao động làm việc tại xã (trước 01 tháng 7 năm 2025) vào làm",
+    "bbox": [
+     107,
+     780.0,
+     947,
+     793.9
+    ],
+    "bbox_qwen": [
+     107,
+     760,
+     947,
+     776
+    ]
+   },
+   {
+    "text": "việc tại xã (kể từ 01 tháng 7 năm 2025).",
+    "bbox": [
+     107,
+     797.0,
+     404,
+     810.9
+    ],
+    "bbox_qwen": [
+     107,
+     776,
+     404,
+     792
+    ]
+   },
+   {
+    "text": "2. Thẩm quyền tiếp nhận",
+    "bbox": [
+     107,
+     814.5,
+     289,
+     827.9
+    ],
+    "bbox_qwen": [
+     107,
+     807,
+     289,
+     823
+    ]
+   },
+   {
+    "text": "a) Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định tiếp nhận đối với các trường hợp quy",
+    "bbox": [
+     107,
+     846.7,
+     912,
+     860.0
+    ],
+    "bbox_qwen": [
+     107,
+     838,
+     912,
+     854
+    ]
+   },
+   {
+    "text": "định tại điểm b, điểm c, điểm đ khoản 1 Điều này;",
+    "bbox": [
+     107,
+     878.8,
+     514,
+     892.1
+    ],
+    "bbox_qwen": [
+     107,
+     854,
+     514,
+     870
+    ]
+   },
+   {
+    "text": "b) Người đứng đầu cơ quan quản lý công chức quyết định tiếp nhận đối với các trường hợp quy định tại",
+    "bbox": [
+     107,
+     895.8,
+     912,
+     906.1
+    ],
+    "bbox_qwen": [
+     107,
+     885,
+     912,
+     901
+    ]
+   },
+   {
+    "text": "điểm a, điểm d, điểm e, điểm g, điểm h khoản 1 Điều này.",
+    "bbox": [
+     107,
+     906.7,
+     547,
+     909.1
+    ],
+    "bbox_qwen": [
+     107,
+     901,
+     547,
+     917
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     25,
+     972.7,
+     77,
+     980.0
+    ],
+    "bbox_qwen": [
+     25,
+     965,
+     77,
+     976
+    ]
+   },
+   {
+    "text": "7/46",
+    "bbox": [
+     932,
+     972.7,
+     957,
+     980.0
+    ],
+    "bbox_qwen": [
+     932,
+     965,
+     957,
+     976
+    ]
+   }
+  ],
+  "latency_s": 23.41,
+  "in_tokens": 3820,
+  "out_tokens": 2927,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 200,
+   "hint": true,
+   "schema": true
+  }
+ },
+ "8": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     38,
+     21.2,
+     142,
+     28.5
+    ],
+    "bbox_qwen": [
+     38,
+     21,
+     142,
+     32
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     538,
+     21.2,
+     607,
+     28.5
+    ],
+    "bbox_qwen": [
+     538,
+     21,
+     607,
+     32
+    ]
+   },
+   {
+    "text": "3. Tiêu chuẩn, điều kiện tiếp nhận:",
+    "bbox": [
+     98,
+     38.8,
+     366,
+     49.1
+    ],
+    "bbox_qwen": [
+     98,
+     37,
+     366,
+     54
+    ]
+   },
+   {
+    "text": "Căn cứ vào tỷ lệ công chức cần bố trí theo từng vị trí việc làm trong cơ quan sử dụng công chức, chỉ tiêu",
+    "bbox": [
+     98,
+     70.9,
+     914,
+     87.3
+    ],
+    "bbox_qwen": [
+     98,
+     64,
+     914,
+     81
+    ]
+   },
+   {
+    "text": "biên chế được giao và yêu cầu của vị trí việc làm cần tuyển, người đứng đầu cơ quan có thẩm quyền tuyển",
+    "bbox": [
+     98,
+     88.5,
+     914,
+     101.8
+    ],
+    "bbox_qwen": [
+     98,
+     81,
+     914,
+     98
+    ]
+   },
+   {
+    "text": "dụng hoặc người đứng đầu cơ quan quản lý xem xét, tiếp nhận vào làm công chức đối với các trường hợp",
+    "bbox": [
+     98,
+     105.5,
+     914,
+     118.8
+    ],
+    "bbox_qwen": [
+     98,
+     98,
+     914,
+     115
+    ]
+   },
+   {
+    "text": "quy định tại khoản 1 Điều này nếu đáp ứng đủ điều kiện đăng ký dự tuyển công chức quy định tại khoản 1",
+    "bbox": [
+     98,
+     122.4,
+     914,
+     135.8
+    ],
+    "bbox_qwen": [
+     98,
+     115,
+     914,
+     132
+    ]
+   },
+   {
+    "text": "Điều 19 Luật Cán bộ, công chức, trừ các trường hợp quy định tại khoản 3 Điều 19 Luật Cán bộ, công chức",
+    "bbox": [
+     98,
+     139.4,
+     914,
+     152.7
+    ],
+    "bbox_qwen": [
+     98,
+     132,
+     914,
+     149
+    ]
+   },
+   {
+    "text": "hoặc đang trong thời hạn xử lý kỷ luật, đang trong thời gian thi hành quyết định kỷ luật, đang trong thời",
+    "bbox": [
+     98,
+     156.4,
+     914,
+     170.3
+    ],
+    "bbox_qwen": [
+     98,
+     149,
+     914,
+     166
+    ]
+   },
+   {
+    "text": "gian thực hiện các quy định liên quan đến kỷ luật theo quy định của Đảng, của pháp luật.",
+    "bbox": [
+     98,
+     173.3,
+     670,
+     187.3
+    ],
+    "bbox_qwen": [
+     98,
+     166,
+     670,
+     183
+    ]
+   },
+   {
+    "text": "a) Trường hợp quy định tại điểm a khoản 1 Điều này phải có kết quả, sản phẩm phù hợp với vị trí việc làm",
+    "bbox": [
+     98,
+     205.5,
+     929,
+     220.6
+    ],
+    "bbox_qwen": [
+     98,
+     200,
+     929,
+     217
+    ]
+   },
+   {
+    "text": "dự kiến tiếp nhận;",
+    "bbox": [
+     98,
+     223.0,
+     231,
+     233.3
+    ],
+    "bbox_qwen": [
+     98,
+     217,
+     231,
+     234
+    ]
+   },
+   {
+    "text": "b) Trường hợp quy định tại các điểm b, c, d, e, g và h khoản 1 Điều này phải có đủ 05 năm công tác trở lên",
+    "bbox": [
+     98,
+     255.2,
+     932,
+     268.5
+    ],
+    "bbox_qwen": [
+     98,
+     251,
+     932,
+     268
+    ]
+   },
+   {
+    "text": "theo đúng quy định của pháp luật, có đóng bảo hiểm xã hội bắt buộc (nếu không liên tục và chưa nhận trợ",
+    "bbox": [
+     98,
+     272.1,
+     914,
+     285.5
+    ],
+    "bbox_qwen": [
+     98,
+     268,
+     914,
+     285
+    ]
+   },
+   {
+    "text": "cấp bảo hiểm xã hội 01 lần thì được cộng dồn, kể cả thời gian công tác nếu có trước đó ở vị trí công việc",
+    "bbox": [
+     98,
+     289.1,
+     914,
+     304.2
+    ],
+    "bbox_qwen": [
+     98,
+     285,
+     914,
+     302
+    ]
+   },
+   {
+    "text": "quy định tại các điểm b, c, d, đ, e, g và h khoản 1 Điều này), làm công việc có yêu cầu chuyên môn, nghiệp",
+    "bbox": [
+     98,
+     306.1,
+     932,
+     321.2
+    ],
+    "bbox_qwen": [
+     98,
+     302,
+     932,
+     319
+    ]
+   },
+   {
+    "text": "vụ phù hợp với công việc ở vị trí việc làm dự kiến tiếp nhận;",
+    "bbox": [
+     98,
+     323.0,
+     567,
+     337.0
+    ],
+    "bbox_qwen": [
+     98,
+     319,
+     567,
+     336
+    ]
+   },
+   {
+    "text": "c) Trường hợp quy định tại điểm đ khoản 1 Điều này phải có quyết định bằng văn bản của cấp có thẩm",
+    "bbox": [
+     98,
+     355.2,
+     900,
+     369.1
+    ],
+    "bbox_qwen": [
+     98,
+     353,
+     900,
+     370
+    ]
+   },
+   {
+    "text": "quyền quyết định đến làm việc tại các cơ quan, tổ chức, đơn vị khác theo yêu cầu nhiệm vụ và không phải",
+    "bbox": [
+     98,
+     372.7,
+     914,
+     386.1
+    ],
+    "bbox_qwen": [
+     98,
+     370,
+     914,
+     387
+    ]
+   },
+   {
+    "text": "đáp ứng yêu cầu về thời gian công tác 05 năm quy định tại điểm b khoản này.",
+    "bbox": [
+     98,
+     389.7,
+     621,
+     403.0
+    ],
+    "bbox_qwen": [
+     98,
+     387,
+     621,
+     404
+    ]
+   },
+   {
+    "text": "4. Hồ sơ của người được đề nghị tiếp nhận vào làm công chức:",
+    "bbox": [
+     98,
+     421.8,
+     540,
+     435.8
+    ],
+    "bbox_qwen": [
+     98,
+     418,
+     540,
+     435
+    ]
+   },
+   {
+    "text": "a) Sơ yếu lý lịch cá nhân theo quy định hiện hành được lập trong thời hạn 30 ngày trước ngày nộp hồ sơ tiếp",
+    "bbox": [
+     98,
+     453.9,
+     946,
+     467.9
+    ],
+    "bbox_qwen": [
+     98,
+     452,
+     946,
+     469
+    ]
+   },
+   {
+    "text": "nhận, có xác nhận của cơ quan, tổ chức, đơn vị nơi công tác;",
+    "bbox": [
+     98,
+     470.9,
+     564,
+     484.8
+    ],
+    "bbox_qwen": [
+     98,
+     469,
+     564,
+     486
+    ]
+   },
+   {
+    "text": "b) Bản sao các văn bằng, chứng chỉ và các giấy tờ khác theo yêu cầu của vị trí việc làm dự kiến tiếp nhận;",
+    "bbox": [
+     98,
+     503.0,
+     925,
+     517.0
+    ],
+    "bbox_qwen": [
+     98,
+     503,
+     925,
+     520
+    ]
+   },
+   {
+    "text": "c) Giấy chứng nhận sức khỏe do cơ quan y tế có thẩm quyền cấp trong thời hạn 06 tháng;",
+    "bbox": [
+     98,
+     535.8,
+     792,
+     549.1
+    ],
+    "bbox_qwen": [
+     98,
+     537,
+     792,
+     554
+    ]
+   },
+   {
+    "text": "d) Bản tự nhận xét, đánh giá của người được đề nghị tiếp nhận về phẩm chất chính trị, phẩm chất đạo đức,",
+    "bbox": [
+     98,
+     567.9,
+     925,
+     581.2
+    ],
+    "bbox_qwen": [
+     98,
+     571,
+     925,
+     588
+    ]
+   },
+   {
+    "text": "trình độ và năng lực chuyên môn, nghiệp vụ, quá trình công tác theo yêu cầu của cơ quan tiếp nhận.",
+    "bbox": [
+     98,
+     584.8,
+     872,
+     598.8
+    ],
+    "bbox_qwen": [
+     98,
+     588,
+     872,
+     605
+    ]
+   },
+   {
+    "text": "Trường hợp các thành phần trong hồ sơ tiếp nhận quy định tại khoản này đã được cấp có thẩm quyền phê",
+    "bbox": [
+     98,
+     617.0,
+     914,
+     632.7
+    ],
+    "bbox_qwen": [
+     98,
+     622,
+     914,
+     639
+    ]
+   },
+   {
+    "text": "duyệt và tồn tại trong cơ sở dữ liệu quốc gia thì được sử dụng để thay thế bản giấy tương ứng.",
+    "bbox": [
+     98,
+     633.9,
+     700,
+     647.9
+    ],
+    "bbox_qwen": [
+     98,
+     639,
+     700,
+     656
+    ]
+   },
+   {
+    "text": "Điều 14. Thủ tục tiếp nhận",
+    "bbox": [
+     98,
+     677.6,
+     316,
+     680.0
+    ],
+    "bbox_qwen": [
+     98,
+     669,
+     316,
+     686
+    ]
+   },
+   {
+    "text": "1. Hội đồng kiểm tra, sát hạch:",
+    "bbox": [
+     98,
+     709.7,
+     316,
+     712.1
+    ],
+    "bbox_qwen": [
+     98,
+     699,
+     316,
+     716
+    ]
+   },
+   {
+    "text": "a) Người đứng đầu cơ quan có thẩm quyền tuyển dụng thành lập Hội đồng kiểm tra, sát hạch. Thành phần",
+    "bbox": [
+     98,
+     730.9,
+     925,
+     744.2
+    ],
+    "bbox_qwen": [
+     98,
+     733,
+     925,
+     750
+    ]
+   },
+   {
+    "text": "Hội đồng kiểm tra, sát hạch được thực hiện theo quy định tại khoản 1 Điều 8 Nghị định này;",
+    "bbox": [
+     98,
+     747.9,
+     684,
+     761.8
+    ],
+    "bbox_qwen": [
+     98,
+     750,
+     684,
+     767
+    ]
+   },
+   {
+    "text": "b) Nhiệm vụ, quyền hạn của Hội đồng kiểm tra, sát hạch:",
+    "bbox": [
+     98,
+     780.0,
+     540,
+     793.9
+    ],
+    "bbox_qwen": [
+     98,
+     784,
+     540,
+     801
+    ]
+   },
+   {
+    "text": "Kiểm tra về tiêu chuẩn, điều kiện, văn bằng, chứng chỉ, chứng nhận của người được đề nghị tiếp nhận theo",
+    "bbox": [
+     98,
+     812.1,
+     932,
+     827.3
+    ],
+    "bbox_qwen": [
+     98,
+     818,
+     932,
+     835
+    ]
+   },
+   {
+    "text": "yêu cầu của vị trí việc làm cần tuyển;",
+    "bbox": [
+     98,
+     840.6,
+     270,
+     843.0
+    ],
+    "bbox_qwen": [
+     98,
+     835,
+     270,
+     852
+    ]
+   },
+   {
+    "text": "Tổ chức sát hạch về trình độ hiểu biết chung và năng lực chuyên môn, nghiệp vụ của người được đề nghị",
+    "bbox": [
+     98,
+     878.8,
+     914,
+     892.1
+    ],
+    "bbox_qwen": [
+     98,
+     869,
+     914,
+     886
+    ]
+   },
+   {
+    "text": "tiếp nhận; nội dung sát hạch phải căn cứ vào yêu cầu của vị trí việc làm cần tuyển; hình thức sát hạch là vấn",
+    "bbox": [
+     98,
+     895.8,
+     943,
+     898.2
+    ],
+    "bbox_qwen": [
+     98,
+     886,
+     943,
+     903
+    ]
+   },
+   {
+    "text": "đáp;",
+    "bbox": [
+     98,
+     899.4,
+     125,
+     906.1
+    ],
+    "bbox_qwen": [
+     98,
+     903,
+     125,
+     920
+    ]
+   },
+   {
+    "text": "Báo cáo người đứng đầu cơ quan có thẩm quyền tuyển dụng về kết quả kiểm tra, sát hạch;",
+    "bbox": [
+     98,
+     927.9,
+     670,
+     941.8
+    ],
+    "bbox_qwen": [
+     98,
+     937,
+     670,
+     954
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     38,
+     972.7,
+     107,
+     980.0
+    ],
+    "bbox_qwen": [
+     38,
+     972,
+     107,
+     983
+    ]
+   },
+   {
+    "text": "8/46",
+    "bbox": [
+     932,
+     972.7,
+     960,
+     980.0
+    ],
+    "bbox_qwen": [
+     932,
+     972,
+     960,
+     983
+    ]
+   }
+  ],
+  "latency_s": 15.23,
+  "in_tokens": 3820,
+  "out_tokens": 1749,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 200,
+   "hint": true,
+   "schema": true
+  }
+ },
+ "9": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     35,
+     21.2,
+     130,
+     28.5
+    ],
+    "bbox_qwen": [
+     35,
+     20,
+     130,
+     33
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     538,
+     21.2,
+     593,
+     28.5
+    ],
+    "bbox_qwen": [
+     538,
+     20,
+     593,
+     33
+    ]
+   },
+   {
+    "text": "c) Hội đồng kiểm tra, sát hạch làm việc theo nguyên tắc tập thể, quyết định theo đa số; trường hợp biểu",
+    "bbox": [
+     97,
+     38.8,
+     914,
+     54.5
+    ],
+    "bbox_qwen": [
+     97,
+     37,
+     914,
+     56
+    ]
+   },
+   {
+    "text": "quyết ngang nhau thì thực hiện theo ý kiến mà Chủ tịch Hội đồng kiểm tra, sát hạch đã biểu quyết. Hội đồng",
+    "bbox": [
+     97,
+     55.8,
+     946,
+     71.5
+    ],
+    "bbox_qwen": [
+     97,
+     56,
+     946,
+     75
+    ]
+   },
+   {
+    "text": "kiểm tra, sát hạch quyết định thành lập Tổ thư ký giúp việc trong trường hợp cần thiết.",
+    "bbox": [
+     97,
+     72.7,
+     770,
+     86.7
+    ],
+    "bbox_qwen": [
+     97,
+     75,
+     770,
+     94
+    ]
+   },
+   {
+    "text": "Hội đồng kiểm tra, sát hạch tự giải thể sau khi hoàn thành nhiệm vụ.",
+    "bbox": [
+     97,
+     105.5,
+     629,
+     115.8
+    ],
+    "bbox_qwen": [
+     97,
+     103,
+     629,
+     122
+    ]
+   },
+   {
+    "text": "2. Không thành lập Hội đồng kiểm tra, sát hạch đối với các trường hợp sau:",
+    "bbox": [
+     97,
+     137.6,
+     687,
+     150.9
+    ],
+    "bbox_qwen": [
+     97,
+     132,
+     687,
+     151
+    ]
+   },
+   {
+    "text": "a) Tiếp nhận các trường hợp quy định tại điểm b, c và điểm đ khoản 1 Điều 13 vào công chức không giữ",
+    "bbox": [
+     97,
+     169.7,
+     914,
+     183.0
+    ],
+    "bbox_qwen": [
+     97,
+     160,
+     914,
+     179
+    ]
+   },
+   {
+    "text": "chức vụ lãnh đạo, quản lý;",
+    "bbox": [
+     97,
+     186.7,
+     260,
+     200.0
+    ],
+    "bbox_qwen": [
+     97,
+     179,
+     260,
+     198
+    ]
+   },
+   {
+    "text": "b) Tiếp nhận các trường hợp quy định tại khoản 1 Điều 13 Nghị định này vào làm công chức giữ chức vụ",
+    "bbox": [
+     97,
+     218.8,
+     914,
+     232.7
+    ],
+    "bbox_qwen": [
+     97,
+     208,
+     914,
+     227
+    ]
+   },
+   {
+    "text": "lãnh đạo, quản lý.",
+    "bbox": [
+     97,
+     236.4,
+     220,
+     246.7
+    ],
+    "bbox_qwen": [
+     97,
+     227,
+     220,
+     246
+    ]
+   },
+   {
+    "text": "3. Không bố trí những người có quan hệ vợ, chồng, cha đẻ, mẹ đẻ; cha, mẹ (vợ hoặc chồng), cha nuôi, mẹ",
+    "bbox": [
+     97,
+     268.5,
+     946,
+     281.8
+    ],
+    "bbox_qwen": [
+     97,
+     255,
+     946,
+     274
+    ]
+   },
+   {
+    "text": "nuôi; con đẻ, con nuôi; anh, chị, em ruột; cô, dì, chú, bác, cậu ruột; anh, chị, em ruột của vợ hoặc chồng; vợ",
+    "bbox": [
+     97,
+     285.5,
+     946,
+     298.8
+    ],
+    "bbox_qwen": [
+     97,
+     274,
+     946,
+     293
+    ]
+   },
+   {
+    "text": "hoặc chồng của anh, chị, em ruột của người tham dự kiểm tra, sát hạch; những người đang trong thời hạn xử",
+    "bbox": [
+     97,
+     302.4,
+     946,
+     315.8
+    ],
+    "bbox_qwen": [
+     97,
+     293,
+     946,
+     312
+    ]
+   },
+   {
+    "text": "lý kỷ luật hoặc đang thi hành quyết định kỷ luật; những người đã bị xử lý về hành vi tham nhũng, tiêu cực",
+    "bbox": [
+     97,
+     319.4,
+     946,
+     333.3
+    ],
+    "bbox_qwen": [
+     97,
+     312,
+     946,
+     331
+    ]
+   },
+   {
+    "text": "làm thành viên Hội đồng kiểm tra, sát hạch.",
+    "bbox": [
+     97,
+     336.4,
+     437,
+     347.3
+    ],
+    "bbox_qwen": [
+     97,
+     331,
+     437,
+     350
+    ]
+   },
+   {
+    "text": "4. Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định tiếp nhận công chức theo thẩm quyền.",
+    "bbox": [
+     97,
+     365.5,
+     911,
+     367.9
+    ],
+    "bbox_qwen": [
+     97,
+     359,
+     911,
+     378
+    ]
+   },
+   {
+    "text": "5. Khi tiếp nhận vào làm công chức để bổ nhiệm giữ chức vụ, chức danh lãnh đạo, quản lý thì thực hiện",
+    "bbox": [
+     97,
+     400.6,
+     908,
+     414.5
+    ],
+    "bbox_qwen": [
+     97,
+     388,
+     908,
+     407
+    ]
+   },
+   {
+    "text": "theo quy trình bổ nhiệm đối với nguồn nhân sự từ nơi khác. Quyết định bổ nhiệm đồng thời là quyết định",
+    "bbox": [
+     97,
+     418.2,
+     924,
+     431.5
+    ],
+    "bbox_qwen": [
+     97,
+     407,
+     924,
+     426
+    ]
+   },
+   {
+    "text": "tiếp nhận vào làm công chức và thực hiện như sau:",
+    "bbox": [
+     97,
+     435.2,
+     472,
+     448.5
+    ],
+    "bbox_qwen": [
+     97,
+     426,
+     472,
+     445
+    ]
+   },
+   {
+    "text": "a) Trường hợp cơ quan có thẩm quyền tuyển dụng đồng thời là cơ quan có thẩm quyền bổ nhiệm hoặc là cấp",
+    "bbox": [
+     97,
+     467.3,
+     946,
+     483.0
+    ],
+    "bbox_qwen": [
+     97,
+     454,
+     946,
+     473
+    ]
+   },
+   {
+    "text": "dưới của cơ quan có thẩm quyền bổ nhiệm thì quyết định bổ nhiệm đồng thời là quyết định tiếp nhận;",
+    "bbox": [
+     97,
+     484.2,
+     887,
+     498.2
+    ],
+    "bbox_qwen": [
+     97,
+     473,
+     887,
+     492
+    ]
+   },
+   {
+    "text": "b) Trường hợp cơ quan có thẩm quyền tuyển dụng là cấp trên của cơ quan có thẩm quyền bổ nhiệm thì cơ",
+    "bbox": [
+     97,
+     513.3,
+     924,
+     515.8
+    ],
+    "bbox_qwen": [
+     97,
+     502,
+     924,
+     521
+    ]
+   },
+   {
+    "text": "quan có thẩm quyền bổ nhiệm phải báo cáo và được cơ quan có thẩm quyền tuyển dụng đồng ý về việc tiếp",
+    "bbox": [
+     97,
+     516.4,
+     924,
+     532.1
+    ],
+    "bbox_qwen": [
+     97,
+     521,
+     924,
+     540
+    ]
+   },
+   {
+    "text": "nhận trước khi quyết định bổ nhiệm.",
+    "bbox": [
+     97,
+     550.9,
+     312,
+     561.2
+    ],
+    "bbox_qwen": [
+     97,
+     540,
+     312,
+     559
+    ]
+   },
+   {
+    "text": "Mục 5. TRÌNH TỰ, THỦ TỤC THI TUYỂN, XÉT TUYỂN CÔNG CHỨC",
+    "bbox": [
+     97,
+     583.0,
+     714,
+     593.3
+    ],
+    "bbox_qwen": [
+     97,
+     578,
+     714,
+     597
+    ]
+   },
+   {
+    "text": "Điều 15. Thông báo tuyển dụng và tiếp nhận Phiếu đăng ký dự tuyển",
+    "bbox": [
+     97,
+     615.2,
+     668,
+     629.1
+    ],
+    "bbox_qwen": [
+     97,
+     615,
+     668,
+     634
+    ]
+   },
+   {
+    "text": "1. Cơ quan có thẩm quyền tuyển dụng phải đăng Thông báo tuyển dụng công khai ít nhất 01 lần trên một",
+    "bbox": [
+     97,
+     647.3,
+     919,
+     661.2
+    ],
+    "bbox_qwen": [
+     97,
+     643,
+     919,
+     662
+    ]
+   },
+   {
+    "text": "trong những phương tiện thông tin đại chúng sau: Báo in, báo điện tử, báo nói, báo hình; đồng thời phải",
+    "bbox": [
+     97,
+     664.2,
+     908,
+     680.0
+    ],
+    "bbox_qwen": [
+     97,
+     662,
+     908,
+     681
+    ]
+   },
+   {
+    "text": "đăng tải trên trang thông tin điện tử hoặc cổng thông tin điện tử của cơ quan có thẩm quyền tuyển dụng.",
+    "bbox": [
+     97,
+     681.2,
+     908,
+     695.2
+    ],
+    "bbox_qwen": [
+     97,
+     681,
+     908,
+     700
+    ]
+   },
+   {
+    "text": "2. Nội dung Thông báo tuyển dụng bao gồm:",
+    "bbox": [
+     97,
+     713.9,
+     421,
+     727.3
+    ],
+    "bbox_qwen": [
+     97,
+     709,
+     421,
+     728
+    ]
+   },
+   {
+    "text": "a) Số lượng biên chế cần tuyển ở từng vị trí việc làm, trong đó thông báo cụ thể vị trí việc làm được tuyển",
+    "bbox": [
+     97,
+     746.1,
+     924,
+     759.4
+    ],
+    "bbox_qwen": [
+     97,
+     738,
+     924,
+     757
+    ]
+   },
+   {
+    "text": "dụng chung cho nhiều cơ quan sử dụng công chức khác nhau (nếu có);",
+    "bbox": [
+     97,
+     763.0,
+     603,
+     777.0
+    ],
+    "bbox_qwen": [
+     97,
+     757,
+     603,
+     776
+    ]
+   },
+   {
+    "text": "b) Số lượng vị trí việc làm thực hiện việc thi tuyển, xét tuyển;",
+    "bbox": [
+     97,
+     795.2,
+     574,
+     809.1
+    ],
+    "bbox_qwen": [
+     97,
+     785,
+     574,
+     804
+    ]
+   },
+   {
+    "text": "c) Tiêu chuẩn, điều kiện của vị trí việc làm đăng ký dự tuyển.",
+    "bbox": [
+     97,
+     827.3,
+     541,
+     841.2
+    ],
+    "bbox_qwen": [
+     97,
+     814,
+     541,
+     833
+    ]
+   },
+   {
+    "text": "Trường hợp cơ quan có thẩm quyền tuyển dụng quyết định tổ chức thi ngoại ngữ thì xác định rõ ngoại ngữ",
+    "bbox": [
+     97,
+     859.4,
+     927,
+     873.3
+    ],
+    "bbox_qwen": [
+     97,
+     842,
+     927,
+     861
+    ]
+   },
+   {
+    "text": "thi, nội dung, hình thức, thời gian thi, xác định điểm số đạt kết quả;",
+    "bbox": [
+     97,
+     877.0,
+     624,
+     890.3
+    ],
+    "bbox_qwen": [
+     97,
+     861,
+     624,
+     880
+    ]
+   },
+   {
+    "text": "d) Thời hạn, địa chỉ tiếp nhận, phương thức tiếp nhận Phiếu đăng ký dự tuyển theo Mẫu số 01 ban hành kèm",
+    "bbox": [
+     97,
+     906.1,
+     943,
+     908.5
+    ],
+    "bbox_qwen": [
+     97,
+     889,
+     943,
+     908
+    ]
+   },
+   {
+    "text": "theo Nghị định này (trực tiếp, qua thư điện tử, qua cổng thông tin điện tử hoặc bằng phương thức điện tử",
+    "bbox": [
+     97,
+     909.1,
+     943,
+     922.4
+    ],
+    "bbox_qwen": [
+     97,
+     908,
+     943,
+     927
+    ]
+   },
+   {
+    "text": "phù hợp khác); số điện thoại, thư điện tử hoặc địa chỉ khác của bộ phận tiếp nhận Phiếu đăng ký dự tuyển;",
+    "bbox": [
+     97,
+     926.1,
+     943,
+     941.8
+    ],
+    "bbox_qwen": [
+     97,
+     927,
+     943,
+     946
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     35,
+     972.7,
+     90,
+     980.0
+    ],
+    "bbox_qwen": [
+     35,
+     971,
+     90,
+     984
+    ]
+   },
+   {
+    "text": "9/46",
+    "bbox": [
+     930,
+     972.7,
+     962,
+     980.0
+    ],
+    "bbox_qwen": [
+     930,
+     971,
+     962,
+     984
+    ]
+   }
+  ],
+  "latency_s": 23.13,
+  "in_tokens": 3820,
+  "out_tokens": 2865,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 200,
+   "hint": true,
+   "schema": true
+  }
+ },
+ "10": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 2:39 PM",
+    "bbox": [
+     26,
+     21.2,
+     132,
+     28.5
+    ],
+    "bbox_qwen": [
+     26,
+     18,
+     132,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     535,
+     21.2,
+     597,
+     28.5
+    ],
+    "bbox_qwen": [
+     535,
+     18,
+     597,
+     30
+    ]
+   },
+   {
+    "text": "đ) Hình thức, nội dung thi tuyển, xét tuyển; thời gian và địa điểm thi tuyển, xét tuyển; hình thức thông báo",
+    "bbox": [
+     87,
+     38.8,
+     928,
+     52.7
+    ],
+    "bbox_qwen": [
+     87,
+     35,
+     928,
+     53
+    ]
+   },
+   {
+    "text": "tới người dự tuyển (tin nhắn SMS, thư điện tử hoặc hình thức điện tử phù hợp khác);",
+    "bbox": [
+     87,
+     55.8,
+     690,
+     69.7
+    ],
+    "bbox_qwen": [
+     87,
+     55,
+     690,
+     73
+    ]
+   },
+   {
+    "text": "e) Các nội dung khác theo quyết định của cơ quan có thẩm quyền tuyển dụng.",
+    "bbox": [
+     87,
+     88.5,
+     705,
+     101.8
+    ],
+    "bbox_qwen": [
+     87,
+     84,
+     705,
+     102
+    ]
+   },
+   {
+    "text": "3. Người đứng đầu cơ quan có thẩm quyền tuyển dụng được thay đổi nội dung Thông báo tuyển dụng 01",
+    "bbox": [
+     87,
+     120.6,
+     928,
+     133.9
+    ],
+    "bbox_qwen": [
+     87,
+     113,
+     928,
+     131
+    ]
+   },
+   {
+    "text": "lần, nhưng chỉ được thực hiện trước ngày khai mạc kỳ tuyển dụng ít nhất là 10 ngày và phải công khai theo",
+    "bbox": [
+     87,
+     137.6,
+     928,
+     150.9
+    ],
+    "bbox_qwen": [
+     87,
+     133,
+     928,
+     151
+    ]
+   },
+   {
+    "text": "quy định tại khoản 1 Điều này. Trường hợp có sự thay đổi về Thông báo tuyển dụng thì các quy định có liên",
+    "bbox": [
+     87,
+     154.5,
+     928,
+     167.9
+    ],
+    "bbox_qwen": [
+     87,
+     153,
+     928,
+     171
+    ]
+   },
+   {
+    "text": "quan tính từ ngày có Thông báo tuyển dụng mới.",
+    "bbox": [
+     87,
+     171.5,
+     360,
+     185.5
+    ],
+    "bbox_qwen": [
+     87,
+     173,
+     360,
+     191
+    ]
+   },
+   {
+    "text": "4. Thời hạn nhận Phiếu đăng ký dự tuyển là 30 ngày kể từ ngày thông báo công khai theo quy định tại",
+    "bbox": [
+     87,
+     203.6,
+     900,
+     217.6
+    ],
+    "bbox_qwen": [
+     87,
+     202,
+     900,
+     220
+    ]
+   },
+   {
+    "text": "khoản 1 Điều này và phải được xác định cụ thể trong Thông báo tuyển dụng.",
+    "bbox": [
+     87,
+     220.6,
+     695,
+     234.5
+    ],
+    "bbox_qwen": [
+     87,
+     222,
+     695,
+     240
+    ]
+   },
+   {
+    "text": "Điều 16. Trình tự tổ chức thi tuyển, xét tuyển công chức",
+    "bbox": [
+     87,
+     252.7,
+     520,
+     266.7
+    ],
+    "bbox_qwen": [
+     87,
+     251,
+     520,
+     269
+    ]
+   },
+   {
+    "text": "1. Sau khi thông báo tuyển dụng, người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định thành lập",
+    "bbox": [
+     87,
+     285.5,
+     933,
+     298.8
+    ],
+    "bbox_qwen": [
+     87,
+     280,
+     933,
+     298
+    ]
+   },
+   {
+    "text": "Hội đồng tuyển dụng. Hội đồng tuyển dụng quyết định thành lập Ban kiểm tra Phiếu đăng ký dự tuyển để",
+    "bbox": [
+     87,
+     302.4,
+     933,
+     315.8
+    ],
+    "bbox_qwen": [
+     87,
+     300,
+     933,
+     318
+    ]
+   },
+   {
+    "text": "kiểm tra điều kiện, tiêu chuẩn của người đăng ký dự tuyển.",
+    "bbox": [
+     87,
+     319.4,
+     430,
+     333.3
+    ],
+    "bbox_qwen": [
+     87,
+     320,
+     430,
+     338
+    ]
+   },
+   {
+    "text": "2. Chậm nhất là 15 ngày hoặc chậm nhất là 30 ngày đối với trường hợp số lượng người đăng ký dự tuyển từ",
+    "bbox": [
+     87,
+     351.5,
+     933,
+     367.3
+    ],
+    "bbox_qwen": [
+     87,
+     349,
+     933,
+     367
+    ]
+   },
+   {
+    "text": "500 người trở lên, kể từ ngày hết thời hạn nhận Phiếu đăng ký dự tuyển, Hội đồng tuyển dụng hoàn thành",
+    "bbox": [
+     87,
+     368.5,
+     933,
+     382.4
+    ],
+    "bbox_qwen": [
+     87,
+     369,
+     933,
+     387
+    ]
+   },
+   {
+    "text": "các công việc sau đây:",
+    "bbox": [
+     87,
+     397.0,
+     200,
+     399.4
+    ],
+    "bbox_qwen": [
+     87,
+     389,
+     200,
+     407
+    ]
+   },
+   {
+    "text": "a) Thông báo trên trang thông tin điện tử hoặc cổng thông tin điện tử danh sách thí sinh đủ điều kiện, tiêu",
+    "bbox": [
+     87,
+     418.2,
+     928,
+     431.5
+    ],
+    "bbox_qwen": [
+     87,
+     418,
+     928,
+     436
+    ]
+   },
+   {
+    "text": "chuẩn dự thi hoặc dự xét và thông tin liên quan đến việc tổ chức tuyển dụng.",
+    "bbox": [
+     87,
+     435.2,
+     560,
+     448.5
+    ],
+    "bbox_qwen": [
+     87,
+     438,
+     560,
+     456
+    ]
+   },
+   {
+    "text": "Nội dung thông báo phải ghi rõ: thông tin thí sinh dự tuyển; vị trí việc làm đăng ký dự tuyển, thứ tự ưu tiên",
+    "bbox": [
+     87,
+     467.3,
+     933,
+     483.0
+    ],
+    "bbox_qwen": [
+     87,
+     467,
+     933,
+     485
+    ]
+   },
+   {
+    "text": "lựa chọn trong Phiếu đăng ký dự tuyển (đối với trường hợp đăng ký dự tuyển vào vị trí việc làm được tuyển",
+    "bbox": [
+     87,
+     484.2,
+     933,
+     498.2
+    ],
+    "bbox_qwen": [
+     87,
+     487,
+     933,
+     505
+    ]
+   },
+   {
+    "text": "dụng chung cho nhiều cơ quan sử dụng công chức khác nhau); thời gian thi vòng 1, thời gian thi vòng 2 (dự",
+    "bbox": [
+     87,
+     501.2,
+     933,
+     517.0
+    ],
+    "bbox_qwen": [
+     87,
+     507,
+     933,
+     525
+    ]
+   },
+   {
+    "text": "kiến) đối với thi vào vị trí việc làm xếp ngạch chuyên viên và tương đương; thời gian thi nghiệp vụ chuyên",
+    "bbox": [
+     87,
+     535.8,
+     933,
+     549.1
+    ],
+    "bbox_qwen": [
+     87,
+     527,
+     933,
+     545
+    ]
+   },
+   {
+    "text": "ngành (đối với vị trí việc làm xếp ngạch nhân viên, ngạch chuyên viên chính và tương đương, ngạch chuyên",
+    "bbox": [
+     87,
+     552.7,
+     933,
+     566.1
+    ],
+    "bbox_qwen": [
+     87,
+     547,
+     933,
+     565
+    ]
+   },
+   {
+    "text": "viên cao cấp và tương đương, ngạch chuyên gia cao cấp), thời gian tổ chức vấn đáp (đối với xét tuyển); hình",
+    "bbox": [
+     87,
+     569.7,
+     933,
+     583.0
+    ],
+    "bbox_qwen": [
+     87,
+     567,
+     933,
+     585
+    ]
+   },
+   {
+    "text": "thức, địa điểm thi và các thông tin khác có liên quan;",
+    "bbox": [
+     87,
+     601.8,
+     400,
+     615.8
+    ],
+    "bbox_qwen": [
+     87,
+     587,
+     400,
+     605
+    ]
+   },
+   {
+    "text": "b) Gửi thông báo triệu tập tới người đăng ký dự tuyển.",
+    "bbox": [
+     87,
+     633.9,
+     440,
+     647.9
+    ],
+    "bbox_qwen": [
+     87,
+     616,
+     440,
+     634
+    ]
+   },
+   {
+    "text": "Trường hợp người dự tuyển không đáp ứng điều kiện, tiêu chuẩn thì phải thông báo và nêu rõ lý do.",
+    "bbox": [
+     87,
+     633.9,
+     705,
+     647.9
+    ],
+    "bbox_qwen": [
+     87,
+     645,
+     705,
+     663
+    ]
+   },
+   {
+    "text": "3. Tổ chức thi môn điều kiện (vòng 1):",
+    "bbox": [
+     87,
+     666.7,
+     360,
+     680.0
+    ],
+    "bbox_qwen": [
+     87,
+     674,
+     360,
+     692
+    ]
+   },
+   {
+    "text": "a) Thời gian tổ chức thi vòng 1: Chậm nhất là 30 ngày kể từ ngày hết thời hạn nhận Phiếu đăng ký dự tuyển.",
+    "bbox": [
+     87,
+     698.8,
+     948,
+     712.1
+    ],
+    "bbox_qwen": [
+     87,
+     703,
+     948,
+     721
+    ]
+   },
+   {
+    "text": "Trường hợp quyết định kéo dài thời gian theo quy định tại khoản 2 Điều này thì thời gian tổ chức thi vòng 1",
+    "bbox": [
+     87,
+     715.8,
+     948,
+     729.1
+    ],
+    "bbox_qwen": [
+     87,
+     723,
+     948,
+     741
+    ]
+   },
+   {
+    "text": "chậm nhất là 45 ngày kể từ ngày hết thời hạn nhận Phiếu đăng ký dự tuyển;",
+    "bbox": [
+     87,
+     732.7,
+     540,
+     746.7
+    ],
+    "bbox_qwen": [
+     87,
+     743,
+     540,
+     761
+    ]
+   },
+   {
+    "text": "b) Tổ chức thi kiến thức, năng lực chung",
+    "bbox": [
+     87,
+     764.8,
+     380,
+     778.8
+    ],
+    "bbox_qwen": [
+     87,
+     772,
+     380,
+     790
+    ]
+   },
+   {
+    "text": "Kết quả thi được thông báo tới thí sinh ngay sau khi kết thúc thời gian làm bài. Không thực hiện việc phúc",
+    "bbox": [
+     87,
+     797.0,
+     933,
+     811.5
+    ],
+    "bbox_qwen": [
+     87,
+     801,
+     933,
+     819
+    ]
+   },
+   {
+    "text": "khảo đối với kết quả thi vòng 1;",
+    "bbox": [
+     87,
+     813.9,
+     260,
+     827.9
+    ],
+    "bbox_qwen": [
+     87,
+     821,
+     260,
+     839
+    ]
+   },
+   {
+    "text": "c) Hội đồng tuyển dụng thông báo công khai trên trang thông tin điện tử hoặc cổng thông tin điện tử của cơ",
+    "bbox": [
+     87,
+     846.7,
+     933,
+     860.0
+    ],
+    "bbox_qwen": [
+     87,
+     850,
+     933,
+     868
+    ]
+   },
+   {
+    "text": "quan có thẩm quyền tuyển dụng danh sách thí sinh tham dự vòng 2, thời gian, địa điểm, hình thức thi vòng 2",
+    "bbox": [
+     87,
+     863.6,
+     933,
+     877.0
+    ],
+    "bbox_qwen": [
+     87,
+     870,
+     933,
+     888
+    ]
+   },
+   {
+    "text": "và thông báo tới thí sinh. Thí sinh có kết quả đạt tại vòng 1 đương nhiên được tham dự vòng 2 mà không",
+    "bbox": [
+     87,
+     897.6,
+     933,
+     900.0
+    ],
+    "bbox_qwen": [
+     87,
+     890,
+     933,
+     908
+    ]
+   },
+   {
+    "text": "cần giấy triệu tập.",
+    "bbox": [
+     87,
+     900.6,
+     180,
+     911.5
+    ],
+    "bbox_qwen": [
+     87,
+     910,
+     180,
+     928
+    ]
+   },
+   {
+    "text": "4. Tổ chức thi nghiệp vụ chuyên ngành (vòng 2):",
+    "bbox": [
+     87,
+     929.7,
+     475,
+     943.6
+    ],
+    "bbox_qwen": [
+     87,
+     939,
+     475,
+     957
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     36,
+     972.7,
+     100,
+     980.0
+    ],
+    "bbox_qwen": [
+     36,
+     970,
+     100,
+     982
+    ]
+   },
+   {
+    "text": "10/46",
+    "bbox": [
+     928,
+     972.7,
+     960,
+     980.0
+    ],
+    "bbox_qwen": [
+     928,
+     970,
+     960,
+     982
+    ]
+   }
+  ],
+  "latency_s": 8.43,
+  "in_tokens": 2243,
+  "out_tokens": 1889,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 150,
+   "hint": true,
+   "schema": false
+  }
+ }
+}

@@ -1,0 +1,47 @@
+{
+ "lines": 181,
+ "dropped_junk_lines": 20,
+ "labels": {
+  "BODY": 95,
+  "OWN_CHUONG": 2,
+  "OWN_DIEU": 13,
+  "OWN_KHOAN": 51,
+  "OWN_DIEM": 20
+ },
+ "headings": 86,
+ "by_kind": {
+  "OWN_CHUONG": 2,
+  "OWN_DIEU": 13,
+  "OWN_KHOAN": 51,
+  "OWN_DIEM": 20
+ },
+ "by_level": {
+  "1": 2,
+  "2": 13,
+  "3": 51,
+  "4": 20
+ },
+ "ambiguous_lines": 0,
+ "ambiguous": [],
+ "seconds": 0.03,
+ "beam": 64,
+ "own_articles": [
+  "Điều 1. Phạm vi điều chỉnh",
+  "Điều 2. Văn bản quy phạm pháp luật",
+  "Điều 3. Giải thích từ ngữ",
+  "Điều 4. Hệ thống văn bản quy phạm pháp luật",
+  "Điều 5. Nguyên tắc xây dựng, ban hành văn bản quy phạm pháp luật",
+  "Điều 6. Phản biện xã hội, tham vấn, góp ý đối với chính sách, dự thảo văn bản quy phạm phá",
+  "Điều 7. Ngôn ngữ, thể thức, kỹ thuật trình bày và dịch văn bản quy phạm pháp luật ra tiếng",
+  "Điều 8. Sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm ph",
+  "Điều 9. Gửi, lưu trữ văn bản quy phạm pháp luật",
+  "Điều 10. Luật, nghị quyết của Quốc hội",
+  "Điều 11. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội",
+  "Điều 12. Lệnh, quyết định của Chủ tịch nước",
+  "Điều 13. Nghị quyết liên tịch giữa Ủy ban Thường vụ Quốc hội, Chính phủ, Đoàn Chủ tịch Ủy "
+ ],
+ "own_groups": [
+  "Chương I NHỮNG QUY ĐỊNH CHUNG",
+  "Chương II THẨM QUYỀN BAN HÀNH, NỘI DUNG VĂN BẢN QUY PHẠM PHÁP LUẬT"
+ ]
+}

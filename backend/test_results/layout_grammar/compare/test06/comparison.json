@@ -1,0 +1,27 @@
+{
+ "document": "test06",
+ "ground_truth": "unavailable",
+ "evaluation_type": "so sánh mô tả giữa các phương pháp",
+ "rule_based_title": "CHÍNH PHỦ CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+ "methods": {
+  "rule_based": {
+   "headings": 58,
+   "by_level": {
+    "1": 2,
+    "2": 15,
+    "3": 17,
+    "4": 19,
+    "5": 5
+   },
+   "by_form": {
+    "điểm a) b)": 19,
+    "khoản 1. 2.": 17,
+    "Điều (văn bản này)": 15,
+    "Mục": 5,
+    "Chương": 2
+   },
+   "pages_with_headings": 10
+  }
+ },
+ "overlap": {}
+}

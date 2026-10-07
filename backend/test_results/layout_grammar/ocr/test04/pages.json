@@ -1,0 +1,1474 @@
+{
+ "1": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "TỔNG CỤC THUẾ",
+    "bbox": [
+     171,
+     53.9,
+     307,
+     62.4
+    ],
+    "bbox_qwen": [
+     171,
+     48,
+     307,
+     62
+    ]
+   },
+   {
+    "text": "CỤC THUẾ TP HÀ NỘI",
+    "bbox": [
+     153,
+     53.9,
+     325,
+     62.4
+    ],
+    "bbox_qwen": [
+     153,
+     63,
+     325,
+     77
+    ]
+   },
+   {
+    "text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+    "bbox": [
+     430,
+     53.9,
+     772,
+     62.4
+    ],
+    "bbox_qwen": [
+     430,
+     48,
+     772,
+     62
+    ]
+   },
+   {
+    "text": "Độc lập - Tự do - Hạnh phúc",
+    "bbox": [
+     503,
+     69.1,
+     700,
+     80.6
+    ],
+    "bbox_qwen": [
+     503,
+     63,
+     700,
+     77
+    ]
+   },
+   {
+    "text": "Số: 76653/CT-TTHT",
+    "bbox": [
+     100,
+     106.7,
+     238,
+     118.2
+    ],
+    "bbox_qwen": [
+     100,
+     97,
+     238,
+     111
+    ]
+   },
+   {
+    "text": "V/v vốn hóa chi phí lãi vay",
+    "bbox": [
+     100,
+     121.2,
+     230,
+     127.9
+    ],
+    "bbox_qwen": [
+     100,
+     113,
+     230,
+     127
+    ]
+   },
+   {
+    "text": "Hà Nội, ngày 19 tháng 11 năm 2018",
+    "bbox": [
+     580,
+     121.2,
+     817,
+     127.9
+    ],
+    "bbox_qwen": [
+     580,
+     100,
+     817,
+     117
+    ]
+   },
+   {
+    "text": "Kính gửi: Công ty CP Dược Khoa",
+    "bbox": [
+     406,
+     170.3,
+     631,
+     181.8
+    ],
+    "bbox_qwen": [
+     406,
+     162,
+     631,
+     179
+    ]
+   },
+   {
+    "text": "Đ/c: Số 9 Nguyễn Công Trứ; Phường Phạm Đình Hổ, Quận Hai Bà Trưng, Thành phố Hà Nội -MST: 01 01 326 329)",
+    "bbox": [
+     136,
+     185.5,
+     900,
+     197.0
+    ],
+    "bbox_qwen": [
+     136,
+     182,
+     900,
+     199
+    ]
+   },
+   {
+    "text": "Cục Thuế TP Hà Nội nhận được công văn số 117-18/DK-CT ngày 06/11/2018 của Công ty CP Dược Khoa (sau đây gọi là Công",
+    "bbox": [
+     99,
+     213.3,
+     934,
+     227.3
+    ],
+    "bbox_qwen": [
+     99,
+     215,
+     934,
+     232
+    ]
+   },
+   {
+    "text": "ty) hỏi về chính sách thuế, Cục Thuế TP Hà Nội có ý kiến như sau:",
+    "bbox": [
+     99,
+     230.9,
+     480,
+     242.4
+    ],
+    "bbox_qwen": [
+     99,
+     232,
+     480,
+     249
+    ]
+   },
+   {
+    "text": "- Căn cứ Điều 4 Thông tư số 96/2015/TT-BTC ngày 22/06/2015 của Bộ Tài chính sửa đổi, bổ sung Điều 6 Thông tư số",
+    "bbox": [
+     99,
+     261.2,
+     880,
+     272.7
+    ],
+    "bbox_qwen": [
+     99,
+     265,
+     880,
+     282
+    ]
+   },
+   {
+    "text": "78/2014/TT-BTC hướng dẫn các khoản chi được trừ và không được trừ khi xác định thu nhập chịu thuế như sau:",
+    "bbox": [
+     99,
+     276.4,
+     660,
+     287.9
+    ],
+    "bbox_qwen": [
+     99,
+     282,
+     660,
+     299
+    ]
+   },
+   {
+    "text": "\"1. Trừ các khoản chi không được trừ tại Khoản 2 Điều này, doanh nghiệp được trừ mọi khoản chi nếu đáp ứng đủ các điều kiện",
+    "bbox": [
+     99,
+     325.5,
+     934,
+     330.9
+    ],
+    "bbox_qwen": [
+     99,
+     315,
+     934,
+     332
+    ]
+   },
+   {
+    "text": "sau:",
+    "bbox": [
+     99,
+     352.7,
+     127,
+     363.6
+    ],
+    "bbox_qwen": [
+     99,
+     332,
+     127,
+     349
+    ]
+   },
+   {
+    "text": "a) Khoản chi thực tế phát sinh liên quan đến hoạt động sản xuất, kinh doanh của doanh nghiệp.",
+    "bbox": [
+     99,
+     383.0,
+     620,
+     393.9
+    ],
+    "bbox_qwen": [
+     99,
+     365,
+     620,
+     382
+    ]
+   },
+   {
+    "text": "b) Khoản chi có đủ hóa đơn, chứng từ hợp pháp theo quy định của pháp luật.",
+    "bbox": [
+     99,
+     413.3,
+     595,
+     424.2
+    ],
+    "bbox_qwen": [
+     99,
+     398,
+     595,
+     415
+    ]
+   },
+   {
+    "text": "c) Khoản chi nếu có hóa đơn mua hàng hóa, dịch vụ từng lần có giá trị từ 20 triệu đồng trở lên (giá đã bao gồm thuế GTGT) khi",
+    "bbox": [
+     99,
+     428.5,
+     934,
+     439.4
+    ],
+    "bbox_qwen": [
+     99,
+     431,
+     934,
+     448
+    ]
+   },
+   {
+    "text": "thanh toán phải có chứng từ thanh toán không dùng tiền mặt.",
+    "bbox": [
+     99,
+     458.8,
+     430,
+     469.7
+    ],
+    "bbox_qwen": [
+     99,
+     448,
+     430,
+     465
+    ]
+   },
+   {
+    "text": "Chứng từ thanh toán không dùng tiền mặt thực hiện theo quy định của các văn bản pháp luật về thuế giá trị gia tăng...",
+    "bbox": [
+     99,
+     489.1,
+     867,
+     500.0
+    ],
+    "bbox_qwen": [
+     99,
+     481,
+     867,
+     498
+    ]
+   },
+   {
+    "text": "...2. Các khoản chi không được trừ khi xác định thu nhập chịu thuế bao gồm:",
+    "bbox": [
+     99,
+     549.7,
+     602,
+     561.2
+    ],
+    "bbox_qwen": [
+     99,
+     514,
+     602,
+     531
+    ]
+   },
+   {
+    "text": "...",
+    "bbox": [
+     99,
+     564.8,
+     112,
+     576.4
+    ],
+    "bbox_qwen": [
+     99,
+     547,
+     112,
+     564
+    ]
+   },
+   {
+    "text": "2.18. Chi trả lãi tiền vay tương ứng với phần vốn điều lệ (đối với doanh nghiệp tư nhân là vốn đầu tư) đã đăng ký còn thiếu theo",
+    "bbox": [
+     99,
+     580.0,
+     934,
+     591.5
+    ],
+    "bbox_qwen": [
+     99,
+     580,
+     934,
+     597
+    ]
+   },
+   {
+    "text": "tiến độ góp vốn ghi trong điều lệ của doanh nghiệp kể cả trường hợp doanh nghiệp đã đi vào sản xuất kinh doanh. Chi trả lãi tiền",
+    "bbox": [
+     99,
+     610.3,
+     934,
+     621.8
+    ],
+    "bbox_qwen": [
+     99,
+     597,
+     934,
+     614
+    ]
+   },
+   {
+    "text": "vay trong quá trình đầu tư đã được ghi nhận vào giá trị của tài sản, giá trị công trình đầu tư.",
+    "bbox": [
+     99,
+     625.5,
+     560,
+     637.0
+    ],
+    "bbox_qwen": [
+     99,
+     614,
+     560,
+     631
+    ]
+   },
+   {
+    "text": "Trường hợp doanh nghiệp đã góp đủ vốn điều lệ, trong quá trình kinh doanh có khoản chi trả lãi tiền vay để đầu tư vào doanh",
+    "bbox": [
+     99,
+     655.8,
+     924,
+     667.3
+    ],
+    "bbox_qwen": [
+     99,
+     647,
+     924,
+     664
+    ]
+   },
+   {
+    "text": "nghiệp khác thì khoản chi này được tính vào chi phí được trừ khi xác định thu nhập chịu thuế.",
+    "bbox": [
+     99,
+     670.9,
+     660,
+     679.4
+    ],
+    "bbox_qwen": [
+     99,
+     664,
+     660,
+     681
+    ]
+   },
+   {
+    "text": "Chi trả lãi tiền vay tương ứng với vốn điều lệ còn thiếu theo tiến độ góp vốn ghi trong điều lệ của doanh nghiệp không được trừ",
+    "bbox": [
+     99,
+     701.2,
+     934,
+     712.7
+    ],
+    "bbox_qwen": [
+     99,
+     697,
+     934,
+     714
+    ]
+   },
+   {
+    "text": "khi xác định thu nhập chịu thuế được xác định như sau:",
+    "bbox": [
+     99,
+     731.5,
+     440,
+     743.0
+    ],
+    "bbox_qwen": [
+     99,
+     714,
+     440,
+     731
+    ]
+   },
+   {
+    "text": "- Trường hợp số tiền vay nhỏ hơn hoặc bằng số vốn điều lệ còn thiếu, thì toàn bộ lãi tiền vay là khoản chi không được trừ.",
+    "bbox": [
+     99,
+     761.8,
+     720,
+     773.3
+    ],
+    "bbox_qwen": [
+     99,
+     747,
+     720,
+     764
+    ]
+   },
+   {
+    "text": "- Trường hợp số tiền vay lớn hơn số vốn điều lệ còn thiếu theo tiến độ góp vốn:",
+    "bbox": [
+     99,
+     777.0,
+     620,
+     788.5
+    ],
+    "bbox_qwen": [
+     99,
+     780,
+     620,
+     797
+    ]
+   },
+   {
+    "text": "+ Nếu doanh nghiệp phát sinh nhiều khoản vay thì khoản chi trả lãi tiền vay không được trừ bằng tỷ lệ (%) giữa vốn điều lệ còn",
+    "bbox": [
+     99,
+     807.3,
+     934,
+     818.8
+    ],
+    "bbox_qwen": [
+     99,
+     813,
+     934,
+     830
+    ]
+   },
+   {
+    "text": "thiếu trên tổng số tiền vay nhân (x) tổng số lãi vay.",
+    "bbox": [
+     99,
+     822.4,
+     340,
+     833.9
+    ],
+    "bbox_qwen": [
+     99,
+     830,
+     340,
+     847
+    ]
+   },
+   {
+    "text": "+ Nếu doanh nghiệp chỉ phát sinh một khoản vay thì khoản chi trả lãi tiền không được trừ bằng số vốn điều lệ còn thiếu nhân (x)",
+    "bbox": [
+     99,
+     852.7,
+     934,
+     864.2
+    ],
+    "bbox_qwen": [
+     99,
+     863,
+     934,
+     880
+    ]
+   },
+   {
+    "text": "lãi suất của khoản vay nhân (x) thời gian góp vốn điều lệ còn thiếu.",
+    "bbox": [
+     99,
+     883.0,
+     440,
+     894.5
+    ],
+    "bbox_qwen": [
+     99,
+     880,
+     440,
+     897
+    ]
+   },
+   {
+    "text": "(Lãi vay thực hiện theo quy định tại điểm 2.17 Điều này)\"",
+    "bbox": [
+     99,
+     913.3,
+     410,
+     924.8
+    ],
+    "bbox_qwen": [
+     99,
+     913,
+     410,
+     930
+    ]
+   },
+   {
+    "text": "2.31. Chi về đầu tư xây dựng cơ bản trong giai đoạn đầu tư để hình thành tài sản cố định.",
+    "bbox": [
+     99,
+     928.5,
+     677,
+     940.0
+    ],
+    "bbox_qwen": [
+     99,
+     946,
+     677,
+     963
+    ]
+   },
+   {
+    "text": "Khi bắt đầu hoạt động sản xuất kinh doanh, doanh nghiệp chưa phát sinh doanh thu nhưng có phát sinh các khoản chi thường",
+    "bbox": [
+     99,
+     972.7,
+     924,
+     980.0
+    ],
+    "bbox_qwen": [
+     99,
+     979,
+     924,
+     996
+    ]
+   },
+   {
+    "text": "xuyên để duy trì hoạt động sản xuất kinh doanh của doanh nghiệp (không phải là các khoản chi đầu tư xây dựng để hình thành",
+    "bbox": [
+     99,
+     972.7,
+     900,
+     980.0
+    ],
+    "bbox_qwen": [
+     99,
+     996,
+     900,
+     1000
+    ]
+   }
+  ],
+  "latency_s": 8.61,
+  "in_tokens": 2207,
+  "out_tokens": 1686,
+  "finish_reason": "stop"
+ },
+ "2": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 1:50 PM",
+    "bbox": [
+     30,
+     21.2,
+     130,
+     28.5
+    ],
+    "bbox_qwen": [
+     30,
+     18,
+     130,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     535,
+     21.2,
+     597,
+     28.5
+    ],
+    "bbox_qwen": [
+     535,
+     18,
+     597,
+     30
+    ]
+   },
+   {
+    "text": "tài sản cố định) mà các khoản chi này đáp ứng các điều kiện theo quy định thì khoản chi này được tính vào chi phí được trừ khi",
+    "bbox": [
+     93,
+     38.8,
+     928,
+     49.7
+    ],
+    "bbox_qwen": [
+     93,
+     36,
+     928,
+     53
+    ]
+   },
+   {
+    "text": "xác định thu nhập chịu thuế.",
+    "bbox": [
+     93,
+     53.9,
+     230,
+     62.4
+    ],
+    "bbox_qwen": [
+     93,
+     53,
+     230,
+     69
+    ]
+   },
+   {
+    "text": "Trường hợp trong giai đoạn đầu tư xây dựng cơ bản, doanh nghiệp phát sinh cả khoản chi trả lãi tiền vay và thu từ lãi tiền gửi thì",
+    "bbox": [
+     93,
+     84.2,
+     928,
+     95.8
+    ],
+    "bbox_qwen": [
+     93,
+     82,
+     928,
+     99
+    ]
+   },
+   {
+    "text": "được bù trừ giữa khoản chi trả lãi tiền vay và thu từ lãi tiền gửi, sau khi bù trừ phần chênh lệch còn lại ghi giảm giá trị đầu tư.”",
+    "bbox": [
+     93,
+     99.4,
+     928,
+     110.9
+    ],
+    "bbox_qwen": [
+     93,
+     99,
+     928,
+     115
+    ]
+   },
+   {
+    "text": "- Căn cứ Thông tư số 45/2013/TT-BTC ngày 25/4/2013 của Bộ Tài chính hướng dẫn chế độ quản lý, sử dụng và trích khấu hao tài",
+    "bbox": [
+     93,
+     129.7,
+     943,
+     141.2
+    ],
+    "bbox_qwen": [
+     93,
+     132,
+     943,
+     148
+    ]
+   },
+   {
+    "text": "sản cố định:",
+    "bbox": [
+     93,
+     147.9,
+     163,
+     153.9
+    ],
+    "bbox_qwen": [
+     93,
+     148,
+     163,
+     164
+    ]
+   },
+   {
+    "text": "+ Tại Điều 2 quy định:",
+    "bbox": [
+     93,
+     175.2,
+     242,
+     184.2
+    ],
+    "bbox_qwen": [
+     93,
+     174,
+     242,
+     190
+    ]
+   },
+   {
+    "text": "\"5. Nguyên giá tài sản cố định:",
+    "bbox": [
+     93,
+     205.5,
+     300,
+     217.0
+    ],
+    "bbox_qwen": [
+     93,
+     203,
+     300,
+     219
+    ]
+   },
+   {
+    "text": "- Nguyên giá tài sản cố định hữu hình là toàn bộ các chi phí mà doanh nghiệp phải bỏ ra để có tài sản cố định hữu hình tính đến",
+    "bbox": [
+     93,
+     235.8,
+     943,
+     247.3
+    ],
+    "bbox_qwen": [
+     93,
+     232,
+     943,
+     248
+    ]
+   },
+   {
+    "text": "thời điểm đưa tài sản đó vào trạng thái sẵn sàng sử dụng.",
+    "bbox": [
+     93,
+     250.9,
+     410,
+     262.4
+    ],
+    "bbox_qwen": [
+     93,
+     248,
+     410,
+     264
+    ]
+   },
+   {
+    "text": "- Nguyên giá tài sản cố định vô hình là toàn bộ các chi phí mà doanh nghiệp phải bỏ ra để có tài sản cố định vô hình tính đến",
+    "bbox": [
+     93,
+     281.2,
+     943,
+     292.7
+    ],
+    "bbox_qwen": [
+     93,
+     277,
+     943,
+     293
+    ]
+   },
+   {
+    "text": "thời điểm đưa tài sản đó vào sử dụng theo dự tính.”",
+    "bbox": [
+     93,
+     296.4,
+     380,
+     305.5
+    ],
+    "bbox_qwen": [
+     93,
+     293,
+     380,
+     309
+    ]
+   },
+   {
+    "text": "- Căn cứ Thông tư số 61/2007/TT-BTC ngày 31/12/2007 của Bộ Tài chính hướng dẫn thực hiện 16 chuẩn mực kế toán:",
+    "bbox": [
+     93,
+     326.7,
+     800,
+     338.2
+    ],
+    "bbox_qwen": [
+     93,
+     322,
+     800,
+     338
+    ]
+   },
+   {
+    "text": "Tại chuẩn mực kế toán số 16 “chi phí đi vay” quy định:",
+    "bbox": [
+     93,
+     357.0,
+     460,
+     368.5
+    ],
+    "bbox_qwen": [
+     93,
+     351,
+     460,
+     367
+    ]
+   },
+   {
+    "text": "“1. Hạch toán chi phí đi vay phải tôn trọng một số quy định sau:",
+    "bbox": [
+     93,
+     387.9,
+     470,
+     398.8
+    ],
+    "bbox_qwen": [
+     93,
+     380,
+     470,
+     396
+    ]
+   },
+   {
+    "text": "1.1. Chi phí đi vay phải ghi nhận vào chi phí sản xuất, kinh doanh trong kỳ phát sinh, trừ khi được vốn hóa theo quy định.",
+    "bbox": [
+     93,
+     417.6,
+     888,
+     429.1
+    ],
+    "bbox_qwen": [
+     93,
+     409,
+     888,
+     425
+    ]
+   },
+   {
+    "text": "1.2. Chi phí đi vay liên quan đến tài sản dở dang khi có đủ các điều kiện vốn hóa thì đơn vị phải thực hiện theo đúng quy định tại",
+    "bbox": [
+     93,
+     447.9,
+     943,
+     459.4
+    ],
+    "bbox_qwen": [
+     93,
+     438,
+     943,
+     454
+    ]
+   },
+   {
+    "text": "Chuẩn mực kế toán \"Chi phí đi vay\" về định nghĩa tài sản dở dang, xác định chi phí đi vay được vốn hóa, thời điểm bắt đầu vốn",
+    "bbox": [
+     93,
+     463.0,
+     943,
+     474.5
+    ],
+    "bbox_qwen": [
+     93,
+     454,
+     943,
+     470
+    ]
+   },
+   {
+    "text": "hóa, tạm ngừng vốn hóa và chấm dứt việc vốn hóa.",
+    "bbox": [
+     93,
+     478.8,
+     410,
+     489.7
+    ],
+    "bbox_qwen": [
+     93,
+     470,
+     410,
+     486
+    ]
+   },
+   {
+    "text": "1.3. Chi phí đi vay liên quan trực tiếp đến việc đầu tư xây dựng hoặc sản xuất tài sản dở dang nếu đủ điều kiện vốn hóa thì được",
+    "bbox": [
+     93,
+     509.1,
+     943,
+     520.0
+    ],
+    "bbox_qwen": [
+     93,
+     499,
+     943,
+     515
+    ]
+   },
+   {
+    "text": "tính vào giá trị của tài sản đó (được vốn hóa), bao gồm các khoản lãi tiền vay, phân bổ các khoản chiết khấu hoặc phụ trội khi",
+    "bbox": [
+     93,
+     524.2,
+     943,
+     535.2
+    ],
+    "bbox_qwen": [
+     93,
+     515,
+     943,
+     531
+    ]
+   },
+   {
+    "text": "phát hành trái phiếu, các khoản chi phí phụ phát sinh liên quan tới quá trình làm thủ tục vay...",
+    "bbox": [
+     93,
+     539.4,
+     620,
+     550.3
+    ],
+    "bbox_qwen": [
+     93,
+     531,
+     620,
+     547
+    ]
+   },
+   {
+    "text": "1.6. Việc vốn hóa chi phí đi vay sẽ được tạm ngừng lại trong các giai đoạn mà quá trình đầu tư xây dựng hoặc sản xuất tài sản dở",
+    "bbox": [
+     93,
+     569.7,
+     943,
+     580.6
+    ],
+    "bbox_qwen": [
+     93,
+     560,
+     943,
+     576
+    ]
+   },
+   {
+    "text": "dang bị gián đoạn, trừ khi sự gián đoạn đó là cần thiết.",
+    "bbox": [
+     93,
+     584.8,
+     360,
+     595.8
+    ],
+    "bbox_qwen": [
+     93,
+     576,
+     360,
+     592
+    ]
+   },
+   {
+    "text": "1.7. Việc vốn hóa chi phí đi vay sẽ chấm dứt khi các hoạt động chủ yếu cần thiết cho việc chuẩn bị đưa tài sản dở dang vào sử",
+    "bbox": [
+     93,
+     615.2,
+     943,
+     626.1
+    ],
+    "bbox_qwen": [
+     93,
+     605,
+     943,
+     621
+    ]
+   },
+   {
+    "text": "dụng hoặc bán đã hoàn thành. Chi phí đi vay phát sinh sau đó sẽ được ghi nhận là chi phí sản xuất kinh doanh trong kỳ khi phát",
+    "bbox": [
+     93,
+     630.3,
+     943,
+     641.2
+    ],
+    "bbox_qwen": [
+     93,
+     621,
+     943,
+     637
+    ]
+   },
+   {
+    "text": "sinh.\"",
+    "bbox": [
+     93,
+     647.9,
+     120,
+     653.9
+    ],
+    "bbox_qwen": [
+     93,
+     637,
+     120,
+     653
+    ]
+   },
+   {
+    "text": "- Căn cứ Khoản 3, Điều 4 của Thông tư số 06/2016/TT-BXD ngày 10/3/2016 của Bộ Xây dựng về hướng dẫn xác định và quản lý",
+    "bbox": [
+     93,
+     675.8,
+     943,
+     686.7
+    ],
+    "bbox_qwen": [
+     93,
+     670,
+     943,
+     686
+    ]
+   },
+   {
+    "text": "chi phí đầu tư xây dựng:",
+    "bbox": [
+     93,
+     690.9,
+     210,
+     699.4
+    ],
+    "bbox_qwen": [
+     93,
+     686,
+     210,
+     702
+    ]
+   },
+   {
+    "text": "“Một số khoản mục chi phí thuộc nội dung chi phí quản lý dự án, chi phí tư vấn đầu tư xây dựng, chi phí khác của dự án nếu",
+    "bbox": [
+     93,
+     721.2,
+     943,
+     732.7
+    ],
+    "bbox_qwen": [
+     93,
+     715,
+     943,
+     731
+    ]
+   },
+   {
+    "text": "chưa có quy định hoặc chưa được tính ngay thì được bổ sung và dự tính để đưa vào tổng mức đầu tư xây dựng.”",
+    "bbox": [
+     93,
+     736.4,
+     840,
+     747.9
+    ],
+    "bbox_qwen": [
+     93,
+     731,
+     840,
+     747
+    ]
+   },
+   {
+    "text": "Căn cứ các quy định trên, Cục Thuế TP Hà Nội có ý kiến nguyên tắc như sau:",
+    "bbox": [
+     93,
+     766.7,
+     600,
+     778.2
+    ],
+    "bbox_qwen": [
+     93,
+     760,
+     600,
+     776
+    ]
+   },
+   {
+    "text": "Trường hợp Công ty vay vốn của Ngân hàng để đầu tư xây dựng dự án “Nhà máy sản xuất dược phẩm, mỹ phẩm và thực phẩm",
+    "bbox": [
+     93,
+     797.0,
+     943,
+     808.5
+    ],
+    "bbox_qwen": [
+     93,
+     789,
+     943,
+     805
+    ]
+   },
+   {
+    "text": "chức năng” có phát sinh khoản chi trả tiền lãi vay trong giai đoạn đầu tư để hình thành tài sản cố định thì khoản chi này được tính",
+    "bbox": [
+     93,
+     812.1,
+     943,
+     823.6
+    ],
+    "bbox_qwen": [
+     93,
+     805,
+     943,
+     821
+    ]
+   },
+   {
+    "text": "vào giá trị của tài sản, giá trị công trình đầu tư nếu đủ điều kiện vốn hóa theo quy định pháp luật về kế toán. Chi phí lãi vay đã",
+    "bbox": [
+     93,
+     827.3,
+     943,
+     838.8
+    ],
+    "bbox_qwen": [
+     93,
+     821,
+     943,
+     837
+    ]
+   },
+   {
+    "text": "được ghi nhận vào giá trị, tài sản, giá trị công trình đầu tư không được tính vào chi phí được trừ khi xác định thu nhập chịu thuế",
+    "bbox": [
+     93,
+     842.4,
+     943,
+     853.9
+    ],
+    "bbox_qwen": [
+     93,
+     837,
+     943,
+     853
+    ]
+   },
+   {
+    "text": "thu nhập doanh nghiệp theo quy định tại Điều 4 Thông tư số 96/2015/TT-BTC ngày 22/06/2015 của Bộ Tài chính.",
+    "bbox": [
+     93,
+     857.6,
+     720,
+     869.1
+    ],
+    "bbox_qwen": [
+     93,
+     853,
+     720,
+     869
+    ]
+   },
+   {
+    "text": "Nội dung vướng mắc của Công ty về việc tiền lãi vay trong quá trình đầu tư xây dựng của dự án được vốn hóa như thế nào không",
+    "bbox": [
+     93,
+     887.9,
+     943,
+     899.4
+    ],
+    "bbox_qwen": [
+     93,
+     882,
+     943,
+     898
+    ]
+   },
+   {
+    "text": "thuộc thẩm quyền giải quyết của Cục Thuế TP Hà Nội, đề nghị Công ty liên hệ Cục Quản lý, Giám sát Kế toán, Kiểm toán - Bộ",
+    "bbox": [
+     93,
+     903.0,
+     943,
+     914.5
+    ],
+    "bbox_qwen": [
+     93,
+     898,
+     943,
+     914
+    ]
+   },
+   {
+    "text": "Tài chính để hướng dẫn theo đúng thẩm quyền.",
+    "bbox": [
+     93,
+     918.2,
+     340,
+     929.7
+    ],
+    "bbox_qwen": [
+     93,
+     914,
+     340,
+     930
+    ]
+   },
+   {
+    "text": "Nếu còn vướng mắc, đề nghị Công ty liên hệ với Phòng Kiểm tra thuế số 3 - Cục Thuế TP Hà Nội để được hướng dẫn cụ thể.",
+    "bbox": [
+     93,
+     948.5,
+     913,
+     960.0
+    ],
+    "bbox_qwen": [
+     93,
+     943,
+     913,
+     959
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     30,
+     972.7,
+     93,
+     980.0
+    ],
+    "bbox_qwen": [
+     30,
+     966,
+     93,
+     978
+    ]
+   },
+   {
+    "text": "2/3",
+    "bbox": [
+     938,
+     972.7,
+     958,
+     980.0
+    ],
+    "bbox_qwen": [
+     938,
+     966,
+     958,
+     978
+    ]
+   }
+  ],
+  "latency_s": 13.24,
+  "in_tokens": 2243,
+  "out_tokens": 2962,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 150,
+   "hint": true,
+   "schema": false
+  }
+ },
+ "3": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 1:50 PM",
+    "bbox": [
+     26,
+     21.2,
+     133,
+     28.5
+    ],
+    "bbox_qwen": [
+     26,
+     18,
+     133,
+     29
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     533,
+     21.2,
+     600,
+     28.5
+    ],
+    "bbox_qwen": [
+     533,
+     18,
+     600,
+     29
+    ]
+   },
+   {
+    "text": "Cục Thuế TP Hà Nội trả lời để Công ty Công ty CP Dược Khoa được biết và thực hiện.",
+    "bbox": [
+     107,
+     38.8,
+     666,
+     47.3
+    ],
+    "bbox_qwen": [
+     107,
+     35,
+     666,
+     52
+    ]
+   },
+   {
+    "text": "Nơi nhận:",
+    "bbox": [
+     90,
+     107.3,
+     166,
+     115.8
+    ],
+    "bbox_qwen": [
+     90,
+     115,
+     166,
+     130
+    ]
+   },
+   {
+    "text": "- Như trên;",
+    "bbox": [
+     90,
+     122.4,
+     158,
+     130.9
+    ],
+    "bbox_qwen": [
+     90,
+     130,
+     158,
+     143
+    ]
+   },
+   {
+    "text": "- Phòng Kiểm tra 3;",
+    "bbox": [
+     90,
+     136.4,
+     196,
+     143.0
+    ],
+    "bbox_qwen": [
+     90,
+     143,
+     196,
+     156
+    ]
+   },
+   {
+    "text": "- Lưu: VT, TTHT(2).",
+    "bbox": [
+     90,
+     146.7,
+     196,
+     153.3
+    ],
+    "bbox_qwen": [
+     90,
+     156,
+     196,
+     169
+    ]
+   },
+   {
+    "text": "KT. CỤC TRƯỞNG",
+    "bbox": [
+     597,
+     146.7,
+     738,
+     153.3
+    ],
+    "bbox_qwen": [
+     597,
+     100,
+     738,
+     115
+    ]
+   },
+   {
+    "text": "PHÓ CỤC TRƯỞNG",
+    "bbox": [
+     597,
+     157.6,
+     738,
+     164.2
+    ],
+    "bbox_qwen": [
+     597,
+     115,
+     738,
+     130
+    ]
+   },
+   {
+    "text": "Mai Sơn",
+    "bbox": [
+     640,
+     198.2,
+     695,
+     206.7
+    ],
+    "bbox_qwen": [
+     640,
+     195,
+     695,
+     208
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     36,
+     972.7,
+     103,
+     980.0
+    ],
+    "bbox_qwen": [
+     36,
+     970,
+     103,
+     981
+    ]
+   },
+   {
+    "text": "3/3",
+    "bbox": [
+     937,
+     972.7,
+     956,
+     980.0
+    ],
+    "bbox_qwen": [
+     937,
+     970,
+     956,
+     981
+    ]
+   }
+  ],
+  "latency_s": 2.59,
+  "in_tokens": 2207,
+  "out_tokens": 343,
+  "finish_reason": "stop"
+ }
+}

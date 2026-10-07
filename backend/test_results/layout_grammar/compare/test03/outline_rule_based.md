@@ -1,0 +1,22 @@
+# Dàn ý - rule_based (20 tiêu đề)
+
+- [L1, tr.1] Chương I
+  - [L2, tr.1] Điều 1. Phạm vi điều chỉnh
+  - [L2, tr.1] Điều 2. Văn bản quy phạm pháp luật
+  - [L2, tr.1] Điều 3. Giải thích từ ngữ
+  - [L2, tr.2] Điều 4. Hệ thống văn bản quy phạm pháp luật
+    - [L3, tr.2] 3. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội; nghị quyết liên tịch giữa Ủy ban Thường vụ
+    - [L3, tr.2] 10. Nghị quyết của Hội đồng nhân dân tỉnh, thành phố trực thuộc trung ương (sau đây gọi chung là cấp
+  - [L2, tr.2] Điều 5. Nguyên tắc xây dựng, ban hành văn bản quy phạm pháp luật
+  - [L2, tr.3] Điều 6. Phản biện xã hội, tham vấn, góp ý đối với chính sách, dự thảo văn bản quy phạm pháp luật
+    - [L3, tr.4] 4. Ban hành văn bản quy phạm pháp luật thay thế văn bản quy phạm pháp luật hiện hành thuộc một trong
+  - [L2, tr.4] Điều 9. Gửi, lưu trữ văn bản quy phạm pháp luật
+    - [L3, tr.4] 3. Văn bản quy phạm pháp luật của cơ quan, người có thẩm quyền ở trung ương ban hành phải được đăng
+- [L1, tr.4] Chương II
+  - [L2, tr.4] Điều 10. Luật, nghị quyết của Quốc hội
+    - [L3, tr.4] 1. Quốc hội ban hành luật để quy định:
+    - [L3, tr.5] 2. Quốc hội ban hành nghị quyết để quy định:
+  - [L2, tr.5] Điều 11. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội
+    - [L3, tr.5] 2. Ủy ban Thường vụ Quốc hội ban hành nghị quyết để quy định:
+      - [L4, tr.5] a) Giải thích Hiến pháp, luật, nghị quyết của Quốc hội và pháp lệnh, nghị quyết của Ủy ban Thường vụ
+  - [L2, tr.5] Điều 12. Lệnh, quyết định của Chủ tịch nước

@@ -1,0 +1,25 @@
+{
+ "document": "test03",
+ "ground_truth": "unavailable",
+ "evaluation_type": "so sánh mô tả giữa các phương pháp",
+ "rule_based_title": "QUỐC HỘI CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+ "methods": {
+  "rule_based": {
+   "headings": 20,
+   "by_level": {
+    "1": 2,
+    "2": 10,
+    "3": 7,
+    "4": 1
+   },
+   "by_form": {
+    "Điều (văn bản này)": 10,
+    "khoản 1. 2.": 7,
+    "Chương": 2,
+    "điểm a) b)": 1
+   },
+   "pages_with_headings": 5
+  }
+ },
+ "overlap": {}
+}

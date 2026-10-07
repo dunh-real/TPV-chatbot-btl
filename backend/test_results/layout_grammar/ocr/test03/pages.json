@@ -1,0 +1,3072 @@
+{
+ "1": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 10:47 AM",
+    "bbox": [
+     20,
+     21.2,
+     110,
+     28.5
+    ],
+    "bbox_qwen": [
+     20,
+     20,
+     110,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     540,
+     21.2,
+     600,
+     28.5
+    ],
+    "bbox_qwen": [
+     540,
+     20,
+     600,
+     30
+    ]
+   },
+   {
+    "text": "QUỐC HỘI",
+    "bbox": [
+     195,
+     53.9,
+     290,
+     67.3
+    ],
+    "bbox_qwen": [
+     195,
+     48,
+     290,
+     65
+    ]
+   },
+   {
+    "text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+    "bbox": [
+     428,
+     53.9,
+     845,
+     67.3
+    ],
+    "bbox_qwen": [
+     428,
+     48,
+     845,
+     65
+    ]
+   },
+   {
+    "text": "Độc lập - Tự do - Hạnh phúc",
+    "bbox": [
+     525,
+     70.9,
+     748,
+     84.8
+    ],
+    "bbox_qwen": [
+     525,
+     67,
+     748,
+     83
+    ]
+   },
+   {
+    "text": "Luật số: 64/2025/QH15",
+    "bbox": [
+     145,
+     112.7,
+     340,
+     126.7
+    ],
+    "bbox_qwen": [
+     145,
+     100,
+     340,
+     117
+    ]
+   },
+   {
+    "text": "Hà Nội, ngày 19 tháng 02 năm 2025",
+    "bbox": [
+     605,
+     112.7,
+     865,
+     126.7
+    ],
+    "bbox_qwen": [
+     605,
+     100,
+     865,
+     117
+    ]
+   },
+   {
+    "text": "Hiệu lực: Đã biết",
+    "bbox": [
+     455,
+     112.7,
+     565,
+     126.7
+    ],
+    "bbox_qwen": [
+     455,
+     105,
+     565,
+     125
+    ]
+   },
+   {
+    "text": "Tình trạng: Đã biết)",
+    "bbox": [
+     445,
+     112.7,
+     575,
+     126.7
+    ],
+    "bbox_qwen": [
+     445,
+     115,
+     575,
+     135
+    ]
+   },
+   {
+    "text": "THƯ VIỆN PHÁP LUẬT",
+    "bbox": [
+     515,
+     112.7,
+     635,
+     126.7
+    ],
+    "bbox_qwen": [
+     515,
+     115,
+     635,
+     135
+    ]
+   },
+   {
+    "text": "ThuVienPhapLuat.vn",
+    "bbox": [
+     435,
+     169.7,
+     545,
+     180.0
+    ],
+    "bbox_qwen": [
+     435,
+     125,
+     545,
+     145
+    ]
+   },
+   {
+    "text": "BAN HÀNH VĂN BẢN QUY PHẠM PHÁP LUẬT",
+    "bbox": [
+     315,
+     201.8,
+     725,
+     212.7
+    ],
+    "bbox_qwen": [
+     315,
+     195,
+     725,
+     215
+    ]
+   },
+   {
+    "text": "Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam;",
+    "bbox": [
+     95,
+     231.5,
+     615,
+     247.9
+    ],
+    "bbox_qwen": [
+     95,
+     230,
+     615,
+     247
+    ]
+   },
+   {
+    "text": "Quốc hội ban hành Luật Ban hành văn bản quy phạm pháp luật.",
+    "bbox": [
+     95,
+     266.7,
+     575,
+     280.0
+    ],
+    "bbox_qwen": [
+     95,
+     260,
+     575,
+     277
+    ]
+   },
+   {
+    "text": "Chương I",
+    "bbox": [
+     95,
+     298.8,
+     175,
+     310.3
+    ],
+    "bbox_qwen": [
+     95,
+     295,
+     175,
+     312
+    ]
+   },
+   {
+    "text": "NHỮNG QUY ĐỊNH CHUNG",
+    "bbox": [
+     385,
+     330.9,
+     615,
+     343.6
+    ],
+    "bbox_qwen": [
+     385,
+     325,
+     615,
+     342
+    ]
+   },
+   {
+    "text": "Điều 1. Phạm vi điều chỉnh",
+    "bbox": [
+     95,
+     363.0,
+     320,
+     373.3
+    ],
+    "bbox_qwen": [
+     95,
+     360,
+     320,
+     377
+    ]
+   },
+   {
+    "text": "Luật này quy định về xây dựng, ban hành văn bản quy phạm pháp luật; nội dung cơ bản về tổ chức thi hành",
+    "bbox": [
+     95,
+     395.2,
+     940,
+     409.1
+    ],
+    "bbox_qwen": [
+     95,
+     390,
+     940,
+     407
+    ]
+   },
+   {
+    "text": "văn bản quy phạm pháp luật.",
+    "bbox": [
+     95,
+     412.7,
+     265,
+     426.1
+    ],
+    "bbox_qwen": [
+     95,
+     410,
+     265,
+     427
+    ]
+   },
+   {
+    "text": "Luật này không quy định về làm Hiến pháp, sửa đổi Hiến pháp.",
+    "bbox": [
+     95,
+     444.8,
+     545,
+     458.2
+    ],
+    "bbox_qwen": [
+     95,
+     440,
+     545,
+     457
+    ]
+   },
+   {
+    "text": "Điều 2. Văn bản quy phạm pháp luật",
+    "bbox": [
+     95,
+     477.0,
+     405,
+     490.3
+    ],
+    "bbox_qwen": [
+     95,
+     470,
+     405,
+     487
+    ]
+   },
+   {
+    "text": "Văn bản quy phạm pháp luật là văn bản có chứa quy phạm pháp luật, được ban hành đúng thẩm quyền, hình",
+    "bbox": [
+     95,
+     509.1,
+     940,
+     522.4
+    ],
+    "bbox_qwen": [
+     95,
+     500,
+     940,
+     517
+    ]
+   },
+   {
+    "text": "thức, trình tự, thủ tục theo quy định của Luật này.",
+    "bbox": [
+     95,
+     526.1,
+     445,
+     539.4
+    ],
+    "bbox_qwen": [
+     95,
+     520,
+     445,
+     537
+    ]
+   },
+   {
+    "text": "Điều 3. Giải thích từ ngữ",
+    "bbox": [
+     95,
+     558.2,
+     305,
+     571.5
+    ],
+    "bbox_qwen": [
+     95,
+     550,
+     305,
+     567
+    ]
+   },
+   {
+    "text": "Trong Luật này, các từ ngữ dưới đây được hiểu như sau:",
+    "bbox": [
+     95,
+     590.3,
+     515,
+     604.2
+    ],
+    "bbox_qwen": [
+     95,
+     580,
+     515,
+     597
+    ]
+   },
+   {
+    "text": "1. Quy phạm pháp luật là quy tắc xử sự chung, có hiệu lực bắt buộc chung, được áp dụng đối với cơ quan,",
+    "bbox": [
+     115,
+     623.0,
+     940,
+     636.4
+    ],
+    "bbox_qwen": [
+     115,
+     610,
+     940,
+     627
+    ]
+   },
+   {
+    "text": "tổ chức, cá nhân, trong phạm vi cả nước hoặc trong đơn vị hành chính nhất định, do cơ quan nhà nước,",
+    "bbox": [
+     115,
+     640.0,
+     845,
+     653.3
+    ],
+    "bbox_qwen": [
+     115,
+     630,
+     845,
+     647
+    ]
+   },
+   {
+    "text": "người có thẩm quyền quy định tại Luật này ban hành và được Nhà nước bảo đảm thực hiện.",
+    "bbox": [
+     115,
+     657.0,
+     665,
+     670.3
+    ],
+    "bbox_qwen": [
+     115,
+     650,
+     665,
+     667
+    ]
+   },
+   {
+    "text": "2. Chính sách là tập hợp các giải pháp cụ thể của Nhà nước để giải quyết một hoặc một số vấn đề của thực",
+    "bbox": [
+     115,
+     689.1,
+     940,
+     702.4
+    ],
+    "bbox_qwen": [
+     115,
+     680,
+     940,
+     697
+    ]
+   },
+   {
+    "text": "tiễn nhằm đạt được mục tiêu nhất định, phù hợp với chủ trương, đường lối của Đảng.",
+    "bbox": [
+     115,
+     703.0,
+     665,
+     705.5
+    ],
+    "bbox_qwen": [
+     115,
+     700,
+     665,
+     717
+    ]
+   },
+   {
+    "text": "3. Tham vấn chính sách là việc trao đổi trực tiếp giữa cơ quan lập đề xuất chính sách với cơ quan, tổ chức,",
+    "bbox": [
+     115,
+     738.2,
+     940,
+     752.1
+    ],
+    "bbox_qwen": [
+     115,
+     730,
+     940,
+     747
+    ]
+   },
+   {
+    "text": "cá nhân được tham vấn theo quy định của Luật này nhằm lựa chọn giải pháp, hoàn thiện chính sách của dự",
+    "bbox": [
+     115,
+     755.8,
+     940,
+     769.1
+    ],
+    "bbox_qwen": [
+     115,
+     750,
+     940,
+     767
+    ]
+   },
+   {
+    "text": "án luật, nghị quyết của Quốc hội, pháp lệnh của Ủy ban Thường vụ Quốc hội.",
+    "bbox": [
+     115,
+     772.7,
+     645,
+     786.1
+    ],
+    "bbox_qwen": [
+     115,
+     770,
+     645,
+     787
+    ]
+   },
+   {
+    "text": "4. Đánh giá tác động của chính sách là việc phân tích, dự báo khả năng ảnh hưởng của từng giải pháp nhằm",
+    "bbox": [
+     115,
+     804.8,
+     940,
+     818.2
+    ],
+    "bbox_qwen": [
+     115,
+     800,
+     940,
+     817
+    ]
+   },
+   {
+    "text": "lựa chọn phương án tối ưu, phù hợp với mục tiêu của chính sách.",
+    "bbox": [
+     115,
+     821.8,
+     515,
+     835.2
+    ],
+    "bbox_qwen": [
+     115,
+     820,
+     515,
+     837
+    ]
+   },
+   {
+    "text": "5. Rà soát văn bản quy phạm pháp luật là việc xem xét, đối chiếu, đánh giá các quy định của văn bản được",
+    "bbox": [
+     115,
+     853.9,
+     940,
+     870.3
+    ],
+    "bbox_qwen": [
+     115,
+     850,
+     940,
+     867
+    ]
+   },
+   {
+    "text": "rà soát nhằm phát hiện, xử lý hoặc kiến nghị xử lý các quy định mâu thuẫn, chồng chéo, hết hiệu lực hoặc",
+    "bbox": [
+     115,
+     870.9,
+     940,
+     884.8
+    ],
+    "bbox_qwen": [
+     115,
+     870,
+     940,
+     887
+    ]
+   },
+   {
+    "text": "không còn phù hợp.",
+    "bbox": [
+     115,
+     888.5,
+     235,
+     901.8
+    ],
+    "bbox_qwen": [
+     115,
+     890,
+     235,
+     907
+    ]
+   },
+   {
+    "text": "6. Kiểm tra văn bản quy phạm pháp luật là việc xem xét, đánh giá, kết luận về tính hợp hiến, tính hợp pháp,",
+    "bbox": [
+     115,
+     920.6,
+     940,
+     933.9
+    ],
+    "bbox_qwen": [
+     115,
+     920,
+     940,
+     937
+    ]
+   },
+   {
+    "text": "tính thống nhất với hệ thống pháp luật của văn bản được kiểm tra.",
+    "bbox": [
+     115,
+     937.6,
+     615,
+     950.9
+    ],
+    "bbox_qwen": [
+     115,
+     940,
+     615,
+     957
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     20,
+     972.7,
+     100,
+     980.0
+    ],
+    "bbox_qwen": [
+     20,
+     970,
+     100,
+     980
+    ]
+   },
+   {
+    "text": "1/36",
+    "bbox": [
+     930,
+     972.7,
+     960,
+     980.0
+    ],
+    "bbox_qwen": [
+     930,
+     970,
+     960,
+     980
+    ]
+   }
+  ],
+  "latency_s": 9.73,
+  "in_tokens": 2207,
+  "out_tokens": 1522,
+  "finish_reason": "stop"
+ },
+ "2": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 10:47 AM",
+    "bbox": [
+     35,
+     21.2,
+     150,
+     28.5
+    ],
+    "bbox_qwen": [
+     35,
+     18,
+     150,
+     28
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     540,
+     21.2,
+     600,
+     28.5
+    ],
+    "bbox_qwen": [
+     540,
+     18,
+     600,
+     28
+    ]
+   },
+   {
+    "text": "Điều 4. Hệ thống văn bản quy phạm pháp luật",
+    "bbox": [
+     93,
+     38.8,
+     500,
+     52.7
+    ],
+    "bbox_qwen": [
+     93,
+     36,
+     500,
+     53
+    ]
+   },
+   {
+    "text": "1. Hiến pháp.",
+    "bbox": [
+     93,
+     71.5,
+     187,
+     84.8
+    ],
+    "bbox_qwen": [
+     93,
+     70,
+     187,
+     85
+    ]
+   },
+   {
+    "text": "2. Bộ luật, luật (sau đây gọi chung là luật), nghị quyết của Quốc hội.",
+    "bbox": [
+     93,
+     103.6,
+     500,
+     117.0
+    ],
+    "bbox_qwen": [
+     93,
+     97,
+     500,
+     113
+    ]
+   },
+   {
+    "text": "3. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội; nghị quyết liên tịch giữa Ủy ban Thường vụ",
+    "bbox": [
+     93,
+     135.8,
+     907,
+     149.1
+    ],
+    "bbox_qwen": [
+     93,
+     125,
+     907,
+     141
+    ]
+   },
+   {
+    "text": "Quốc hội với Đoàn Chủ tịch Ủy ban Trung ương Mặt trận Tổ quốc Việt Nam; nghị quyết liên tịch giữa Ủy",
+    "bbox": [
+     93,
+     152.7,
+     929,
+     166.1
+    ],
+    "bbox_qwen": [
+     93,
+     143,
+     929,
+     159
+    ]
+   },
+   {
+    "text": "ban Thường vụ Quốc hội, Chính phủ với Đoàn Chủ tịch Ủy ban Trung ương Mặt trận Tổ quốc Việt Nam.",
+    "bbox": [
+     93,
+     169.7,
+     917,
+     183.0
+    ],
+    "bbox_qwen": [
+     93,
+     161,
+     917,
+     177
+    ]
+   },
+   {
+    "text": "4. Lệnh, quyết định của Chủ tịch nước.",
+    "bbox": [
+     93,
+     201.8,
+     340,
+     212.7
+    ],
+    "bbox_qwen": [
+     93,
+     190,
+     340,
+     205
+    ]
+   },
+   {
+    "text": "5. Nghị định, nghị quyết của Chính phủ; nghị quyết liên tịch giữa Chính phủ với Đoàn Chủ tịch Ủy ban",
+    "bbox": [
+     93,
+     233.9,
+     907,
+     247.9
+    ],
+    "bbox_qwen": [
+     93,
+     217,
+     907,
+     233
+    ]
+   },
+   {
+    "text": "Trung ương Mặt trận Tổ quốc Việt Nam.",
+    "bbox": [
+     93,
+     233.9,
+     320,
+     247.9
+    ],
+    "bbox_qwen": [
+     93,
+     235,
+     320,
+     251
+    ]
+   },
+   {
+    "text": "6. Quyết định của Thủ tướng Chính phủ.",
+    "bbox": [
+     93,
+     251.5,
+     410,
+     264.8
+    ],
+    "bbox_qwen": [
+     93,
+     264,
+     410,
+     280
+    ]
+   },
+   {
+    "text": "7. Nghị quyết của Hội đồng Thẩm phán Tòa án nhân dân tối cao.",
+    "bbox": [
+     93,
+     283.6,
+     500,
+     297.0
+    ],
+    "bbox_qwen": [
+     93,
+     292,
+     500,
+     308
+    ]
+   },
+   {
+    "text": "8. Thông tư của Chánh án Tòa án nhân dân tối cao; thông tư của Viện trưởng Viện kiểm sát nhân dân tối",
+    "bbox": [
+     93,
+     315.8,
+     917,
+     329.1
+    ],
+    "bbox_qwen": [
+     93,
+     320,
+     917,
+     336
+    ]
+   },
+   {
+    "text": "cao; thông tư của Bộ trưởng, Thủ trưởng cơ quan ngang Bộ; thông tư của Tổng Kiểm toán nhà nước.",
+    "bbox": [
+     93,
+     347.9,
+     680,
+     361.2
+    ],
+    "bbox_qwen": [
+     93,
+     338,
+     680,
+     354
+    ]
+   },
+   {
+    "text": "9. Thông tư liên tịch giữa Chánh án Tòa án nhân dân tối cao, Viện trưởng Viện kiểm sát nhân dân tối cao,",
+    "bbox": [
+     93,
+     364.8,
+     917,
+     378.8
+    ],
+    "bbox_qwen": [
+     93,
+     366,
+     917,
+     382
+    ]
+   },
+   {
+    "text": "Tổng Kiểm toán nhà nước, Bộ trưởng, Thủ trưởng cơ quan ngang Bộ.",
+    "bbox": [
+     93,
+     397.0,
+     530,
+     410.9
+    ],
+    "bbox_qwen": [
+     93,
+     384,
+     530,
+     400
+    ]
+   },
+   {
+    "text": "10. Nghị quyết của Hội đồng nhân dân tỉnh, thành phố trực thuộc trung ương (sau đây gọi chung là cấp",
+    "bbox": [
+     93,
+     414.5,
+     900,
+     427.9
+    ],
+    "bbox_qwen": [
+     93,
+     412,
+     900,
+     428
+    ]
+   },
+   {
+    "text": "tỉnh).",
+    "bbox": [
+     93,
+     446.7,
+     130,
+     460.0
+    ],
+    "bbox_qwen": [
+     93,
+     430,
+     130,
+     446
+    ]
+   },
+   {
+    "text": "11. Quyết định của Ủy ban nhân dân cấp tỉnh.",
+    "bbox": [
+     93,
+     466.1,
+     450,
+     473.9
+    ],
+    "bbox_qwen": [
+     93,
+     458,
+     450,
+     474
+    ]
+   },
+   {
+    "text": "12. Văn bản quy phạm pháp luật của chính quyền địa phương ở đơn vị hành chính - kinh tế đặc biệt.",
+    "bbox": [
+     93,
+     495.8,
+     890,
+     509.1
+    ],
+    "bbox_qwen": [
+     93,
+     486,
+     890,
+     502
+    ]
+   },
+   {
+    "text": "13. Nghị quyết của Hội đồng nhân dân huyện, quận, thị xã, thành phố thuộc tỉnh, thành phố thuộc thành phố",
+    "bbox": [
+     93,
+     527.9,
+     950,
+     541.8
+    ],
+    "bbox_qwen": [
+     93,
+     514,
+     950,
+     530
+    ]
+   },
+   {
+    "text": "trực thuộc trung ương (sau đây gọi chung là cấp huyện).",
+    "bbox": [
+     93,
+     557.0,
+     470,
+     559.4
+    ],
+    "bbox_qwen": [
+     93,
+     532,
+     470,
+     548
+    ]
+   },
+   {
+    "text": "14. Quyết định của Ủy ban nhân dân cấp huyện.",
+    "bbox": [
+     93,
+     560.0,
+     470,
+     573.9
+    ],
+    "bbox_qwen": [
+     93,
+     560,
+     470,
+     576
+    ]
+   },
+   {
+    "text": "Điều 5. Nguyên tắc xây dựng, ban hành văn bản quy phạm pháp luật",
+    "bbox": [
+     93,
+     577.6,
+     580,
+     590.9
+    ],
+    "bbox_qwen": [
+     93,
+     588,
+     580,
+     604
+    ]
+   },
+   {
+    "text": "1. Bảo đảm sự lãnh đạo toàn diện, trực tiếp của Đảng Cộng sản Việt Nam.",
+    "bbox": [
+     93,
+     609.7,
+     500,
+     623.0
+    ],
+    "bbox_qwen": [
+     93,
+     621,
+     500,
+     637
+    ]
+   },
+   {
+    "text": "2. Bảo đảm tính hợp hiến, tính hợp pháp, tính thống nhất của văn bản quy phạm pháp luật trong hệ thống",
+    "bbox": [
+     93,
+     641.8,
+     920,
+     655.2
+    ],
+    "bbox_qwen": [
+     93,
+     649,
+     920,
+     665
+    ]
+   },
+   {
+    "text": "pháp luật và không trái với điều ước quốc tế mà nước Cộng hòa xã hội chủ nghĩa Việt Nam là thành viên;",
+    "bbox": [
+     93,
+     673.9,
+     920,
+     687.3
+    ],
+    "bbox_qwen": [
+     93,
+     667,
+     920,
+     683
+    ]
+   },
+   {
+    "text": "tuân thủ đúng thẩm quyền, nội dung, hình thức và trình tự, thủ tục xây dựng, ban hành văn bản quy phạm",
+    "bbox": [
+     93,
+     673.9,
+     920,
+     687.3
+    ],
+    "bbox_qwen": [
+     93,
+     685,
+     920,
+     701
+    ]
+   },
+   {
+    "text": "pháp luật.",
+    "bbox": [
+     93,
+     706.1,
+     160,
+     721.8
+    ],
+    "bbox_qwen": [
+     93,
+     703,
+     160,
+     719
+    ]
+   },
+   {
+    "text": "3. Bảo đảm chủ quyền quốc gia, quốc phòng, an ninh, lợi ích quốc gia, dân tộc; kiểm soát quyền lực, phòng,",
+    "bbox": [
+     93,
+     723.0,
+     940,
+     737.0
+    ],
+    "bbox_qwen": [
+     93,
+     731,
+     940,
+     747
+    ]
+   },
+   {
+    "text": "chống tham nhũng, tiêu cực, lãng phí; phòng, chống lợi ích nhóm, cục bộ.",
+    "bbox": [
+     93,
+     740.6,
+     600,
+     753.9
+    ],
+    "bbox_qwen": [
+     93,
+     749,
+     600,
+     765
+    ]
+   },
+   {
+    "text": "4. Tôn trọng, bảo vệ và bảo đảm quyền con người, quyền công dân, bình đẳng giới; bảo đảm dân chủ, công",
+    "bbox": [
+     93,
+     757.6,
+     930,
+     770.9
+    ],
+    "bbox_qwen": [
+     93,
+     777,
+     930,
+     793
+    ]
+   },
+   {
+    "text": "bằng, nhân đạo, công khai, minh bạch, khoa học, kịp thời, ổn định, khả thi, hiệu quả.",
+    "bbox": [
+     93,
+     789.7,
+     700,
+     803.0
+    ],
+    "bbox_qwen": [
+     93,
+     795,
+     700,
+     811
+    ]
+   },
+   {
+    "text": "5. Bảo đảm việc thực hiện chủ trương phân quyền, phân cấp; giải quyết vấn đề bất cập, phát sinh từ thực",
+    "bbox": [
+     93,
+     806.7,
+     920,
+     820.0
+    ],
+    "bbox_qwen": [
+     93,
+     823,
+     920,
+     839
+    ]
+   },
+   {
+    "text": "tiễn; vấn đề mới, xu hướng mới; yêu cầu quản lý nhà nước và khuyến khích sáng tạo, khơi thông mọi nguồn",
+    "bbox": [
+     93,
+     838.8,
+     950,
+     852.7
+    ],
+    "bbox_qwen": [
+     93,
+     841,
+     950,
+     857
+    ]
+   },
+   {
+    "text": "lực, thúc đẩy phát triển kinh tế - xã hội.",
+    "bbox": [
+     93,
+     855.8,
+     300,
+     869.7
+    ],
+    "bbox_qwen": [
+     93,
+     859,
+     300,
+     875
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     35,
+     972.7,
+     100,
+     980.0
+    ],
+    "bbox_qwen": [
+     35,
+     968,
+     100,
+     978
+    ]
+   },
+   {
+    "text": "2/36",
+    "bbox": [
+     930,
+     972.7,
+     950,
+     980.0
+    ],
+    "bbox_qwen": [
+     930,
+     968,
+     950,
+     978
+    ]
+   }
+  ],
+  "latency_s": 9.6,
+  "in_tokens": 2207,
+  "out_tokens": 1506,
+  "finish_reason": "stop"
+ },
+ "3": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 10:47 AM",
+    "bbox": [
+     35,
+     21.2,
+     144,
+     28.5
+    ],
+    "bbox_qwen": [
+     35,
+     19,
+     144,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     536,
+     21.2,
+     596,
+     28.5
+    ],
+    "bbox_qwen": [
+     536,
+     19,
+     596,
+     30
+    ]
+   },
+   {
+    "text": "6. Văn bản quy phạm pháp luật quy định thực hiện thí điểm phải xác định thời gian thực hiện thí điểm và",
+    "bbox": [
+     91,
+     38.8,
+     937,
+     54.5
+    ],
+    "bbox_qwen": [
+     91,
+     40,
+     937,
+     57
+    ]
+   },
+   {
+    "text": "phải được sơ kết, tổng kết để xem xét, quyết định việc tiếp tục áp dụng hoặc ban hành văn bản quy phạm",
+    "bbox": [
+     91,
+     55.8,
+     937,
+     69.7
+    ],
+    "bbox_qwen": [
+     91,
+     57,
+     937,
+     74
+    ]
+   },
+   {
+    "text": "pháp luật để áp dụng chính thức.",
+    "bbox": [
+     91,
+     73.3,
+     310,
+     86.7
+    ],
+    "bbox_qwen": [
+     91,
+     74,
+     310,
+     91
+    ]
+   },
+   {
+    "text": "7. Bảo đảm thực hiện quy định của pháp luật về bảo vệ bí mật nhà nước đối với nội dung văn bản quy phạm",
+    "bbox": [
+     91,
+     105.5,
+     937,
+     118.8
+    ],
+    "bbox_qwen": [
+     91,
+     108,
+     937,
+     125
+    ]
+   },
+   {
+    "text": "pháp luật thuộc phạm vi bí mật nhà nước.",
+    "bbox": [
+     91,
+     122.4,
+     340,
+     135.8
+    ],
+    "bbox_qwen": [
+     91,
+     125,
+     340,
+     142
+    ]
+   },
+   {
+    "text": "Điều 6. Phản biện xã hội, tham vấn, góp ý đối với chính sách, dự thảo văn bản quy phạm pháp luật",
+    "bbox": [
+     91,
+     154.5,
+     919,
+     167.9
+    ],
+    "bbox_qwen": [
+     91,
+     150,
+     919,
+     167
+    ]
+   },
+   {
+    "text": "1. Mặt trận Tổ quốc Việt Nam và các tổ chức chính trị - xã hội thực hiện phản biện xã hội đối với dự thảo",
+    "bbox": [
+     91,
+     186.7,
+     937,
+     197.0
+    ],
+    "bbox_qwen": [
+     91,
+     184,
+     937,
+     201
+    ]
+   },
+   {
+    "text": "văn bản quy phạm pháp luật theo quy định của Luật này, Luật Mặt trận Tổ quốc Việt Nam và các luật khác",
+    "bbox": [
+     91,
+     203.6,
+     937,
+     217.6
+    ],
+    "bbox_qwen": [
+     91,
+     201,
+     937,
+     218
+    ]
+   },
+   {
+    "text": "có liên quan.",
+    "bbox": [
+     91,
+     224.2,
+     170,
+     231.5
+    ],
+    "bbox_qwen": [
+     91,
+     218,
+     170,
+     235
+    ]
+   },
+   {
+    "text": "Phản biện xã hội được thực hiện trong thời gian tổ chức soạn thảo văn bản quy phạm pháp luật.",
+    "bbox": [
+     91,
+     253.3,
+     844,
+     266.7
+    ],
+    "bbox_qwen": [
+     91,
+     252,
+     844,
+     269
+    ]
+   },
+   {
+    "text": "2. Cơ quan lập đề xuất chính sách có trách nhiệm tham vấn Hội đồng Dân tộc, Ủy ban của Quốc hội, Bộ, cơ",
+    "bbox": [
+     91,
+     285.5,
+     937,
+     298.8
+    ],
+    "bbox_qwen": [
+     91,
+     286,
+     937,
+     303
+    ]
+   },
+   {
+    "text": "quan ngang Bộ theo quy định của Luật này.",
+    "bbox": [
+     91,
+     302.4,
+     340,
+     315.8
+    ],
+    "bbox_qwen": [
+     91,
+     303,
+     340,
+     320
+    ]
+   },
+   {
+    "text": "3. Mặt trận Tổ quốc Việt Nam, các tổ chức thành viên của Mặt trận và các cơ quan, tổ chức, cá nhân có",
+    "bbox": [
+     91,
+     334.5,
+     937,
+     347.9
+    ],
+    "bbox_qwen": [
+     91,
+     337,
+     937,
+     354
+    ]
+   },
+   {
+    "text": "quyền và được tạo điều kiện tham gia góp ý kiến về chính sách, dự thảo văn bản quy phạm pháp luật.",
+    "bbox": [
+     91,
+     351.5,
+     937,
+     365.5
+    ],
+    "bbox_qwen": [
+     91,
+     354,
+     937,
+     371
+    ]
+   },
+   {
+    "text": "4. Cơ quan lập đề xuất chính sách, cơ quan chủ trì soạn thảo có trách nhiệm nghiên cứu tiếp thu, giải trình",
+    "bbox": [
+     91,
+     383.6,
+     937,
+     399.4
+    ],
+    "bbox_qwen": [
+     91,
+     388,
+     937,
+     405
+    ]
+   },
+   {
+    "text": "đầy đủ và công khai việc tiếp thu, giải trình ý kiến phản biện xã hội, tham vấn chính sách, góp ý chính sách,",
+    "bbox": [
+     91,
+     400.6,
+     937,
+     414.5
+    ],
+    "bbox_qwen": [
+     91,
+     405,
+     937,
+     422
+    ]
+   },
+   {
+    "text": "dự thảo văn bản quy phạm pháp luật.",
+    "bbox": [
+     91,
+     418.2,
+     310,
+     431.5
+    ],
+    "bbox_qwen": [
+     91,
+     422,
+     310,
+     439
+    ]
+   },
+   {
+    "text": "Điều 7. Ngôn ngữ, thể thức, kỹ thuật trình bày và dịch văn bản quy phạm pháp luật ra tiếng dân tộc",
+    "bbox": [
+     91,
+     464.2,
+     937,
+     466.7
+    ],
+    "bbox_qwen": [
+     91,
+     456,
+     937,
+     473
+    ]
+   },
+   {
+    "text": "thiểu số, tiếng nước ngoài",
+    "bbox": [
+     91,
+     467.3,
+     270,
+     481.2
+    ],
+    "bbox_qwen": [
+     91,
+     473,
+     270,
+     490
+    ]
+   },
+   {
+    "text": "1. Ngôn ngữ được sử dụng trong văn bản quy phạm pháp luật là tiếng Việt, bảo đảm chính xác, phổ thông,",
+    "bbox": [
+     91,
+     499.4,
+     937,
+     515.8
+    ],
+    "bbox_qwen": [
+     91,
+     507,
+     937,
+     524
+    ]
+   },
+   {
+    "text": "thống nhất, diễn đạt rõ ràng, dễ hiểu.",
+    "bbox": [
+     91,
+     516.4,
+     280,
+     530.3
+    ],
+    "bbox_qwen": [
+     91,
+     524,
+     280,
+     541
+    ]
+   },
+   {
+    "text": "2. Văn bản quy phạm pháp luật có thể được bố cục theo phần, chương, mục, tiểu mục, điều, khoản, điểm;",
+    "bbox": [
+     91,
+     548.5,
+     924,
+     562.4
+    ],
+    "bbox_qwen": [
+     91,
+     558,
+     924,
+     575
+    ]
+   },
+   {
+    "text": "phần, chương, mục, tiểu mục, điều phải có tên.",
+    "bbox": [
+     91,
+     566.1,
+     380,
+     579.4
+    ],
+    "bbox_qwen": [
+     91,
+     575,
+     380,
+     592
+    ]
+   },
+   {
+    "text": "3. Văn bản quy phạm pháp luật phải đánh số, ký hiệu bảo đảm thể hiện rõ số thứ tự liên tục, năm ban hành,",
+    "bbox": [
+     91,
+     615.2,
+     937,
+     629.1
+    ],
+    "bbox_qwen": [
+     91,
+     609,
+     937,
+     626
+    ]
+   },
+   {
+    "text": "loại văn bản, cơ quan, người có thẩm quyền ban hành văn bản.",
+    "bbox": [
+     91,
+     647.3,
+     520,
+     661.2
+    ],
+    "bbox_qwen": [
+     91,
+     626,
+     520,
+     643
+    ]
+   },
+   {
+    "text": "4. Văn bản quy phạm pháp luật có thể được dịch ra tiếng dân tộc thiểu số, tiếng nước ngoài. Bản dịch có giá",
+    "bbox": [
+     91,
+     664.8,
+     937,
+     675.2
+    ],
+    "bbox_qwen": [
+     91,
+     660,
+     937,
+     677
+    ]
+   },
+   {
+    "text": "trị tham khảo.",
+    "bbox": [
+     91,
+     693.3,
+     170,
+     695.8
+    ],
+    "bbox_qwen": [
+     91,
+     677,
+     170,
+     694
+    ]
+   },
+   {
+    "text": "Điều 8. Sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật",
+    "bbox": [
+     91,
+     696.4,
+     919,
+     710.3
+    ],
+    "bbox_qwen": [
+     91,
+     711,
+     919,
+     728
+    ]
+   },
+   {
+    "text": "1. Văn bản quy phạm pháp luật chỉ được sửa đổi, bổ sung, thay thế bằng văn bản quy phạm pháp luật của",
+    "bbox": [
+     91,
+     746.1,
+     924,
+     759.4
+    ],
+    "bbox_qwen": [
+     91,
+     745,
+     924,
+     762
+    ]
+   },
+   {
+    "text": "chính cơ quan, người có thẩm quyền đã ban hành văn bản đó hoặc bị đình chỉ việc thi hành bằng văn bản",
+    "bbox": [
+     91,
+     763.0,
+     937,
+     778.2
+    ],
+    "bbox_qwen": [
+     91,
+     762,
+     937,
+     779
+    ]
+   },
+   {
+    "text": "của cơ quan, người có thẩm quyền, trừ trường hợp quy định tại điểm a và điểm b khoản 2 Điều 54 của Luật",
+    "bbox": [
+     91,
+     780.0,
+     937,
+     793.9
+    ],
+    "bbox_qwen": [
+     91,
+     779,
+     937,
+     796
+    ]
+   },
+   {
+    "text": "này hoặc luật, nghị quyết của Quốc hội có quy định khác.",
+    "bbox": [
+     91,
+     812.1,
+     460,
+     827.9
+    ],
+    "bbox_qwen": [
+     91,
+     796,
+     460,
+     813
+    ]
+   },
+   {
+    "text": "2. Văn bản quy phạm pháp luật bị bãi bỏ bằng văn bản của chính cơ quan, người có thẩm quyền đã ban hành",
+    "bbox": [
+     91,
+     829.1,
+     937,
+     843.0
+    ],
+    "bbox_qwen": [
+     91,
+     830,
+     937,
+     847
+    ]
+   },
+   {
+    "text": "văn bản đó hoặc bằng văn bản của cơ quan, người có thẩm quyền, trừ trường hợp quy định tại điểm a và",
+    "bbox": [
+     91,
+     846.7,
+     937,
+     857.0
+    ],
+    "bbox_qwen": [
+     91,
+     847,
+     937,
+     864
+    ]
+   },
+   {
+    "text": "điểm b khoản 2 Điều 54 của Luật này.",
+    "bbox": [
+     91,
+     878.8,
+     320,
+     892.1
+    ],
+    "bbox_qwen": [
+     91,
+     864,
+     320,
+     881
+    ]
+   },
+   {
+    "text": "3. Văn bản sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản khác phải xác định rõ tên",
+    "bbox": [
+     91,
+     895.8,
+     937,
+     909.7
+    ],
+    "bbox_qwen": [
+     91,
+     898,
+     937,
+     915
+    ]
+   },
+   {
+    "text": "văn bản, phần, chương, mục, tiểu mục, điều, khoản, điểm của văn bản bị sửa đổi, bổ sung, thay thế, bãi bỏ",
+    "bbox": [
+     91,
+     912.7,
+     937,
+     923.6
+    ],
+    "bbox_qwen": [
+     91,
+     915,
+     937,
+     932
+    ]
+   },
+   {
+    "text": "hoặc đình chỉ việc thi hành.",
+    "bbox": [
+     91,
+     912.7,
+     250,
+     923.6
+    ],
+    "bbox_qwen": [
+     91,
+     932,
+     250,
+     949
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     35,
+     972.7,
+     95,
+     980.0
+    ],
+    "bbox_qwen": [
+     35,
+     969,
+     95,
+     980
+    ]
+   },
+   {
+    "text": "3/36",
+    "bbox": [
+     933,
+     972.7,
+     963,
+     980.0
+    ],
+    "bbox_qwen": [
+     933,
+     969,
+     963,
+     980
+    ]
+   }
+  ],
+  "latency_s": 10.47,
+  "in_tokens": 2207,
+  "out_tokens": 1696,
+  "finish_reason": "stop"
+ },
+ "4": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 10:47 AM",
+    "bbox": [
+     30,
+     21.2,
+     130,
+     28.5
+    ],
+    "bbox_qwen": [
+     30,
+     17,
+     130,
+     27
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     520,
+     21.2,
+     580,
+     28.5
+    ],
+    "bbox_qwen": [
+     520,
+     17,
+     580,
+     27
+    ]
+   },
+   {
+    "text": "Trường hợp bãi bỏ pháp lệnh thì Ủy ban Thường vụ Quốc hội có trách nhiệm báo cáo Quốc hội tại kỳ họp",
+    "bbox": [
+     100,
+     38.8,
+     922,
+     53.3
+    ],
+    "bbox_qwen": [
+     100,
+     32,
+     922,
+     48
+    ]
+   },
+   {
+    "text": "gần nhất.",
+    "bbox": [
+     100,
+     58.8,
+     162,
+     66.7
+    ],
+    "bbox_qwen": [
+     100,
+     49,
+     162,
+     65
+    ]
+   },
+   {
+    "text": "Văn bản bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật quy định tại khoản 1 và khoản 2",
+    "bbox": [
+     100,
+     88.5,
+     922,
+     101.8
+    ],
+    "bbox_qwen": [
+     100,
+     71,
+     922,
+     87
+    ]
+   },
+   {
+    "text": "Điều này phải được đăng tải trên công báo điện tử, cơ sở dữ liệu quốc gia về pháp luật.",
+    "bbox": [
+     100,
+     105.5,
+     680,
+     118.8
+    ],
+    "bbox_qwen": [
+     100,
+     88,
+     680,
+     104
+    ]
+   },
+   {
+    "text": "4. Ban hành văn bản quy phạm pháp luật thay thế văn bản quy phạm pháp luật hiện hành thuộc một trong",
+    "bbox": [
+     100,
+     137.6,
+     922,
+     150.9
+    ],
+    "bbox_qwen": [
+     100,
+     125,
+     922,
+     141
+    ]
+   },
+   {
+    "text": "các trường hợp sau đây:",
+    "bbox": [
+     100,
+     154.5,
+     230,
+     167.9
+    ],
+    "bbox_qwen": [
+     100,
+     142,
+     230,
+     158
+    ]
+   },
+   {
+    "text": "a) Thay đổi cơ bản chính sách, phạm vi điều chỉnh, đối tượng áp dụng;",
+    "bbox": [
+     100,
+     186.7,
+     642,
+     200.6
+    ],
+    "bbox_qwen": [
+     100,
+     179,
+     642,
+     195
+    ]
+   },
+   {
+    "text": "b) Sửa đổi, bổ sung về nội dung quá một phần hai tổng số điều.",
+    "bbox": [
+     100,
+     218.8,
+     560,
+     232.7
+    ],
+    "bbox_qwen": [
+     100,
+     216,
+     560,
+     232
+    ]
+   },
+   {
+    "text": "5. Cơ quan, người có thẩm quyền ban hành văn bản quy phạm pháp luật phải đồng thời sửa đổi, bổ sung, bãi",
+    "bbox": [
+     100,
+     251.5,
+     922,
+     264.8
+    ],
+    "bbox_qwen": [
+     100,
+     253,
+     922,
+     269
+    ]
+   },
+   {
+    "text": "bỏ toàn bộ hoặc một phần của văn bản quy phạm pháp luật do mình đã ban hành khác với quy định của văn",
+    "bbox": [
+     100,
+     268.5,
+     922,
+     281.8
+    ],
+    "bbox_qwen": [
+     100,
+     270,
+     922,
+     286
+    ]
+   },
+   {
+    "text": "bản quy phạm pháp luật mới được ban hành. Trường hợp có quy định khác nhưng vẫn tiếp tục được áp dụng",
+    "bbox": [
+     100,
+     285.5,
+     922,
+     298.8
+    ],
+    "bbox_qwen": [
+     100,
+     287,
+     922,
+     303
+    ]
+   },
+   {
+    "text": "thì phải được quy định rõ trong văn bản quy phạm pháp luật mới được ban hành.",
+    "bbox": [
+     100,
+     302.4,
+     660,
+     315.8
+    ],
+    "bbox_qwen": [
+     100,
+     304,
+     660,
+     320
+    ]
+   },
+   {
+    "text": "6. Văn bản quy phạm pháp luật có thể được ban hành để đồng thời sửa đổi, bổ sung, thay thế, bãi bỏ nội",
+    "bbox": [
+     100,
+     334.5,
+     922,
+     350.3
+    ],
+    "bbox_qwen": [
+     100,
+     341,
+     922,
+     357
+    ]
+   },
+   {
+    "text": "dung của nhiều văn bản quy phạm pháp luật do cùng một cơ quan, người có thẩm quyền ban hành.",
+    "bbox": [
+     100,
+     351.5,
+     892,
+     365.5
+    ],
+    "bbox_qwen": [
+     100,
+     358,
+     892,
+     374
+    ]
+   },
+   {
+    "text": "Điều 9. Gửi, lưu trữ văn bản quy phạm pháp luật",
+    "bbox": [
+     100,
+     383.6,
+     510,
+     397.6
+    ],
+    "bbox_qwen": [
+     100,
+     395,
+     510,
+     411
+    ]
+   },
+   {
+    "text": "1. Chậm nhất là 03 ngày kể từ ngày công bố luật, nghị quyết của Quốc hội, pháp lệnh, nghị quyết của Ủy",
+    "bbox": [
+     100,
+     433.3,
+     922,
+     446.7
+    ],
+    "bbox_qwen": [
+     100,
+     432,
+     922,
+     448
+    ]
+   },
+   {
+    "text": "ban Thường vụ Quốc hội hoặc ký chứng thực, ký ban hành đối với văn bản quy phạm pháp luật khác, cơ",
+    "bbox": [
+     100,
+     450.3,
+     922,
+     463.6
+    ],
+    "bbox_qwen": [
+     100,
+     449,
+     922,
+     465
+    ]
+   },
+   {
+    "text": "quan, người có thẩm quyền ban hành văn bản quy phạm pháp luật có trách nhiệm gửi văn bản để đăng tải",
+    "bbox": [
+     100,
+     467.3,
+     922,
+     481.2
+    ],
+    "bbox_qwen": [
+     100,
+     466,
+     922,
+     482
+    ]
+   },
+   {
+    "text": "trên công báo điện tử, cơ sở dữ liệu quốc gia về pháp luật.",
+    "bbox": [
+     100,
+     499.4,
+     520,
+     513.3
+    ],
+    "bbox_qwen": [
+     100,
+     483,
+     520,
+     499
+    ]
+   },
+   {
+    "text": "2. Hồ sơ chính sách, dự án và bản gốc của văn bản quy phạm pháp luật phải được lưu trữ theo quy định của",
+    "bbox": [
+     100,
+     517.0,
+     922,
+     530.3
+    ],
+    "bbox_qwen": [
+     100,
+     520,
+     922,
+     536
+    ]
+   },
+   {
+    "text": "pháp luật về lưu trữ.",
+    "bbox": [
+     100,
+     548.5,
+     210,
+     562.4
+    ],
+    "bbox_qwen": [
+     100,
+     537,
+     210,
+     553
+    ]
+   },
+   {
+    "text": "3. Văn bản quy phạm pháp luật của cơ quan, người có thẩm quyền ở trung ương ban hành phải được đăng",
+    "bbox": [
+     100,
+     566.1,
+     922,
+     579.4
+    ],
+    "bbox_qwen": [
+     100,
+     574,
+     922,
+     590
+    ]
+   },
+   {
+    "text": "tải trên công báo điện tử nước Cộng hòa xã hội chủ nghĩa Việt Nam. Văn bản quy phạm pháp luật của Hội",
+    "bbox": [
+     100,
+     583.0,
+     922,
+     596.4
+    ],
+    "bbox_qwen": [
+     100,
+     591,
+     922,
+     607
+    ]
+   },
+   {
+    "text": "đồng nhân dân, Ủy ban nhân dân, chính quyền địa phương ở đơn vị hành chính - kinh tế đặc biệt phải được",
+    "bbox": [
+     100,
+     600.0,
+     922,
+     613.9
+    ],
+    "bbox_qwen": [
+     100,
+     608,
+     922,
+     624
+    ]
+   },
+   {
+    "text": "đăng tải trên công báo điện tử cấp tỉnh.",
+    "bbox": [
+     100,
+     632.1,
+     310,
+     646.1
+    ],
+    "bbox_qwen": [
+     100,
+     625,
+     310,
+     641
+    ]
+   },
+   {
+    "text": "4. Văn bản quy phạm pháp luật đăng tải trên công báo điện tử có giá trị như văn bản gốc.",
+    "bbox": [
+     100,
+     664.8,
+     710,
+     676.4
+    ],
+    "bbox_qwen": [
+     100,
+     662,
+     710,
+     678
+    ]
+   },
+   {
+    "text": "Chương II",
+    "bbox": [
+     100,
+     697.0,
+     180,
+     710.3
+    ],
+    "bbox_qwen": [
+     100,
+     699,
+     180,
+     715
+    ]
+   },
+   {
+    "text": "THẨM QUYỀN BAN HÀNH, NỘI DUNG VĂN BẢN QUY PHẠM PHÁP LUẬT",
+    "bbox": [
+     180,
+     729.1,
+     858,
+     742.4
+    ],
+    "bbox_qwen": [
+     180,
+     736,
+     858,
+     752
+    ]
+   },
+   {
+    "text": "Điều 10. Luật, nghị quyết của Quốc hội",
+    "bbox": [
+     100,
+     761.2,
+     420,
+     774.5
+    ],
+    "bbox_qwen": [
+     100,
+     773,
+     420,
+     789
+    ]
+   },
+   {
+    "text": "1. Quốc hội ban hành luật để quy định:",
+    "bbox": [
+     100,
+     810.3,
+     370,
+     824.2
+    ],
+    "bbox_qwen": [
+     100,
+     810,
+     370,
+     826
+    ]
+   },
+   {
+    "text": "a) Tổ chức và hoạt động của Quốc hội, Chủ tịch nước, Chính phủ, Tòa án nhân dân, Viện kiểm sát nhân dân,",
+    "bbox": [
+     100,
+     827.3,
+     922,
+     841.2
+    ],
+    "bbox_qwen": [
+     100,
+     847,
+     922,
+     863
+    ]
+   },
+   {
+    "text": "Hội đồng bầu cử quốc gia, Kiểm toán nhà nước, chính quyền địa phương, đơn vị hành chính - kinh tế đặc",
+    "bbox": [
+     100,
+     859.4,
+     922,
+     873.3
+    ],
+    "bbox_qwen": [
+     100,
+     864,
+     922,
+     880
+    ]
+   },
+   {
+    "text": "biệt và cơ quan khác do Quốc hội thành lập;",
+    "bbox": [
+     100,
+     877.0,
+     390,
+     890.3
+    ],
+    "bbox_qwen": [
+     100,
+     881,
+     390,
+     897
+    ]
+   },
+   {
+    "text": "b) Quyền con người, quyền và nghĩa vụ cơ bản của công dân mà theo Hiến pháp phải do luật định; việc hạn",
+    "bbox": [
+     100,
+     926.1,
+     922,
+     940.0
+    ],
+    "bbox_qwen": [
+     100,
+     918,
+     922,
+     934
+    ]
+   },
+   {
+    "text": "chế quyền con người, quyền công dân; tội phạm và hình phạt; tổ tụng tư pháp;",
+    "bbox": [
+     100,
+     946.7,
+     600,
+     953.9
+    ],
+    "bbox_qwen": [
+     100,
+     935,
+     600,
+     951
+    ]
+   },
+   {
+    "text": "c) Chính sách cơ bản về kinh tế, xã hội, văn hóa, giáo dục, khoa học, công nghệ, môi trường, tài chính, tiền",
+    "bbox": [
+     100,
+     972.7,
+     922,
+     980.0
+    ],
+    "bbox_qwen": [
+     100,
+     972,
+     922,
+     988
+    ]
+   },
+   {
+    "text": "tệ quốc gia, ngân sách nhà nước; quy định các thứ thuế, về huân chương, huy chương và danh hiệu vinh dự",
+    "bbox": [
+     100,
+     972.7,
+     922,
+     980.0
+    ],
+    "bbox_qwen": [
+     100,
+     989,
+     922,
+     1000
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     30,
+     972.7,
+     90,
+     980.0
+    ],
+    "bbox_qwen": [
+     30,
+     972,
+     90,
+     982
+    ]
+   },
+   {
+    "text": "4/36",
+    "bbox": [
+     922,
+     972.7,
+     952,
+     980.0
+    ],
+    "bbox_qwen": [
+     922,
+     972,
+     952,
+     982
+    ]
+   }
+  ],
+  "latency_s": 8.14,
+  "in_tokens": 1475,
+  "out_tokens": 1694,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 120,
+   "hint": true,
+   "schema": true
+  }
+ },
+ "5": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 10:47 AM",
+    "bbox": [
+     33,
+     21.2,
+     140,
+     28.5
+    ],
+    "bbox_qwen": [
+     33,
+     21,
+     140,
+     33
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     540,
+     21.2,
+     596,
+     28.5
+    ],
+    "bbox_qwen": [
+     540,
+     21,
+     596,
+     33
+    ]
+   },
+   {
+    "text": "d) Chính sách cơ bản về quốc phòng, an ninh quốc gia; hàm, cấp trong lực lượng vũ trang nhân dân; quy",
+    "bbox": [
+     103,
+     38.8,
+     915,
+     54.5
+    ],
+    "bbox_qwen": [
+     103,
+     36,
+     915,
+     57
+    ]
+   },
+   {
+    "text": "định về tình trạng khẩn cấp, các biện pháp đặc biệt khác bảo đảm quốc phòng và an ninh quốc gia;",
+    "bbox": [
+     103,
+     55.8,
+     878,
+     69.7
+    ],
+    "bbox_qwen": [
+     103,
+     54,
+     878,
+     72
+    ]
+   },
+   {
+    "text": "đ) Chính sách cơ bản về đối ngoại; hàm, cấp ngoại giao; hàm, cấp nhà nước khác;",
+    "bbox": [
+     103,
+     88.5,
+     736,
+     101.8
+    ],
+    "bbox_qwen": [
+     103,
+     85,
+     736,
+     103
+    ]
+   },
+   {
+    "text": "e) Chính sách dân tộc, chính sách tôn giáo của Nhà nước;",
+    "bbox": [
+     103,
+     120.6,
+     545,
+     133.9
+    ],
+    "bbox_qwen": [
+     103,
+     116,
+     545,
+     134
+    ]
+   },
+   {
+    "text": "g) Trưng cầu ý dân;",
+    "bbox": [
+     103,
+     152.7,
+     246,
+     166.1
+    ],
+    "bbox_qwen": [
+     103,
+     148,
+     246,
+     166
+    ]
+   },
+   {
+    "text": "h) Cơ chế bảo vệ Hiến pháp;",
+    "bbox": [
+     103,
+     184.8,
+     318,
+     198.2
+    ],
+    "bbox_qwen": [
+     103,
+     180,
+     318,
+     198
+    ]
+   },
+   {
+    "text": "i) Vấn đề khác thuộc thẩm quyền của Quốc hội theo quy định của Hiến pháp và luật.",
+    "bbox": [
+     103,
+     217.0,
+     756,
+     230.3
+    ],
+    "bbox_qwen": [
+     103,
+     211,
+     756,
+     229
+    ]
+   },
+   {
+    "text": "2. Quốc hội ban hành nghị quyết để quy định:",
+    "bbox": [
+     103,
+     249.1,
+     461,
+     263.0
+    ],
+    "bbox_qwen": [
+     103,
+     243,
+     461,
+     261
+    ]
+   },
+   {
+    "text": "a) Thực hiện thí điểm một số chính sách mới thuộc thẩm quyền quyết định của Quốc hội khác với quy định",
+    "bbox": [
+     103,
+     281.8,
+     935,
+     295.2
+    ],
+    "bbox_qwen": [
+     103,
+     274,
+     935,
+     292
+    ]
+   },
+   {
+    "text": "của luật hiện hành;",
+    "bbox": [
+     103,
+     298.8,
+     214,
+     309.1
+    ],
+    "bbox_qwen": [
+     103,
+     292,
+     214,
+     310
+    ]
+   },
+   {
+    "text": "b) Tạm ngưng, điều chỉnh hiệu lực hoặc kéo dài thời hạn áp dụng toàn bộ hoặc một phần luật, nghị quyết",
+    "bbox": [
+     103,
+     330.9,
+     921,
+     344.2
+    ],
+    "bbox_qwen": [
+     103,
+     323,
+     921,
+     341
+    ]
+   },
+   {
+    "text": "của Quốc hội đáp ứng yêu cầu cấp bách về phát triển kinh tế - xã hội, bảo đảm quyền con người, quyền",
+    "bbox": [
+     103,
+     344.8,
+     915,
+     347.3
+    ],
+    "bbox_qwen": [
+     103,
+     341,
+     915,
+     359
+    ]
+   },
+   {
+    "text": "công dân;",
+    "bbox": [
+     103,
+     364.8,
+     161,
+     367.3
+    ],
+    "bbox_qwen": [
+     103,
+     359,
+     161,
+     377
+    ]
+   },
+   {
+    "text": "c) Vấn đề khác do Quốc hội quyết định.",
+    "bbox": [
+     103,
+     397.0,
+     405,
+     410.9
+    ],
+    "bbox_qwen": [
+     103,
+     390,
+     405,
+     408
+    ]
+   },
+   {
+    "text": "Điều 11. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội",
+    "bbox": [
+     103,
+     429.1,
+     627,
+     443.0
+    ],
+    "bbox_qwen": [
+     103,
+     421,
+     627,
+     439
+    ]
+   },
+   {
+    "text": "1. Ủy ban Thường vụ Quốc hội ban hành pháp lệnh trong trường hợp được Quốc hội giao.",
+    "bbox": [
+     103,
+     461.8,
+     661,
+     475.2
+    ],
+    "bbox_qwen": [
+     103,
+     452,
+     661,
+     470
+    ]
+   },
+   {
+    "text": "2. Ủy ban Thường vụ Quốc hội ban hành nghị quyết để quy định:",
+    "bbox": [
+     103,
+     493.9,
+     561,
+     507.3
+    ],
+    "bbox_qwen": [
+     103,
+     484,
+     561,
+     502
+    ]
+   },
+   {
+    "text": "a) Giải thích Hiến pháp, luật, nghị quyết của Quốc hội và pháp lệnh, nghị quyết của Ủy ban Thường vụ",
+    "bbox": [
+     103,
+     526.1,
+     908,
+     539.4
+    ],
+    "bbox_qwen": [
+     103,
+     515,
+     908,
+     533
+    ]
+   },
+   {
+    "text": "Quốc hội;",
+    "bbox": [
+     103,
+     543.0,
+     161,
+     553.9
+    ],
+    "bbox_qwen": [
+     103,
+     533,
+     161,
+     551
+    ]
+   },
+   {
+    "text": "b) Tạm ngưng, điều chỉnh hiệu lực hoặc kéo dài thời hạn áp dụng toàn bộ hoặc một phần pháp lệnh, nghị",
+    "bbox": [
+     103,
+     575.2,
+     921,
+     589.1
+    ],
+    "bbox_qwen": [
+     103,
+     564,
+     921,
+     582
+    ]
+   },
+   {
+    "text": "quyết của Ủy ban Thường vụ Quốc hội đáp ứng yêu cầu cấp bách về phát triển kinh tế - xã hội;",
+    "bbox": [
+     103,
+     592.7,
+     878,
+     606.1
+    ],
+    "bbox_qwen": [
+     103,
+     582,
+     878,
+     600
+    ]
+   },
+   {
+    "text": "c) Tổng động viên hoặc động viên cục bộ; ban bố, bãi bỏ tình trạng khẩn cấp trong cả nước hoặc ở từng địa",
+    "bbox": [
+     103,
+     624.8,
+     935,
+     638.2
+    ],
+    "bbox_qwen": [
+     103,
+     613,
+     935,
+     631
+    ]
+   },
+   {
+    "text": "phương;",
+    "bbox": [
+     103,
+     644.8,
+     161,
+     655.2
+    ],
+    "bbox_qwen": [
+     103,
+     631,
+     161,
+     649
+    ]
+   },
+   {
+    "text": "d) Hướng dẫn hoạt động của Hội đồng nhân dân;",
+    "bbox": [
+     103,
+     673.9,
+     475,
+     687.3
+    ],
+    "bbox_qwen": [
+     103,
+     662,
+     475,
+     680
+    ]
+   },
+   {
+    "text": "đ) Nội dung được luật, nghị quyết của Quốc hội giao, trừ trường hợp quy định tại khoản 1 Điều này;",
+    "bbox": [
+     103,
+     706.1,
+     884,
+     720.0
+    ],
+    "bbox_qwen": [
+     103,
+     693,
+     884,
+     711
+    ]
+   },
+   {
+    "text": "e) Vấn đề khác thuộc thẩm quyền của Ủy ban Thường vụ Quốc hội.",
+    "bbox": [
+     103,
+     738.2,
+     621,
+     752.1
+    ],
+    "bbox_qwen": [
+     103,
+     725,
+     621,
+     743
+    ]
+   },
+   {
+    "text": "Điều 12. Lệnh, quyết định của Chủ tịch nước",
+    "bbox": [
+     103,
+     770.3,
+     451,
+     784.2
+    ],
+    "bbox_qwen": [
+     103,
+     756,
+     451,
+     774
+    ]
+   },
+   {
+    "text": "Chủ tịch nước ban hành lệnh, quyết định để quy định:",
+    "bbox": [
+     103,
+     803.0,
+     514,
+     816.4
+    ],
+    "bbox_qwen": [
+     103,
+     787,
+     514,
+     805
+    ]
+   },
+   {
+    "text": "1. Tổng động viên hoặc động viên cục bộ; công bố, bãi bỏ tình trạng khẩn cấp trong cả nước hoặc ở từng địa",
+    "bbox": [
+     103,
+     835.2,
+     947,
+     848.5
+    ],
+    "bbox_qwen": [
+     103,
+     818,
+     947,
+     836
+    ]
+   },
+   {
+    "text": "phương;",
+    "bbox": [
+     103,
+     855.2,
+     161,
+     865.5
+    ],
+    "bbox_qwen": [
+     103,
+     836,
+     161,
+     854
+    ]
+   },
+   {
+    "text": "2. Vấn đề khác thuộc thẩm quyền của Chủ tịch nước.",
+    "bbox": [
+     103,
+     884.2,
+     511,
+     895.2
+    ],
+    "bbox_qwen": [
+     103,
+     867,
+     511,
+     885
+    ]
+   },
+   {
+    "text": "Điều 13. Nghị quyết liên tịch giữa Ủy ban Thường vụ Quốc hội, Chính phủ, Đoàn Chủ tịch Ủy ban",
+    "bbox": [
+     103,
+     913.3,
+     915,
+     915.8
+    ],
+    "bbox_qwen": [
+     103,
+     898,
+     915,
+     916
+    ]
+   },
+   {
+    "text": "Trung ương Mặt trận Tổ quốc Việt Nam",
+    "bbox": [
+     103,
+     916.4,
+     421,
+     930.3
+    ],
+    "bbox_qwen": [
+     103,
+     916,
+     421,
+     934
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     33,
+     972.7,
+     89,
+     980.0
+    ],
+    "bbox_qwen": [
+     33,
+     967,
+     89,
+     979
+    ]
+   },
+   {
+    "text": "5/36",
+    "bbox": [
+     939,
+     972.7,
+     965,
+     980.0
+    ],
+    "bbox_qwen": [
+     939,
+     967,
+     965,
+     979
+    ]
+   }
+  ],
+  "latency_s": 6.31,
+  "in_tokens": 3820,
+  "out_tokens": 1375,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 200,
+   "hint": true,
+   "schema": true
+  }
+ }
+}
