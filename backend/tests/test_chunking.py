@@ -56,7 +56,9 @@ def test_khong_gop_xuyen_chuong():
 
 
 def test_gop_manh_vun_nhung_van_nho_moi_muc_da_gop():
-    chunks = chunker().split(VAN_BAN)
+    # Chế độ cả Điều; chế độ chia theo Khoản (mặc định) cố ý không gộp xuyên Điều - xem
+    # test_chunk_theo_khoan_khong_gop_xuyen_dieu.
+    chunks = chunker(legal_chunk_granularity="dieu").split(VAN_BAN)
     gop = next(c for c in chunks if len(c.sections) > 1)
     assert gop.section_label.startswith("Điều 1.")
     assert gop.section_label.endswith("Điều 4. Nguyên tắc lập hoá đơn")

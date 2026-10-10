@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,7 @@ from app.documents.pptx_builder import (
     build_pptx,
     count_slides,
 )
+from app.documents.slide_deck import so as so_vn
 from app.documents.verify import (
     check_numbers,
     collect_known_numbers,
@@ -343,9 +345,20 @@ def instructions_for(data: dict[str, Any]) -> str:
     return INSTRUCTIONS + (CANH_BAO_INSTRUCTION if co_canh_bao else "")
 
 
+def _khong_co_gi_de_trinh_bay(data: dict[str, Any]) -> bool:
+    """Không có đơn vị nào và không dòng số liệu nào: dựng deck lúc này chỉ ra một bộ
+    slide toàn số 0 kèm "0/0 đơn vị" - trông như báo cáo thật nhưng không nói gì."""
+    rows = sum(len((data.get(k) or {}).get("breakdown") or []) for k in ("personnel", "equipment"))
+    units = (data.get("reporting") or {}).get("units_total") or 0
+    return rows == 0 and units == 0
+
+
 async def brief_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error"):
         return {}
+    if _khong_co_gi_de_trinh_bay(state["data"]):
+        return {"error": "Không tìm thấy đơn vị hay số liệu nào của thuê bao này trong ERP cho kỳ "
+                         f"{_period_label(state['params'])}. Kiểm tra lại mã thuê bao (X-Tenant-Id)."}
     slides, so_cua_code = build_slides_markdown(
         state["data"], state["params"], state.get("inputs"))
     logger.info("Đã soạn %d slide để Presenton render", len(slides))
@@ -432,31 +445,257 @@ def _slide_table(data_key: str, data: dict[str, Any]) -> SlideTable | None:
     return SlideTable(columns=table.columns, rows=table.rows) if table else None
 
 
+async def _render_local(state: dict[str, Any], output_path: Path, ly_do: Exception) -> dict[str, Any]:
+    logger.warning("Presenton không dựng được slide (%s) - dùng bản tự dựng", ly_do)
+    spec = await anyio.to_thread.run_sync(
+        lambda: _fallback_deck(state["data"], state["params"]))
+    path = await anyio.to_thread.run_sync(lambda: build_pptx(spec, output_path))
+    return {
+        "output_path": str(path),
+        "engine": "local",
+        "slide_count": count_slides(spec.slides),
+        "assumptions": [*state.get("assumptions", []),
+                        f"Presenton không dùng được ({ly_do}); bộ slide này do hệ "
+                        f"thống tự dựng nên chỉ có số liệu, không có phần nhận xét."],
+    }
+
+
 async def render_node(state: dict[str, Any]) -> dict[str, Any]:
-    """Presenton dựng slide; hỏng thì lùi về bản code tự dựng, và nói ra."""
+    """Dựng slide qua Presenton; hỏng thì lùi về bản code tự dựng, và nói ra."""
     if state.get("error"):
         return {"output_path": ""}
 
     output_path = _output_path(state["params"])
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    if getattr(get_settings(), "presenton_render_mode", "direct") == "generate":
+        return await _render_generate(state, output_path)
+    return await _render_direct(state, output_path)
+
+
+# --------------------------------------------------------------------------- #
+# 2a. Dựng thẳng từ layout template - đường mặc định
+# --------------------------------------------------------------------------- #
+MAX_DECK_ATTEMPTS = 2
+MAX_SUMMARY_ATTEMPTS = 3
+
+SUMMARY_SCHEMA: dict[str, Any] = {
+    "type": "object", "additionalProperties": False, "required": ["tong_quan", "nhan_xet", "ket_luan"],
+    "properties": {
+        "tong_quan": {"type": "string", "maxLength": 280},
+        "nhan_xet": {"type": "array", "items": {
+            "type": "object", "additionalProperties": False, "required": ["bang", "noi_dung"],
+            "properties": {"bang": {"type": "string"}, "noi_dung": {"type": "string", "maxLength": 300}}}},
+        "ket_luan": {"type": "array", "minItems": 3, "maxItems": 3, "items": {
+            "type": "object", "additionalProperties": False, "required": ["tieu_de", "noi_dung"],
+            "properties": {"tieu_de": {"type": "string", "maxLength": 22},
+                           "noi_dung": {"type": "string", "maxLength": 110}}}},
+    },
+}
+SUMMARY_SYSTEM = ("Bạn là chuyên viên tổng hợp báo cáo số liệu hành chính. Tuyệt đối trung thực "
+                  "với dữ liệu. Chỉ viết tiếng Việt bằng chữ quốc ngữ.")
+
+
+def _summary_prompt(datasets: list[Any], unit: str, period: str) -> str:
+    blocks = []
+    for d in datasets:
+        bang = "\n".join(f"- {cat}: " + ", ".join(f"{name} {so_vn(vals[i])}" for name, vals in d.series)
+                         for i, cat in enumerate(d.categories))
+        blocks.append(f"### Bảng `{d.key}`: {d.title}\n{bang}\nChỉ tiêu đã tính sẵn:\n"
+                      + "\n".join(f"- {f}" for f in d.facts))
+    return (f"Báo cáo số liệu {period}. Đơn vị: {unit}.\n\n" + "\n\n".join(blocks)
+            + "\n\nViết phần chữ cho bộ slide báo cáo, giọng văn hành chính, ngắn gọn.\n"
+            "Quy tắc bắt buộc:\n"
+            "- Chỉ dùng con số xuất hiện nguyên văn trong các bảng hoặc chỉ tiêu đã tính sẵn ở trên. "
+            "Không tự cộng, trừ, chia, làm tròn hay ước lượng số mới.\n"
+            "- Không suy đoán nguyên nhân, không dự báo, không khuyến nghị hay đề xuất việc cần làm: "
+            "kết luận chỉ nêu điều số liệu cho thấy.\n"
+            "- Mã trạng thái (ví dụ 'Trạng thái 0') giữ nguyên là mã, không tự diễn giải.\n"
+            "- `tong_quan`: 1-2 câu, dưới 280 ký tự.\n"
+            "- `nhan_xet`: mỗi bảng một mục, trường `bang` ghi đúng khoá bảng, dưới 300 ký tự.\n"
+            "- `ket_luan`: đúng 3 ý; `tieu_de` dưới 22 ký tự, `noi_dung` dưới 110 ký tự.")
+
+
+def _summary_problems(out: dict[str, Any], datasets: list[Any], known: set[str]) -> list[str]:
+    text = " ".join([out.get("tong_quan", ""),
+                     *(n.get("noi_dung", "") for n in out.get("nhan_xet", [])),
+                     *(f"{k.get('tieu_de', '')} {k.get('noi_dung', '')}" for k in out.get("ket_luan", []))])
+    problems = []
+    if (la := check_numbers(text, known)).unverified:
+        problems.append("số không có trong dữ liệu: " + ", ".join(sorted(set(la.unverified))))
+    if (chu := tim_chu_ngoai_he(text)):
+        problems.append("có ký tự không phải tiếng Việt: " + "".join(sorted(set(chu))))
+    if (thieu := {d.key for d in datasets} - {n.get("bang") for n in out.get("nhan_xet", [])}):
+        problems.append("thiếu nhận xét cho bảng: " + ", ".join(sorted(thieu)))
+    if len(out.get("ket_luan") or []) != 3:
+        problems.append("ket_luan phải đúng 3 ý")
+    return problems
+
+
+async def _summarize(datasets: list[Any], unit: str, period: str,
+                     known: set[str]) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Qwen viết chữ dẫn dắt; mỗi lần sai quy tắc thì được chỉ ra lỗi và viết lại.
+
+    Trả (bản tóm tắt hoặc None, log). None nghĩa là sau ba lần vẫn sai - bên gọi
+    dùng chữ do code tính, không đưa bản sai lên slide.
+    """
+    from app.services.llm import LLMError, get_llm, parse_json_response
+
+    messages = [{"role": "system", "content": SUMMARY_SYSTEM},
+                {"role": "user", "content": _summary_prompt(datasets, unit, period)}]
+    log: dict[str, Any] = {"attempts": []}
+    started = time.monotonic()
+    for _ in range(MAX_SUMMARY_ATTEMPTS):
+        try:
+            raw = await get_llm().chat(
+                messages, temperature=0.0, max_tokens=1500, thinking=False,
+                extra={"response_format": {"type": "json_schema", "json_schema": {
+                    "name": "tom_tat_slide", "schema": SUMMARY_SCHEMA, "strict": True}}})
+            out = parse_json_response(raw)
+        except (LLMError, ValueError) as exc:
+            log["attempts"].append({"error": str(exc)[:200]})
+            log["llm_error"] = str(exc)[:200]
+            break
+        problems = _summary_problems(out, datasets, known) if isinstance(out, dict) else ["không phải JSON object"]
+        log["attempts"].append({"problems": problems})
+        if not problems:
+            log["seconds"] = round(time.monotonic() - started, 1)
+            return out, log
+        messages += [{"role": "assistant", "content": raw},
+                     {"role": "user", "content": "Bản trên vi phạm: " + "; ".join(problems)
+                      + ". Viết lại toàn bộ JSON đúng quy tắc."}]
+    log["seconds"] = round(time.monotonic() - started, 1)
+    return None, log
+
+
+async def _ten_don_vi(inputs: dict[str, Any]) -> str:
+    """Tên đơn vị in trên bìa: người dùng nêu thì theo người dùng, không thì tên tenant trong ERP."""
+    if (value := str(inputs.get("don_vi_trinh_bay") or "").strip()):
+        return value
+    from sqlalchemy import text
+
+    from app.core.context import current_tenant_id
+    from app.db.erp_session import erp_session_scope
+
+    tenant = current_tenant_id()
+    try:
+        async with erp_session_scope() as session:
+            name = (await session.execute(
+                text("SELECT TenancyName FROM AbpTenants WHERE Id = :id"), {"id": tenant})).scalar()
+    except Exception as exc:  # noqa: BLE001 - thiếu tên đơn vị không đáng làm hỏng cả bộ slide
+        logger.warning("Không tra được tên tenant %s: %s", tenant, exc)
+        name = None
+    return str(name).strip() if name else f"Đơn vị thuê bao {tenant}"
+
+
+async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, Any]:
+    from datetime import date
+
+    from app.documents import slide_deck as sd
+
+    settings = get_settings()
+    data, params = state["data"], state["params"]
+    timings: dict[str, float] = {}
+    assumptions = list(state.get("assumptions", []))
+    started = time.monotonic()
+
+    datasets = sd.build_datasets(data, params)
+    unit = await _ten_don_vi(state.get("inputs") or {})
+    period = _period_label(params)
+    report_date = date.today().strftime("%d/%m/%Y")
+
+    # Số hợp lệ cho chữ Qwen: dữ liệu gốc + số kỳ + mọi số code đã viết (tỷ lệ...).
+    base_plan = sd.build_plan(data, params, unit, datasets, None, report_date)
+    known = (collect_known_numbers(data) | _period_numbers(params) | sd.code_numbers(base_plan)
+             | collect_known_numbers([unit, report_date]))
+
+    summary, summary_log = None, {}
+    if getattr(settings, "presenton_summary", True) and datasets:
+        summary, summary_log = await _summarize(datasets, unit, period, known)
+        timings["llm_summary"] = summary_log.get("seconds", 0.0)
+        if summary is None and summary_log.get("llm_error"):
+            assumptions.append(f"Không gọi được Qwen để viết phần nhận xét ({summary_log['llm_error'][:120]}); "
+                               "phần chữ trên slide do hệ thống tính từ số liệu.")
+        elif summary is None:
+            assumptions.append("Qwen chưa viết được phần nhận xét đúng quy tắc đối chiếu số; "
+                               "phần chữ trên slide do hệ thống tính từ số liệu.")
+    plan = sd.build_plan(data, params, unit, datasets, summary, report_date) if summary else base_plan
+    title = f"Báo cáo số liệu {period} - {unit}"
+
+    presenton = get_presenton()
+    deck_check: dict[str, Any] = {}
+    try:
+        t0 = time.monotonic()
+        template = await presenton.get_template()
+        timings["presenton_template"] = round(time.monotonic() - t0, 1)
+        pid = ""
+        for attempt in range(1, MAX_DECK_ATTEMPTS + 1):
+            t0 = time.monotonic()
+            pid = await presenton.create_blank()
+            built = [sd.build_slide(p, i, pid, template) for i, p in enumerate(plan)]
+            try:
+                await presenton.update_deck(pid, title, template["theme"], [s for s, _ in built])
+                deck_check = sd.verify_deck(await presenton.get_deck(pid), plan, [r for _, r in built])
+            except PresentonError:
+                await presenton.delete_deck(pid)
+                raise
+            timings["presenton_build"] = round(time.monotonic() - t0, 1)
+            deck_check["attempt"] = attempt
+            if deck_check["ok"]:
+                break
+            logger.warning("Deck %s lệch kế hoạch (lần %d): %s", pid, attempt, deck_check["issues"][:5])
+            await presenton.delete_deck(pid)
+        else:
+            raise PresentonError("deck Presenton lưu lệch so với nội dung đã soạn sau "
+                                 f"{MAX_DECK_ATTEMPTS} lần: {deck_check['issues'][:3]}")
+        t0 = time.monotonic()
+        try:
+            content = await presenton.export_deck(pid, "pptx")
+        except PresentonError:
+            await presenton.delete_deck(pid)  # không để lại deck mồ côi trên Presenton
+            raise
+        timings["presenton_export"] = round(time.monotonic() - t0, 1)
+    except (PresentonError, sd.DeckBuildError) as exc:
+        result = await _render_local(state, output_path, exc)
+        result["timings"] = timings
+        return result
+
+    await anyio.to_thread.run_sync(lambda: output_path.write_bytes(content))
+    timings["render_total"] = round(time.monotonic() - started, 1)
+    logger.info("Presenton (dựng thẳng) xong %d slide sau %.1fs, deck=%s, nhận xét=%s: %s",
+                len(plan), timings["render_total"], pid, "qwen" if summary else "code", output_path)
+    return {
+        "output_path": str(output_path),
+        "engine": "presenton",
+        "presentation_id": pid,
+        "edit_url": f"/presentation?id={pid}",
+        "elapsed_seconds": timings["render_total"],
+        "slide_count": len(plan),
+        "so_cua_code": sorted(sd.code_numbers(plan) | collect_known_numbers([unit, report_date])),
+        "summary_source": "qwen" if summary else "code",
+        "deck_check": {**deck_check, "summary": summary_log},
+        "timings": timings,
+        "assumptions": assumptions,
+        "brief": "\n\n---\n\n".join(
+            "\n".join(filter(None, [f"[{p.role}] {p.layout}", *p.texts.values(),
+                                    *(f"{i.get('card_title', i.get('entry_title', ''))}: "
+                                      f"{i.get('card_description', i.get('card_caption', i.get('entry_description', '')))}"
+                                      for items in p.lists.values() for i in items)]))
+            for p in plan),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# 2b. Để Presenton tự sinh (đường cũ, PRESENTON_RENDER_MODE=generate)
+# --------------------------------------------------------------------------- #
+async def _render_generate(state: dict[str, Any], output_path: Path) -> dict[str, Any]:
     try:
         deck = await get_presenton().generate(
             state["brief"], n_slides=state["n_slides"],
             slides_markdown=state["slides_markdown"],
             instructions=instructions_for(state["data"]))
     except PresentonError as exc:
-        logger.warning("Presenton không dựng được slide (%s) - dùng bản tự dựng", exc)
-        spec = await anyio.to_thread.run_sync(
-            lambda: _fallback_deck(state["data"], state["params"]))
-        path = await anyio.to_thread.run_sync(lambda: build_pptx(spec, output_path))
-        return {
-            "output_path": str(path),
-            "engine": "local",
-            "slide_count": count_slides(spec.slides),
-            "assumptions": [f"Presenton không dùng được ({exc}); bộ slide này do hệ "
-                            f"thống tự dựng nên chỉ có số liệu, không có phần nhận xét."],
-        }
+        return await _render_local(state, output_path, exc)
 
     await anyio.to_thread.run_sync(lambda: output_path.write_bytes(deck.content))
     logger.info("Presenton render xong %d slide sau %.0fs: %s",

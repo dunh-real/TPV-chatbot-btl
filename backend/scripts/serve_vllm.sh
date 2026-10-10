@@ -54,5 +54,7 @@ exec vllm serve "${MODEL}" \
     --max-num-seqs "${MAX_SEQS}" \
     --max-num-batched-tokens "${MAX_BATCHED}" \
     --limit-mm-per-prompt '{"image": 2}' \
+    --enable-auto-tool-choice \
+    --tool-call-parser hermes \
     --speculative-config '{"method": "qwen3_5_mtp", "num_speculative_tokens": 2}' \
     "$@"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, NotRequired, TypedDict
 
 from app.rag.retrieval import RetrievalResult, RetrievedChunk
 
@@ -30,6 +30,10 @@ class Citation(TypedDict):
     snippet: str
     score: float
     matched_by: str
+    # VBQPPL theo phiên bản (chỉ có khi bật legal_versioning_enabled)
+    component_ids: NotRequired[list[str]]
+    version_ids: NotRequired[dict[str, str]]
+    validity: NotRequired[str]
 
 
 class QAState(TypedDict, total=False):
@@ -227,5 +231,8 @@ class PresentationState(TypedDict, total=False):
     edit_url: str
     elapsed_seconds: float
     slide_count: int
+    summary_source: str               # qwen | code - ai viết phần chữ dẫn dắt (đường dựng thẳng)
+    deck_check: dict[str, Any]        # đối chiếu deck Presenton đã lưu với kế hoạch slide
+    timings: dict[str, float]         # thời gian từng công đoạn dựng slide, giây
     assumptions: list[str]
     error: str

@@ -359,6 +359,17 @@ async def test_khong_doc_lai_duoc_file_thi_noi_la_chua_kiem(tmp_path):
 # --------------------------------------------------------------------------- #
 # Toàn bộ workflow 5, với Presenton giả
 # --------------------------------------------------------------------------- #
+class WF5Settings:
+    """Cấu hình giả cho workflow 5. Các test đường cũ (Presenton tự sinh) chạy ở "generate";
+    test đường dựng thẳng đổi sang "direct" bằng monkeypatch."""
+
+    output_dir = ""
+    utility_model = "test"
+    presenton_n_slides = 0
+    presenton_render_mode = "generate"
+    presenton_summary = True
+
+
 @pytest.fixture
 async def ppt_env(tmp_path, monkeypatch, erp_session):
     """Số liệu đọc từ ERP tạm, sổ văn bản ở CSDL app tạm, output vào thư mục tạm."""
@@ -380,18 +391,15 @@ async def ppt_env(tmp_path, monkeypatch, erp_session):
     async def _erp_scope():
         yield erp_session
 
-    class _Settings:
-        output_dir = str(tmp_path)
-        utility_model = "test"
-        presenton_n_slides = 0
+    WF5Settings.output_dir = str(tmp_path)
 
     import app.db.session as db_session
 
     monkeypatch.setattr(db_session, "session_scope", _scope)
     monkeypatch.setattr(rp, "session_scope", _scope)
     monkeypatch.setattr(rp, "erp_session_scope", _erp_scope)
-    monkeypatch.setattr(rp, "get_settings", lambda: _Settings())
-    monkeypatch.setattr(pr, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(rp, "get_settings", lambda: WF5Settings)
+    monkeypatch.setattr(pr, "get_settings", lambda: WF5Settings)
     yield tmp_path
     await app_session.close()
     await engine.dispose()
@@ -607,3 +615,184 @@ def test_bat_duoc_chu_ngoai_he(dong, mong_doi):
 def test_khong_bao_oan_chu_tieng_viet(dong):
     """Báo oan còn tệ hơn không báo: người duyệt mất lòng tin vào chốt này."""
     assert tim_chu_ngoai_he(dong) == []
+
+
+# --------------------------------------------------------------------------- #
+# Đường dựng thẳng (PRESENTON_RENDER_MODE=direct): code điền layout, Presenton render
+# --------------------------------------------------------------------------- #
+import json as _json  # noqa: E402
+import re as _re  # noqa: E402
+
+_TEMPLATE = _json.loads((Path(__file__).parent / "fixtures" / "presenton_modern_template.json")
+                        .read_text(encoding="utf-8"))
+
+
+class FakeDirectPresenton:
+    """Presenton giả cho đường dựng thẳng: lưu slide nhận được, xuất .pptx từ chính chữ trong ui."""
+
+    def __init__(self, tmp_path, loi: Exception | None = None, sua_bieu_do: bool = False) -> None:
+        self.tmp_path, self.loi, self.sua_bieu_do = tmp_path, loi, sua_bieu_do
+        self.slides: list[dict] = []
+        self.created: list[str] = []
+        self.deleted: list[str] = []
+
+    async def get_template(self, name=None):
+        return _TEMPLATE
+
+    async def create_blank(self):
+        if self.loi:
+            raise self.loi
+        self.created.append(f"d{len(self.created) + 1}")
+        return self.created[-1]
+
+    async def update_deck(self, pid, title, theme, slides):
+        self.slides = slides
+
+    async def get_deck(self, pid):
+        import copy
+
+        slides = copy.deepcopy(self.slides)
+        if self.sua_bieu_do:  # renderer "lưu lệch": biểu đồ mất một đơn vị
+            for s in slides:
+                for c in s["ui"]["components"]:
+                    for e in c["elements"]:
+                        if e.get("type") == "chart":
+                            e["categories"] = e["categories"][:-1]
+        return {"id": pid, "slides": slides}
+
+    async def export_deck(self, pid, export_as="pptx"):
+        from app.documents.slide_deck import ui_texts
+
+        if getattr(self, "loi_export", None):
+            raise self.loi_export
+
+        deck = DeckSpec(title="Báo cáo", slides=[
+            SlideSpec(kind="bullet", title=(ui_texts(s["ui"]) or ["Slide"])[0][:60] or "Slide",
+                      bullets=[t for t in ui_texts(s["ui"])[1:] if t][:12])
+            for s in self.slides])
+        return Path(build_pptx(deck, self.tmp_path / "direct.pptx")).read_bytes()
+
+    async def delete_deck(self, pid):
+        self.deleted.append(pid)
+
+
+class SummaryLLM(ParamsLLM):
+    """Trích tham số như ParamsLLM; phần tóm tắt trả về `tong_quan` cho trước."""
+
+    def __init__(self, tong_quan: str = "Báo cáo số liệu của đơn vị trong kỳ.") -> None:
+        super().__init__()
+        self.tong_quan = tong_quan
+        self.summary_calls = 0
+
+    async def chat(self, messages, **kwargs):
+        self.summary_calls += 1
+        keys = _re.findall(r"### Bảng `(\w+)`", messages[1]["content"])
+        return _json.dumps({
+            "tong_quan": self.tong_quan,
+            "nhan_xet": [{"bang": k, "noi_dung": "Số liệu được trình bày theo từng nhóm."} for k in keys],
+            "ket_luan": [{"tieu_de": "Nhân sự", "noi_dung": "Đã tổng hợp."},
+                         {"tieu_de": "Thiết bị", "noi_dung": "Đã tổng hợp."},
+                         {"tieu_de": "Báo cáo", "noi_dung": "Đã tổng hợp."}]}, ensure_ascii=False)
+
+
+@pytest.fixture
+def direct_mode(monkeypatch):
+    monkeypatch.setattr(WF5Settings, "presenton_render_mode", "direct")
+
+
+def _patch_llm(monkeypatch, llm):
+    import app.services.llm as llm_module
+
+    monkeypatch.setattr(rp, "get_llm", lambda: llm)
+    monkeypatch.setattr(llm_module, "get_llm", lambda: llm)
+
+
+async def test_dung_thang_tu_layout_template(ppt_env, monkeypatch, direct_mode):
+    from app.agents.graph import run_presentation_workflow
+
+    llm = SummaryLLM()
+    gia = FakeDirectPresenton(ppt_env)
+    _patch_llm(monkeypatch, llm)
+    monkeypatch.setattr(pr, "get_presenton", lambda: gia)
+
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
+
+    assert result["error"] == ""
+    assert result["engine"] == "presenton"
+    assert result["summary_source"] == "qwen"
+    assert result["deck_check"]["ok"], result["deck_check"]["issues"]
+    assert result["validation"]["status"] == "passed", \
+        [i["quote"] for i in result["validation"]["issues"]]
+    assert result["edit_url"] == "/presentation?id=d1"
+    assert result["slide_count"] == len(gia.slides) == len(Presentation(result["output_path"]).slides)
+    # Mọi slide đều dựng từ layout của template, không slide nào để Presenton tự sinh.
+    assert {s["layout"] for s in gia.slides} <= set(_TEMPLATE["layouts"])
+    kieu = {e.get("type") for s in gia.slides for c in s["ui"]["components"] for e in c["elements"]}
+    assert {"chart", "table"} <= kieu
+    assert llm.summary_calls == 1
+    assert {"llm_summary", "presenton_export", "render_total"} <= set(result["timings"])
+
+
+async def test_qwen_viet_so_bia_thi_slide_dung_chu_cua_code(ppt_env, monkeypatch, direct_mode):
+    from app.agents.graph import run_presentation_workflow
+
+    llm = SummaryLLM(tong_quan="Tổng nhân sự 999 người.")
+    gia = FakeDirectPresenton(ppt_env)
+    _patch_llm(monkeypatch, llm)
+    monkeypatch.setattr(pr, "get_presenton", lambda: gia)
+
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
+
+    assert result["engine"] == "presenton"
+    assert result["summary_source"] == "code"
+    assert llm.summary_calls == pr.MAX_SUMMARY_ATTEMPTS
+    assert "999" not in result["brief"]
+    assert any("Qwen" in a for a in result["assumptions"])
+    assert result["validation"]["status"] == "passed"
+
+
+async def test_deck_luu_lech_thi_xoa_dung_lai_roi_lui_ve_ban_tu_dung(ppt_env, monkeypatch, direct_mode):
+    from app.agents.graph import run_presentation_workflow
+
+    gia = FakeDirectPresenton(ppt_env, sua_bieu_do=True)
+    _patch_llm(monkeypatch, SummaryLLM())
+    monkeypatch.setattr(pr, "get_presenton", lambda: gia)
+
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
+
+    assert gia.deleted == gia.created == ["d1", "d2"]  # deck lệch không được giữ lại
+    assert result["engine"] == "local"
+    assert Path(result["output_path"]).exists()
+    assert any("lệch" in a for a in result["assumptions"])
+
+
+async def test_presenton_hong_khi_dung_thang_thi_lui_ve_ban_tu_dung(ppt_env, monkeypatch, direct_mode):
+    from app.agents.graph import run_presentation_workflow
+    from app.services.presenton import PresentonError
+
+    _patch_llm(monkeypatch, SummaryLLM())
+    monkeypatch.setattr(pr, "get_presenton",
+                        lambda: FakeDirectPresenton(ppt_env, loi=PresentonError("container chưa chạy")))
+
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
+
+    assert result["engine"] == "local"
+    assert any("container chưa chạy" in a for a in result["assumptions"])
+    # Giả định của bước trích tham số không bị đường lùi ghi đè mất.
+    assert Path(result["output_path"]).exists()
+
+
+async def test_xuat_file_loi_thi_xoa_deck_va_lui_ve_ban_tu_dung(ppt_env, monkeypatch, direct_mode):
+    from app.agents.graph import run_presentation_workflow
+    from app.services.presenton import PresentonError
+
+    gia = FakeDirectPresenton(ppt_env)
+    gia.loi_export = PresentonError("Không gọi được Presenton khi xuất pptx: ReadTimeout")
+    _patch_llm(monkeypatch, SummaryLLM())
+    monkeypatch.setattr(pr, "get_presenton", lambda: gia)
+
+    result = await run_presentation_workflow("Tạo slide báo cáo nhân sự tháng 8/2026")
+
+    assert gia.deleted == ["d1"]  # không để lại deck mồ côi trên Presenton
+    assert result["engine"] == "local"
+    assert any("ReadTimeout" in a for a in result["assumptions"])

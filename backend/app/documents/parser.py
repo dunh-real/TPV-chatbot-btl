@@ -20,7 +20,7 @@ from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-SourceFormat = Literal["docx", "pdf_digital", "pdf_scan", "text"]
+SourceFormat = Literal["docx", "pdf_digital", "pdf_scan", "pdf_ocr", "text"]
 
 EMU_PER_MM = 36000
 PT_PER_MM = 72 / 25.4        # 1 mm = 2.8346 pt
@@ -113,9 +113,23 @@ def _effective(paragraph, attr: str):
     return None
 
 
+# Giá trị `w:jc` của OOXML strict (LibreOffice ghi ra) mà python-docx không có trong enum.
+_JC_STRICT = {"start": "LEFT", "end": "RIGHT", "both": "JUSTIFY"}
+
+
 def _alignment_name(paragraph) -> str | None:
     """"JUSTIFY" / "CENTER"..., lấy cả khi đoạn kế thừa canh lề từ style."""
-    value = _effective(paragraph, "alignment")
+    try:
+        value = _effective(paragraph, "alignment")
+    except ValueError:
+        # python-docx ném ValueError khi gặp `w:jc="end"`/"start" - cả văn bản sẽ
+        # không mở được chỉ vì một thuộc tính canh lề. Đọc thẳng XML của đoạn.
+        from docx.oxml.ns import qn
+
+        ppr = paragraph._p.pPr
+        jc = ppr.find(qn("w:jc")) if ppr is not None else None
+        raw = jc.get(qn("w:val")) if jc is not None else None
+        return _JC_STRICT.get(raw, raw.upper() if raw else None)
     return str(value).split(".")[-1].split(" ")[0] if value is not None else None
 
 
@@ -431,6 +445,59 @@ def parse_text(path: Path) -> DocumentStructure:
             style=f"Heading {level}" if level else None,
         ))
     return DocumentStructure(blocks=blocks, source_format="text")
+
+
+# --------------------------------------------------------------------------- #
+# PDF scan đã OCR
+# --------------------------------------------------------------------------- #
+_OCR_TABLE_LINE = re.compile(r"^\s*\|")
+
+
+def _ocr_line(raw: str) -> str:
+    """Bỏ markup Markdown mô hình OCR tự thêm: "#" là nó đoán chữ to, "**" là đoán chữ đậm.
+
+    Không phải định dạng người soạn khai, nên giữ lại thì dàn ý tin nhầm "#" là
+    cấp mục khai báo, còn soát chính tả thấy "**" lẫn trong câu.
+    """
+    line = raw.strip().replace("**", "").replace("__", "")
+    return re.sub(r"^#{1,6}\s+", "", line).strip()
+
+
+def parse_ocr_pages(pages: list[str]) -> DocumentStructure:
+    """Cây khối từ chữ OCR của từng trang (Markdown, theo đúng thứ tự trang).
+
+    Mỗi dòng một khối, vì đầu dòng là chỗ mang đánh số Chương/Điều/Khoản; dòng mở
+    bằng chữ thường là phần nối của câu bị xuống dòng nên ghép vào khối trước.
+    Bảng (các dòng "|") gộp thành một khối bảng. Không có phông, cỡ, lề - ảnh trang
+    không cho đọc những thứ đó.
+    """
+    blocks: list[Block] = []
+
+    def them(text: str, kind: str, page: int) -> None:
+        blocks.append(Block(id=f"P{len(blocks):02d}", text=text, kind=kind, page=page))
+
+    for page_index, markdown in enumerate(pages, start=1):
+        table: list[str] = []
+        for raw in (markdown or "").splitlines():
+            if _OCR_TABLE_LINE.match(raw):
+                table.append(raw.strip())
+                continue
+            if table:
+                them("\n".join(table), "table", page_index)
+                table = []
+            line = _ocr_line(raw)
+            if not line or set(line) <= set("-|:= "):
+                continue
+            previous = blocks[-1] if blocks else None
+            if (previous is not None and previous.kind == "paragraph" and previous.page == page_index
+                    and line[:1].islower() and not previous.text.rstrip().endswith((".", ":", ";"))):
+                previous.text = f"{previous.text} {line}"
+                continue
+            them(line, "paragraph", page_index)
+        if table:
+            them("\n".join(table), "table", page_index)
+
+    return DocumentStructure(blocks=blocks, source_format="pdf_ocr", page_count=len(pages))
 
 
 # --------------------------------------------------------------------------- #

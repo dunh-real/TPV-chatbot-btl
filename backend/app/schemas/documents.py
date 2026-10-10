@@ -32,6 +32,37 @@ class CollectionStats(BaseModel):
     vectors: list[str] = Field(default_factory=list)
 
 
+class DocumentItem(BaseModel):
+    doc_id: str
+    doc_title: str
+    source: str = ""
+    doc_type: str = ""
+    chunk_count: int = 0
+    ingested_at: float | None = None
+    # VBQPPL (khi bật phiên bản): số hiệu, loại, ngày hiệu lực đọc từ văn bản
+    so_hieu: str = ""
+    loai: str = ""
+    ngay_hieu_luc: str | None = None
+
+
+class DocumentPage(BaseModel):
+    items: list[DocumentItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class BatchDeleteRequest(BaseModel):
+    doc_ids: list[str] = Field(min_length=1, max_length=200)
+
+
+class BatchDeleteResponse(BaseModel):
+    deleted: list[str] = Field(default_factory=list)
+    errors: dict[str, str] = Field(default_factory=dict)
+    # Văn bản gốc được dựng lại vì văn bản sửa đổi của nó vừa bị xoá
+    rebuilt: list[str] = Field(default_factory=list)
+
+
 # --------------------------------------------------------------------------- #
 # Workflow 2: xử lý văn bản
 # --------------------------------------------------------------------------- #

@@ -3,11 +3,15 @@
 Đây là đầu vào cho rule engine, và cũng là thứ trả về giao diện để người đọc thấy
 hệ thống hiểu tài liệu được tổ chức ra sao.
 
-Hai nguồn cho một tiêu đề mục, xếp theo độ tin cậy:
+Ba nguồn cho một tiêu đề mục, xếp theo độ tin cậy:
     1. style "Heading N" của DOCX, "###" của Markdown - người soạn khai hẳn cấp mục
-    2. dòng NGẮN mở đầu bằng đánh số: "I.", "1.", "1.2.", "a)", "Chương II"
+    2. văn phạm văn bản quy phạm (`legal_grammar.py`): Phần > Chương > Mục > Điều >
+       Khoản > Điểm, tách được nội dung trích dẫn của văn bản sửa đổi
+    3. dòng NGẮN mở đầu bằng đánh số: "I.", "1.", "1.2.", "a)", "Chương II"
 
-Nguồn 2 chỉ dùng khi tài liệu không khai đủ bằng style - đã khai thì tin cái đã
+Nguồn 2 chỉ dùng khi văn phạm nhận ra ít nhất một đơn vị của chính văn bản; không
+thì là tài liệu thường (báo cáo, kế hoạch...) và dùng nguồn 3. Nguồn 2, 3 chỉ dùng
+khi tài liệu không khai đủ bằng style - đã khai thì tin cái đã
 khai. "Đủ" ở đây là từ hai mục trở lên: một style Heading duy nhất thường chỉ là
 cái tên đặt cho tài liệu, các mục bên trong vẫn đánh số tay. Không có nguồn nào thì
 dàn ý rỗng và rule engine báo "chưa kiểm được", chứ không đoán bừa rồi báo lỗi oan.
@@ -20,10 +24,14 @@ không phải thói quen của người viết code.
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 
+from app.documents.legal_grammar import parse_legal
 from app.documents.parser import Block, DocumentStructure
+
+logger = logging.getLogger(__name__)
 
 _STYLE_LEVEL = re.compile(r"heading\s*(\d)", re.I)
 
@@ -70,6 +78,9 @@ class Heading:
     level: int
     text: str
     marker: str = ""
+    # Khoản/Điểm của văn bản quy phạm: có trong dàn ý nhưng khối của nó là nội dung,
+    # không phải tên mục - không xét "mục rỗng", "trùng tên mục", vẫn kiểm như đoạn văn.
+    content_unit: bool = False
 
 
 @dataclass(slots=True)
@@ -79,10 +90,11 @@ class Outline:
     markers: list[Marker] = field(default_factory=list)
     title: Heading | None = None
     explicit: bool = False        # True: dàn ý lấy từ style/Markdown, không phải suy ra
+    method: str = "marker"        # style | legal_grammar | marker
 
     @property
     def heading_ids(self) -> set[str]:
-        ids = {h.block_id for h in self.headings}
+        ids = {h.block_id for h in self.headings if not h.content_unit}
         if self.title is not None:
             ids.add(self.title.block_id)
         return ids
@@ -209,7 +221,12 @@ def build_outline(
     # mục bên trong đánh số tay. Coi đó là "đã khai cấp mục" thì dàn ý chỉ có mỗi
     # dòng tên, mà mọi mục thật thì biến mất.
     explicit = len(styled) >= 2
-    headings = styled if explicit else _marker_headings(markers, heading_max_chars)
+    if explicit:
+        headings, method = styled, "style"
+    elif (legal := _legal_headings(structure, blocks, markers)) is not None:
+        headings, method = legal, "legal_grammar"
+    else:
+        headings, method = _marker_headings(markers, heading_max_chars), "marker"
 
     return Outline(
         blocks=blocks,
@@ -217,4 +234,34 @@ def build_outline(
         markers=markers,
         title=_title(blocks, headings, title_max_chars),
         explicit=explicit,
+        method=method,
     )
+
+
+def _legal_headings(structure: DocumentStructure, blocks: list[Block],
+                    markers: list[Marker]) -> list[Heading] | None:
+    """Dàn ý theo văn phạm văn bản quy phạm; None nếu tài liệu không phải loại đó.
+
+    Một lượt soát gọi build_outline hai lần (parse_node và rule engine) trên cùng cây
+    khối, nên kết quả giải mã được giữ trong `structure.metadata` để khỏi chạy lại.
+    """
+    key = tuple((b.id, len(b.text)) for b in blocks)
+    cached = structure.metadata.get("_legal_parse")
+    if cached is not None and cached[0] == key:
+        parsed = cached[1]
+    else:
+        # Bảng không mang đơn vị cấu trúc nào; đưa chuỗi rỗng để giữ đúng vị trí khối.
+        parsed = parse_legal(["" if b.kind == "table" else b.text for b in blocks])
+        structure.metadata["_legal_parse"] = (key, parsed)
+        if parsed is not None:
+            logger.info("Dàn ý theo văn phạm văn bản quy phạm: %d mục từ %d khối, %d dòng mơ hồ",
+                        len(parsed.headings), len(blocks), len(parsed.ambiguous))
+    if parsed is None:
+        return None
+    marker_of = {m.index: m.marker for m in markers}
+    # Khối kết thúc như một câu là tên đơn vị dính liền nội dung (PDF hay gộp "Điều 1.
+    # Phạm vi điều chỉnh" với câu ngay sau): cũng là khối nội dung, như Khoản/Điểm.
+    return [Heading(blocks[h.index].id, h.index, h.level, h.text, marker_of.get(h.index, ""),
+                    content_unit=h.unit in ("Khoản", "Điểm")
+                    or blocks[h.index].text.rstrip().endswith((".", ";")))
+            for h in parsed.headings]

@@ -111,6 +111,8 @@ class RetrievedChunk:
             parts.append(self.section)
         if self.payload.get("page") is not None:
             parts.append(f"tr.{self.payload['page']}")
+        if self.payload.get("validity_label"):
+            parts.append(str(self.payload["validity_label"]))
         return " - ".join(p for p in parts if p)
 
 

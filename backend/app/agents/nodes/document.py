@@ -30,6 +30,7 @@ import asyncio
 import logging
 import re
 import time
+from pathlib import Path
 from typing import Any
 
 from app.agents import references
@@ -46,8 +47,9 @@ from app.agents.prompts import (
 from app.core.config import get_settings
 from app.documents.chinh_ta import soat_chinh_ta
 from app.documents.giao_viec import goi_y_mau
+from app.documents.ocr_tai_lieu import doc_pdf_de_soat
 from app.documents.outline import build_outline
-from app.documents.parser import parse_document
+from app.documents.parser import parse_document, parse_ocr_pages
 from app.documents.rules import RuleFinding, get_rule_engine
 from app.services.llm import LLMError, get_llm
 
@@ -86,6 +88,19 @@ async def parse_node(state: dict[str, Any]) -> dict[str, Any]:
         logger.exception("Không parse được %s", path)
         return {"error": f"Không đọc được tài liệu: {exc}"}
 
+    ocr_pages = 0
+    if structure.source_format == "pdf_scan":
+        # PDF scan không có lớp chữ: OCR rồi soát trên chữ đọc được. OCR tắt hoặc
+        # hỏng thì giữ cây khối rỗng như cũ - rule engine sẽ nói rõ là chưa đọc được.
+        try:
+            pages = await anyio.to_thread.run_sync(lambda: doc_pdf_de_soat(Path(path)))
+        except Exception:  # noqa: BLE001 - OCR hỏng không được làm sập cả lượt soát
+            logger.exception("OCR %s thất bại", path)
+            pages = None
+        if pages:
+            structure = parse_ocr_pages(pages)
+            ocr_pages = len(pages)
+
     # Dàn ý dựng một lần ở đây rồi dùng lại cho cả rule engine lẫn phần trả về
     # giao diện: hai nơi đọc cùng một cách hiểu về tài liệu.
     outline = build_outline(structure)
@@ -94,6 +109,7 @@ async def parse_node(state: dict[str, Any]) -> dict[str, Any]:
         "outline": outline,
         "trace": {**state.get("trace", {}),
                   "source_format": structure.source_format,
+                  "ocr_pages": ocr_pages,
                   "block_count": len(structure.blocks),
                   "headings": len(outline.headings)},
     }

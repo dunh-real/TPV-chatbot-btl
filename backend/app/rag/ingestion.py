@@ -126,30 +126,81 @@ class IngestionPipeline:
             **(metadata or {}),
         }
 
+        # Văn bản quy phạm (khi bật phiên bản): cây Điều/Khoản/Điểm vào CSDL, lệnh sửa đổi
+        # được áp, và mỗi khoảng hiệu lực của văn bản thành một bộ chunk riêng.
+        from app.legal import hooks as legal_hooks
+
+        legal = await legal_hooks.on_ingest(text, doc_id, source or doc_title)
+        if legal is not None:
+            doc_title = legal.this.doc_title
+            base_metadata["doc_title"] = doc_title
+
         chunks = await anyio.to_thread.run_sync(lambda: self.chunker.split(text, base_metadata))
         if not chunks:
             logger.warning("Tài liệu %s không tạo được chunk nào", doc_title)
             return IngestResult(doc_id=doc_id, doc_title=doc_title, chunk_count=0,
                                 elapsed_ms=(time.perf_counter() - started) * 1000, source=source)
 
+        if legal is not None and len(legal.this.snapshots) > 1:
+            # Văn bản đã bị sửa đổi: chunk từ từng bản dựng lại theo khoảng hiệu lực.
+            sets = await self._snapshot_sets(legal.this, base_metadata)
+        else:
+            snap = legal.this.snapshots[0] if legal is not None and legal.this.snapshots else None
+            sets = [(snap, chunks)]
         if self.settings.doc_card_enabled:
-            chunks = self._with_doc_card(text, doc_title, base_metadata, chunks)
+            snap, latest = sets[-1]
+            sets[-1] = (snap, self._with_doc_card(text, doc_title, base_metadata, latest))
 
-        # Gắn số trang bằng cách dò vị trí chunk trong văn bản gốc.
-        pages = self._locate_pages(text, chunks, page_offsets or [])
+        # Gắn số trang bằng cách dò vị trí chunk trong văn bản gốc (chỉ bản nạp vào có trang).
+        pages_of = {id(cs): self._locate_pages(text, cs, page_offsets or []) for _, cs in sets}
+        written = await self._write(doc_id, doc_title, sets, pages_of,
+                                    legal.this if legal is not None else None)
 
-        # Nhúng kèm tiêu đề tài liệu: người dùng hay hỏi thẳng theo tên văn bản
-        # ("Thông tư 80 quy định gì") trong khi tên đó không xuất hiện trong thân chunk.
-        embed_inputs = [contextualize(doc_title, chunk.text) for chunk in chunks]
-        embeddings = await anyio.to_thread.run_sync(lambda: embed_documents(embed_inputs))
+        # Văn bản đích vừa bị văn bản này sửa: dựng lại chunk của chúng ngay.
+        for other in (legal.others if legal is not None else []):
+            other_meta = {"doc_title": other.doc_title, "source": other.source,
+                          "doc_type": Path(other.source).suffix.lstrip(".")}
+            other_sets = await self._snapshot_sets(other, other_meta)
+            n = await self._write(other.doc_id, other.doc_title, other_sets, {}, other)
+            logger.info("Dựng lại %s sau sửa đổi: %d chunk / %d khoảng hiệu lực",
+                        other.doc_title, n, len(other_sets))
 
-        points = [
-            ChunkPoint(
-                doc_id=doc_id,
-                chunk_index=chunk.index,
-                text=chunk.text,
-                embedding=embedding,
-                payload={
+        elapsed = (time.perf_counter() - started) * 1000
+        logger.info("Đã nạp %s: %d chunk trong %.0fms", doc_title, written, elapsed)
+        return IngestResult(doc_id=doc_id, doc_title=doc_title, chunk_count=written,
+                            elapsed_ms=elapsed, source=source)
+
+    async def refresh_legal_document(self, snap_doc) -> int:
+        """Dựng lại chunk của một VBQPPL từ cây phiên bản (sau khi duyệt/áp một lệnh sửa đổi)."""
+        await self.store.ensure_collection()
+        meta = {"doc_title": snap_doc.doc_title, "source": snap_doc.source,
+                "doc_type": Path(snap_doc.source).suffix.lstrip(".")}
+        sets = await self._snapshot_sets(snap_doc, meta)
+        return await self._write(snap_doc.doc_id, snap_doc.doc_title, sets, {}, snap_doc)
+
+    async def _snapshot_sets(self, snap_doc, base_metadata: dict[str, Any]) -> list[tuple[Any, list[Chunk]]]:
+        sets = []
+        for snap in snap_doc.snapshots:
+            cs = await anyio.to_thread.run_sync(lambda t=snap.text: self.chunker.split(t, dict(base_metadata)))
+            sets.append((snap, cs))
+        return sets
+
+    async def _write(self, doc_id: str, doc_title: str, sets: list[tuple[Any, list[Chunk]]],
+                     pages_of: dict[int, list[int | None]], snap_doc) -> int:
+        """Embed + ghi mọi bộ chunk của một tài liệu (xoá bản cũ trước)."""
+        from app.legal import hooks as legal_hooks
+
+        points: list[ChunkPoint] = []
+        for snapshot_index, (snap, cs) in enumerate(sets):
+            if not cs:
+                continue
+            pages = pages_of.get(id(cs)) or [None] * len(cs)
+            # Nhúng kèm tiêu đề tài liệu: người dùng hay hỏi thẳng theo tên văn bản
+            # ("Thông tư 80 quy định gì") trong khi tên đó không xuất hiện trong thân chunk.
+            embed_inputs = [contextualize(doc_title, chunk.text) for chunk in cs]
+            embeddings = await anyio.to_thread.run_sync(lambda e=embed_inputs: embed_documents(e))
+            for chunk, embedding, page in zip(cs, embeddings, pages, strict=True):
+                payload = {
                     **chunk.metadata,
                     "section": chunk.section_label,
                     "sections": chunk.sections,
@@ -158,19 +209,17 @@ class IngestionPipeline:
                     "page": page,
                     "token_count": chunk.token_count,
                     "ingested_at": time.time(),
-                },
-            )
-            for chunk, embedding, page in zip(chunks, embeddings, pages, strict=True)
-        ]
+                    # Điều chứa chunk (VBQPPL): để truy hồi mở rộng một Khoản về cả Điều (small-to-big).
+                    "dieus": [str(u["dieu"]) for u in chunk.units if u.get("dieu")],
+                }
+                if snap_doc is not None and snap is not None:
+                    payload.update(legal_hooks.chunk_payload(snap_doc, snap, chunk.units))
+                points.append(ChunkPoint(doc_id=doc_id, chunk_index=chunk.index, text=chunk.text,
+                                         embedding=embedding, payload=payload, snapshot=snapshot_index))
 
         # Xoá bản cũ trước khi ghi: tránh sót chunk thừa của lần ingest trước.
         await self.store.delete_document(doc_id)
-        written = await self.store.upsert_chunks(points)
-
-        elapsed = (time.perf_counter() - started) * 1000
-        logger.info("Đã nạp %s: %d chunk trong %.0fms", doc_title, written, elapsed)
-        return IngestResult(doc_id=doc_id, doc_title=doc_title, chunk_count=written,
-                            elapsed_ms=elapsed, source=source)
+        return await self.store.upsert_chunks(points)
 
     def _with_doc_card(
         self, text: str, doc_title: str, base_metadata: dict[str, Any], chunks: list[Chunk]

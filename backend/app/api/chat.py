@@ -132,7 +132,11 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
             yield _sse("delta", {"text": answer})
 
         used = extract_used_citations(answer, citations) if citations else []
-        yield _sse("done", {"citations": used, "conversation_id": conversation_id})
+        from app.legal import hooks as legal_hooks
+
+        answer_id = await legal_hooks.record_answer(prepared, answer, used or citations)
+        yield _sse("done", {"citations": used, "conversation_id": conversation_id,
+                            **({"answer_id": answer_id} if answer_id else {})})
         await _save_turn(conversation_id, request.question, answer)
 
     return StreamingResponse(

@@ -39,10 +39,15 @@ class ChunkPoint:
     text: str
     embedding: HybridEmbedding
     payload: dict[str, Any]
+    # Khoảng hiệu lực thứ mấy của văn bản (VBQPPL đã bị sửa đổi có nhiều bộ chunk).
+    # 0 giữ nguyên id cũ để tài liệu thường không đổi id giữa các phiên bản code.
+    snapshot: int = 0
 
     @property
     def point_id(self) -> str:
-        return str(uuid.uuid5(_POINT_NAMESPACE, f"{self.doc_id}:{self.chunk_index}"))
+        key = f"{self.doc_id}:{self.chunk_index}" if not self.snapshot else \
+            f"{self.doc_id}@{self.snapshot}:{self.chunk_index}"
+        return str(uuid.uuid5(_POINT_NAMESPACE, key))
 
 
 def to_qdrant_sparse(sparse: SparseEmbedding) -> models.SparseVector:
@@ -104,6 +109,12 @@ class QdrantVectorStore:
             "source": models.PayloadSchemaType.KEYWORD,
             "doc_type": models.PayloadSchemaType.KEYWORD,
             "chunk_index": models.PayloadSchemaType.INTEGER,
+            # VBQPPL theo phiên bản (app.legal)
+            "legal_id": models.PayloadSchemaType.KEYWORD,
+            "dieus": models.PayloadSchemaType.KEYWORD,
+            "valid_from": models.PayloadSchemaType.DATETIME,
+            "valid_to": models.PayloadSchemaType.DATETIME,
+            "latest": models.PayloadSchemaType.BOOL,
         }
         for field_name, schema in specs.items():
             try:
@@ -172,10 +183,19 @@ class QdrantVectorStore:
                 with_payload=True,
                 with_vectors=False,
             )
-            payloads.extend(dict(point.payload or {}) for point in points)
+            # VBQPPL đã bị sửa đổi có một bộ chunk cho mỗi khoảng hiệu lực; đọc lại văn bản
+            # thì lấy bản mới nhất (latest), không lặp nội dung các bản cũ.
+            payloads.extend(dict(point.payload or {}) for point in points
+                            if (point.payload or {}).get("latest", True))
             if offset is None:
                 break
         return sorted(payloads, key=lambda p: p.get("chunk_index", 0))
+
+    async def scroll_filtered(self, query_filter: models.Filter, limit: int = 256) -> list[dict[str, Any]]:
+        """Payload (kèm text) của các chunk khớp bộ lọc, theo thứ tự trong file gốc."""
+        points, _ = await self._client.scroll(collection_name=self.collection, scroll_filter=query_filter,
+                                              limit=limit, with_payload=True, with_vectors=False)
+        return sorted((dict(p.payload or {}) for p in points), key=lambda p: p.get("chunk_index", 0))
 
     async def list_documents(self, page_size: int = 512) -> list[dict[str, Any]]:
         """Các tài liệu đang có trong kho, gộp từ chunk về theo doc_id.
@@ -191,7 +211,7 @@ class QdrantVectorStore:
                 collection_name=self.collection,
                 limit=page_size,
                 offset=offset,
-                with_payload=["doc_id", "doc_title", "source", "doc_type", "ingested_at"],
+                with_payload=["doc_id", "doc_title", "source", "doc_type", "ingested_at", "latest"],
                 with_vectors=False,
             )
             for point in points:
@@ -202,11 +222,14 @@ class QdrantVectorStore:
                 entry = docs.setdefault(doc_id, {
                     "doc_id": doc_id,
                     "doc_title": str(payload.get("doc_title") or payload.get("source") or doc_id),
+                    "source": str(payload.get("source") or ""),
                     "doc_type": str(payload.get("doc_type") or ""),
                     "chunk_count": 0,
                     "ingested_at": payload.get("ingested_at"),
                 })
-                entry["chunk_count"] += 1
+                # VBQPPL bị sửa có một bộ chunk mỗi khoảng hiệu lực: chỉ đếm bản mới nhất.
+                if payload.get("latest", True):
+                    entry["chunk_count"] += 1
             if offset is None:
                 break
         return sorted(docs.values(), key=lambda d: d["doc_title"].lower())

@@ -183,3 +183,30 @@ def ghep_markdown(trang: list[TrangKetQua]) -> str:
     if len(phan) <= 1:
         return phan[0] if phan else ""
     return NGAN_TRANG.join(phan).strip()
+
+
+def doc_pdf_de_soat(path: Path) -> list[str] | None:
+    """Chữ từng trang của một PDF scan, cho workflow 2 (soát tài liệu) dựng lại cây khối.
+
+    Khác `lap_ke_hoach` + `doc_trang_ocr` (màn OCR) ở chỗ KHÔNG thêm marker bố cục:
+    chữ này đi vào rule engine và LLM soát chữ nghĩa, marker lẫn vào chỉ thành lỗi giả.
+    Trang có sẵn lớp chữ vẫn đọc thẳng, chỉ trang scan đi qua mô hình. Trả None khi
+    OCR đang tắt hoặc không đọc được chữ nào; trang OCR lỗi để rỗng, không lệch số trang.
+
+    Chạy đồng bộ và lâu (vài giây mỗi trang), nơi gọi phải đẩy sang thread.
+    """
+    ocr = get_ocr_service()
+    if not ocr.enabled:
+        logger.warning("%s là PDF scan nhưng OCR đang tắt (OCR_ENABLED=false) - không soát được", path.name)
+        return None
+    can_ocr = ocr.classify_pages(path)
+    if not can_ocr:
+        return None
+    trang = extract_digital_pages(path, len(can_ocr))
+    scan = [i for i, can in enumerate(can_ocr) if can]
+    da_doc = ocr.ocr_pages(path, scan)
+    for index in scan:
+        trang[index] = da_doc.get(index, "")
+    logger.info("Soát tài liệu %s: OCR %d/%d trang scan đọc được chữ (%d trang)",
+                path.name, len(da_doc), len(scan), len(can_ocr))
+    return trang if any(t.strip() for t in trang) else None

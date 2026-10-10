@@ -50,6 +50,17 @@ _CHU_KHUON = (
 )
 
 
+def _nfc(text: str) -> str:
+    """Dựng sẵn dạng NFC. DOCX soạn bằng một số bộ gõ lưu chữ có dấu dạng tổ hợp (NFD):
+    regex cụm chữ coi dấu tổ hợp là ký tự ngắt, nên "Đường" bị tách thành "Đư ờng"."""
+    return unicodedata.normalize("NFC", text)
+
+
+# Tiêu đề Điều in đậm dài hơn giới hạn của `_BOLD_LINE` vẫn còn nguyên `**...**`,
+# và mọi mẫu neo `^Điều` trượt qua nó (Bộ luật Hình sự: Điều 5, 6, ... mất ranh giới).
+_BOLD_DIEU = re.compile(r"^\*\*(?P<inner>(?:Điều|ĐIỀU)\s+\d+[a-z]?\s*[.:].*?)\*\*[:.]?$")
+
+
 def _la_chu_khuon(dong: str) -> bool:
     """Dòng khuôn của văn bản hành chính, so khớp sau khi bỏ dấu."""
     bo_dau = unicodedata.normalize("NFD", dong.lower())
@@ -147,6 +158,10 @@ def cleanup_markdown(text: str) -> str:
             lines_out.append(khong_rao)
             continue
 
+        if (dieu := _BOLD_DIEU.match(stripped)) is not None:
+            lines_out.append(f"### {dieu.group('inner').strip()}")
+            continue
+
         # Tiêu đề ngầm: dòng ngắn viết hoa toàn bộ, hoặc dòng chỉ gồm **in đậm**.
         if len(stripped) < 200 and not _la_chu_khuon(stripped):
             if _UPPERCASE_HEADING.match(stripped):
@@ -231,8 +246,91 @@ def extract_digital_pages(path: Path, page_count: int) -> list[str]:
 
     texts = [""] * page_count
     for index, page in enumerate(pages[:page_count]):
-        texts[index] = (page.get("text") or "").strip()
+        texts[index] = tach_moc_cau_truc((page.get("text") or "").strip())
+    _bu_lop_chu_an(path, texts)
     return texts
+
+
+def _bu_lop_chu_an(path: Path, texts: list[str]) -> None:
+    """Trang scan có lớp chữ OCR ẩn của nơi phát hành (chữ alpha = 0 phủ trên ảnh): classify_pages coi là
+    digital, nhưng pymupdf4llm bỏ chữ ẩn -> cả trang chỉ còn dòng dấu ký số (NĐ 379/2026 trang 1: 43 ký tự
+    thay vì 1650, mất quốc hiệu, số hiệu, Chương I, Điều 1). Khi đó lấy thẳng lớp chữ theo khối đoạn văn."""
+    try:
+        import pymupdf
+
+        with pymupdf.open(path) as doc:
+            for index, text in enumerate(texts):
+                if index >= doc.page_count:
+                    break
+                blocks = doc[index].get_text("blocks", sort=True)
+                raw = "\n".join(" ".join(b[4].split()) for b in blocks if b[6] == 0 and b[4].strip())
+                if len(raw) > 200 and len(text) < 0.5 * len(raw):
+                    texts[index] = tach_moc_cau_truc(raw)
+    except Exception as exc:  # noqa: BLE001 - giữ kết quả pymupdf4llm
+        logger.warning("Không đọc được lớp chữ của %s: %s", path.name, exc)
+
+
+# Mốc cấu trúc VBQPPL bị pymupdf4llm nối vào giữa đoạn: PDF căn đều, không giãn dòng giữa các
+# đoạn nên cả trang thành vài dòng dài (TT 25/2026/TT-BNV: 10 trang -> 22 dòng, "**Điều 2. …** 1. Đối
+# với …" chung một dòng) - chunker không thấy Điều/Khoản nào. Chỉ tách khi mốc đứng ngay sau dấu kết
+# câu/vế (". ; :" hoặc "**"), để viện dẫn giữa câu ("tại khoản 1 Điều 5") giữ nguyên.
+_MOC_CAU_TRUC = re.compile(
+    r"(?<=[.;:”\"*)])[ \t]+(?=(?:\*\*)?(?:Điều \d+[a-z]?\.\s|(?:Chương|CHƯƠNG) [IVXLC]+\b|(?:Mục|MỤC) \d+\.?\s"
+    r"|\d{1,2}\.\s+[A-ZĐÀ-Ỹ]|[a-zđ]\)\s))"
+    r"|[ \t]+(?=\*\*Điều \d+[a-z]?\.)")       # tiêu đề Điều in đậm: tách cả khi trước nó là số trang/dấu ký số
+_THE_DANH_DAU = re.compile(r"</?mark>")
+
+
+# Chữ Kirin trùng hình chữ Latinh mà mô hình OCR đôi khi in ra ("379/2026/NĐ-CР" với Р = U+0420):
+# nhìn giống hệt nhưng mọi so khớp chữ (số hiệu, BM25, tra địa chỉ) đều trượt. VBQPPL tiếng Việt
+# không dùng chữ Kirin, nên quy hết về Latinh.
+_KIRIN_GIA = str.maketrans("АВЕКМНОРСТХаеорсухіІ", "ABEKMHOPCTXaeopcyxiI")
+
+
+def bo_chu_kirin_gia(text: str) -> str:
+    return text.translate(_KIRIN_GIA)
+
+
+def tach_moc_cau_truc(text: str) -> str:
+    return _MOC_CAU_TRUC.sub("\n", _THE_DANH_DAU.sub("", text))
+
+
+# --------------------------------------------------------------------------- #
+# DOCX -> Markdown từ cây khối của parse_docx
+# --------------------------------------------------------------------------- #
+_DONG_KHOAN = re.compile(r"^\d{1,3}[a-z]?\.\s")
+
+
+def _bang_markdown(text: str) -> str:
+    rows = [r for r in text.split("\n") if r.strip(" |")]
+    if not rows:
+        return ""
+    cells = [[c.strip() for c in r.split(" | ")] for r in rows]
+    width = max(len(c) for c in cells)
+    out = ["| " + " | ".join(c + [""] * (width - len(c))) + " |" for c in cells]
+    out.insert(1, "|" + " --- |" * width)
+    return "\n".join(out)
+
+
+def docx_blocks_markdown(path: Path) -> str:
+    """Markdown tối thiểu dựng từ `parse_docx` (cấu trúc khối đã có cho workflow soát văn bản),
+    thay MarkItDown: rag_testing M2 - cùng chất lượng truy hồi, chuyển đổi nhanh 2,2-3,4x, bộ nhớ
+    ít hơn ~13x. Đoạn in đậm ngắn không kết câu (tiêu đề) thành **...**; dòng Khoản thì không."""
+    from app.documents.parser import parse_docx
+
+    parts: list[str] = []
+    for b in parse_docx(path).blocks:
+        text = _nfc(b.text)
+        if b.kind == "table":
+            parts.append(_bang_markdown(text))
+        elif b.kind == "heading":
+            parts.append(f"### {text}")
+        elif b.bold and len(text) < 200 and "\n" not in text and not text.endswith((".", ";", ",")) \
+                and not _DONG_KHOAN.match(text):
+            parts.append(f"**{text}**")
+        else:
+            parts.append(text)
+    return "\n\n".join(parts)
 
 
 # --------------------------------------------------------------------------- #
@@ -267,11 +365,24 @@ class DocumentConverter:
 
         if suffix == ".pdf" or suffix in IMAGE_SUFFIXES:
             return self._convert_pdf(path)
+        if suffix == ".doc":
+            # MarkItDown không đọc được Word 97-2003 -> chuyển sang .docx trước.
+            from app.rag.doc_convert import doc_to_docx
+
+            path = doc_to_docx(path, self.settings)
         if suffix in OFFICE_SUFFIXES:
-            return LoadedDocument(text=sua_dinh_chu(cleanup_markdown(self._convert_office(path))))
+            # Không qua `sua_dinh_chu`: bộ đọc Office lấy chữ từ XML nên KHÔNG có lỗi
+            # dính chữ của PDF; chạy nó ở đây chỉ gây hại - tách "kilôgam" thành
+            # "ki lô gam", "Hêrôin" thành "Hê rô in" (đo trên Bộ luật Hình sự).
+            if path.suffix.lower() == ".docx" and self.settings.docx_converter == "blocks":
+                try:
+                    return LoadedDocument(text=cleanup_markdown(docx_blocks_markdown(path)))
+                except Exception as exc:  # noqa: BLE001 - còn đường lùi MarkItDown
+                    logger.warning("Dựng Markdown từ khối DOCX lỗi trên %s, dùng MarkItDown: %s", path.name, exc)
+            return LoadedDocument(text=cleanup_markdown(_nfc(self._convert_office(path))))
         if suffix in TEXT_SUFFIXES:
             raw = path.read_text(encoding="utf-8", errors="ignore")
-            return LoadedDocument(text=sua_dinh_chu(cleanup_markdown(raw)))
+            return LoadedDocument(text=sua_dinh_chu(cleanup_markdown(_nfc(raw))))
 
         raise ValueError(
             f"Định dạng chưa hỗ trợ: {path.suffix} "
@@ -311,7 +422,7 @@ class DocumentConverter:
                     path.name, len(scan_pages),
                 )
 
-        cleaned = bo_tieu_de_chay([cleanup_markdown(text) for text in page_texts])
+        cleaned = bo_tieu_de_chay([cleanup_markdown(bo_chu_kirin_gia(text)) for text in page_texts])
         # Vốn từ phải lấy từ CẢ tài liệu chứ không riêng từng trang: chữ dính ở
         # trang này gần như luôn đứng rời ở trang khác, và đó là bằng chứng để
         # chọn đúng chỗ cắt. Sửa vẫn theo từng trang để mốc trang không lệch.

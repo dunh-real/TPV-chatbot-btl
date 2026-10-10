@@ -1966,14 +1966,159 @@
       existing.innerHTML = '<div class="card-head"><h3>Collection</h3><span class="pill err">lỗi</span></div>' +
         '<div class="muted sm">' + esc(errText(e)) + '</div>';
     }
+    loadDocList();
+  }
+
+  /* Danh sách tài liệu đã nạp: tìm kiếm, phân trang, chọn nhiều để xoá. Lựa chọn giữ qua các trang. */
+  var docState = { page: 1, pageSize: 20, q: '', total: 0, items: [], selected: new Set(), timer: null };
+
+  function docListCard() {
+    var card = $('#docListCard');
+    if (card) return card;
+    card = el('div', { class: 'card', id: 'docListCard' },
+      '<div class="card-head"><h3>Tài liệu đã nạp</h3><span class="pill" id="docTotal">…</span></div>' +
+      '<div class="doc-toolbar">' +
+        '<input type="search" id="docSearch" placeholder="Tìm theo tên, file nguồn, số hiệu…" />' +
+        '<select id="docPageSize" title="Số dòng mỗi trang">' +
+          [10, 20, 50, 100].map(function (n) { return '<option value="' + n + '"' + (n === docState.pageSize ? ' selected' : '') + '>' + n + ' / trang</option>'; }).join('') +
+        '</select>' +
+        '<button class="ghost-btn danger" id="docDeleteSel" disabled>Xoá đã chọn</button>' +
+      '</div>' +
+      '<div class="table-scroll"><table class="doc-table"><thead><tr>' +
+        '<th class="chk"><input type="checkbox" id="docAll" title="Chọn cả trang" /></th>' +
+        '<th>Tài liệu</th><th>Loại</th><th class="num">Chunk</th><th>Nạp lúc</th>' +
+      '</tr></thead><tbody id="docRows"></tbody></table></div>' +
+      '<div class="pager"><button class="ghost-btn" id="docPrev">‹ Trước</button>' +
+        '<span id="docPageInfo" class="muted sm"></span><button class="ghost-btn" id="docNext">Sau ›</button></div>');
+    var stats = $('#statsCard');
+    var box = $('#corpusResult');
+    if (stats && stats.nextSibling) box.insertBefore(card, stats.nextSibling);
+    else box.appendChild(card);
+
+    $('#docSearch').addEventListener('input', function () {
+      var v = this.value;
+      clearTimeout(docState.timer);
+      docState.timer = setTimeout(function () { docState.q = v.trim(); docState.page = 1; loadDocList(); }, 300);
+    });
+    $('#docPageSize').addEventListener('change', function () {
+      docState.pageSize = parseInt(this.value, 10) || 20; docState.page = 1; loadDocList();
+    });
+    $('#docPrev').addEventListener('click', function () { if (docState.page > 1) { docState.page--; loadDocList(); } });
+    $('#docNext').addEventListener('click', function () {
+      if (docState.page * docState.pageSize < docState.total) { docState.page++; loadDocList(); }
+    });
+    $('#docAll').addEventListener('change', function () {
+      var on = this.checked;
+      docState.items.forEach(function (d) { if (on) docState.selected.add(d.doc_id); else docState.selected.delete(d.doc_id); });
+      renderDocRows();
+    });
+    $('#docRows').addEventListener('change', function (ev) {
+      var box = ev.target;
+      if (!box.matches('input[data-doc]')) return;
+      if (box.checked) docState.selected.add(box.dataset.doc); else docState.selected.delete(box.dataset.doc);
+      syncDocSelection();
+    });
+    $('#docDeleteSel').addEventListener('click', deleteSelectedDocs);
+    return card;
+  }
+
+  function syncDocSelection() {
+    var n = docState.selected.size;
+    var btn = $('#docDeleteSel');
+    btn.disabled = n === 0;
+    btn.textContent = n ? 'Xoá đã chọn (' + n + ')' : 'Xoá đã chọn';
+    var all = $('#docAll');
+    var onPage = docState.items.filter(function (d) { return docState.selected.has(d.doc_id); }).length;
+    all.checked = docState.items.length > 0 && onPage === docState.items.length;
+    all.indeterminate = onPage > 0 && onPage < docState.items.length;
+  }
+
+  function renderDocRows() {
+    var rows = $('#docRows');
+    if (!docState.items.length) {
+      rows.innerHTML = '<tr><td colspan="5" class="muted sm empty">' +
+        (docState.q ? 'Không có tài liệu khớp "' + esc(docState.q) + '".' : 'Kho chưa có tài liệu nào.') + '</td></tr>';
+    } else {
+      rows.innerHTML = docState.items.map(function (d) {
+        var checked = docState.selected.has(d.doc_id) ? ' checked' : '';
+        var legal = d.so_hieu ? '<span class="pill accent">' + esc((d.loai ? d.loai + ' ' : '') + d.so_hieu) + '</span>' : '';
+        var hl = d.ngay_hieu_luc ? '<span class="muted sm"> · hiệu lực ' + esc(d.ngay_hieu_luc.split('-').reverse().join('/')) + '</span>' : '';
+        var when = d.ingested_at ? new Date(d.ingested_at * 1000).toLocaleString('vi-VN') : '';
+        return '<tr' + (checked ? ' class="is-selected"' : '') + '>' +
+          '<td class="chk"><input type="checkbox" data-doc="' + esc(d.doc_id) + '"' + checked + ' /></td>' +
+          '<td><div class="doc-title">' + esc(d.doc_title) + '</div>' +
+            '<div class="muted sm">' + legal + (d.source && d.source !== d.doc_title ? ' ' + esc(d.source) : '') + hl +
+            ' · <code>' + esc(d.doc_id) + '</code></div></td>' +
+          '<td>' + esc(d.doc_type || '') + '</td>' +
+          '<td class="num">' + fmtNum(d.chunk_count) + '</td>' +
+          '<td class="nowrap">' + esc(when) + '</td></tr>';
+      }).join('');
+    }
+    var pages = Math.max(1, Math.ceil(docState.total / docState.pageSize));
+    $('#docTotal').textContent = fmtNum(docState.total) + ' tài liệu';
+    $('#docPageInfo').textContent = 'Trang ' + docState.page + ' / ' + pages;
+    $('#docPrev').disabled = docState.page <= 1;
+    $('#docNext').disabled = docState.page >= pages;
+    syncDocSelection();
+  }
+
+  async function loadDocList() {
+    docListCard();
+    $('#docRows').innerHTML = '<tr><td colspan="5"><div class="skeleton" style="width:50%"></div></td></tr>';
+    try {
+      var r = await API.listDocs({ page: docState.page, page_size: docState.pageSize, q: docState.q });
+      docState.total = r.total;
+      docState.items = r.items || [];
+      // Trang hiện tại trống (vừa xoá hết dòng của trang cuối): lùi một trang.
+      if (!docState.items.length && docState.total > 0 && docState.page > 1) {
+        docState.page = Math.ceil(docState.total / docState.pageSize);
+        return loadDocList();
+      }
+      renderDocRows();
+    } catch (e) {
+      $('#docRows').innerHTML = '<tr><td colspan="5" style="color:var(--err)">' + esc(errText(e)) + '</td></tr>';
+    }
+  }
+
+  async function deleteSelectedDocs() {
+    var ids = Array.from(docState.selected);
+    if (!ids.length) return;
+    if (!confirm('Xoá ' + ids.length + ' tài liệu khỏi kho? Toàn bộ chunk (và cây phiên bản nếu là văn bản pháp luật) sẽ bị xoá, không hoàn tác được.')) return;
+    var btn = $('#docDeleteSel');
+    btn.disabled = true;
+    btn.textContent = 'Đang xoá…';
+    try {
+      var r = { deleted: [], errors: {}, rebuilt: [] };
+      for (var i = 0; i < ids.length; i += 200) {          // API nhận tối đa 200 doc_id mỗi lần
+        var part = await API.deleteDocs(ids.slice(i, i + 200));
+        r.deleted = r.deleted.concat(part.deleted || []);
+        Object.assign(r.errors, part.errors || {});
+        r.rebuilt = r.rebuilt.concat(part.rebuilt || []);
+      }
+      r.deleted.forEach(function (id) { docState.selected.delete(id); });
+      var nErr = Object.keys(r.errors).length;
+      toast('Đã xoá ' + r.deleted.length + ' tài liệu' + (nErr ? ', ' + nErr + ' lỗi' : ''), nErr ? 'err' : 'ok');
+      if (nErr || r.rebuilt.length) {
+        pushCorpusResult('<div class="card-head"><h3>Kết quả xoá</h3><span class="pill ok">' + r.deleted.length + ' đã xoá</span>' +
+          (nErr ? '<span class="pill err">' + nErr + ' lỗi</span>' : '') + '</div>' +
+          (r.rebuilt.length ? '<div class="card-sub">Đã dựng lại văn bản gốc (văn bản sửa đổi của chúng vừa bị xoá): ' +
+            r.rebuilt.map(function (d) { return '<code>' + esc(d) + '</code>'; }).join(', ') + '</div>' : '') +
+          Object.keys(r.errors).map(function (k) { return '<div class="muted sm"><code>' + esc(k) + '</code>: ' + esc(r.errors[k]) + '</div>'; }).join(''),
+          nErr ? 'err' : '');
+      }
+    } catch (e) {
+      toast(errText(e), 'err');
+    } finally {
+      loadStats();
+    }
   }
 
   function pushCorpusResult(html, kind) {
     var box = $('#corpusResult');
     var card = el('div', { class: 'card' }, html);
     if (kind === 'err') card.style.borderColor = 'var(--err)';
-    var stats = $('#statsCard');
-    if (stats && stats.nextSibling) box.insertBefore(card, stats.nextSibling);
+    var anchor = $('#docListCard') || $('#statsCard');
+    if (anchor && anchor.nextSibling) box.insertBefore(card, anchor.nextSibling);
     else box.appendChild(card);
   }
 

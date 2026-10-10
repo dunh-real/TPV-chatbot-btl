@@ -73,6 +73,10 @@ Quy tắc bắt buộc:
 - Nếu ngữ cảnh không đủ để trả lời, nói rõ "Tôi không tìm thấy thông tin này trong tài liệu hiện có"
   và gợi ý người dùng cung cấp thêm chi tiết. Không suy đoán.
 - Nếu các nguồn mâu thuẫn nhau, nêu rõ sự khác biệt kèm trích dẫn từng nguồn.
+- Văn bản pháp luật theo thời gian: nguồn ghi "CHƯA CÓ HIỆU LỰC tại ngày ..." là quy định đã ban hành
+  nhưng CHƯA áp dụng tại ngày tra cứu - không gọi nó là "hiện hành" hay "đang áp dụng". Trả lời theo
+  quy định đang áp dụng (nếu ngữ cảnh có), rồi nói thêm quy định mới sẽ có hiệu lực từ ngày nào.
+  Nguồn ghi "đang áp dụng ..., hết hiệu lực từ ..." là bản hiện hành nhưng sắp được thay: nêu cả mốc đó.
 - Trả lời trực tiếp, đúng trọng tâm; dùng gạch đầu dòng khi liệt kê nhiều điều kiện.
 - Ngữ cảnh được máy trích từ PDF nên có thể còn sót rác định dạng: thẻ <sup>, </sub>,
   gạch dưới quanh ký hiệu toán (_i_, _H_), dấu sao thừa. ĐỪNG chép lại những dấu đó.

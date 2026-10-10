@@ -72,6 +72,7 @@ class PresentonClient:
             follow_redirects=True,
         )
         self._logged_in = False
+        self._templates: dict[str, dict[str, Any]] = {}
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -224,6 +225,78 @@ class PresentonClient:
         if not response.content:
             raise PresentonError("Presenton trả về file rỗng.")
         return response.content
+
+    # ------------------------------------------- dựng thẳng (chỉ render) --
+    # Đường mặc định của workflow 5 (`presenton_render_mode = "direct"`): backend
+    # tự điền layout của template, Presenton chỉ lưu, render và xuất file - không
+    # bước nào gọi LLM bên Presenton. Xem `app.documents.slide_deck`.
+    async def _json(self, method: str, url: str, action: str, **kwargs) -> Any:
+        try:
+            response = await self._request(method, url, **kwargs)
+            response.raise_for_status()
+            return response.json() if response.content else {}
+        except httpx.HTTPStatusError as exc:
+            raise PresentonError(f"Presenton từ chối {action} ({exc.response.status_code}): "
+                                 f"{exc.response.text[:200]}") from exc
+        except httpx.HTTPError as exc:
+            # Timeout của httpx không mang message: thiếu tên lỗi thì câu báo cụt "khi xuất pptx: ".
+            raise PresentonError(f"Không gọi được Presenton khi {action}: "
+                                 f"{type(exc).__name__} {exc}".rstrip()) from exc
+        except ValueError as exc:
+            raise PresentonError(f"Presenton trả về dữ liệu không đọc được khi {action}.") from exc
+
+    async def get_template(self, name: str | None = None) -> dict[str, Any]:
+        """Layout + theme của template, đọc từ chính Presenton đang chạy và giữ lại.
+
+        Không đóng gói sẵn bản sao: layout phải khớp đúng renderer đang chạy, nâng
+        cấp image Presenton thì bản sao cũ sẽ lệch mà không ai biết.
+        """
+        name = name or self.settings.presenton_template
+        cached = self._templates.get(name)
+        if cached is not None:
+            return cached
+        raw = await self._json("GET", f"/api/v1/ppt/template/{name}", f"đọc template {name}")
+        layouts = (raw.get("layouts") or {}).get("layouts") or []
+        if not layouts or not raw.get("theme"):
+            raise PresentonError(f"Template {name} không có layout hoặc theme.")
+        template = {"id": raw.get("id") or name, "theme": raw["theme"],
+                    "layouts": {layout["id"]: layout for layout in layouts}}
+        self._templates[name] = template
+        return template
+
+    async def create_blank(self) -> str:
+        data = await self._json("POST", "/api/v1/ppt/presentation/create/blank", "tạo deck trống")
+        if not (pid := str(data.get("id") or "")):
+            raise PresentonError("Presenton không trả về mã deck.")
+        return pid
+
+    async def update_deck(self, presentation_id: str, title: str, theme: dict[str, Any],
+                          slides: list[dict[str, Any]]) -> None:
+        await self._json("PATCH", "/api/v1/ppt/presentation/update", "lưu slide", json={
+            "id": presentation_id, "n_slides": len(slides), "title": title,
+            "theme": theme, "slides": slides})
+
+    async def get_deck(self, presentation_id: str) -> dict[str, Any]:
+        return await self._json("GET", f"/api/v1/ppt/presentation/{presentation_id}", "đọc lại deck")
+
+    async def export_deck(self, presentation_id: str, export_as: str = "pptx") -> bytes:
+        """Xuất file và tải về. Với .pptx thì ép font như đường cũ."""
+        data = await self._json("POST", f"/api/v1/ppt/presentation/{presentation_id}/export",
+                                f"xuất {export_as}", json={"export_as": export_as},
+                                timeout=self.settings.presenton_export_timeout)
+        if not (path := str(data.get("path") or "")):
+            raise PresentonError("Presenton xuất xong nhưng không trả về đường dẫn file.")
+        content = await self._download(path)
+        if export_as == "pptx" and self.settings.presenton_font:
+            content = await asyncio.to_thread(doi_font, content, self.settings.presenton_font)
+        return content
+
+    async def delete_deck(self, presentation_id: str) -> None:
+        """Xoá deck lỗi. Không ném lỗi: xoá hụt chỉ để lại rác, không làm hỏng kết quả."""
+        try:
+            await self._request("DELETE", f"/api/v1/ppt/presentation/{presentation_id}")
+        except httpx.HTTPError as exc:
+            logger.warning("Không xoá được deck %s trên Presenton: %s", presentation_id, exc)
 
 
 def _ly_do(payload: dict[str, Any]) -> str:

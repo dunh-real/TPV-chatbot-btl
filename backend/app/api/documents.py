@@ -8,7 +8,7 @@ from pathlib import Path
 
 from urllib.parse import quote
 
-from fastapi import Depends, APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import Depends, APIRouter, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 
 from app.api.files import output_file_response
@@ -22,7 +22,11 @@ from app.documents.giao_viec import MetaGiaoViec, build_giao_viec
 from app.documents.rules import available_rule_sets
 from app.services import storage
 from app.schemas.documents import (
+    BatchDeleteRequest,
+    BatchDeleteResponse,
     CollectionStats,
+    DocumentItem,
+    DocumentPage,
     GiaoViecRequest,
     GiaoViecResponse,
     IngestResponse,
@@ -198,10 +202,90 @@ async def download(filename: str) -> FileResponse:
     return output_file_response(filename)
 
 
+@router.get("", response_model=DocumentPage, summary="Danh sách tài liệu đã nạp (phân trang)",
+            dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xem danh sách tài liệu"))])
+async def list_documents(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=200),
+    q: str = Query("", max_length=200, description="Lọc theo tên / file nguồn / số hiệu (không phân biệt dấu)"),
+    doc_type: str = Query("", max_length=100),
+) -> DocumentPage:
+    try:
+        docs = await get_vector_store().list_documents()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=f"Không đọc được kho tài liệu: {exc}") from exc
+    legal = await _legal_info([d["doc_id"] for d in docs])
+    items = [DocumentItem(**d, **legal.get(d["doc_id"], {})) for d in docs]
+    if q.strip():
+        from app.legal.identity import strip_accents
+
+        key = strip_accents(q).lower().strip()
+        items = [d for d in items if key in strip_accents(f"{d.doc_title} {d.source} {d.so_hieu}").lower()]
+    if doc_type:
+        items = [d for d in items if d.doc_type == doc_type]
+    items.sort(key=lambda d: d.ingested_at or 0, reverse=True)         # mới nạp lên đầu
+    start = (page - 1) * page_size
+    return DocumentPage(items=items[start:start + page_size], total=len(items), page=page, page_size=page_size)
+
+
+async def _legal_info(doc_ids: list[str]) -> dict[str, dict]:
+    if not get_settings().legal_versioning_enabled or not doc_ids:
+        return {}
+    from sqlalchemy import select
+
+    from app.db.models import LegalDocument
+    from app.db.session import session_scope
+
+    try:
+        async with session_scope() as s:
+            rows = (await s.execute(select(LegalDocument).where(LegalDocument.doc_id.in_(doc_ids)))).scalars().all()
+    except Exception:  # noqa: BLE001 - thiếu thông tin VBQPPL không được làm hỏng danh sách
+        logger.exception("Không đọc được thông tin VBQPPL cho danh sách tài liệu")
+        return {}
+    return {r.doc_id: {"so_hieu": r.so_hieu, "loai": r.loai,
+                       "ngay_hieu_luc": r.ngay_hieu_luc.isoformat() if r.ngay_hieu_luc else None} for r in rows}
+
+
+async def remove_document(doc_id: str) -> list[str]:
+    """Xoá tài liệu khỏi kho: chunk trong Qdrant + cây phiên bản VBQPPL (nếu bật). Trả về doc_id các
+    văn bản gốc đã dựng lại chunk vì văn bản sửa đổi của chúng vừa bị xoá."""
+    await get_vector_store().delete_document(doc_id)
+    if not get_settings().legal_versioning_enabled:
+        return []
+    from app.db.session import session_scope
+    from app.legal import hooks, service
+
+    async with session_scope() as s:
+        targets = await service.delete_document(s, doc_id)
+        packs = [await hooks.pack(s, t) for t in targets]
+    pipe = get_ingestion_pipeline()
+    for snap_doc in packs:
+        await pipe.refresh_legal_document(snap_doc)
+    return [p.doc_id for p in packs]
+
+
+@router.post("/delete-batch", response_model=BatchDeleteResponse, summary="Xoá nhiều tài liệu khỏi kho",
+             dependencies=[Depends(quyen.can_admin("xoá tài liệu khỏi kho"))])
+async def delete_batch(request: BatchDeleteRequest) -> BatchDeleteResponse:
+    result = BatchDeleteResponse()
+    for doc_id in dict.fromkeys(request.doc_ids):          # bỏ trùng, giữ thứ tự
+        try:
+            result.rebuilt += await remove_document(doc_id)
+            result.deleted.append(doc_id)
+        except Exception as exc:  # noqa: BLE001 - một tài liệu lỗi không dừng cả lô
+            logger.exception("Xoá %s thất bại", doc_id)
+            result.errors[doc_id] = f"{type(exc).__name__}: {exc}"[:300]
+    result.rebuilt = [d for d in dict.fromkeys(result.rebuilt) if d not in result.deleted]
+    logger.info("Xoá hàng loạt: %d xong, %d lỗi, dựng lại %d", len(result.deleted), len(result.errors),
+                len(result.rebuilt))
+    return result
+
+
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Xoá tài liệu khỏi kho",
                dependencies=[Depends(quyen.can_admin("xoá tài liệu khỏi kho"))])
 async def delete_document(doc_id: str) -> None:
-    await get_vector_store().delete_document(doc_id)
+    await remove_document(doc_id)
 
 
 @router.get("/stats", response_model=CollectionStats, summary="Thống kê collection",

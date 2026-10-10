@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+from datetime import date
 from typing import Any
 
 from app.agents import progress
@@ -196,12 +197,25 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
     # nào" - trong khi tên tài liệu đang hiện ngay trên đầu màn hình.
     da_chon = bool(state.get("doc_ids") or state.get("sources"))
 
+    # VBQPPL theo phiên bản: tra thẳng Điều/Khoản/Điểm nêu trong câu hỏi, và chỉ lấy
+    # chunk còn hiệu lực tại ngày được hỏi (mặc định hôm nay). Reranker không phân biệt
+    # "Điều 8" với "Điều 25", nên địa chỉ không được đem đi chấm điểm ngữ nghĩa.
+    from app.legal import hooks as legal_hooks
+
+    plan = await legal_hooks.prepare_query(question, query_filter)
+    if plan is not None:
+        query_filter = plan.query_filter
+    top_n = state.get("top_n") or cfg.rerank_top_n
+    # Mở rộng về Điều gộp các chunk cùng Điều làm một: lấy dư ứng viên để chỗ trống được lấp bằng
+    # chunk hạng sau (như khi đo trong rag_testing), rồi mới cắt về top_n.
+    fetch_n = top_n * 2 if cfg.legal_parent_expand else top_n
+
     try:
         result = await get_retriever().retrieve(
             query=query,
             query_variants=variants,
             query_filter=query_filter,
-            top_n=state.get("top_n") or cfg.rerank_top_n,
+            top_n=fetch_n,
             rerank=state.get("use_rerank", True),
             score_threshold=0.0 if da_chon else None,
         )
@@ -209,14 +223,72 @@ async def retrieve_node(state: QAState) -> dict[str, Any]:
         logger.exception("Truy hồi thất bại")
         return {"chunks": [], "error": errors.friendly(exc)}
 
+    if plan is not None and plan.address_chunks:
+        # Đơn vị tra thẳng đứng đầu; bỏ chunk tìm kiếm trùng Điều với nó để khỏi lặp ngữ cảnh.
+        exact = plan.address_chunks
+        exact_dieu = {re.sub(r":(?:khoan|diem)-.*$", "", cid)
+                      for e in exact for cid in e.payload.get("component_ids", [])}
+        rest = [c for c in result.chunks if not exact_dieu & set(c.payload.get("component_ids") or [])]
+        result.chunks = [*exact, *rest][:max(fetch_n, len(exact))]
+
+    expanded = 0
+    if cfg.legal_parent_expand and result.chunks:
+        try:
+            result.chunks, expanded = await _mo_rong_ve_dieu(result.chunks, cfg.legal_parent_expand_max_chars)
+        except Exception:  # noqa: BLE001 - giữ chunk nhỏ nếu không đọc được chunk anh em
+            logger.exception("Mở rộng chunk về cả Điều thất bại - dùng chunk tìm được")
+    n_exact = len(plan.address_chunks) if plan is not None else 0
+    result.chunks = result.chunks[:max(top_n, n_exact)]
+
     trace = {
+        "parent_expanded": expanded,
         "queries": result.queries,
         "branch_hits": result.branch_hits,
         "fused_count": result.fused_count,
         "timings_ms": {k: round(v, 1) for k, v in result.timings_ms.items()},
         "top_scores": [round(c.rerank_score, 4) for c in result.chunks],
     }
+    if plan is not None:
+        trace["legal"] = plan.trace
     return {"retrieval": result, "chunks": result.chunks, "trace": {**state.get("trace", {}), **trace}}
+
+
+async def _mo_rong_ve_dieu(chunks: list[RetrievedChunk], max_chars: int) -> tuple[list[RetrievedChunk], int]:
+    """Small-to-big: VBQPPL được chunk theo Khoản để tìm cho trúng, nhưng LLM cần cả Điều (câu dẫn,
+    các Khoản liên quan) để trả lời đúng. Chunk thuộc một Điều được thay bằng mọi chunk của Điều đó
+    (cùng văn bản, cùng khoảng hiệu lực), giữ thứ hạng của chunk tốt nhất; chunk cùng Điều phía sau
+    bị bỏ vì đã nằm trong bản mở rộng. Chunk tra thẳng theo địa chỉ giữ nguyên (đã đúng đơn vị hỏi).
+    Đo trong rag_testing (cấu hình C8, BAO_CAO.md mục 10)."""
+    from dataclasses import replace
+
+    from qdrant_client import models
+
+    store = get_retriever().store
+    out: list[RetrievedChunk] = []
+    seen: set[tuple] = set()
+    expanded = 0
+    for c in chunks:
+        p = c.payload
+        dieus = tuple(str(d) for d in p.get("dieus") or [])
+        if not dieus or c.matched_by == "address" or not p.get("doc_id"):
+            out.append(c)
+            continue
+        key = (p["doc_id"], dieus, p.get("valid_from"), p.get("valid_to"))
+        if key in seen:
+            continue
+        seen.add(key)
+        siblings = await store.scroll_filtered(models.Filter(must=[
+            models.FieldCondition(key="doc_id", match=models.MatchValue(value=p["doc_id"])),
+            models.FieldCondition(key="dieus", match=models.MatchAny(any=list(dieus)))]))
+        siblings = [s for s in siblings if tuple(str(d) for d in s.get("dieus") or []) == dieus
+                    and (s.get("valid_from"), s.get("valid_to")) == key[2:]]
+        text = "\n\n".join(s.get("text", "") for s in siblings)
+        if len(siblings) <= 1 or not text or (max_chars and len(text) > max_chars):
+            out.append(c)
+            continue
+        expanded += 1
+        out.append(replace(c, text=text, payload={**p, "text": text, "expanded_chunks": len(siblings)}))
+    return out, expanded
 
 
 # --------------------------------------------------------------------------- #
@@ -249,8 +321,30 @@ def _snippet(text: str, limit: int = 240) -> str:
     return flat if len(flat) <= limit else flat[:limit].rsplit(" ", 1)[0] + "…"
 
 
-def build_context(chunks: list[RetrievedChunk], max_chars: int) -> tuple[str, list[Citation]]:
+def _iso_date(value: Any) -> date | None:
+    try:
+        return date.fromisoformat(str(value)[:10]) if value else None
+    except ValueError:
+        return None
+
+
+def trang_thai_hieu_luc(payload: dict[str, Any], as_of: date) -> str:
+    """Trạng thái hiệu lực của nguồn TẠI ngày tra cứu, viết sẵn cho LLM. Chỉ nhãn "hiệu lực từ 01/12/2026"
+    thì model không biết hôm nay là ngày nào, và đã gọi quy định sửa đổi chưa có hiệu lực là "hiện hành"
+    (Luật 23/2026, hỏi ngày 10/10/2026)."""
+    start = _iso_date(payload.get("valid_from")) or _iso_date(payload.get("ngay_hieu_luc"))
+    end = _iso_date(payload.get("valid_to"))
+    if start and start > as_of:
+        return f"CHƯA CÓ HIỆU LỰC tại ngày {as_of:%d/%m/%Y} - có hiệu lực từ {start:%d/%m/%Y}"
+    if end and end > as_of:
+        return f"đang áp dụng tại ngày {as_of:%d/%m/%Y}, hết hiệu lực từ {end:%d/%m/%Y} (đã có bản sửa đổi/thay thế)"
+    return ""
+
+
+def build_context(chunks: list[RetrievedChunk], max_chars: int,
+                  as_of: date | None = None) -> tuple[str, list[Citation]]:
     """Ghép các chunk thành khối ngữ cảnh đánh số [n] kèm metadata nguồn."""
+    as_of = as_of or date.today()
     blocks: list[str] = []
     citations: list[Citation] = []
     used_chars = 0
@@ -265,32 +359,42 @@ def build_context(chunks: list[RetrievedChunk], max_chars: int) -> tuple[str, li
 
         index = len(citations) + 1
         header = f"[{index}] {chunk.citation_label()}"
+        if status := trang_thai_hieu_luc(chunk.payload, as_of):
+            header += f" [{status}]"
         block = f"{header}\n{text}"
         if used_chars + len(block) > max_chars and blocks:
             break
 
         blocks.append(block)
         used_chars += len(block)
-        citations.append(
-            Citation(
-                id=index,
-                doc_id=chunk.doc_id,
-                doc_title=chunk.doc_title,
-                section=chunk.section,
-                source=str(chunk.payload.get("source", "")),
-                page=chunk.payload.get("page"),
-                snippet=_snippet(text),
-                score=round(chunk.rerank_score, 4),
-                matched_by=getattr(chunk, "matched_by", "rerank"),
-            )
+        citation = Citation(
+            id=index,
+            doc_id=chunk.doc_id,
+            doc_title=chunk.doc_title,
+            section=chunk.section,
+            source=str(chunk.payload.get("source", "")),
+            page=chunk.payload.get("page"),
+            snippet=_snippet(text),
+            score=round(chunk.rerank_score, 4),
+            matched_by=getattr(chunk, "matched_by", "rerank"),
         )
+        # VBQPPL theo phiên bản: đơn vị + phiên bản làm bằng chứng (để biết câu trả lời
+        # nào lỗi thời khi văn bản bị sửa) và khoảng hiệu lực hiển thị cạnh nhãn.
+        if chunk.payload.get("component_ids"):
+            citation["component_ids"] = list(chunk.payload["component_ids"])
+            citation["version_ids"] = dict(chunk.payload.get("version_ids") or {})
+            citation["validity"] = str(chunk.payload.get("validity_label") or "")
+        citations.append(citation)
 
     return "\n\n".join(blocks), citations
 
 
 async def build_context_node(state: QAState) -> dict[str, Any]:
     cfg = get_settings()
-    context, citations = build_context(state.get("chunks", []), cfg.context_max_chars)
+    as_of = _iso_date((state.get("trace", {}).get("legal") or {}).get("as_of")) or date.today()
+    context, citations = build_context(state.get("chunks", []), cfg.context_max_chars, as_of)
+    if "CHƯA CÓ HIỆU LỰC" in context or "đang áp dụng tại ngày" in context:
+        context = f"NGÀY TRA CỨU: {as_of:%d/%m/%Y}\n\n{context}"
     return {
         "context": context,
         "citations": citations,

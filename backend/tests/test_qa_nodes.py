@@ -59,6 +59,15 @@ class FakeLLM:
 
 
 # ------------------------------------------------------------ rewrite ----- #
+@pytest.fixture
+def bat_viet_lai(monkeypatch):
+    """Các test viết lại truy vấn kiểm chính bước đó, nên phải tự bật nó: không phụ thuộc .env của máy
+    chạy test (production đặt QUERY_REWRITE_ENABLED=false)."""
+    cfg = qa_mod.get_settings().model_copy(update={"query_rewrite_enabled": True})
+    monkeypatch.setattr(qa_mod, "get_settings", lambda: cfg)
+
+
+@pytest.mark.usefixtures("bat_viet_lai")
 async def test_rewrite_giai_dai_tu_va_sinh_bien_the(monkeypatch):
     llm = FakeLLM(json_response={
         "standalone_query": "Hoá đơn điện tử có bắt buộc chữ ký số không?",
@@ -75,12 +84,14 @@ async def test_rewrite_giai_dai_tu_va_sinh_bien_the(monkeypatch):
     assert len(out["query_variants"]) == 2
 
 
+@pytest.mark.usefixtures("bat_viet_lai")
 async def test_rewrite_loi_thi_dung_cau_hoi_goc(monkeypatch):
     monkeypatch.setattr(qa_mod, "get_llm", lambda: FakeLLM(fail=True))
     out = await qa_mod.rewrite_query_node({"question": "Mức phạt là bao nhiêu?", "history": []})
     assert out == {"standalone_query": "Mức phạt là bao nhiêu?", "query_variants": []}
 
 
+@pytest.mark.usefixtures("bat_viet_lai")
 async def test_rewrite_dung_lai_ket_qua_da_cache(monkeypatch):
     llm = FakeLLM(json_response={"standalone_query": "câu hỏi chuẩn hoá", "variants": ["a"]})
     monkeypatch.setattr(qa_mod, "get_llm", lambda: llm)

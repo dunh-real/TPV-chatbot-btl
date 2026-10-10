@@ -117,6 +117,34 @@ class Settings(BaseSettings):
     chunk_max_tokens: int = 1200    # vượt mức này -> phải cắt tiếp
     chunk_hard_cap: int = 1500      # trần tuyệt đối, cắt cưỡng bức
     chunk_overlap: int = 100
+    # Văn bản quy phạm: ranh giới mục lấy từ `legal_grammar` (Phần/Chương/Mục/Điều
+    # của chính văn bản) thay cho regex heading. Regex cũ coi dòng Khoản là tiêu đề
+    # và làm rơi mục có thân rỗng - đo được mất 25-55% nội dung (rag_testing).
+    chunk_legal_structure: bool = True
+    # VBQPPL: "khoan" = mỗi Khoản (kèm Điểm) một chunk, tiêu đề Điều lặp ở mọi chunk, không gộp
+    # xuyên Điều; "dieu" = cả Điều như trước. Ngưỡng riêng cho VBQPPL (văn bản khác vẫn dùng
+    # chunk_* ở trên): rag_testing cấu hình C8, prod_hit 0,412 -> 0,713 trên 4 văn bản GĐ1.
+    legal_chunk_granularity: str = "khoan"
+    legal_chunk_min_tokens: int = 50
+    legal_chunk_ideal_tokens: int = 300
+    legal_chunk_max_tokens: int = 800
+    legal_chunk_hard_cap: int = 1000
+
+    # Markdown của .docx: "blocks" dựng từ cây khối `parse_docx` (nhanh hơn 2-3x, ít bộ nhớ hơn
+    # ~13x, chất lượng truy hồi bằng MarkItDown - rag_testing M2); "markitdown" như trước.
+    docx_converter: str = "blocks"
+
+    # --------------------------------------------- Đọc file .doc (Word 97) ---
+    # MarkItDown không đọc được .doc; chuyển sang .docx bằng LibreOffice chạy trong
+    # container (host không cần cài LibreOffice). Rỗng -> gọi `soffice` trên host.
+    doc_convert_image: str = "tpv-libreoffice:7.3"
+    doc_convert_timeout: float = 180.0
+
+    # ------------------------------------- Phiên bản VBQPPL + theo dõi sửa đổi ---
+    # Bật: lưu cây Điều/Khoản/Điểm theo phiên bản có hiệu lực, áp lệnh sửa đổi khi
+    # nạp văn bản sửa đổi, tra theo địa chỉ pháp lý, ghi nguồn gốc câu trả lời và
+    # đánh dấu câu trả lời lỗi thời. Tắt: hành vi y như trước.
+    legal_versioning_enabled: bool = False
 
     # ---------------------------------------------------------- Retrieval ---
     retrieval_branch_limit: int = 50   # top-k mỗi nhánh trước khi RRF
@@ -128,6 +156,10 @@ class Settings(BaseSettings):
     # một lượt forward trên toàn bộ ứng viên, nên đây là trần chi phí; đặt 1 để
     # quay về hành vi cũ (chỉ chấm câu hỏi gốc).
     rerank_max_queries: int = 5
+    # Small-to-big cho VBQPPL: chunk tìm được (một Khoản) được thay bằng cả Điều chứa nó trước khi
+    # đưa vào ngữ cảnh. Điều dài hơn `legal_parent_expand_max_chars` (0 = không giới hạn) giữ chunk nhỏ.
+    legal_parent_expand: bool = True
+    legal_parent_expand_max_chars: int = 12000
     # Trọng số RRF cho từng nhánh: dense / lexical (M3 sparse) / bm25
     weight_dense: float = 1.0
     weight_lexical: float = 0.8
@@ -225,6 +257,14 @@ class Settings(BaseSettings):
     presenton_n_slides: int = 0
     presenton_max_wait_seconds: float = 900.0
     presenton_poll_interval: float = 5.0
+    # "direct": backend điền layout của template, Presenton chỉ render + xuất file
+    # (xem app/documents/slide_deck.py). "generate": đường cũ, để LLM của Presenton
+    # tự chọn layout và viết lại slide - giữ lại để rollback bằng một biến môi trường.
+    presenton_render_mode: str = "direct"
+    # Đường "direct": Qwen viết tổng quan, nhận xét biểu đồ và kết luận (có kiểm số,
+    # chữ hệ lạ, viết lại tối đa 3 lần). Tắt = mọi chữ do code tính.
+    presenton_summary: bool = True
+    presenton_export_timeout: float = 180.0
     # Model API dùng riêng cho việc sinh slide. Khoá đọc từ `llm_slide_api_key`
     # (tên do người dùng đặt trong .env); Presenton nhận qua biến môi trường của
     # container chứ backend không tự gọi model này.

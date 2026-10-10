@@ -1178,3 +1178,24 @@ mark.loi.src-llm:hover, mark.loi.src-llm.on { background: rgba(0,0,0,.05); }
   background: var(--surface); color: var(--text-soft);
   border: 1px solid var(--border); border-radius: var(--radius);
 }
+
+/* ── danh sách tài liệu đã nạp (kho tri thức) ─────────────────────── */
+.doc-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 10px; }
+.doc-toolbar input[type="search"], .doc-toolbar select {
+  padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text); font-size: 13px; font-family: inherit;
+}
+.doc-toolbar input[type="search"] { flex: 1 1 220px; min-width: 0; }
+.doc-toolbar .ghost-btn:disabled { opacity: .5; cursor: not-allowed; }
+.doc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.doc-table th, .doc-table td { border-bottom: 1px solid var(--border); padding: 7px 8px; text-align: left; vertical-align: top; }
+.doc-table th { background: var(--surface-2); font-weight: 600; white-space: nowrap; position: sticky; top: 0; }
+.doc-table .chk { width: 30px; text-align: center; }
+.doc-table .num { text-align: right; white-space: nowrap; }
+.doc-table .nowrap { white-space: nowrap; color: var(--muted); }
+.doc-table .doc-title { font-weight: 550; color: var(--text); word-break: break-word; }
+.doc-table .empty { text-align: center; padding: 16px; }
+.doc-table tr.is-selected td { background: var(--accent-soft); }
+.doc-table input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.pager .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }

@@ -501,6 +501,10 @@ async def run_presentation_workflow(
         "slide_count": result.get("slide_count", 0),
         "edit_url": result.get("edit_url", ""),
         "elapsed_seconds": result.get("elapsed_seconds", 0.0),
+        "presentation_id": result.get("presentation_id", ""),
+        "summary_source": result.get("summary_source", ""),
+        "deck_check": result.get("deck_check", {}),
+        "timings": result.get("timings", {}),
         "assumptions": result.get("assumptions", []),
         "error": result.get("error", ""),
     }
@@ -1321,6 +1325,14 @@ async def run_qa(state: QAState) -> dict[str, Any]:
         state["conversation_id"],
         [("user", state["question"]), ("assistant", result.get("answer", ""))],
     )
+    # Nguồn gốc câu trả lời (VBQPPL theo phiên bản): để biết câu nào lỗi thời khi nguồn bị sửa.
+    from app.legal import hooks as legal_hooks
+
+    answer_id = await legal_hooks.record_answer(
+        {**state, "trace": result.get("trace", {})}, result.get("answer", ""),
+        result.get("used_citations") or result.get("citations") or [])
+    if answer_id:
+        result["answer_id"] = answer_id
     return result
 
 

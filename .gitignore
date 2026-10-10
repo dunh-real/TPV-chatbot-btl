@@ -1,3 +1,13 @@
 
 # Khoá PGP của kho ODBC Microsoft, không thuộc dự án
 microsoft.asc
+
+# Thực nghiệm / kết quả đo - giữ trên máy, không đưa lên nhánh
+text_to_sql_experiment/
+erp_database/*
+!erp_database/scripts/
+erp_database/secrets/
+backend/test_results/
+backend/tests/layout_experiment/
+backend/tests/fixtures/layout_pdf/
+.playwright-mcp/

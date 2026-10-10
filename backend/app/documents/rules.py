@@ -85,6 +85,9 @@ def _no_format_reason(source_format: str) -> str:
     if source_format == "pdf_scan":
         return ("Tài liệu dạng ảnh/scan nên không đọc được phông chữ, cỡ chữ và lề trang. "
                 "Phần tổ chức nội dung vẫn được kiểm, phần trình bày thì không.")
+    if source_format == "pdf_ocr":
+        return ("Tài liệu scan, chữ được đọc bằng OCR nên không có phông chữ, cỡ chữ và lề trang. "
+                "Phần tổ chức nội dung vẫn được kiểm, phần trình bày thì không.")
     return ("Tệp dạng văn bản thuần (.txt/.md) không mang thông tin định dạng. "
             "Chỉ kiểm được cách tổ chức nội dung, không kiểm được cách trình bày.")
 
@@ -271,6 +274,8 @@ class RuleEngine:
         findings: list[RuleFinding] = []
         headings = outline.headings
         for position, heading in enumerate(headings):
+            if heading.content_unit:
+                continue
             nxt = headings[position + 1] if position + 1 < len(headings) else None
             end = nxt.index if nxt else len(outline.blocks)
             if outline.blocks[heading.index + 1:end]:
@@ -300,6 +305,8 @@ class RuleEngine:
         findings: list[RuleFinding] = []
         seen: dict[str, str] = {}
         for heading in outline.headings:
+            if heading.content_unit:
+                continue
             # Bỏ phần đánh số rồi mới so: "1. Tổng quan" và "2. Tổng quan" là trùng tên.
             body = heading.text[len(heading.marker):] if heading.marker else heading.text
             key = " ".join(body.split()).lower()

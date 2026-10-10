@@ -37,5 +37,16 @@ class PresentationResponse(BaseModel):
     )
     slide_count: int = Field(default=0, description="Đếm từ chính file .pptx")
     elapsed_seconds: float = 0.0
+    presentation_id: str = ""
+    summary_source: str = Field(
+        default="", description="qwen | code - ai viết phần chữ dẫn dắt khi dựng thẳng từ template"
+    )
+    deck_check: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Đối chiếu deck Presenton đã lưu với nội dung đã soạn: layout, chữ, biểu đồ",
+    )
+    timings: dict[str, float] = Field(
+        default_factory=dict, description="Thời gian từng công đoạn dựng slide, giây"
+    )
     assumptions: list[str] = Field(default_factory=list)
     error: str = ""

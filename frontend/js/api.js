@@ -211,6 +211,12 @@
     giaoViecDownload: function (fileName) { return url('/api/documents/download/' + encodeURIComponent(fileName)); },
     stats: function () { return request('/api/documents/stats'); },
     deleteDoc: function (docId) { return request('/api/documents/' + encodeURIComponent(docId), { method: 'DELETE' }); },
+    listDocs: function (params) {
+      var qs = new URLSearchParams();
+      Object.keys(params || {}).forEach(function (k) { if (params[k] !== '' && params[k] != null) qs.set(k, params[k]); });
+      return request('/api/documents?' + qs.toString());
+    },
+    deleteDocs: function (docIds) { return postJSON('/api/documents/delete-batch', { doc_ids: docIds }); },
 
     // workflow 3 / 4
     templates: function () { return request('/api/reports/templates'); },
