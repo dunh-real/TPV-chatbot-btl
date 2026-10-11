@@ -325,7 +325,12 @@ def instructions_for(data: dict[str, Any]) -> str:
 
 def _khong_co_gi_de_trinh_bay(data: dict[str, Any]) -> bool:
     """Không có đơn vị nào và không dòng số liệu nào: dựng deck lúc này chỉ ra một bộ
-    slide toàn số 0 kèm "0/0 đơn vị" - trông như báo cáo thật nhưng không nói gì."""
+    slide toàn số 0 kèm "0/0 đơn vị" - trông như báo cáo thật nhưng không nói gì.
+
+    Số liệu từ truy vấn động (`queries`, Text-to-SQL) không qua chốt này: bảng rỗng ở đó tự ghi
+    "Không có dữ liệu thỏa điều kiện truy vấn" trên slide (`query_result`)."""
+    if "queries" in data:
+        return False
     rows = sum(len((data.get(k) or {}).get("breakdown") or []) for k in ("personnel", "equipment"))
     units = (data.get("reporting") or {}).get("units_total") or 0
     return rows == 0 and units == 0

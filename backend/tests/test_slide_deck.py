@@ -243,3 +243,86 @@ def test_khong_co_don_vi_nao_thi_bao_loi_khong_dung_deck_rong():
             "reporting": {"units_total": 0, "units_reported": 0, "missing": [], "reported": []}}
     assert pr._khong_co_gi_de_trinh_bay(rong)
     assert not pr._khong_co_gi_de_trinh_bay(_data())
+
+
+# ------------------------------------------------- số liệu từ truy vấn động (Text-to-SQL) -- #
+def _q(columns: list[tuple[str, str, str, str | None]], rows: list[list], question: str = "Số lượng tài sản theo danh mục",
+       warnings: list[str] | None = None) -> dict:
+    """Một kết quả `query_erp` đúng dạng `QueryResult.as_dict()` (Decimal đã thành chuỗi)."""
+    return {"query_id": "q", "question": question, "row_count": len(rows), "truncated": False,
+            "columns": [{"name": n, "data_type": t, "label": l, "unit": u} for n, t, l, u in columns],
+            "rows": rows, "schema_version": "s", "policy_version": "p", "source_tables": ["dbo.Asm_Assets"],
+            "warnings": warnings or []}
+
+
+DANH_MUC = _q([("category", "nvarchar", "Danh mục", None), ("quantity", "int", "Số lượng", "cái")],
+              [["Máy chủ", 6], ["Máy in", 8], ["Bàn", 0]])
+
+
+def test_truy_van_dong_nhom_va_so_thanh_bieu_do():
+    ds, = sd.query_parts({"queries": [DANH_MUC]}).datasets
+    assert ds.key == "bang_1" and ds.title == "Số lượng theo danh mục"
+    assert ds.categories == ["Máy in", "Máy chủ", "Bàn"]                 # biểu đồ xếp giảm dần
+    assert ds.series == [("Số lượng", [8, 6, 0])]
+    assert ds.table_columns == ["Danh mục", "Số lượng (cái)"]
+    assert ds.table_rows == [["Máy chủ", "6"], ["Máy in", "8"], ["Bàn", "0"]]   # bảng giữ thứ tự SQL
+    assert ds.total_card == ("14 cái", "Tổng số lượng")
+    assert ds.facts[:2] == ["Tổng số lượng: 14 cái trên 3 danh mục.", "Cao nhất: Máy in với 8 cái, chiếm 57,1%."]
+    assert "1/3 danh mục có số lượng bằng 0." in ds.facts
+
+
+def test_cot_ty_le_khong_cong_thanh_tong_va_giu_so_goc():
+    q = _q([("dept", "nvarchar", "Đơn vị", None), ("rate", "decimal(5,2)", "Tỷ lệ hoàn thành", "%")],
+           [["Phòng A", "45.50"], ["Phòng B", "80.25"]])
+    ds, = sd.query_parts({"queries": [q]}).datasets
+    assert ds.total_card is None and not any(f.startswith("Tổng") for f in ds.facts)
+    assert ds.series == [("Tỷ lệ hoàn thành", [80.25, 45.5])]
+    assert ds.table_rows == [["Phòng A", "45.50"], ["Phòng B", "80.25"]]        # đối chiếu số khớp dữ liệu gốc
+
+
+def test_cot_id_va_nam_khong_phai_so_lieu():
+    q = _q([("DepartmentId", "bigint", "Mã phòng", None), ("year", "int", "Năm", None),
+            ("total", "int", "Nhân sự", "người")], [[11, 2026, 5], [12, 2026, 7]])
+    ds, = sd.query_parts({"queries": [q]}).datasets
+    assert [n for n, _ in ds.series] == ["Nhân sự"]
+    assert ds.categories == ["12 · 2026", "11 · 2026"]
+
+
+def test_ket_qua_mot_dong_thanh_the_chi_tieu_chu_thanh_bang_rong_thanh_ghi_chu():
+    tong = _q([("total", "int", "Tổng nhân sự", "người"), ("hires", "int", "Tuyển mới", "người")], [[120, 4]])
+    danh_sach = _q([("name", "nvarchar", "Họ tên", None), ("dept", "nvarchar", "Đơn vị", None)],
+                   [["Nguyễn A", "Phòng 1"]], question="Danh sách trưởng phòng")
+    rong = _q([("category", "nvarchar", "Danh mục", None), ("quantity", "int", "Số lượng", None)], [],
+              question="Thiết bị hỏng tháng 9", warnings=["Chỉ tính tài sản chưa thanh lý."])
+    parts = sd.query_parts({"queries": [tong, danh_sach, rong]})
+    assert parts.datasets == []
+    assert parts.kpis == [("120 người", "Tổng nhân sự"), ("4 người", "Tuyển mới")]
+    assert parts.tables == [("Danh sách trưởng phòng", ["Họ tên", "Đơn vị"], [["Nguyễn A", "Phòng 1"]])]
+    assert ("Lưu ý phạm vi dữ liệu", "Chỉ tính tài sản chưa thanh lý.") in parts.notes
+    assert any(t == "Không có dữ liệu" and "Thiết bị hỏng tháng 9" in x for t, x in parts.notes)
+
+
+def test_deck_tu_truy_van_dong_dung_layout_template_va_tu_doi_chieu_duoc():
+    tong = _q([("total", "int", "Tổng tài sản", "cái")], [[14]], question="Tổng tài sản")
+    data = {"queries": [DANH_MUC, tong]}
+    datasets = sd.build_datasets(data, PARAMS)
+    plan = sd.build_plan(data, PARAMS, "Đơn vị thử", datasets, None, "09/10/2026")
+    roles = [p.role for p in plan]
+    assert roles[:3] == ["title", "toc", "scope"]
+    assert {"kpi", "chart", "highlights", "table", "notes"} <= set(roles)
+    assert {p.layout for p in plan} <= set(TEMPLATE["layouts"])
+    scope = next(p for p in plan if p.role == "scope").lists["card_stack"]
+    assert scope[1]["card_description"] == "CSDL ERP, truy vấn chỉ đọc (dbo.Asm_Assets)."
+    assert scope[3] == {"card_title": "Câu hỏi truy vấn", "card_description": "Số lượng tài sản theo danh mục"}
+    built = [sd.build_slide(p, i, "pid", TEMPLATE) for i, p in enumerate(plan)]
+    check = sd.verify_deck({"slides": [s for s, _ in built]}, plan, [r for _, r in built])
+    assert check["ok"], check["issues"]
+    assert check["charts_ok"] == check["charts_total"] == 1
+
+
+def test_khong_co_ky_thi_khong_bia_thang():
+    plan = sd.build_plan({"queries": [DANH_MUC]}, {}, "Đơn vị thử",
+                         sd.build_datasets({"queries": [DANH_MUC]}, {}), None, "09/10/2026")
+    assert plan[0].texts["primary_heading"] == "Báo cáo số liệu"
+    ky = next(p for p in plan if p.role == "scope").lists["card_stack"][2]
+    assert ky["card_description"] == "Theo câu hỏi truy vấn."

@@ -19,8 +19,10 @@ gọi Qwen ở `app.agents.nodes.presentation`.
 from __future__ import annotations
 
 import copy
+import re
 import uuid
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from app.documents.verify import collect_known_numbers, tim_chu_ngoai_he
@@ -96,6 +98,7 @@ class Dataset:
     facts: list[str] = field(default_factory=list)
     highlights: list[tuple[str, str]] = field(default_factory=list)
     grouped_others: int = 0     # số mục đã gộp vào "Các mục khác" trên biểu đồ
+    total_card: tuple[str, str] | None = None   # (giá trị, chú thích) cho slide chỉ tiêu - truy vấn động
 
     @property
     def chart_type(self) -> str:
@@ -115,7 +118,16 @@ def canh_bao_ky(source: dict[str, Any]) -> str:
 
 
 def _period(params: dict[str, Any]) -> str:
-    return f"tháng {params['thang']}/{params['nam']}"
+    if params.get("thang") and params.get("nam"):
+        return f"tháng {params['thang']}/{params['nam']}"
+    # Câu hỏi Text-to-SQL không nêu kỳ: không bịa tháng, nói đúng là theo câu hỏi.
+    return "theo câu hỏi truy vấn"
+
+
+def _heading(params: dict[str, Any]) -> str:
+    if params.get("thang") and params.get("nam"):
+        return f"Báo cáo T{params['thang']}/{params['nam']}"
+    return "Báo cáo số liệu"
 
 
 def _compare(params: dict[str, Any]) -> str:
@@ -253,7 +265,172 @@ def _equipment(source: dict[str, Any], params: dict[str, Any]) -> Dataset:
     return ds
 
 
+# --------------------------------------------------------------------------- #
+# Số liệu từ truy vấn động (Text-to-SQL): bảng kết quả bất kỳ -> bộ dữ liệu slide
+# --------------------------------------------------------------------------- #
+# Không có tên chỉ tiêu cố định: cột nào là nhóm, cột nào là số đọc từ kiểu SQL của cột.
+_KIEU_SO = {"int", "integer", "bigint", "smallint", "tinyint", "decimal", "numeric", "money",
+            "smallmoney", "float", "real", "double", "number"}
+# Cột tỷ lệ/trung bình/đơn giá: vẫn vẽ được, nhưng cộng lại thành "tổng" là sai nghĩa.
+_KHONG_CONG = re.compile(r"t[yỷ]\s*l[eệ]|ph[aầ]n\s*tr[aă]m|%|trung\s*b[iì]nh|b[iì]nh\s*qu[aâ]n|"
+                         r"[đd][oơ]n\s*gi[aá]|\bgi[aá]\b|avg|average|mean|median|rate|ratio|pct|percent|"
+                         r"\bmin\b|\bmax\b|price", re.I)
+
+
+@dataclass(slots=True)
+class QueryParts:
+    """Kết quả truy vấn động đã phân loại để dựng deck."""
+    datasets: list[Dataset] = field(default_factory=list)           # có cột nhóm + cột số: biểu đồ
+    kpis: list[tuple[str, str]] = field(default_factory=list)       # một dòng, chỉ có số: thẻ chỉ tiêu
+    tables: list[tuple[str, list[str], list[list[str]]]] = field(default_factory=list)  # chỉ bảng
+    notes: list[tuple[str, str]] = field(default_factory=list)      # cảnh báo, kết quả rỗng
+    sources: list[str] = field(default_factory=list)
+    questions: list[str] = field(default_factory=list)
+
+
+def _kieu(col: dict[str, Any]) -> str:
+    return re.sub(r"\(.*$", "", str(col.get("data_type") or "")).strip().lower()
+
+
+_COT_NHOM = re.compile(r"^(n[aă]m|th[aá]ng|qu[yý]|k[yỳ]|m[aã]|stt|year|month|quarter|period|code)\b", re.I)
+
+
+def _la_cot_so(col: dict[str, Any], values: list[Any]) -> bool:
+    name = str(col.get("name") or "")
+    if name.lower() == "id" or name.endswith(("Id", "ID", "_id")):
+        return False                                   # mã định danh không phải số liệu
+    if _COT_NHOM.search(name) or _COT_NHOM.search(str(col.get("label") or "")):
+        return False                                   # năm/tháng/mã là trục nhóm, không phải số liệu
+    present = [v for v in values if v is not None]
+    if _kieu(col) in _KIEU_SO:
+        return all(_so_hoc(v) is not None for v in present)
+    return bool(present) and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in present)
+
+
+def _so_hoc(value: Any) -> int | float | None:
+    """Giá trị số để vẽ/tính; Decimal đã được as_dict đổi sang chuỗi để không mất chính xác."""
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    try:
+        d = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
+    return int(d) if d == d.to_integral_value() else float(d)
+
+
+def _chu_so(value: Any) -> str:
+    """Số nguyên viết kiểu Việt Nam; số thập phân giữ nguyên dạng gốc của truy vấn để đối chiếu khớp."""
+    if value is None:
+        return "—"
+    n = _so_hoc(value)
+    return so(n) if isinstance(n, int) else _nhan(value)
+
+
+def _nhan_cot(col: dict[str, Any]) -> str:
+    label = _nhan(col.get("label") or col.get("name"))
+    return label + (f" ({col['unit']})" if col.get("unit") else "")
+
+
+def _cong_duoc(col: dict[str, Any]) -> bool:
+    return not _KHONG_CONG.search(f"{col.get('name', '')} {col.get('label', '')} {col.get('unit', '')}")
+
+
+def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
+                   num_cols: list[int]) -> Dataset:
+    cols, rows = result["columns"], result["rows"]
+    main = num_cols[0]
+    group = " · ".join(_nhan(cols[i].get("label") or cols[i].get("name")) for i in group_cols)
+    label = _nhan(cols[main].get("label") or cols[main].get("name"))
+    unit = str(cols[main].get("unit") or "")
+    don_vi = f" {unit}" if unit else ""
+
+    def ten(row: list[Any]) -> str:
+        return " · ".join(_nhan(row[i]) if row[i] is not None else "—" for i in group_cols)
+
+    # Biểu đồ xếp theo cột số đầu; bảng giữ nguyên thứ tự của truy vấn.
+    ordered = sorted(rows, key=lambda r: -(_so_hoc(r[main]) or 0))
+    cong = _cong_duoc(cols[main])
+    series_cols = num_cols[:len(PALETTE) - 1]
+    pairs = [(ten(r), [(_so_hoc(r[i]) or 0) for i in series_cols]) for r in ordered]
+    others = 0
+    if len(pairs) > CHART_MAX_BARS:
+        others = len(pairs) - (CHART_MAX_BARS - 1 if cong else CHART_MAX_BARS)
+        if cong:      # số đếm/tổng: phần còn lại gộp thành một cột, vẫn đúng tổng
+            rest = pairs[CHART_MAX_BARS - 1:]
+            pairs = pairs[:CHART_MAX_BARS - 1] + [(f"Các {group.lower()} khác",
+                                                   [sum(v[j] for _, v in rest) for j in range(len(series_cols))])]
+        else:         # tỷ lệ/trung bình không cộng được: chỉ vẽ các mục cao nhất
+            pairs = pairs[:CHART_MAX_BARS]
+    series = [(_nhan(cols[i].get("label") or cols[i].get("name")), [v[j] for _, v in pairs])
+              for j, i in enumerate(series_cols)]
+
+    title = f"{label} theo {group.lower()}" if len(num_cols) == 1 else f"Số liệu theo {group.lower()}"
+    ds = Dataset(key=key, title=title, short=label if len(num_cols) == 1 else "Số liệu",
+                 group_label=group, unit=unit, categories=[n for n, _ in pairs], series=series,
+                 table_columns=[_nhan_cot(c) for c in cols],
+                 table_rows=[[_chu_so(v) if j in num_cols else (_nhan(v) if v is not None else "—")
+                              for j, v in enumerate(r)] for r in rows],
+                 grouped_others=others)
+
+    values = [(ten(r), _so_hoc(r[main])) for r in ordered if _so_hoc(r[main]) is not None]
+    total = sum(v for _, v in values) if cong else None
+    facts: list[str] = []
+    cards: list[tuple[str, str]] = []
+    if total is not None:
+        facts.append(f"Tổng {label.lower()}: {_chu_so(total)}{don_vi} trên {len(rows)} {group.lower()}.")
+        cards.append((f"Tổng {label.lower()}", f"{_chu_so(total)}{don_vi} trên {len(rows)} {group.lower()}."))
+        ds.total_card = (f"{_chu_so(total)}{don_vi}", f"Tổng {label.lower()}")
+    if values:
+        top_name, top = values[0]
+        share = f", chiếm {ty_le(top, total)}" if total else ""
+        facts.append(f"Cao nhất: {top_name} với {_chu_so(top)}{don_vi}{share}.")
+        cards.append(("Cao nhất", f"{top_name}: {_chu_so(top)}{don_vi}{share}."))
+        if len(values) > 1:
+            low_name, low = values[-1]
+            facts.append(f"Thấp nhất: {low_name} với {_chu_so(low)}{don_vi}.")
+            cards.append(("Thấp nhất", f"{low_name}: {_chu_so(low)}{don_vi}."))
+        if (zero := [n for n, v in values if v == 0]):
+            facts.append(f"{len(zero)}/{len(values)} {group.lower()} có {label.lower()} bằng 0.")
+    if others:
+        facts.append(f"Biểu đồ thể hiện {len(pairs)} cột; đủ {len(rows)} {group.lower()} trong bảng chi tiết.")
+    cards.append((f"Số {group.lower()}", f"{len(rows)} {group.lower()} trong kết quả truy vấn."))
+    ds.facts, ds.highlights = facts, cards
+    return ds
+
+
+def query_parts(data: dict[str, Any]) -> QueryParts:
+    parts = QueryParts()
+    for index, result in enumerate(data.get("queries") or []):
+        cols, rows = result.get("columns") or [], result.get("rows") or []
+        parts.sources += [s for s in result.get("source_tables") or [] if s not in parts.sources]
+        question = _nhan(str(result.get("question") or "").splitlines()[0] if result.get("question") else "")
+        if question:
+            parts.questions.append(question)
+        parts.notes += [("Lưu ý phạm vi dữ liệu", _nhan(w)) for w in result.get("warnings") or []]
+        if not rows:
+            parts.notes.append(("Không có dữ liệu", "Không có dữ liệu thỏa điều kiện truy vấn"
+                                + (f" \"{question[:80]}\"." if question else ".")))
+            continue
+        num_cols = [i for i, c in enumerate(cols) if _la_cot_so(c, [r[i] for r in rows])]
+        group_cols = [i for i in range(len(cols)) if i not in num_cols]
+        if num_cols and group_cols:
+            parts.datasets.append(_query_dataset(f"bang_{index + 1}", result, group_cols, num_cols))
+        elif num_cols and len(rows) == 1:
+            parts.kpis += [((f"{_chu_so(rows[0][i])} {cols[i].get('unit') or ''}").strip(),
+                            _nhan(cols[i].get("label") or cols[i].get("name"))) for i in num_cols]
+        else:
+            title = question[:60] or f"Kết quả truy vấn {index + 1}"
+            parts.tables.append((title, [_nhan_cot(c) for c in cols],
+                                 [[_chu_so(v) if i in num_cols else (_nhan(v) if v is not None else "—")
+                                   for i, v in enumerate(r)] for r in rows]))
+    return parts
+
+
 def build_datasets(data: dict[str, Any], params: dict[str, Any]) -> list[Dataset]:
+    if "queries" in data:
+        return query_parts(data).datasets
     out: list[Dataset] = []
     if (source := data.get("personnel")) and source.get("breakdown"):
         out.append(_personnel(source, params))
@@ -326,6 +503,33 @@ def note_cards(data: dict[str, Any]) -> list[tuple[str, str]]:
     return (list(dict.fromkeys(cards)) + generic)[:4]
 
 
+def query_kpi_cards(parts: QueryParts, datasets: list[Dataset]) -> list[tuple[str, str]]:
+    """Thẻ chỉ tiêu cho truy vấn động: kết quả một dòng + tổng của các bảng cộng được."""
+    cards = list(parts.kpis) + [d.total_card for d in datasets if d.total_card]
+    return list(dict.fromkeys(cards))[:6]
+
+
+def query_scope_cards(parts: QueryParts, params: dict[str, Any], unit: str) -> list[tuple[str, str]]:
+    bang = ", ".join(parts.sources[:4]) + (" ..." if len(parts.sources) > 4 else "")
+    compare = _compare(params)
+    return [
+        ("Đơn vị báo cáo", unit),
+        ("Nguồn dữ liệu", "CSDL ERP, truy vấn chỉ đọc" + (f" ({bang})." if bang else ".")),
+        ("Kỳ báo cáo", _period(params).capitalize() + (f", đối chiếu {compare}." if compare else ".")),
+        ("Câu hỏi truy vấn", (parts.questions[0][:150] if parts.questions else "Theo yêu cầu báo cáo.")),
+    ]
+
+
+def query_note_cards(parts: QueryParts) -> list[tuple[str, str]]:
+    """Đúng 4 thẻ: cảnh báo của truy vấn và kết quả rỗng trước, thiếu thì ghi chú chung."""
+    generic = [("Truy vấn sinh tự động", "Câu SQL do hệ thống sinh theo chính sách truy vấn ERP, "
+                                         "chỉ đọc và chỉ trên các bảng được phép."),
+               ("Kiểm chứng", "Mọi con số trên slide đã được đối chiếu tự động với kết quả truy vấn."),
+               ("Thời điểm số liệu", "Dữ liệu nhập sau thời điểm lập báo cáo sẽ làm thay đổi kết quả."),
+               ("Phạm vi kết quả", "Số liệu đúng theo điều kiện trong câu hỏi; đổi điều kiện sẽ cho kết quả khác.")]
+    return (list(dict.fromkeys(parts.notes)) + generic)[:4]
+
+
 # --------------------------------------------------------------------------- #
 # Kế hoạch deck
 # --------------------------------------------------------------------------- #
@@ -362,13 +566,18 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
     """Toàn bộ nội dung deck. Không chữ nào trên slide nằm ngoài kế hoạch này."""
     period = _period(params)
     notes = {n["bang"]: n["noi_dung"] for n in (summary or {}).get("nhan_xet", [])}
+    parts = query_parts(data) if "queries" in data else None
+    ten_bang = [d.title.lower() for d in datasets] + [t.lower() for t, _, _ in (parts.tables if parts else [])]
     overview = (summary or {}).get("tong_quan") or (
-        f"Báo cáo số liệu {period} của {unit}: " + "; ".join(d.title.lower() for d in datasets) + ".")
+        f"Báo cáo số liệu {period} của {unit}: " + ("; ".join(ten_bang) or "kết quả truy vấn ERP") + ".")
     reporting = data.get("reporting") or {}
+    kpis = query_kpi_cards(parts, datasets) if parts else kpi_cards(data)
 
-    sections = [("Phạm vi và nguồn dữ liệu", "Đơn vị, nguồn, kỳ báo cáo, quy ước"),
-                ("Chỉ tiêu chính", "Các con số tổng hợp của kỳ")]
+    sections = [("Phạm vi và nguồn dữ liệu", "Đơn vị, nguồn, kỳ báo cáo, quy ước")]
+    if len(kpis) >= 2:
+        sections.append(("Chỉ tiêu chính", "Các con số tổng hợp của kỳ"))
     sections += [(d.short, d.title) for d in datasets]
+    sections += [(t[:40], "Bảng kết quả truy vấn") for t, _, _ in (parts.tables if parts else [])]
     if reporting:
         sections.append(("Tình hình gửi báo cáo", "Đơn vị đã gửi và chưa gửi trong kỳ"))
     sections.append(("Ghi chú dữ liệu", "Điểm cần lưu ý khi đọc số liệu"))
@@ -377,7 +586,7 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
 
     plan: list[SlidePlan] = [
         SlidePlan(layout=LAYOUT_TITLE, role="title", note=overview, texts={
-            "primary_heading": f"Báo cáo T{params['thang']}/{params['nam']}",
+            "primary_heading": _heading(params),
             "supporting_paragraph": overview,
             "badge_initials": "".join(w[0] for w in unit.split()[:2]).upper() or "BC",
             "card_primary_text": unit,
@@ -390,10 +599,10 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
                   texts={"section_heading": "Phạm vi và nguồn dữ liệu",
                          "body_paragraph": f"Bộ slide tổng hợp số liệu {period} trực tiếp từ CSDL ERP."},
                   lists={"card_stack": [{"card_title": t, "card_description": d}
-                                        for t, d in scope_cards(data, params, unit)]},
+                                        for t, d in (query_scope_cards(parts, params, unit) if parts
+                                                     else scope_cards(data, params, unit))]},
                   icons=["buildings", "database", "calendar", "ruler"]),
     ]
-    kpis = kpi_cards(data)
     if len(kpis) >= 2:
         plan.append(SlidePlan(layout=LAYOUT_GRID, role="kpi", note="; ".join(f"{c}: {v}" for v, c in kpis),
                               texts={"large_heading": "Chỉ tiêu chính",
@@ -417,6 +626,10 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
                  f"đúng theo kết quả truy vấn ERP.")
         plan += _table_slides(f"Chi tiết {d.short.lower()}", d.table_columns, d.table_rows, intro)
 
+    for title, columns, rows in (parts.tables if parts else []):
+        plan += _table_slides(title[:40], columns, rows,
+                              f"{len(rows)} dòng, đúng theo kết quả truy vấn ERP.")
+
     if reporting:
         missing = reporting.get("missing") or []
         cards = [("Đã gửi báo cáo", f"{so(reporting.get('units_reported', 0))}/"
@@ -437,7 +650,8 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
                           texts={"section_heading": "Ghi chú dữ liệu",
                                  "body_paragraph": "Các điểm cần lưu ý khi đọc và sử dụng số liệu."},
                           lists={"card_stack": [{"card_title": t, "card_description": x}
-                                                for t, x in note_cards(data)]},
+                                                for t, x in (query_note_cards(parts) if parts
+                                                             else note_cards(data))]},
                           icons=["warning-circle", "info", "info", "info"]))
     if summary:
         items = summary["ket_luan"]

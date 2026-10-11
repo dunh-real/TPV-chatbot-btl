@@ -88,6 +88,8 @@ async def test_local_powerpoint_contains_every_dynamic_value(environment, monkey
     state.update(await presentation.brief_node(state))
     class OfflinePresenton:
         async def generate(self,*args,**kwargs): raise PresentonError("offline")
+        # Đường dựng thẳng (mặc định) cũng phải lùi về bản tự dựng khi Presenton tắt.
+        async def get_template(self,*args,**kwargs): raise PresentonError("offline")
     monkeypatch.setattr(presentation,"get_presenton",OfflinePresenton)
     state.update(await presentation.render_node(state))
     state.update(await presentation.verify_node(state))
