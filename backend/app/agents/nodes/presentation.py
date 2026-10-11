@@ -1,6 +1,7 @@
 """Dựng PowerPoint từ dữ liệu truy vấn động hoặc tài liệu; kiểm tra số trong file đã xuất."""
 from __future__ import annotations
 
+import copy
 import logging
 import re
 import time
@@ -464,6 +465,16 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 MAX_DECK_ATTEMPTS = 2
 MAX_SUMMARY_ATTEMPTS = 3
 
+SUMMARY_LIMITS = {"tong_quan": 280, "nhan_xet": 300}
+
+
+def _summary_schema(limits: dict[str, int]) -> dict[str, Any]:
+    schema = copy.deepcopy(SUMMARY_SCHEMA)
+    schema["properties"]["tong_quan"]["maxLength"] = limits["tong_quan"]
+    schema["properties"]["nhan_xet"]["items"]["properties"]["noi_dung"]["maxLength"] = limits["nhan_xet"]
+    return schema
+
+
 SUMMARY_SCHEMA: dict[str, Any] = {
     "type": "object", "additionalProperties": False, "required": ["tong_quan", "nhan_xet", "ket_luan"],
     "properties": {
@@ -481,7 +492,8 @@ SUMMARY_SYSTEM = ("Bạn là chuyên viên tổng hợp báo cáo số liệu h�
                   "với dữ liệu. Chỉ viết tiếng Việt bằng chữ quốc ngữ.")
 
 
-def _summary_prompt(datasets: list[Any], unit: str, period: str) -> str:
+def _summary_prompt(datasets: list[Any], unit: str, period: str,
+                    limits: dict[str, int] = SUMMARY_LIMITS) -> str:
     blocks = []
     for d in datasets:
         bang = "\n".join(f"- {cat}: " + ", ".join(f"{name} {so_vn(vals[i])}" for name, vals in d.series)
@@ -496,8 +508,12 @@ def _summary_prompt(datasets: list[Any], unit: str, period: str) -> str:
             "- Không suy đoán nguyên nhân, không dự báo, không khuyến nghị hay đề xuất việc cần làm: "
             "kết luận chỉ nêu điều số liệu cho thấy.\n"
             "- Mã trạng thái (ví dụ 'Trạng thái 0') giữ nguyên là mã, không tự diễn giải.\n"
-            "- `tong_quan`: 1-2 câu, dưới 280 ký tự.\n"
-            "- `nhan_xet`: mỗi bảng một mục, trường `bang` ghi đúng khoá bảng, dưới 300 ký tự.\n"
+            "- Viết như người soạn báo cáo: gọi tên chỉ tiêu bằng tiếng Việt có dấu kèm đơn vị (\"12 người\"), "
+            "không viết khoá bảng, tên cột hay tên trường kỹ thuật (kiểu `bang_1`, `soluongnhansu`, "
+            "`ten_phong_ban`), không viết mã viết tắt trong ngoặc sau tên đơn vị.\n"
+            "- Dấu câu chuẩn: mỗi câu kết thúc bằng dấu chấm, không dùng dấu \"…\" hay \"·\".\n"
+            f"- `tong_quan`: 1-2 câu, dưới {limits['tong_quan']} ký tự.\n"
+            f"- `nhan_xet`: mỗi bảng một mục, trường `bang` ghi đúng khoá bảng, dưới {limits['nhan_xet']} ký tự.\n"
             "- `ket_luan`: đúng 3 ý; `tieu_de` dưới 22 ký tự, `noi_dung` dưới 110 ký tự.")
 
 
@@ -506,6 +522,12 @@ def _summary_problems(out: dict[str, Any], datasets: list[Any], known: set[str])
                      *(n.get("noi_dung", "") for n in out.get("nhan_xet", [])),
                      *(f"{k.get('tieu_de', '')} {k.get('noi_dung', '')}" for k in out.get("ket_luan", []))])
     problems = []
+    from app.documents.nhan_cot import la_ten_truong
+
+    if la_ten_truong(text.replace("bang_", "")) or re.search(r"\bbang_\d", text):
+        problems.append("có tên trường/khoá bảng kỹ thuật trong câu chữ - viết bằng tiếng Việt có dấu")
+    if "…" in text or "·" in text:
+        problems.append("dùng ký hiệu \"…\" hoặc \"·\"")
     if (la := check_numbers(text, known)).unverified:
         problems.append("số không có trong dữ liệu: " + ", ".join(sorted(set(la.unverified))))
     if (chu := tim_chu_ngoai_he(text)):
@@ -518,7 +540,8 @@ def _summary_problems(out: dict[str, Any], datasets: list[Any], known: set[str])
 
 
 async def _summarize(datasets: list[Any], unit: str, period: str,
-                     known: set[str]) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+                     known: set[str], limits: dict[str, int] = SUMMARY_LIMITS
+                     ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     """Qwen viết chữ dẫn dắt; mỗi lần sai quy tắc thì được chỉ ra lỗi và viết lại.
 
     Trả (bản tóm tắt hoặc None, log). None nghĩa là sau ba lần vẫn sai - bên gọi
@@ -527,7 +550,7 @@ async def _summarize(datasets: list[Any], unit: str, period: str,
     from app.services.llm import LLMError, get_llm, parse_json_response
 
     messages = [{"role": "system", "content": SUMMARY_SYSTEM},
-                {"role": "user", "content": _summary_prompt(datasets, unit, period)}]
+                {"role": "user", "content": _summary_prompt(datasets, unit, period, limits)}]
     log: dict[str, Any] = {"attempts": []}
     started = time.monotonic()
     for _ in range(MAX_SUMMARY_ATTEMPTS):
@@ -535,7 +558,7 @@ async def _summarize(datasets: list[Any], unit: str, period: str,
             raw = await get_llm().chat(
                 messages, temperature=0.0, max_tokens=1500, thinking=False,
                 extra={"response_format": {"type": "json_schema", "json_schema": {
-                    "name": "tom_tat_slide", "schema": SUMMARY_SCHEMA, "strict": True}}})
+                    "name": "tom_tat_slide", "schema": _summary_schema(limits), "strict": True}}})
             out = parse_json_response(raw)
         except (LLMError, ValueError) as exc:
             log["attempts"].append({"error": str(exc)[:200]})
@@ -590,13 +613,16 @@ async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, 
     report_date = date.today().strftime("%d/%m/%Y")
 
     # Số hợp lệ cho chữ Qwen: dữ liệu gốc + số kỳ + mọi số code đã viết (tỷ lệ...).
-    base_plan = sd.build_plan(data, params, unit, datasets, None, report_date)
+    ten_template = getattr(settings, "presenton_template", "modern") or "modern"
+    limits = {**SUMMARY_LIMITS, **sd.HO_SO.get(ten_template, {}).get("summary", {})}
+    base_plan = sd.chuyen_template(
+        sd.build_plan(data, params, unit, datasets, None, report_date, ten_template), ten_template)
     known = (collect_known_numbers(data) | _period_numbers(params) | sd.code_numbers(base_plan)
              | collect_known_numbers([unit, report_date]))
 
     summary, summary_log = None, {}
     if getattr(settings, "presenton_summary", True) and datasets:
-        summary, summary_log = await _summarize(datasets, unit, period, known)
+        summary, summary_log = await _summarize(datasets, unit, period, known, limits)
         timings["llm_summary"] = summary_log.get("seconds", 0.0)
         if summary is None and summary_log.get("llm_error"):
             assumptions.append(f"Không gọi được Qwen để viết phần nhận xét ({summary_log['llm_error'][:120]}); "
@@ -604,7 +630,8 @@ async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, 
         elif summary is None:
             assumptions.append("Qwen chưa viết được phần nhận xét đúng quy tắc đối chiếu số; "
                                "phần chữ trên slide do hệ thống tính từ số liệu.")
-    plan = sd.build_plan(data, params, unit, datasets, summary, report_date) if summary else base_plan
+    plan = sd.chuyen_template(sd.build_plan(data, params, unit, datasets, summary, report_date, ten_template),
+                              ten_template) if summary else base_plan
     title = f"Báo cáo số liệu {period} - {unit}"
 
     presenton = get_presenton()
@@ -619,7 +646,8 @@ async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, 
             pid = await presenton.create_blank()
             built = [sd.build_slide(p, i, pid, template) for i, p in enumerate(plan)]
             try:
-                await presenton.update_deck(pid, title, template["theme"], [s for s, _ in built])
+                await presenton.update_deck(pid, title, sd.theme_cho(ten_template, template["theme"]),
+                                            [s for s, _ in built])
                 deck_check = sd.verify_deck(await presenton.get_deck(pid), plan, [r for _, r in built])
             except PresentonError:
                 await presenton.delete_deck(pid)

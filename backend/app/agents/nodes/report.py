@@ -391,6 +391,10 @@ async def _gather_from_database(state, data) -> dict[str, Any]:
     if result.truncated:
         raise ToolError("Kết quả quá nhiều dòng để lập báo cáo đầy đủ. Hãy thu hẹp kỳ/phạm vi hoặc yêu cầu SQL tổng hợp.")
     data["queries"] = [result.as_dict()]
+    # Cột của Text-to-SQL mang tên alias (soluongnhansu...): đặt nhãn tiếng Việt trước khi lên Word/slide.
+    from app.documents.nhan_cot import gan_nhan_cot
+
+    await gan_nhan_cot(data["queries"][0], question)
     return {"data": data}
 
 

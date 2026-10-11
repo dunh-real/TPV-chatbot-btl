@@ -157,7 +157,10 @@ async def fetch_data_node(state: dict[str, Any]) -> dict[str, Any]:
         result = await query_erp(question)
         if result.truncated:
             return {"error": "Kết quả bị cắt; hãy thu hẹp phạm vi hoặc yêu cầu truy vấn tổng hợp trước khi lập Word."}
-        return {"data": {"queries": [result.as_dict()]}, "data_notes": result.warnings}
+        from app.documents.nhan_cot import gan_nhan_cot
+
+        query = await gan_nhan_cot(result.as_dict(), state["request"])
+        return {"data": {"queries": [query]}, "data_notes": result.warnings}
     except Exception as exc:
         return {"error": errors.as_error(exc, "truy vấn dữ liệu ERP")}
 

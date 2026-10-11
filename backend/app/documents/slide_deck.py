@@ -27,7 +27,8 @@ from typing import Any
 
 from app.documents.verify import collect_known_numbers, tim_chu_ngoai_he
 
-PALETTE = ["#234CD9", "#93B4F5", "#F59E0B", "#10B981", "#6B7280"]
+# Đa sắc, tương phản đủ để phân biệt chuỗi số liệu (không chỉ các sắc xanh của theme).
+PALETTE = ["#2563EB", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#0EA5E9", "#F97316", "#14B8A6"]
 ICON = "/static/icons/bold/{}-bold.svg"
 # Tắt sinh ảnh nên ô ảnh dùng ảnh giữ chỗ trung tính có sẵn trong Presenton.
 PLACEHOLDER_IMAGE = "/static/images/placeholder.jpg"
@@ -46,6 +47,20 @@ LAYOUT_CARDS = "title_description_bullet_points_list_with_icon"   # đúng 4 th�
 LAYOUT_GRID = "title_description_bullet_points_grid_with_icon"    # 2-6 thẻ
 LAYOUT_CHART = "title_description_chart"
 LAYOUT_TABLE_BASE = "title_description_chart_table"
+
+# Template momentum (Presenton): layout dùng cho từng loại slide - xem `chuyen_template`.
+M_TITLE = "title_with_accent_footer_6891"
+M_TOC = "center_title_agenda_grid_wave_7815"
+M_STEPS = "title_process_cards_9539"            # 1-4 thẻ có icon, nối bằng mũi tên: phạm vi dữ liệu
+M_CARDS = "title_over_cards_layout_8558"        # 2-6 thẻ đánh số: chỉ tiêu, kết luận
+M_CHART = "title_chart_analysis_sections_9322"  # biểu đồ cột + 1-4 ý nổi bật bên cạnh
+M_TABLE = "title_table_with_accents_1720"
+
+# Khác biệt theo template: số dòng/cột một trang bảng, độ dài chữ Qwen viết (vừa ô của layout).
+HO_SO: dict[str, dict[str, Any]] = {
+    "modern": {},
+    "momentum": {"table_rows": 8, "table_cols": 4, "summary": {"tong_quan": 180, "nhan_xet": 135}},
+}
 
 
 class DeckBuildError(ValueError):
@@ -337,17 +352,28 @@ def _cong_duoc(col: dict[str, Any]) -> bool:
     return not _KHONG_CONG.search(f"{col.get('name', '')} {col.get('label', '')} {col.get('unit', '')}")
 
 
+def _la_cot_ma(col: dict[str, Any]) -> bool:
+    """Cột mã/định danh (mã phòng ban, mã tài sản): chỉ để trong bảng chi tiết, không làm nhãn nhóm."""
+    name, label = str(col.get("name") or "").lower(), str(col.get("label") or "")
+    return label.startswith(("Mã", "STT")) or name.startswith(("ma", "code")) or name.endswith(("code", "id"))
+
+
 def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
                    num_cols: list[int]) -> Dataset:
     cols, rows = result["columns"], result["rows"]
     main = num_cols[0]
-    group = " · ".join(_nhan(cols[i].get("label") or cols[i].get("name")) for i in group_cols)
+    # Trục nhóm: cột tên có giá trị khác nhau ("Phòng ban", không ghép thêm "Mã phòng ban"); không có thì
+    # cột mã; cột hằng (cùng một năm ở mọi dòng) xếp cuối vì không phân biệt được dòng nào.
+    def hang(i: int) -> bool:
+        return len(rows) > 1 and len({str(r[i]) for r in rows}) == 1
+    cat = min(group_cols, key=lambda i: (hang(i), _la_cot_ma(cols[i]), group_cols.index(i)))
+    group = _nhan(cols[cat].get("label") or cols[cat].get("name"))
     label = _nhan(cols[main].get("label") or cols[main].get("name"))
     unit = str(cols[main].get("unit") or "")
     don_vi = f" {unit}" if unit else ""
 
     def ten(row: list[Any]) -> str:
-        return " · ".join(_nhan(row[i]) if row[i] is not None else "—" for i in group_cols)
+        return _nhan(row[cat]) if row[cat] is not None else "Chưa xác định"
 
     # Biểu đồ xếp theo cột số đầu; bảng giữ nguyên thứ tự của truy vấn.
     ordered = sorted(rows, key=lambda r: -(_so_hoc(r[main]) or 0))
@@ -359,7 +385,7 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
         others = len(pairs) - (CHART_MAX_BARS - 1 if cong else CHART_MAX_BARS)
         if cong:      # số đếm/tổng: phần còn lại gộp thành một cột, vẫn đúng tổng
             rest = pairs[CHART_MAX_BARS - 1:]
-            pairs = pairs[:CHART_MAX_BARS - 1] + [(f"Các {group.lower()} khác",
+            pairs = pairs[:CHART_MAX_BARS - 1] + [(f"{group} khác",
                                                    [sum(v[j] for _, v in rest) for j in range(len(series_cols))])]
         else:         # tỷ lệ/trung bình không cộng được: chỉ vẽ các mục cao nhất
             pairs = pairs[:CHART_MAX_BARS]
@@ -378,26 +404,45 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     total = sum(v for _, v in values) if cong else None
     facts: list[str] = []
     cards: list[tuple[str, str]] = []
+    nhom = group.lower()
     if total is not None:
-        facts.append(f"Tổng {label.lower()}: {_chu_so(total)}{don_vi} trên {len(rows)} {group.lower()}.")
-        cards.append((f"Tổng {label.lower()}", f"{_chu_so(total)}{don_vi} trên {len(rows)} {group.lower()}."))
+        facts.append(f"Tổng {label.lower()} là {_chu_so(total)}{don_vi}, trên {len(rows)} {nhom}.")
+        cards.append((f"Tổng {label.lower()}", f"{_chu_so(total)}{don_vi} trên {len(rows)} {nhom}."))
         ds.total_card = (f"{_chu_so(total)}{don_vi}", f"Tổng {label.lower()}")
     if values:
         top_name, top = values[0]
         share = f", chiếm {ty_le(top, total)}" if total else ""
-        facts.append(f"Cao nhất: {top_name} với {_chu_so(top)}{don_vi}{share}.")
-        cards.append(("Cao nhất", f"{top_name}: {_chu_so(top)}{don_vi}{share}."))
+        facts.append(f"{top_name} cao nhất với {_chu_so(top)}{don_vi}{share}.")
+        cards.append(("Cao nhất", f"{top_name} với {_chu_so(top)}{don_vi}{share}."))
         if len(values) > 1:
             low_name, low = values[-1]
-            facts.append(f"Thấp nhất: {low_name} với {_chu_so(low)}{don_vi}.")
-            cards.append(("Thấp nhất", f"{low_name}: {_chu_so(low)}{don_vi}."))
+            facts.append(f"{low_name} thấp nhất với {_chu_so(low)}{don_vi}.")
+            cards.append(("Thấp nhất", f"{low_name} với {_chu_so(low)}{don_vi}."))
         if (zero := [n for n, v in values if v == 0]):
-            facts.append(f"{len(zero)}/{len(values)} {group.lower()} có {label.lower()} bằng 0.")
+            facts.append(f"Có {len(zero)}/{len(values)} {nhom} chưa có số liệu {label.lower()}.")
     if others:
-        facts.append(f"Biểu đồ thể hiện {len(pairs)} cột; đủ {len(rows)} {group.lower()} trong bảng chi tiết.")
-    cards.append((f"Số {group.lower()}", f"{len(rows)} {group.lower()} trong kết quả truy vấn."))
+        facts.append(f"Biểu đồ thể hiện {len(pairs)} cột, bảng chi tiết có đủ {len(rows)} {nhom}.")
+    cards.append((f"Số {nhom}", f"{len(rows)} {nhom} có trong kết quả."))
     ds.facts, ds.highlights = facts, cards
     return ds
+
+
+_MENH_LENH = re.compile(r"^(?:hãy\s+|vui lòng\s+|cho tôi\s+|giúp tôi\s+)*(?:tạo|lập|làm|soạn|xuất|dựng|vẽ|tổng hợp)"
+                        r"(?:\s+cho tôi)?\s+(?:(?:một\s+)?(?:bộ\s+)?(?:slide|bản trình bày|báo cáo|file|văn bản|"
+                        r"word|excel|pdf|powerpoint|pptx|docx)\s*)+(?:về\s+|cho\s+)?", re.I)
+
+
+def noi_dung_cau_hoi(question: str) -> str:
+    """"Tạo slide báo cáo số lượng nhân sự..." -> "Số lượng nhân sự...": câu lệnh của người dùng không
+    phải nội dung báo cáo. Bỏ phần lịch sử hội thoại nối thêm sau dòng đầu."""
+    first = _nhan(question.splitlines()[0] if question else "")
+    text = _MENH_LENH.sub("", first).strip(" .:")
+    return (text[:1].upper() + text[1:]) if text else first
+
+
+def canh_bao_doc_duoc(warning: str) -> str:
+    """Cảnh báo của Text-to-SQL viết cho kỹ thuật ("SQL đã kiểm tra quyền...") -> câu cho người đọc."""
+    return re.sub(r"\bSQL\b", "Truy vấn", _nhan(warning))
 
 
 def query_parts(data: dict[str, Any]) -> QueryParts:
@@ -405,13 +450,13 @@ def query_parts(data: dict[str, Any]) -> QueryParts:
     for index, result in enumerate(data.get("queries") or []):
         cols, rows = result.get("columns") or [], result.get("rows") or []
         parts.sources += [s for s in result.get("source_tables") or [] if s not in parts.sources]
-        question = _nhan(str(result.get("question") or "").splitlines()[0] if result.get("question") else "")
+        question = noi_dung_cau_hoi(str(result.get("question") or ""))
         if question:
             parts.questions.append(question)
-        parts.notes += [("Lưu ý phạm vi dữ liệu", _nhan(w)) for w in result.get("warnings") or []]
+        parts.notes += [("Lưu ý phạm vi dữ liệu", canh_bao_doc_duoc(w)) for w in result.get("warnings") or []]
         if not rows:
-            parts.notes.append(("Không có dữ liệu", "Không có dữ liệu thỏa điều kiện truy vấn"
-                                + (f" \"{question[:80]}\"." if question else ".")))
+            parts.notes.append(("Không có dữ liệu", "Không có số liệu thỏa điều kiện"
+                                + (f" của nội dung \"{question[:80]}\"." if question else ".")))
             continue
         num_cols = [i for i, c in enumerate(cols) if _la_cot_so(c, [r[i] for r in rows])]
         group_cols = [i for i in range(len(cols)) if i not in num_cols]
@@ -421,7 +466,7 @@ def query_parts(data: dict[str, Any]) -> QueryParts:
             parts.kpis += [((f"{_chu_so(rows[0][i])} {cols[i].get('unit') or ''}").strip(),
                             _nhan(cols[i].get("label") or cols[i].get("name"))) for i in num_cols]
         else:
-            title = question[:60] or f"Kết quả truy vấn {index + 1}"
+            title = question[:60] or f"Kết quả tra cứu {index + 1}"
             parts.tables.append((title, [_nhan_cot(c) for c in cols],
                                  [[_chu_so(v) if i in num_cols else (_nhan(v) if v is not None else "—")
                                    for i, v in enumerate(r)] for r in rows]))
@@ -463,15 +508,12 @@ def kpi_cards(data: dict[str, Any]) -> list[tuple[str, str]]:
 
 
 def scope_cards(data: dict[str, Any], params: dict[str, Any], unit: str) -> list[tuple[str, str]]:
-    sources = [s.get("scope", {}).get("nguon") for k in ("personnel", "equipment")
-               if (s := data.get(k)) and s.get("scope", {}).get("nguon")]
     notes = sorted({n for k in ("personnel", "equipment")
                     if (n := ((data.get(k) or {}).get("scope") or {}).get("ghi_chu"))})
     compare = _compare(params)
     return [
         ("Đơn vị báo cáo", unit),
-        ("Nguồn dữ liệu", "CSDL ERP, truy vấn chỉ đọc"
-         + (f" ({', '.join(sources)})." if sources else ".")),
+        ("Nguồn dữ liệu", "Hệ thống ERP của đơn vị, truy vấn chỉ đọc."),
         ("Kỳ báo cáo", _period(params).capitalize() + (f", đối chiếu {compare}." if compare else ".")),
         ("Quy ước số liệu", " ".join(notes) or "Đếm theo bản ghi chưa xoá trong ERP."),
     ]
@@ -510,20 +552,20 @@ def query_kpi_cards(parts: QueryParts, datasets: list[Dataset]) -> list[tuple[st
 
 
 def query_scope_cards(parts: QueryParts, params: dict[str, Any], unit: str) -> list[tuple[str, str]]:
-    bang = ", ".join(parts.sources[:4]) + (" ..." if len(parts.sources) > 4 else "")
-    compare = _compare(params)
+    # Không in tên bảng CSDL, không ghi "đối chiếu kỳ trước": truy vấn động chỉ lấy đúng kỳ được hỏi.
+    so_bang = len(parts.sources)
     return [
         ("Đơn vị báo cáo", unit),
-        ("Nguồn dữ liệu", "CSDL ERP, truy vấn chỉ đọc" + (f" ({bang})." if bang else ".")),
-        ("Kỳ báo cáo", _period(params).capitalize() + (f", đối chiếu {compare}." if compare else ".")),
-        ("Câu hỏi truy vấn", (parts.questions[0][:150] if parts.questions else "Theo yêu cầu báo cáo.")),
+        ("Nguồn dữ liệu", "Hệ thống ERP của đơn vị, truy vấn chỉ đọc"
+         + (f" trên {so_bang} bảng dữ liệu." if so_bang else ".")),
+        ("Kỳ báo cáo", _period(params).capitalize() + "."),
+        ("Nội dung báo cáo", (parts.questions[0][:150] if parts.questions else "Theo yêu cầu của người dùng.")),
     ]
 
 
 def query_note_cards(parts: QueryParts) -> list[tuple[str, str]]:
     """Đúng 4 thẻ: cảnh báo của truy vấn và kết quả rỗng trước, thiếu thì ghi chú chung."""
-    generic = [("Truy vấn sinh tự động", "Câu SQL do hệ thống sinh theo chính sách truy vấn ERP, "
-                                         "chỉ đọc và chỉ trên các bảng được phép."),
+    generic = [("Truy vấn tự động", "Số liệu do hệ thống tự truy vấn, chỉ đọc và chỉ trên dữ liệu được phép."),
                ("Kiểm chứng", "Mọi con số trên slide đã được đối chiếu tự động với kết quả truy vấn."),
                ("Thời điểm số liệu", "Dữ liệu nhập sau thời điểm lập báo cáo sẽ làm thay đổi kết quả."),
                ("Phạm vi kết quả", "Số liệu đúng theo điều kiện trong câu hỏi; đổi điều kiện sẽ cho kết quả khác.")]
@@ -545,12 +587,42 @@ class SlidePlan:
     table: tuple[list[str], list[list[str]]] | None = None
 
 
-def _trang(rows: list[list[str]]) -> list[list[list[str]]]:
-    return [rows[i:i + TABLE_ROWS_PER_SLIDE] for i in range(0, len(rows), TABLE_ROWS_PER_SLIDE)] or [[]]
+def _trang(rows: list[list[str]], per_page: int = TABLE_ROWS_PER_SLIDE) -> list[list[list[str]]]:
+    """Chia đều số dòng giữa các trang (8 dòng, 7/trang -> 4 + 4), không để trang cuối lẻ một dòng."""
+    if not rows:
+        return [[]]
+    size = -(-len(rows) // -(-len(rows) // per_page))
+    return [rows[i:i + size] for i in range(0, len(rows), size)]
 
 
-def _table_slides(title: str, columns: list[str], rows: list[list[str]], intro: str) -> list[SlidePlan]:
-    pages = _trang(rows)
+def _chia_cot(columns: list[str], rows: list[list[str]], max_cols: int) -> list[tuple[list[str], list[list[str]]]]:
+    """Bảng trên slide không mang cột mã (mã phòng, STT) khi đã có cột tên làm khoá; layout chỉ nhận
+    `max_cols` cột thì chia nhóm cột, giữ cột đầu làm khoá."""
+    keep = [i for i, c in enumerate(columns) if i == 0 or not c.startswith(("Mã", "STT"))]
+    if columns[:1] and not columns[0].startswith(("Mã", "STT")) and len(keep) < len(columns):
+        columns, rows = [columns[i] for i in keep], [[r[i] for i in keep] for r in rows]
+    if not max_cols or len(columns) <= max_cols:
+        return [(columns, rows)]
+    keep = list(range(len(columns)))
+    if len(keep) <= max_cols:
+        return [([columns[i] for i in keep], [[r[i] for i in keep] for r in rows])]
+    rest = keep[1:]
+    step = max_cols - 1
+    return [([columns[0]] + [columns[i] for i in rest[k:k + step]],
+             [[r[0]] + [r[i] for i in rest[k:k + step]] for r in rows]) for k in range(0, len(rest), step)]
+
+
+def _table_slides(title: str, columns: list[str], rows: list[list[str]], intro: str,
+                  per_page: int = TABLE_ROWS_PER_SLIDE, max_cols: int = 0) -> list[SlidePlan]:
+    out = []
+    for columns, rows in _chia_cot(columns, rows, max_cols):
+        out += _table_pages(title, columns, rows, intro, per_page)
+    return out
+
+
+def _table_pages(title: str, columns: list[str], rows: list[list[str]], intro: str,
+                 per_page: int) -> list[SlidePlan]:
+    pages = _trang(rows, per_page)
     out = []
     for i, page in enumerate(pages, start=1):
         so_trang = f" ({i}/{len(pages)})" if len(pages) > 1 else ""
@@ -562,8 +634,13 @@ def _table_slides(title: str, columns: list[str], rows: list[list[str]], intro: 
 
 def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
                datasets: list[Dataset], summary: dict[str, Any] | None,
-               report_date: str) -> list[SlidePlan]:
-    """Toàn bộ nội dung deck. Không chữ nào trên slide nằm ngoài kế hoạch này."""
+               report_date: str, template: str = "modern") -> list[SlidePlan]:
+    """Toàn bộ nội dung deck. Không chữ nào trên slide nằm ngoài kế hoạch này.
+
+    Kế hoạch dựng theo bộ ô của template `modern` (dạng chuẩn); template khác được chuyển sang
+    layout của nó ở `chuyen_template` (gộp/đổi tên ô, rút gọn tiêu đề theo giới hạn layout)."""
+    hs = HO_SO.get(template, {})
+    per_page, max_cols = hs.get("table_rows", TABLE_ROWS_PER_SLIDE), hs.get("table_cols", 0)
     period = _period(params)
     notes = {n["bang"]: n["noi_dung"] for n in (summary or {}).get("nhan_xet", [])}
     parts = query_parts(data) if "queries" in data else None
@@ -590,7 +667,7 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
             "supporting_paragraph": overview,
             "badge_initials": "".join(w[0] for w in unit.split()[:2]).upper() or "BC",
             "card_primary_text": unit,
-            "card_secondary_text": f"CSDL ERP · {report_date}"}),
+            "card_secondary_text": f"Nguồn ERP, lập ngày {report_date}"}),
         SlidePlan(layout=LAYOUT_TOC, role="toc", note="Nội dung trình bày.",
                   texts={"header_text": "Nội dung trình bày"},
                   lists={"entry_grid": [{"badge_number": str(i), "entry_title": t, "entry_description": d}
@@ -617,18 +694,18 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
                               texts={"primary_heading": d.title, "supporting_paragraph": body}))
         plan.append(SlidePlan(layout=LAYOUT_CARDS, role="highlights", dataset=d,
                               note="; ".join(f"{t}: {x}" for t, x in d.highlights),
-                              texts={"section_heading": f"{d.short}: điểm nổi bật",
+                              texts={"section_heading": f"Điểm nổi bật về {d.short.lower()}",
                                      "body_paragraph": f"Các điểm chính về {d.title.lower()} {period}."},
                               lists={"card_stack": [{"card_title": t, "card_description": x}
                                                     for t, x in _du_bon(d.highlights)]},
                               icons=["sigma", "arrow-up", "arrows-left-right", "warning-circle"]))
-        intro = (f"Chi tiết {d.title.lower()} {period}, {len(d.table_rows)} dòng, "
-                 f"đúng theo kết quả truy vấn ERP.")
-        plan += _table_slides(f"Chi tiết {d.short.lower()}", d.table_columns, d.table_rows, intro)
+        intro = f"Số liệu chi tiết về {d.title.lower()} {period}, lấy từ hệ thống ERP."
+        plan += _table_slides(f"Chi tiết {d.short.lower()}", d.table_columns, d.table_rows, intro,
+                              per_page, max_cols)
 
     for title, columns, rows in (parts.tables if parts else []):
         plan += _table_slides(title[:40], columns, rows,
-                              f"{len(rows)} dòng, đúng theo kết quả truy vấn ERP.")
+                              f"Số liệu chi tiết {period}, lấy từ hệ thống ERP.", per_page, max_cols)
 
     if reporting:
         missing = reporting.get("missing") or []
@@ -644,7 +721,8 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
         if missing:
             plan += _table_slides("Đơn vị chưa gửi báo cáo", ["Mã đơn vị", "Đơn vị"],
                                   [[_nhan(m["ma_don_vi"]), _nhan(m["ten_don_vi"])] for m in missing],
-                                  f"{so(len(missing))} đơn vị chưa có báo cáo {period} trong sổ văn bản.")
+                                  f"{so(len(missing))} đơn vị chưa có báo cáo {period} trong sổ văn bản.",
+                                  per_page, max_cols)
 
     plan.append(SlidePlan(layout=LAYOUT_CARDS, role="notes", note="Ghi chú dữ liệu.",
                           texts={"section_heading": "Ghi chú dữ liệu",
@@ -667,7 +745,7 @@ def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
 
 def _du_bon(cards: list[tuple[str, str]]) -> list[tuple[str, str]]:
     """Layout thẻ dọc nhận đúng 4 thẻ."""
-    filler = [("Nguồn", "CSDL ERP, truy vấn tổng hợp chỉ đọc."),
+    filler = [("Nguồn", "Hệ thống ERP của đơn vị, truy vấn tổng hợp chỉ đọc."),
               ("Đối chiếu", "Số liệu trên slide đã được đối chiếu tự động với dữ liệu gốc.")]
     return (cards + filler)[:4] if len(cards) < 4 else cards[:4]
 
@@ -679,6 +757,8 @@ def code_numbers(plan: list[SlidePlan]) -> set[str]:
     Qwen viết KHÔNG được tính vào đây: nó chỉ được dùng số của bộ dữ liệu.
     """
     known: set[str] = set()
+    for i in range(1, len(plan) + 1):           # số trang ở chân slide
+        known |= {str(i), f"{i:02d}"}
     for p in plan:
         if p.role in ("conclusion",):
             continue
@@ -703,16 +783,57 @@ def code_numbers(plan: list[SlidePlan]) -> set[str]:
 # Điền layout
 # --------------------------------------------------------------------------- #
 def fit(text: str, limit: int) -> str:
-    """Rút gọn theo ranh giới câu, rồi ranh giới từ - không để renderer cắt cứng giữa từ/số."""
-    text = " ".join(str(text).split())
+    """Rút gọn theo ranh giới câu, rồi vế câu, rồi từ - không cắt giữa từ/số, không thêm "…"."""
+    lines = [" ".join(line.split()) for line in str(text).split("\n")]
+    text = "\n".join(line for line in lines if line)
     if not limit or len(text) <= limit:
         return text
     cut = text[:limit]
-    for sep in (". ", "; "):
+    for sep in (". ", "; ", ", "):
         i = cut.rfind(sep)
         if i > limit // 3:
-            return cut[:i + 1].rstrip(";").rstrip() + ("" if sep == ". " else ".")
-    return cut[:limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:-") + "…"
+            return cut[:i].rstrip(" ,;:-") + "."
+    return cut.rsplit(" ", 1)[0].rstrip(" ,;:-")
+
+
+# Ô tiêu đề/nhãn (không chấm câu) và ô đoạn văn (luôn kết thúc bằng dấu câu).
+_O_TIEU_DE = re.compile(r"(heading|title|label|badge|marker|pagination|folio|page|tag|price|value|initials|"
+                        r"header|headline|metadata|primary_text|secondary_text|number)", re.I)
+_DAU_KET = (".", "!", "?", ":", "%", ")")
+
+
+_O_CAU = re.compile(r"(subtitle|paragraph|description|caption|summary|body|intro)", re.I)
+
+
+def kieu_o(name: str) -> str:
+    """Mục lục là nhãn ngắn (không chấm); ô phụ đề/mô tả là câu dù tên ô có chữ "title"."""
+    name = name or ""
+    if "agenda" in name.lower():
+        return "tieu_de"
+    if _O_CAU.search(name):
+        return "cau"
+    return "tieu_de" if _O_TIEU_DE.search(name) else "cau"
+
+
+def chuan_hoa(text: str, kieu: str = "cau") -> str:
+    """Chuẩn hoá trình bày: khoảng trắng, dấu câu, viết hoa chữ đầu; bỏ ký hiệu kỹ thuật ("·", "…")."""
+    out = []
+    for line in str(text or "").split("\n"):
+        t = " ".join(line.split())
+        t = t.replace(" · ", ", ").replace("·", ",").replace("…", "").replace("...", "")
+        t = re.sub(r"\s+([,.;:!?%)])", r"\1", t)                  # không cách trước dấu câu
+        t = re.sub(r"([,;:])(?=[^\s\d/])", r"\1 ", t)               # cách sau dấu phẩy/chấm phẩy
+        t = re.sub(r"([.,;:])[.,;]+", r"\1", t)                     # dấu câu lặp
+        t = re.sub(r"\(\s+", "(", t).strip(" ,;")
+        if t:
+            t = t[:1].upper() + t[1:]
+        out.append(t)
+    t = "\n".join(x for x in out if x)
+    if not t:
+        return ""
+    if kieu == "tieu_de":
+        return t.rstrip(" .;:,")
+    return t if t.endswith(_DAU_KET) else t.rstrip(" ,;") + "."
 
 
 @dataclass(slots=True)
@@ -720,10 +841,18 @@ class FillReport:
     written: list[str] = field(default_factory=list)
     unmapped: list[str] = field(default_factory=list)
     icon_i: int = 0
+    page: int = 0
+
+
+_O_TRANG = re.compile(r"(marker|pagination|page_number|folio|page_label|footer_index)", re.I)
 
 
 def _set_text(e: dict[str, Any], text: str) -> str:
-    text = fit(text, e.get("max_length") or 0)
+    kieu = kieu_o(e.get("name") or "")
+    limit = e.get("max_length") or 0
+    text = chuan_hoa(text, kieu)
+    if limit and len(text) > limit:
+        text = chuan_hoa(fit(text, limit - (1 if kieu == "cau" else 0)), kieu)
     e["runs"] = [{**(e.get("runs") or [{}])[0], "text": text}]
     return text
 
@@ -735,6 +864,9 @@ def _fill(elems: list[dict[str, Any]], vals: dict[str, str], lists: dict[str, li
         if t == "text" and name and not e.get("decorative"):
             if name in vals:
                 rep.written.append(_set_text(e, vals[name]))
+            elif rep.page and _O_TRANG.search(name):
+                e["runs"] = [{**(e.get("runs") or [{}])[0], "text": f"{rep.page:02d}"}]
+                rep.written.append(f"{rep.page:02d}")
             else:
                 _set_text(e, "")
                 rep.unmapped.append(name)
@@ -743,7 +875,8 @@ def _fill(elems: list[dict[str, Any]], vals: dict[str, str], lists: dict[str, li
                 if icons:
                     e["data"] = ICON.format(icons[rep.icon_i % len(icons)])
                 rep.icon_i += 1
-            else:
+            elif not (e.get("decorative") and e.get("data")):
+                # Ảnh trang trí của template (sóng, góc, khung) giữ nguyên; ô ảnh nội dung dùng ảnh giữ chỗ.
                 e["data"] = PLACEHOLDER_IMAGE
         elif t in ("grid", "flex", "group") and name in lists:
             items = lists[name]
@@ -775,7 +908,9 @@ def _fill_chart(ui: dict[str, Any], ds: Dataset) -> None:
                 el["legend"] = len(pay["series"]) > 1
                 el["x_axis_title"] = ""
                 el["y_axis_title"] = ""
-                el["colors"] = PALETTE[:max(len(pay["series"]), 1)]
+                # Một chuỗi: Presenton tô từng cột theo `colors` -> mỗi nhóm một màu thay vì cả biểu đồ một màu.
+                n = len(pay["categories"]) if len(pay["series"]) == 1 else len(pay["series"])
+                el["colors"] = [PALETTE[i % len(PALETTE)] for i in range(max(n, 1))]
                 el["data_labels"] = "top"
 
 
@@ -825,6 +960,53 @@ def _table_ui(base: dict[str, Any], columns: list[str], rows: list[list[str]]) -
     return ui
 
 
+def _table_ui_momentum(base: dict[str, Any], columns: list[str], rows: list[list[str]]) -> dict[str, Any]:
+    """Layout bảng của momentum chỉ chứa 4 dòng chữ cỡ 23: kéo bảng lên sát đoạn giới thiệu và giảm
+    cỡ chữ để chứa tối đa 8 dòng mà không đè lên chân trang (y < 650). Chữ tiêu đề cột của template
+    màu trắng trên nền xanh nhạt 8% (gần như không đọc được) -> đổi sang màu nhấn của template."""
+    ui = copy.deepcopy(base)
+    for c in ui["components"]:
+        if c["id"] != "comparison_table":
+            continue
+        c["position"] = {**c.get("position", {}), "y": 285.0}
+        for e in c["elements"]:
+            if e.get("type") != "table":
+                continue
+            head, body = copy.deepcopy(e["columns"][0]), copy.deepcopy(e["rows"][0][0])
+            for cell in (head, body):
+                for holder in [cell, *(cell.get("runs") or [])]:
+                    if isinstance(holder.get("font"), dict):
+                        holder["font"]["size"] = 16.0
+                        if cell is head:
+                            holder["font"]["color"] = "#1A3DB3"
+            e["size"] = {"width": e["size"]["width"], "height": min(42.0, 365.0 / (len(rows) + 1)) * (len(rows) + 1)}
+            e["columns"] = [_cell(head, col) for col in columns]
+            e["rows"] = [[_cell(body, val) for val in row] for row in rows]
+            e["max_columns"], e["max_rows"] = len(columns), max(len(rows), 1)
+            e["min_columns"], e["min_rows"] = 1, 1
+    return ui
+
+
+_M_NOI_DUNG = {M_STEPS, M_CARDS, M_CHART, M_TABLE}
+
+
+def _thu_tieu_de(ui: dict[str, Any], size: float = 68.0) -> None:
+    """Tiêu đề momentum cỡ 82-89, giãn dòng 0.9: chữ có phần dưới dòng (p, g, y) đè lên đoạn giới thiệu
+    đặt ngay dưới (cách ~80px). Cỡ 68 giữ được độ đậm của template mà không chạm đoạn dưới."""
+    def walk(e: dict[str, Any]) -> None:
+        if e.get("type") == "text" and (e.get("font") or {}).get("size", 0) >= 80:
+            for holder in [e, *(e.get("runs") or [])]:
+                if isinstance(holder.get("font"), dict):
+                    holder["font"]["size"] = size
+        for k in e.get("children") or []:
+            walk(k)
+        if e.get("child"):
+            walk(e["child"])
+    for c in ui["components"]:
+        for e in c["elements"]:
+            walk(e)
+
+
 def build_slide(p: SlidePlan, index: int, presentation_id: str,
                 template: dict[str, Any]) -> tuple[dict[str, Any], FillReport]:
     layouts = template["layouts"]
@@ -832,8 +1014,10 @@ def build_slide(p: SlidePlan, index: int, presentation_id: str,
         raise DeckBuildError(f"Template thiếu layout {p.layout}")
     ui = copy.deepcopy(layouts[p.layout])
     if p.table is not None:
-        ui = _table_ui(ui, *p.table)
-    rep = FillReport()
+        ui = (_table_ui_momentum if p.layout == M_TABLE else _table_ui)(ui, *p.table)
+    if p.layout in _M_NOI_DUNG:
+        _thu_tieu_de(ui)
+    rep = FillReport(page=index + 1)
     for c in ui["components"]:
         _fill(c["elements"], p.texts, p.lists, p.icons, rep)
     if p.role == "chart" and p.dataset:
@@ -901,6 +1085,98 @@ def ui_texts(ui: dict[str, Any]) -> list[str]:
     return out
 
 
+# --------------------------------------------------------------------------- #
+# Chuyển kế hoạch chuẩn sang layout của template khác
+# --------------------------------------------------------------------------- #
+_NGAN = {"Phạm vi và nguồn dữ liệu": "Phạm vi dữ liệu", "Tình hình gửi báo cáo": "Gửi báo cáo"}
+
+
+def _ngan(text: str, limit: int) -> str:
+    """Tiêu đề ngắn cho ô hẹp: bản rút gọn có sẵn, không có thì cắt ở ranh giới từ (không chấm, không "…")."""
+    text = _NGAN.get(text, text)
+    return text if len(text) <= limit else text[:limit + 1].rsplit(" ", 1)[0].rstrip(" ,;:-")
+
+
+def _the(p: SlidePlan, list_name: str) -> list[dict[str, str]]:
+    return p.lists.get(list_name) or []
+
+
+def chuyen_template(plan: list[SlidePlan], template: str) -> list[SlidePlan]:
+    """Kế hoạch dựng theo ô của `modern` -> layout của `template`. Template chưa có ánh xạ: giữ nguyên.
+
+    momentum: slide "điểm nổi bật" gộp vào cạnh biểu đồ (layout biểu đồ có sẵn cột ý chính), bớt
+    một slide thẻ lặp lại cho mỗi bảng số liệu."""
+    if template != "momentum":
+        return plan
+    out: list[SlidePlan] = []
+    for i, p in enumerate(plan):
+        t = p.texts
+        if p.role == "title":
+            m = re.match(r"^Báo cáo T(\d+)/(\d+)$", t["primary_heading"])
+            cover = f"Báo cáo\n{m.group(1)}/{m.group(2)}" if m else "Báo cáo\nsố liệu"
+            out.append(SlidePlan(layout=M_TITLE, role="title", note=p.note, texts={
+                "cover_title": cover, "cover_subtitle": t["supporting_paragraph"],
+                "presenter_metadata": f"Đơn vị: {t['card_primary_text']}",
+                "date_metadata": t["card_secondary_text"].replace("Nguồn ERP, l", "L")}))
+        elif p.role == "toc":
+            out.append(SlidePlan(layout=M_TOC, role="toc", note=p.note, texts={"slide_title": t["header_text"]},
+                                 lists={"grid_items_elements_with_descrtipiton_title": [
+                                     {"agenda_item_label": f"{int(x['badge_number']):02d}",
+                                      "agenda_item_description": _ngan(x["entry_title"], 18)}
+                                     for x in _the(p, "entry_grid")[:8]]}))
+        elif p.role == "scope":
+            out.append(SlidePlan(layout=M_STEPS, role="scope", note=p.note, icons=p.icons,
+                                 texts={"main_title": t["section_heading"], "intro_description": t["body_paragraph"]},
+                                 lists={"flex_elements": [{"step_heading": x["card_title"],
+                                                           "step_description": x["card_description"]}
+                                                          for x in _the(p, "card_stack")[:4]]}))
+        elif p.role == "highlights":
+            continue                                     # đã nằm cạnh biểu đồ
+        elif p.role == "chart":
+            nxt = plan[i + 1] if i + 1 < len(plan) else None
+            y = _the(nxt, "card_stack") if nxt and nxt.role == "highlights" and nxt.dataset is p.dataset else []
+            items = [{"note_label": f"{k:02d}", "note_description": f"{x['card_title']}: {x['card_description']}"}
+                     for k, x in enumerate(y[:4], start=1)]
+            out.append(SlidePlan(layout=M_CHART, role="chart", note=p.note, dataset=p.dataset,
+                                 texts={"main_title": t["primary_heading"], "intro_description": t["supporting_paragraph"],
+                                        "section_heading": "Điểm nổi bật"},
+                                 lists={"section_grid_lists": items} if items else {}))
+        elif p.role == "table":
+            heading = t["main_heading"]
+            trang = m.group(0) if (m := re.search(r"\(\d+/\d+\)$", heading)) else ""
+            intro = t["intro_paragraph"] if heading.startswith("Chi tiết") else f"{heading}: {t['intro_paragraph']}"
+            intro = intro.rstrip(".") + (f", trang {trang.strip('()')}." if trang and heading.startswith("Chi tiết") else ".")
+            out.append(SlidePlan(layout=M_TABLE, role="table", note=p.note, table=p.table,
+                                 texts={"slide_title": "Chi tiết", "intro_paragraph": intro}))
+        elif p.role == "notes":
+            # Layout timeline của momentum dựng sẵn đúng 4 thẻ (thẻ đầu, lưới 2 thẻ, thẻ mũi tên): ít ghi chú
+            # hơn thì thẻ bị lặp/tràn mép -> dùng layout thẻ đánh số như kết luận.
+            out.append(SlidePlan(layout=M_CARDS, role="notes", note=p.note, icons=p.icons,
+                                 texts={"main_heading": _ngan(t["section_heading"], 17),
+                                        "subtitle_text": t["body_paragraph"]},
+                                 lists={"cards_row": [{"card_badge_label": f"{k:02d}", "card_title": x["card_title"],
+                                                       "card_description": x["card_description"]}
+                                                      for k, x in enumerate(_the(p, "card_stack")[:3], start=1)]}))
+        else:                                            # kpi, reporting, conclusion: thẻ đánh số
+            out.append(SlidePlan(layout=M_CARDS, role=p.role, note=p.note, icons=p.icons,
+                                 texts={"main_heading": _ngan(t["large_heading"], 17),
+                                        "subtitle_text": t["supporting_paragraph"]},
+                                 lists={"cards_row": [{"card_badge_label": f"{k:02d}", "card_title": x["card_title"],
+                                                       "card_description": x["card_caption"]}
+                                                      for k, x in enumerate(_the(p, "grid_1")[:6], start=1)]}))
+    return out
+
+
+def theme_cho(template: str, theme: dict[str, Any]) -> dict[str, Any]:
+    """Theme gửi Presenton: giữ font/màu nền của template, thay dải màu biểu đồ bằng bảng đa sắc
+    (theme momentum gốc chỉ có các sắc xanh nên biểu đồ nhiều chuỗi trông như một màu)."""
+    out = copy.deepcopy(theme)
+    colors = out.setdefault("colors", {})
+    for i, color in enumerate(PALETTE):
+        colors[f"graph_{i}"] = color
+    return out
+
+
 def verify_deck(presentation: dict[str, Any], plan: list[SlidePlan],
                 reports: list[FillReport]) -> dict[str, Any]:
     """Đọc lại deck Presenton đã lưu: đủ slide, đúng layout, chữ đúng nguyên văn,
@@ -934,6 +1210,11 @@ def verify_deck(presentation: dict[str, Any], plan: list[SlidePlan],
             charts_ok += ok
             if not ok:
                 issues.append({"type": "chart_mismatch", "slide": s.get("index"), "detail": p.dataset.key})
-    return {"ok": not issues, "slides": len(slides), "planned": len(plan),
+    from app.documents.nhan_cot import la_ten_truong
+
+    # Tên trường CSDL lọt lên slide: cảnh báo kèm vị trí (nhãn cột đã được đặt trước khi dựng deck).
+    field_like = [{"slide": r_i + 1, "text": w[:80]} for r_i, r in enumerate(reports) for w in r.written
+                  if la_ten_truong(w)]
+    return {"ok": not issues, "slides": len(slides), "planned": len(plan), "field_like": field_like,
             "charts_ok": charts_ok, "charts_total": charts_total,
             "unmapped_slots": sum(len(r.unmapped) for r in reports), "issues": issues}

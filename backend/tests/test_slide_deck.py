@@ -222,7 +222,7 @@ def test_tom_tat_dung_so_lieu_thi_khong_loi():
 @pytest.mark.parametrize(("text", "limit", "expected"), [
     ("Ngắn.", 30, "Ngắn."),
     ("Câu một dài. Câu hai rất dài không vừa", 20, "Câu một dài."),
-    ("mot hai ba bon nam sau bay", 12, "mot hai ba…"),
+    ("mot hai ba bon nam sau bay", 12, "mot hai ba"),      # cắt ở ranh giới từ, không thêm "…"
 ])
 def test_fit_cat_o_ranh_gioi_cau_tu(text, limit, expected):
     assert sd.fit(text, limit) == expected
@@ -267,8 +267,8 @@ def test_truy_van_dong_nhom_va_so_thanh_bieu_do():
     assert ds.table_columns == ["Danh mục", "Số lượng (cái)"]
     assert ds.table_rows == [["Máy chủ", "6"], ["Máy in", "8"], ["Bàn", "0"]]   # bảng giữ thứ tự SQL
     assert ds.total_card == ("14 cái", "Tổng số lượng")
-    assert ds.facts[:2] == ["Tổng số lượng: 14 cái trên 3 danh mục.", "Cao nhất: Máy in với 8 cái, chiếm 57,1%."]
-    assert "1/3 danh mục có số lượng bằng 0." in ds.facts
+    assert ds.facts[:2] == ["Tổng số lượng là 14 cái, trên 3 danh mục.", "Máy in cao nhất với 8 cái, chiếm 57,1%."]
+    assert "Có 1/3 danh mục chưa có số liệu số lượng." in ds.facts
 
 
 def test_cot_ty_le_khong_cong_thanh_tong_va_giu_so_goc():
@@ -285,7 +285,7 @@ def test_cot_id_va_nam_khong_phai_so_lieu():
             ("total", "int", "Nhân sự", "người")], [[11, 2026, 5], [12, 2026, 7]])
     ds, = sd.query_parts({"queries": [q]}).datasets
     assert [n for n, _ in ds.series] == ["Nhân sự"]
-    assert ds.categories == ["12 · 2026", "11 · 2026"]
+    assert ds.categories == ["12", "11"]            # cột năm giống nhau ở mọi dòng không làm trục nhóm
 
 
 def test_ket_qua_mot_dong_thanh_the_chi_tieu_chu_thanh_bang_rong_thanh_ghi_chu():
@@ -312,8 +312,8 @@ def test_deck_tu_truy_van_dong_dung_layout_template_va_tu_doi_chieu_duoc():
     assert {"kpi", "chart", "highlights", "table", "notes"} <= set(roles)
     assert {p.layout for p in plan} <= set(TEMPLATE["layouts"])
     scope = next(p for p in plan if p.role == "scope").lists["card_stack"]
-    assert scope[1]["card_description"] == "CSDL ERP, truy vấn chỉ đọc (dbo.Asm_Assets)."
-    assert scope[3] == {"card_title": "Câu hỏi truy vấn", "card_description": "Số lượng tài sản theo danh mục"}
+    assert scope[1]["card_description"] == "Hệ thống ERP của đơn vị, truy vấn chỉ đọc trên 1 bảng dữ liệu."
+    assert scope[3] == {"card_title": "Nội dung báo cáo", "card_description": "Số lượng tài sản theo danh mục"}
     built = [sd.build_slide(p, i, "pid", TEMPLATE) for i, p in enumerate(plan)]
     check = sd.verify_deck({"slides": [s for s, _ in built]}, plan, [r for _, r in built])
     assert check["ok"], check["issues"]
@@ -326,3 +326,95 @@ def test_khong_co_ky_thi_khong_bia_thang():
     assert plan[0].texts["primary_heading"] == "Báo cáo số liệu"
     ky = next(p for p in plan if p.role == "scope").lists["card_stack"][2]
     assert ky["card_description"] == "Theo câu hỏi truy vấn."
+
+
+# ---------------------------------------------------- chuẩn hoá chữ + template momentum -- #
+MOMENTUM = json.loads((Path(__file__).parent / "fixtures" / "presenton_momentum_template.json")
+                      .read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize(("text", "kieu", "expected"), [
+    ("tổng  27 người , trên 7 phòng ban", "cau", "Tổng 27 người, trên 7 phòng ban."),
+    ("Phòng Kinh doanh · KIDO…", "cau", "Phòng Kinh doanh, KIDO."),
+    ("Kết luận.", "tieu_de", "Kết luận"),
+    ("Tỷ lệ 44,4%", "cau", "Tỷ lệ 44,4%"),
+    ("a;b,c..", "cau", "A; b, c."),
+])
+def test_chuan_hoa_dau_cau(text, kieu, expected):
+    assert sd.chuan_hoa(text, kieu) == expected
+
+
+def test_noi_dung_bao_cao_bo_cau_lenh():
+    assert sd.noi_dung_cau_hoi("Tạo slide báo cáo số lượng nhân sự theo phòng ban tháng 10/2026") == \
+        "Số lượng nhân sự theo phòng ban tháng 10/2026"
+    assert sd.noi_dung_cau_hoi("Lập báo cáo Word tài sản theo danh mục") == "Tài sản theo danh mục"
+
+
+def _momentum_plan(rows: int = 9) -> list[sd.SlidePlan]:
+    q = _q([("tenphongban", "nvarchar", "Phòng ban", None), ("maphongban", "nvarchar", "Mã phòng ban", None),
+            ("soluongnhansu", "int", "Số nhân sự", "người")],
+           [[f"Phòng {i}", f"P{i:02d}", i] for i in range(1, rows + 1)],
+           question="Tạo slide báo cáo số nhân sự theo phòng ban tháng 10/2026",
+           warnings=["SQL đã kiểm tra quyền và khả năng chạy."])
+    data = {"queries": [q]}
+    summary = {"tong_quan": "Tháng 10/2026 có 45 người.", "nhan_xet": [{"bang": "bang_1", "noi_dung": "Phòng 9 đông nhất."}],
+               "ket_luan": [{"tieu_de": "Quy mô", "noi_dung": "45 người."}] * 3}
+    plan = sd.build_plan(data, PARAMS, "Đơn vị thử", sd.build_datasets(data, PARAMS), summary, "09/10/2026",
+                         "momentum")
+    return sd.chuyen_template(plan, "momentum")
+
+
+def test_momentum_dung_layout_cua_template_va_gop_diem_noi_bat_vao_bieu_do():
+    plan = _momentum_plan()
+    assert {p.layout for p in plan} <= set(MOMENTUM["layouts"])
+    assert "highlights" not in [p.role for p in plan]
+    chart = next(p for p in plan if p.role == "chart")
+    notes = [x["note_description"] for x in chart.lists["section_grid_lists"]]
+    assert notes[1] == "Cao nhất: Phòng 9 với 9 người, chiếm 20%."
+    tables = [p for p in plan if p.role == "table"]
+    assert [len(p.table[1]) for p in tables] == [5, 4]                       # 9 dòng, 8/trang -> chia đều 5 + 4
+    assert all(p.table[0] == ["Phòng ban", "Số nhân sự (người)"] for p in tables)   # bỏ cột mã
+    assert plan[0].texts["cover_title"] == "Báo cáo\n9/2026"
+
+
+def test_momentum_dung_ra_ui_vua_o_khong_ten_truong_co_so_trang():
+    plan = _momentum_plan()
+    built = [sd.build_slide(p, i, "pid", MOMENTUM) for i, p in enumerate(plan)]
+    check = sd.verify_deck({"slides": [s for s, _ in built]}, plan, [r for _, r in built])
+    assert check["ok"], check["issues"]
+    assert check["field_like"] == []
+
+    def texts(e, out):
+        if e.get("type") == "text" and e.get("name") and not e.get("decorative"):
+            out.append((e["name"], e.get("max_length") or 0, sd._run_text(e)))
+        for k in e.get("children") or []:
+            texts(k, out)
+        if e.get("child"):
+            texts(e["child"], out)
+    for slide, _ in built:
+        out = []
+        for c in slide["ui"]["components"]:
+            for e in c["elements"]:
+                texts(e, out)
+        for name, limit, text in out:
+            assert not limit or len(text) <= limit, (slide["layout"], name, text)
+            assert "…" not in text and "·" not in text, (name, text)
+        marker = [t for n, _, t in out if sd._O_TRANG.search(n)]
+        assert marker == [f"{slide['index'] + 1:02d}"] * len(marker)
+    # Ảnh trang trí của template giữ nguyên, không bị thay bằng ảnh giữ chỗ.
+    cover = json.dumps(built[0][0]["ui"])
+    assert "/app_data/templates/momentum/static/" in cover and sd.PLACEHOLDER_IMAGE not in cover
+
+
+def test_bang_nhieu_cot_bo_cot_ma_roi_chia_nhom_cot():
+    cols = ["Phòng ban", "Mã phòng ban", "A", "B", "C", "D"]
+    rows = [["P1", "M1", "1", "2", "3", "4"]]
+    parts = sd._chia_cot(cols, rows, 4)
+    assert [c for c, _ in parts] == [["Phòng ban", "A", "B", "C"], ["Phòng ban", "D"]]
+
+
+def test_theme_cho_bieu_do_da_sac():
+    theme = sd.theme_cho("momentum", MOMENTUM["theme"])
+    graph = [theme["colors"][f"graph_{i}"] for i in range(4)]
+    assert len(set(graph)) == 4 and graph[:2] == sd.PALETTE[:2]
+    assert MOMENTUM["theme"]["colors"]["graph_1"] == "#213EBB"            # không sửa theme gốc
