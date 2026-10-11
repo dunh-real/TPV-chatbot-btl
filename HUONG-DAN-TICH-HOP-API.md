@@ -48,7 +48,7 @@ curl -X POST https://chatbot-demo.tpvtech.vn/api/agent/chat \
   "plan":    { "steps": [ ... ], "confidence": 1.0, "clarify": "", "reason": "...", "source": "llm" },
   "steps":   [ { "id": "s1", "intent": "agent", "answer": "...", "attempts": 1, "empty": false, "error": "" } ],
   "citations": [],
-  "refs":      [ { "id": 1, "kind": "cong_cu", "label": "get_personnel_statistics(...)", "snippet": "...", "locator": {...} } ],
+  "refs":      [ { "id": 1, "kind": "cong_cu", "label": "query_erp(question)", "snippet": "...", "locator": {...} } ],
   "artifacts": [],
   "missing_input": [],
   "result": { ... },
@@ -372,7 +372,7 @@ event: step_start     {"id":"s1","intent":"agent","request":"...","label":"Tra s
 event: step_progress  {"round":1,"max_rounds":8,"phase":"đang suy nghĩ"}
 event: step_progress  {"round":1,"max_rounds":8,"phase":"đang tra","tools":["get_reporting_status"]}
 event: step_progress  {"round":2,"max_rounds":8,"phase":"đang suy nghĩ"}
-event: step_progress  {"round":2,"max_rounds":8,"phase":"đang tra","tools":["get_personnel_statistics"]}
+event: step_progress  {"round":2,"max_rounds":8,"phase":"đang tra","tools":["query_erp"]}
 event: step_progress  {"round":3,"max_rounds":8,"phase":"đang suy nghĩ"}
 event: answer_delta   {"text":"Kỳ báo cáo "}          ← lặp lại rất nhiều lần
 event: step_done      {"id":"s1","intent":"agent","planned_intent":"agent","label":"Tra số liệu",

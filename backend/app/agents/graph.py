@@ -44,7 +44,6 @@ from app.agents.nodes.drafting import (
     fetch_data_node,
     register_node,
     render_sections_node,
-    search_regulations_node,
     select_template_node,
     validate_node,
 )
@@ -265,7 +264,6 @@ def build_draft_graph():
     graph.add_node("extract_params", extract_params_node)
     graph.add_node("select_template", select_template_node)
     graph.add_node("fetch_data", fetch_data_node)
-    graph.add_node("search_regulations", search_regulations_node)
     graph.add_node("render_sections", render_sections_node)
     graph.add_node("count_retry", _count_retry)
     graph.add_node("validate", validate_node)
@@ -277,9 +275,7 @@ def build_draft_graph():
                                 {"select_template": "select_template", "__end__": END})
     graph.add_conditional_edges("select_template", route_after_template,
                                 {"fetch_data": "fetch_data", "__end__": END})
-    # Số liệu và quy định độc lập nhau -> chạy song song.
-    graph.add_edge("fetch_data", "search_regulations")
-    graph.add_edge("search_regulations", "render_sections")
+    graph.add_edge("fetch_data", "render_sections")
     graph.add_edge("render_sections", "validate")
     graph.add_conditional_edges("validate", route_after_validate,
                                 {"render_sections": "count_retry", "export": "export"})
@@ -368,6 +364,7 @@ async def run_draft_workflow(
         "ma_don_vi": result.get("ma_don_vi", ""),
         "template": result.get("template", {}).get("ma_template", ""),
         "template_name": result.get("template", {}).get("ten_bao_cao", ""),
+        "data": result.get("data", {}),
         "sections": result.get("sections", []),
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
@@ -495,6 +492,7 @@ async def run_presentation_workflow(
         "request": request,
         "params": result.get("params", {}),
         "brief": result.get("brief", ""),
+        "data": result.get("data", {}),
         "engine": result.get("engine", ""),
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
@@ -1098,7 +1096,7 @@ def _summarize_report(result: dict[str, Any]) -> str:
 
 
 # Tên công cụ nói bằng tiếng người. `tool_log` giữ tên hàm, mà tên hàm là chữ của
-# lập trình viên: "Tôi đã tra bằng get_personnel_statistics" là câu đọc lên cho
+# lập trình viên: "Tôi đã tra bằng query_erp" là câu đọc lên cho
 # người dùng nghe thấy chính cấu trúc bên trong hệ thống, không phải câu trả lời.
 TOOL_VI: dict[str, str] = {
     "search_documents": "tìm trong kho tài liệu",
@@ -1107,9 +1105,7 @@ TOOL_VI: dict[str, str] = {
     "get_template": "tra mẫu báo cáo",
     "generate_docx": "dựng file .docx",
     "generate_presentation": "dựng bộ slide",
-    "get_personnel_statistics": "tra số liệu nhân sự",
-    "get_equipment_statistics": "tra số liệu trang thiết bị",
-    "get_reporting_status": "tra tình hình gửi báo cáo",
+    "query_erp": "truy vấn dữ liệu ERP",
 }
 
 # Công cụ chỉ đọc kho tài liệu. Vòng lặp chỉ chạy được bấy nhiêu mà không kết

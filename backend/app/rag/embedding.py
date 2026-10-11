@@ -21,9 +21,12 @@ import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 
-import torch
-import torch.nn as nn
-from transformers import AutoModel, AutoTokenizer
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import torch
+    import torch.nn as nn
+    from transformers import AutoModel, AutoTokenizer
 
 from app.core.config import Settings, get_settings
 
@@ -76,6 +79,9 @@ class VietnameseM3Embedder:
             if self._model is not None:
                 return
 
+            import torch
+            from transformers import AutoModel, AutoTokenizer
+
             cfg = self.settings
             device = torch.device(
                 cfg.embedding_device
@@ -105,6 +111,8 @@ class VietnameseM3Embedder:
         self, hidden_size: int, device: torch.device, dtype: torch.dtype
     ) -> nn.Linear | None:
         """Tải `sparse_linear.pt` (Linear(hidden,1)) từ repo BGE-M3."""
+        import torch
+        import torch.nn as nn
         from huggingface_hub import hf_hub_download
 
         cfg = self.settings
@@ -133,45 +141,47 @@ class VietnameseM3Embedder:
         return self._sparse_linear is not None
 
     # -- encode ------------------------------------------------------------- #
-    @torch.inference_mode()
     def encode(self, texts: list[str]) -> tuple[list[list[float]], list[SparseEmbedding]]:
         """Trả về (dense_vectors, lexical_sparse_vectors) cho danh sách văn bản."""
         if not texts:
             return [], []
-        self._ensure_loaded()
-        cfg = self.settings
-        dense_out: list[list[float]] = []
-        lexical_out: list[SparseEmbedding] = []
+        import torch
 
-        for start in range(0, len(texts), cfg.embedding_batch_size):
-            batch = texts[start : start + cfg.embedding_batch_size]
-            encoded = self._tokenizer(
-                batch,
-                padding=True,
-                truncation=True,
-                max_length=cfg.embedding_max_length,
-                return_tensors="pt",
-            ).to(self._device)
+        with torch.inference_mode():
+            self._ensure_loaded()
+            cfg = self.settings
+            dense_out: list[list[float]] = []
+            lexical_out: list[SparseEmbedding] = []
 
-            hidden = self._model(**encoded).last_hidden_state  # [B, L, H]
+            for start in range(0, len(texts), cfg.embedding_batch_size):
+                batch = texts[start : start + cfg.embedding_batch_size]
+                encoded = self._tokenizer(
+                    batch,
+                    padding=True,
+                    truncation=True,
+                    max_length=cfg.embedding_max_length,
+                    return_tensors="pt",
+                ).to(self._device)
 
-            # dense: CLS pooling + L2 normalize (đúng pipeline của model gốc)
-            dense = torch.nn.functional.normalize(hidden[:, 0], p=2, dim=-1)
-            dense_out.extend(dense.float().cpu().tolist())
+                hidden = self._model(**encoded).last_hidden_state  # [B, L, H]
 
-            if self._sparse_linear is None:
-                lexical_out.extend(SparseEmbedding() for _ in batch)
-                continue
+                # dense: CLS pooling + L2 normalize (đúng pipeline của model gốc)
+                dense = torch.nn.functional.normalize(hidden[:, 0], p=2, dim=-1)
+                dense_out.extend(dense.float().cpu().tolist())
 
-            # lexical: relu(W·h) cho từng token, gom max theo token id
-            weights = torch.relu(self._sparse_linear(hidden)).squeeze(-1)  # [B, L]
-            weights = weights * encoded["attention_mask"]
-            lexical_out.extend(
-                self._to_sparse(ids.tolist(), w.float().cpu().tolist())
-                for ids, w in zip(encoded["input_ids"], weights, strict=True)
-            )
+                if self._sparse_linear is None:
+                    lexical_out.extend(SparseEmbedding() for _ in batch)
+                    continue
 
-        return dense_out, lexical_out
+                # lexical: relu(W·h) cho từng token, gom max theo token id
+                weights = torch.relu(self._sparse_linear(hidden)).squeeze(-1)  # [B, L]
+                weights = weights * encoded["attention_mask"]
+                lexical_out.extend(
+                    self._to_sparse(ids.tolist(), w.float().cpu().tolist())
+                    for ids, w in zip(encoded["input_ids"], weights, strict=True)
+                )
+
+            return dense_out, lexical_out
 
     def _to_sparse(self, token_ids: list[int], weights: list[float]) -> SparseEmbedding:
         best: dict[int, float] = {}

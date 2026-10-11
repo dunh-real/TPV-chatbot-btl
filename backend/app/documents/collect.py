@@ -102,7 +102,7 @@ def read_unit_report(path: str | Path, ma_don_vi: str = "", ten_don_vi: str = ""
 
 
 def _metric(value: int, total: int | None = None) -> dict[str, Any]:
-    """Cùng hình dạng với Metric của nhánh CSDL, nhưng không có kỳ trước."""
+    """Chỉ tiêu tổng hợp từ tài liệu, không có kỳ trước."""
     return {
         "value": value,
         "prev": None,
@@ -115,8 +115,8 @@ def _metric(value: int, total: int | None = None) -> dict[str, Any]:
 def aggregate_reports(reports: list[UnitReport], period: str) -> dict[str, Any]:
     """Cộng số liệu trang thiết bị từ nhiều báo cáo thành một kết quả tổng hợp.
 
-    Trả về đúng hình dạng mà `get_equipment_statistics` trả về, để bước vẽ biểu
-    đồ, kiểm chứng số và viết nhận xét dùng lại được nguyên vẹn.
+    Giữ cấu trúc tổng hợp tài liệu cho bước vẽ biểu đồ, kiểm chứng số
+    và viết nhận xét.
     """
     usable = [r for r in reports if r.ok]
     breakdown: list[dict[str, Any]] = []

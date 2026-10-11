@@ -1,0 +1,261 @@
+{
+  "version": "2",
+  "tables": {
+    "dbo.Dms_WorkDepartment": {
+      "permissions_any": [
+        "Hrm.EmployeeProfile.View",
+        "Asm.Asset.View",
+        "Hrm.EmployeeProfile.ViewMine"
+      ],
+      "columns": [
+        "Id",
+        "TenantId",
+        "CreationTime",
+        "IsDeleted",
+        "DeletionTime",
+        "Code",
+        "DepartmentCode",
+        "DisplayName",
+        "Describe"
+      ],
+      "lookup_columns": [
+        "Code",
+        "DepartmentCode",
+        "DisplayName"
+      ],
+      "meaning": "Danh mục phòng ban. Không dùng phòng ban hiện tại để loại bỏ hồ sơ lịch sử khi câu hỏi không yêu cầu."
+    },
+    "dbo.Dms_WorkPosition": {
+      "permissions_any": [
+        "Hrm.EmployeeProfile.View",
+        "Hrm.EmployeeProfile.ViewMine"
+      ],
+      "columns": [
+        "Id",
+        "TenantId",
+        "CreationTime",
+        "IsDeleted",
+        "DeletionTime",
+        "Code",
+        "Name"
+      ],
+      "lookup_columns": [
+        "Code",
+        "Name"
+      ],
+      "meaning": "Danh mục chức vụ."
+    },
+    "dbo.Hrm_EmployeeProfile": {
+      "permissions_any": [
+        "Hrm.EmployeeProfile.View",
+        "Hrm.EmployeeProfile.ViewMine"
+      ],
+      "columns": [
+        "Id",
+        "TenantId",
+        "CreationTime",
+        "IsDeleted",
+        "DeletionTime",
+        "WorkDepartmentId",
+        "WorkPositionId",
+        "HireDate",
+        "ResignationDate",
+        "EmployeeId",
+        "EmployeeCode",
+        "FullName"
+      ],
+      "meaning": "Hồ sơ nhân sự trong phạm vi nhóm tài khoản; được đọc mã và họ tên, không cấp giấy tờ, liên hệ, lương. Số cuối tháng suy từ HireDate/CreationTime và ResignationDate, không phải snapshot lịch sử đầy đủ. Mốc cuối tháng dùng đầu tháng sau, khoảng ngày nửa mở."
+    },
+    "dbo.Asm_Assets": {
+      "permissions_any": [
+        "Asm.Asset.View"
+      ],
+      "columns": [
+        "Id",
+        "TenantId",
+        "CreationTime",
+        "IsDeleted",
+        "DeletionTime",
+        "Code",
+        "Name",
+        "AssetCategoryId",
+        "Status",
+        "Quantity",
+        "WorkDepartmentId",
+        "LastModificationTime"
+      ],
+      "meaning": "Tài sản. COUNT đếm hồ sơ, SUM(COALESCE(Quantity,1)) đếm số lượng; giữ Quantity=0. Status là mã enum, không suy đoán tên nếu không có định nghĩa. Trạng thái, phòng ban và Quantity hiện tại không thể tái dựng lịch sử chính xác."
+    },
+    "dbo.Asm_AssetCategories": {
+      "permissions_any": [
+        "Asm.Asset.View"
+      ],
+      "columns": [
+        "Id",
+        "TenantId",
+        "CreationTime",
+        "IsDeleted",
+        "DeletionTime",
+        "Code",
+        "Name"
+      ],
+      "lookup_columns": [
+        "Code",
+        "Name"
+      ],
+      "meaning": "Danh mục loại tài sản."
+    }
+  },
+  "users": {},
+  "groups": {
+    "admin": {
+      "priority": 1000,
+      "static_admin": true,
+      "tables": {
+        "dbo.Dms_WorkDepartment": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View",
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Dms_WorkPosition": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Hrm_EmployeeProfile": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Asm_Assets": {
+          "permissions_any": [
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Asm_AssetCategories": {
+          "permissions_any": [
+            "Asm.Asset.View"
+          ]
+        }
+      }
+    },
+    "director": {
+      "priority": 800,
+      "tenant_roles": {
+        "64": [
+          159
+        ]
+      },
+      "tables": {
+        "dbo.Dms_WorkDepartment": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View",
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Dms_WorkPosition": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Hrm_EmployeeProfile": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Asm_Assets": {
+          "permissions_any": [
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Asm_AssetCategories": {
+          "permissions_any": [
+            "Asm.Asset.View"
+          ]
+        }
+      }
+    },
+    "hr": {
+      "priority": 700,
+      "tenant_roles": {},
+      "tables": {
+        "dbo.Dms_WorkDepartment": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View",
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Dms_WorkPosition": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Hrm_EmployeeProfile": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        }
+      }
+    },
+    "department_manager": {
+      "priority": 600,
+      "tenant_roles": {
+        "64": [
+          161,
+          168,
+          216
+        ]
+      },
+      "tables": {
+        "dbo.Dms_WorkDepartment": {
+          "scope": "department",
+          "scope_column": "Id",
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View",
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Dms_WorkPosition": {
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Hrm_EmployeeProfile": {
+          "scope": "department",
+          "scope_column": "WorkDepartmentId",
+          "permissions_any": [
+            "Hrm.EmployeeProfile.View"
+          ]
+        },
+        "dbo.Asm_Assets": {
+          "scope": "department",
+          "scope_column": "WorkDepartmentId",
+          "permissions_any": [
+            "Asm.Asset.View"
+          ]
+        },
+        "dbo.Asm_AssetCategories": {
+          "permissions_any": [
+            "Asm.Asset.View"
+          ]
+        }
+      }
+    },
+    "employee": {
+      "priority": 0,
+      "tables": {
+        "dbo.Hrm_EmployeeProfile": {
+          "scope": "self",
+          "scope_column": "EmployeeId"
+        },
+        "dbo.Dms_WorkDepartment": {
+          "scope": "department",
+          "scope_column": "Id"
+        },
+        "dbo.Dms_WorkPosition": {}
+      }
+    }
+  },
+  "default_group": "employee"
+}

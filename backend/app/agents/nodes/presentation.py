@@ -1,29 +1,4 @@
-"""Các node của workflow 5: tạo bộ slide.
-
-    yêu cầu ─> tham số ─> số liệu (SQL, dùng chung workflow 4)
-                       └─> bản tóm tắt số liệu (CODE dựng, không qua LLM)
-                            └─> Presenton dựng .pptx ─> đối chiếu số trong file
-
-VÌ SAO ĐỔI SANG PRESENTON
-
-Bản cũ để LLM tự lập dàn ý rồi tự viết từng gạch đầu dòng. Chạy ba lần liên tiếp
-trên cùng một câu hỏi thì cả ba lần đều có câu bịa: "Phòng Kinh doanh và Kỹ thuật
-thiếu số liệu" (tên đơn vị model tự chọn), "8 đơn vị thiếu dữ liệu nhân sự" (danh
-sách thật có 9). Van chắn số không bắt được vì 8 trùng với tháng báo cáo.
-
-Nên phần sinh nội dung giao cho Presenton, và phần khó nhất - biết con số nào là
-thật - giữ nguyên ở đây: tóm tắt số liệu do CODE dựng từ kết quả SQL, model chỉ
-được bày lại thứ đã có trong đó.
-
-BA THỨ KHÔNG ĐỔI SO VỚI BẢN CŨ
-
-  1. Số liệu do `app.tools.data` tính, không con số nào do model tính.
-  2. Bộ slide trả về vẫn bị đối chiếu số một lần nữa (`verify_node`).
-  3. Presenton hỏng thì vẫn ra file: đường lùi dựng bằng `pptx_builder`, và
-     đường lùi đó KHÔNG gọi LLM - chỉ ô chỉ tiêu, biểu đồ, bảng và ghi chú do
-     code viết. Thà bộ slide khô khan còn hơn bộ slide có câu bịa.
-"""
-
+"""Dựng PowerPoint từ dữ liệu truy vấn động hoặc tài liệu; kiểm tra số trong file đã xuất."""
 from __future__ import annotations
 
 import logging
@@ -50,6 +25,7 @@ from app.documents.verify import (
     collect_known_numbers,
     tim_chu_ngoai_he,
 )
+from app.documents.query_result import query_slides, query_deck
 from app.services import storage
 from app.services.presenton import PresentonError, get_presenton
 
@@ -260,6 +236,8 @@ def build_slides_markdown(
     "chi tiết vào" - vô hại với một trợ lý nhưng với một bộ sinh nội dung thì đó
     là lời mời thêm thắt.
     """
+    if "queries" in data:
+        return query_slides(data["queries"], inputs), set()
     inputs = inputs or {}
     period = _period_label(params)
     slides: list[str] = [_slide_bia(data, params, inputs)]
@@ -383,6 +361,8 @@ def _output_path(params: dict[str, Any]) -> Path:
 
 def _fallback_deck(data: dict[str, Any], params: dict[str, Any]) -> DeckSpec:
     """Bộ slide đường lùi: 100% do code dựng, không một chữ nào của LLM."""
+    if "queries" in data:
+        return query_deck(data["queries"])
     from app.agents.nodes.report import _build_charts
 
     period = _period_label(params)
@@ -753,7 +733,9 @@ async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"validation": {"status": "skipped", "issues": []}}
 
     data = state.get("data", {})
-    known = collect_known_numbers(data) | _period_numbers(state.get("params", {}))
+    numeric_source = [{"rows": q["rows"], "question": q["question"], "columns": q["columns"]}
+                      for q in data["queries"]] if "queries" in data else data
+    known = collect_known_numbers(numeric_source) | _period_numbers(state.get("params", {}))
 
     try:
         slide_count, doan_van = await anyio.to_thread.run_sync(

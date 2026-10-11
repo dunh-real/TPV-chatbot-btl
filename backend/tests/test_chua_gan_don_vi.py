@@ -16,7 +16,6 @@ from datetime import datetime
 import pytest
 
 from app.core.config import get_settings
-from app.tools.data import get_equipment_statistics, get_personnel_statistics
 
 from conftest import ERP_TENANT
 
@@ -69,67 +68,19 @@ async def erp_thieu_phong_ban():
     settings.erp_tenant_id = truoc
 
 
-# --------------------------------------------------------------------------- #
-# Thiết bị
-# --------------------------------------------------------------------------- #
-async def test_toan_cong_ty_dem_ca_thiet_bi_chua_gan(erp_thieu_phong_ban):
-    """Trước bản vá: 15. Đúng: 115."""
-    result = await get_equipment_statistics(erp_thieu_phong_ban, "2026-09")
-
-    assert result.metrics["total_equipment"].value == 115
-    assert result.scope["chua_gan_don_vi"] == 100
+@pytest.mark.parametrize("where,expected", [("",115), ("WHERE WorkDepartmentId=1",10)])
+async def test_sql_dem_dung_pham_vi_thiet_bi(erp_thieu_phong_ban, erp_query, where, expected):
+    result = await erp_query(erp_thieu_phong_ban, f"SELECT SUM(Quantity) AS total FROM dbo.Asm_Assets {where}")
+    assert result.rows == [[expected]]
 
 
-async def test_dong_chua_gan_hien_trong_bang_va_nam_cuoi(erp_thieu_phong_ban):
-    """Cộng vào tổng mà không hiện ra dòng nào thì người đọc không đối chiếu được."""
-    result = await get_equipment_statistics(erp_thieu_phong_ban, "2026-09")
-
-    cuoi = result.breakdown[-1]
-    assert cuoi["ten_don_vi"] == "(chưa gán phòng ban)"
-    assert cuoi["so_luong"] == 100
-    assert sum(row["so_luong"] for row in result.breakdown) == 115
+async def test_nhom_null_khong_bi_executor_loai_bo(erp_thieu_phong_ban, erp_query):
+    result = await erp_query(erp_thieu_phong_ban, "SELECT WorkDepartmentId,SUM(Quantity) AS total FROM dbo.Asm_Assets GROUP BY WorkDepartmentId")
+    assert [None,100] in result.rows
+    assert sum(row[1] for row in result.rows) == 115
 
 
-async def test_hoi_mot_don_vi_thi_khong_cong_bua_vao(erp_thieu_phong_ban):
-    """Không ai biết 100 máy phát điện thuộc đơn vị nào, nên không được cộng."""
-    result = await get_equipment_statistics(erp_thieu_phong_ban, "2026-09",
-                                            ma_don_vi="00001")
-
-    assert result.metrics["total_equipment"].value == 10
-    assert "chua_gan_don_vi" not in result.scope
-    assert all(row["ten_don_vi"] != "(chưa gán phòng ban)" for row in result.breakdown)
-
-
-async def test_co_canh_bao_khi_du_lieu_erp_thieu_phong_ban(erp_thieu_phong_ban):
-    result = await get_equipment_statistics(erp_thieu_phong_ban, "2026-09")
-
-    assert not result.is_consistent
-    assert "100/115" in result.consistency[0].message
-
-
-async def test_units_with_data_khong_dem_nham_dong_vo_chu(erp_thieu_phong_ban):
-    """Dòng chưa gán phòng ban không phải là một "đơn vị có dữ liệu"."""
-    result = await get_equipment_statistics(erp_thieu_phong_ban, "2026-09")
-
-    assert result.scope["units_with_data"] == 2
-
-
-# --------------------------------------------------------------------------- #
-# Nhân sự - cùng một lỗi, cùng một ranh giới
-# --------------------------------------------------------------------------- #
-async def test_nhan_su_toan_cong_ty_dem_ca_nguoi_chua_gan(erp_thieu_phong_ban):
-    """Nhánh "(chưa gán phòng ban)" của bảng nhân sự trước đây không chạy được:
-    bộ lọc `IN (...)` đã loại sạch dòng `NULL` trước khi tới đó."""
-    result = await get_personnel_statistics(erp_thieu_phong_ban, "2026-09")
-
-    assert result.metrics["total_personnel"].value == 3
-    assert result.breakdown[-1]["ten_don_vi"] == "(chưa gán phòng ban)"
-    assert result.breakdown[-1]["nhan_su"] == 1
-
-
-async def test_nhan_su_mot_don_vi_khong_cong_nguoi_vo_chu(erp_thieu_phong_ban):
-    result = await get_personnel_statistics(erp_thieu_phong_ban, "2026-09",
-                                            ma_don_vi="00001")
-
-    assert result.metrics["total_personnel"].value == 1
-    assert all(row["ten_don_vi"] != "(chưa gán phòng ban)" for row in result.breakdown)
+@pytest.mark.parametrize("where,expected", [("",3), ("WHERE WorkDepartmentId=1",1)])
+async def test_sql_dem_dung_pham_vi_nhan_su(erp_thieu_phong_ban, erp_query, where, expected):
+    result = await erp_query(erp_thieu_phong_ban, f"SELECT COUNT(*) AS total FROM dbo.Hrm_EmployeeProfile {where}")
+    assert result.rows == [[expected]]

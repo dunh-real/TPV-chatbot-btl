@@ -39,8 +39,8 @@ async def list_templates() -> list[TemplateSummary]:
 async def draft(request: DraftRequest) -> DraftResponse:
     """Soạn một báo cáo từ MỘT nguồn. `nguon` chọn nguồn đó là gì.
 
-    - `csdl` (mặc định): số liệu lấy từ ERP theo mẫu báo cáo trong CSDL. Mọi con
-      số phải truy được về một trường dữ liệu.
+    - `csdl` (mặc định): discovery sinh SQL chỉ đọc từ câu hỏi; Word dựng bảng từ
+      QueryResult có cột/dòng động.
     - `tai_lieu`: đọc một file đã tải lên (`file_id`) rồi soạn báo cáo từ chính
       nội dung đó. Bảo đảm yếu hơn - chỉ chặn được số KHÔNG có trong tài liệu,
       không chặn được số có thật nhưng dùng sai chỗ.
@@ -63,7 +63,7 @@ async def draft(request: DraftRequest) -> DraftResponse:
              summary="Tổng hợp báo cáo nhiều đơn vị (workflow 4)",
              dependencies=[Depends(quyen.can_quyen("Ai.ReportSummary.Create", "tổng hợp báo cáo"))])
 async def aggregate(request: AggregateRequest) -> AggregateResponse:
-    """Số liệu do data tool truy vấn, biểu đồ do code vẽ, LLM chỉ viết nhận xét.
+    """Nhánh ERP dựng bảng từ discovery; nhánh tài liệu tổng hợp các báo cáo đã nộp.
 
     Trường `data` trả về nguyên kết quả của các data tool: mọi con số trong báo cáo
     đều đối chiếu được với nó.

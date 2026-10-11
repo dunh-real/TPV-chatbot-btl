@@ -16,7 +16,6 @@ from datetime import datetime
 import pytest
 
 from app.core.config import get_settings
-from app.tools.data import get_personnel_statistics
 
 from conftest import ERP_TENANT
 
@@ -73,29 +72,19 @@ async def erp_ho_so_nhap_lai():
     settings.erp_tenant_id = truoc
 
 
-async def test_ban_ghi_xoa_mem_khong_thanh_mot_luot_tuyen_moi(erp_ho_so_nhap_lai):
-    """Trước bản vá: 4. Đúng: 2."""
-    result = await get_personnel_statistics(erp_ho_so_nhap_lai, "2026-09")
-
-    assert result.metrics["new_hires"].value == 2
-
-
-async def test_nhan_su_van_khop_voi_bien_dong(erp_ho_so_nhap_lai):
-    """Phép kiểm của chính tool: tăng bao nhiêu phải bằng tuyển mới trừ nghỉ việc."""
-    result = await get_personnel_statistics(erp_ho_so_nhap_lai, "2026-09")
-
-    nhan_su = result.metrics["total_personnel"]
-    assert nhan_su.value == 3
-    assert nhan_su.prev == 1
-    assert nhan_su.value - nhan_su.prev == (result.metrics["new_hires"].value
-                                            - result.metrics["resignations"].value)
-    assert result.is_consistent
+async def test_sql_lich_su_loai_dung_ban_ghi_xoa_mem(erp_ho_so_nhap_lai, erp_query):
+    result = await erp_query(erp_ho_so_nhap_lai, """
+        SELECT COUNT(*) AS total,
+          SUM(CASE WHEN HireDate>='2026-09-01' AND HireDate<'2026-10-01' THEN 1 ELSE 0 END) AS hires
+        FROM dbo.Hrm_EmployeeProfile
+        WHERE IsDeleted=0 OR DeletionTime>='2026-10-01'
+    """)
+    assert result.rows == [[3,2]]
 
 
-async def test_bang_chi_tiet_cung_khong_dem_trung(erp_ho_so_nhap_lai):
-    """Số ở bảng chi tiết và số ở chỉ tiêu tổng phải ra từ cùng một phép lọc."""
-    result = await get_personnel_statistics(erp_ho_so_nhap_lai, "2026-09")
-
-    dong = next(r for r in result.breakdown if r["ma_don_vi"] == "00001")
-    assert dong["tuyen_moi"] == 2
-    assert dong["nhan_su"] == 3
+async def test_executor_khong_tu_ap_bo_loc_xoa_hien_tai_cho_lich_su(erp_ho_so_nhap_lai, erp_query):
+    result = await erp_query(erp_ho_so_nhap_lai, """
+        SELECT COUNT(*) AS total FROM dbo.Hrm_EmployeeProfile
+        WHERE CreationTime<'2026-09-15' AND (IsDeleted=0 OR DeletionTime>='2026-09-15')
+    """)
+    assert result.rows == [[3]]

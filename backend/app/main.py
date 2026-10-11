@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import secrets
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from app.schemas.common import HealthResponse, RequestCheckResponse
 from app.services.cache import get_cache
 from app.services.conversation import get_memory
 from app.services.llm import get_llm
+from app.services.erp_discovery import watch_schema, close_discovery
 from app.rag.vectorstore import get_vector_store
 
 logger = logging.getLogger(__name__)
@@ -86,7 +88,15 @@ async def lifespan(app: FastAPI):
     if settings.warmup_models:
         await _warmup()
 
-    yield
+    schema_task = asyncio.create_task(watch_schema()) if settings.erp_database_url else None
+    try:
+        yield
+    finally:
+        if schema_task:
+            schema_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await schema_task
+        await close_discovery()
 
     await store.close()
     await conversations.close()

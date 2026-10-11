@@ -13,7 +13,7 @@ class DraftRequest(BaseModel):
     request: str = Field(min_length=1, max_length=2000,
                          examples=["Soạn báo cáo tình hình thiết bị tháng 8"])
     ma_don_vi: str | None = Field(
-        default=None, description="Đơn vị lập báo cáo; bỏ trống thì hệ thống sẽ hỏi lại"
+        default=None, description="Đơn vị người dùng chọn; bỏ trống thì dùng phạm vi trong câu hỏi"
     )
     inputs: dict[str, str] = Field(
         default_factory=dict,
@@ -22,7 +22,7 @@ class DraftRequest(BaseModel):
     )
     nguon: Literal["csdl", "tai_lieu"] = Field(
         default="csdl",
-        description="csdl = lấy số liệu ERP theo mẫu; tai_lieu = soạn từ một file đã tải lên",
+        description="csdl = truy vấn ERP bằng discovery; tai_lieu = soạn từ một file đã tải lên",
     )
     file_id: str = Field(
         default="",
@@ -82,6 +82,7 @@ class DraftResponse(BaseModel):
     ma_don_vi: str = ""
     template: str = ""
     template_name: str = ""
+    data: dict[str, Any] = Field(default_factory=dict, description="QueryResult trong data.queries của nhánh ERP")
     sections: list[SectionModel] = Field(default_factory=list)
     validation: ValidationModel = Field(default_factory=ValidationModel)
     output_path: str = ""

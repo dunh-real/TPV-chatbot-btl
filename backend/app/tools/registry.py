@@ -1,25 +1,9 @@
-"""Danh mục tool của agent - tất cả những gì hệ thống làm được, gom về một chỗ.
-
-Đây là mặt tiền duy nhất mà tầng agent nhìn thấy. Giá trị của nó không nằm ở chỗ
-gọi hộ hàm, mà ở ba ràng buộc đặt đúng một lần cho mọi tool:
-
-  1. Tên tool phải có thật  - LLM không gọi được thứ không tồn tại.
-  2. Tham số phải hợp lệ    - sai tên là chặn ngay, không "đoán ý" rồi chạy nhầm.
-  3. Kết quả là dữ liệu thuần - `AggregateResult` được đổi về dict, nên mọi con số
-     đi vào prompt đều đối chiếu ngược lại được.
-
-`app.tools.data.call_tool` vẫn tồn tại song song và nhận sẵn một `AsyncSession`:
-node của workflow 4 dùng nó vì cần đối tượng `AggregateResult` (còn `.is_consistent`,
-`.metrics`) chứ không phải dict. Registry này thì tự mở phiên CSDL, dành cho người
-gọi chỉ cần kết quả.
-"""
-
+"""Đăng ký công cụ của agent và kiểm tra tham số trước khi gọi."""
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from app.db.erp_session import erp_session_scope
 from app.db.session import session_scope
 from app.tools import data as data_tools
 from app.tools.base import ToolError, ToolSpec
@@ -116,8 +100,8 @@ def catalog() -> list[dict[str, Any]]:
     """Danh mục tool dạng dữ liệu - cho API và giao diện hiển thị."""
     return [
         {"name": spec.name, "description": spec.description,
-         "parameters": spec.parameters, "reads_database": spec.needs_session}
-        for spec in TOOLS.values()
+         "parameters": spec.parameters, "reads_database": spec.needs_session or name in data_tools.TOOLS}
+        for name, spec in TOOLS.items()
     ]
 
 
@@ -136,14 +120,16 @@ async def call_tool(name: str, **kwargs: Any) -> Any:
     if spec is None:
         raise ToolError(f"Không có công cụ tên {name!r}. Chỉ dùng được: {', '.join(TOOLS)}")
 
-    kwargs = data_tools.resolve_aliases(spec, kwargs)
+    resolved = {k: v for k, v in kwargs.items() if k not in spec.aliases}
+    for alias, real in spec.aliases.items():
+        if alias in kwargs and real not in resolved:
+            resolved[real] = kwargs[alias]
+    kwargs = resolved
     unknown = set(kwargs) - set(spec.parameters)
     if unknown:
         raise ToolError(f"{name}: tham số không hợp lệ {sorted(unknown)}")
 
     if spec.needs_session:
-        # Tool số liệu đọc ERP; phiên ERP chặn ghi ngay tại engine.
-        scope = erp_session_scope if name in data_tools.TOOLS else session_scope
-        async with scope() as session:
+        async with session_scope() as session:
             return _plain(await spec.func(session, **kwargs))
     return _plain(await spec.func(**kwargs))

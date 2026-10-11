@@ -110,3 +110,25 @@ async def erp_session():
 
     await engine.dispose()
     settings.erp_tenant_id = truoc
+
+
+@pytest.fixture
+def erp_query(tmp_path, monkeypatch):
+    """Chạy SQL nghiệp vụ toàn tenant bằng Admin giả; quyền nhóm có bộ test riêng."""
+    from types import SimpleNamespace as NS
+    from app.core.config import get_settings
+    from app.core.context import Principal
+    from app.db.erp_auth import AccountAccess
+    from app.services.erp_discovery import run_discovery
+    from app.services.erp_sql_catalog import SchemaStore
+
+    monkeypatch.setattr(get_settings(), "erp_sql_policy_file", str(Path(__file__).parents[1] / "config/erp_sql_policy.json"))
+    principal = Principal(tenant_id=ERP_TENANT, user_id="1", access=AccountAccess(
+        1, ERP_TENANT, "test", "Test", "", is_static_admin=True,
+        permissions=frozenset({"Hrm.EmployeeProfile.View", "Asm.Asset.View"})))
+    async def query(session, sql):
+        message = NS(content=sql, tool_calls=[])
+        client = NS(chat=NS(completions=NS(create=lambda **_: NS(choices=[NS(message=message, finish_reason="stop")]))))
+        return await session.run_sync(lambda sync: run_discovery("Kiểm tra nghiệp vụ", principal=principal,
+            client=client, connection=sync.connection(), store=SchemaStore(tmp_path / "schema.json", 300)))
+    return query

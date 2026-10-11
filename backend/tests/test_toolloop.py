@@ -131,14 +131,14 @@ def test_schema_suy_kieu_va_truong_bat_buoc_tu_chu_ky():
 
 def test_schema_khong_phoi_tham_so_session():
     """Tool CSDL nhận session làm tham số đầu - model không được thấy nó."""
-    schema = registry.TOOLS["get_personnel_statistics"].to_json_schema()["function"]
+    schema = registry.TOOLS["query_erp"].to_json_schema()["function"]
     assert "session" not in schema["parameters"]["properties"]
-    assert schema["parameters"]["required"] == ["ky"]
+    assert schema["parameters"]["required"] == ["question"]
 
 
 def test_schema_khong_phoi_bi_danh():
     """Bí danh để nhận đầu vào cũ, không phải để model có hai cách gọi."""
-    props = registry.TOOLS["get_personnel_statistics"].to_json_schema()["function"][
+    props = registry.TOOLS["query_erp"].to_json_schema()["function"][
         "parameters"]["properties"]
     assert "start_date" not in props and "end_date" not in props
 
@@ -484,3 +484,22 @@ def test_gom_manh_tool_call_roi_rac_thanh_loi_goi_hoan_chinh():
     assert _json.loads("".join(partial[1]["args"])) == {"noi_dung": "x"}
     assert partial[0]["name"] == "doc_so_lieu" and partial[1]["name"] == "ghi_file"
     assert hasattr(LLMClient, "stream_chat_with_tools")
+
+
+async def test_large_erp_result_keeps_valid_json_and_explicit_preview(monkeypatch):
+    import json
+    source = {"query_id": "q", "question": "Danh sách", "columns": [{"name": "name"}],
+              "rows": [["Nhóm " + str(i) + " dài" * 20] for i in range(100)],
+              "row_count": 100, "truncated": False, "warnings": []}
+    async def query(*args, **kwargs): return source
+    monkeypatch.setattr(toolloop, "call_tool", query)
+    content, visible = await toolloop._execute(ToolCall(id="q1", name="query_erp", arguments={"question": "Danh sách"}))
+    assert json.loads(content) == visible
+    assert visible["truncated"] and visible["warnings"]
+    assert 0 < visible["row_count"] < source["row_count"]
+    assert len(content) <= toolloop.MAX_RESULT_CHARS
+    assert source["row_count"] == 100 and source["truncated"] is False
+
+
+def test_context_preview_without_rows_is_not_database_empty():
+    assert not toolloop.looks_empty({"query_id": "q", "rows": [], "truncated": True})

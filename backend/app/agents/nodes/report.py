@@ -1,16 +1,4 @@
-"""Các node của workflow 4: tổng hợp báo cáo.
-
-    yêu cầu ─> trích tham số ─> gọi data tool (SQL) ─> đối chiếu file báo cáo
-            ─> vẽ biểu đồ (code) ─> viết nhận xét (LLM) ─> đối chiếu số ─> DOCX
-
-Khác workflow 3 ở ba điểm: gộp nhiều đơn vị, so sánh giữa các kỳ, và có biểu đồ.
-Mọi thứ còn lại - dựng mục, kiểm số, xuất file, ghi sổ - tái dùng nguyên.
-
-Ranh giới không được vượt: **LLM không tính toán**. Tổng, hiệu, tỷ lệ phần trăm,
-mức tăng giảm đều do `app.tools.data` tính sẵn; model chỉ diễn đạt. Biểu đồ cũng
-do code vẽ, vì người đọc nhìn chiều cao cột chứ không đọc số.
-"""
-
+"""Tạo báo cáo Word từ truy vấn discovery; nhánh đọc báo cáo đã nộp vẫn dùng dữ liệu tài liệu."""
 from __future__ import annotations
 
 import json
@@ -46,14 +34,16 @@ from app.documents.verify import (
     collect_known_numbers,
     tim_chu_ngoai_he,
 )
-from app.db.erp_repository import ErpTaiNguyenRepository
 from app.db.erp_session import erp_session_scope
 from app.db.repository import TemplateRepository, VanBanRepository
 from app.db.session import session_scope
 from app.services import storage
 from app.services.llm import LLMError, get_llm
 from app.services import errors
-from app.tools.data import ToolError, call_tool, previous_ky
+from app.tools.base import ToolError
+from app.services.report_register import previous_ky, get_reporting_status
+from app.services.erp_discovery import query_erp
+from app.documents.query_result import query_sections
 
 logger = logging.getLogger(__name__)
 
@@ -253,9 +243,7 @@ def scope_from_request(request: str, llm_choice: list[str]) -> list[str]:
 # --------------------------------------------------------------------------- #
 async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
     today = date.today()
-    async with erp_session_scope() as session:
-        units = await ErpTaiNguyenRepository(session).list_don_vi()
-    unit_lines = "\n".join(f"- {u['ma_don_vi']}: {u['ten_don_vi']}" for u in units)
+    unit_lines = "Đơn vị do người dùng nêu trong yêu cầu; discovery sẽ tra mã và tên."
 
     params: dict[str, Any] = {}
     try:
@@ -284,20 +272,14 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
         nam = nam or (today.year if today.month > 1 else today.year - 1)
         assumptions.append(f"Không nêu kỳ, lấy kỳ gần nhất đã khép: tháng {thang}/{nam}")
 
-    valid_codes = {u["ma_don_vi"] for u in units}
-    requested = [c for c in (params.get("ma_don_vi") or []) if c in valid_codes]
+    requested = params.get("ma_don_vi") or []
 
     noi_dung = [c for c in (params.get("noi_dung") or []) if c in ("nhan_su", "thiet_bi")]
     noi_dung = scope_from_request(state.get("request", ""),
                                   noi_dung or ["nhan_su", "thiet_bi"])
-    # Bỏ mảng người này không được xem. Cắt ở đây chứ không để truy vấn chạy rồi
-    # mới lọc kết quả: số liệu không được phép đọc thì đừng đọc, chứ không phải
-    # đọc xong rồi giấu đi.
-    duoc_xem = quyen.loc_mang_duoc_xem(noi_dung)
-    if duoc_xem != noi_dung:
-        logger.info("Bỏ mảng %s khỏi báo cáo: thiếu quyền",
-                    [m for m in noi_dung if m not in duoc_xem])
-    noi_dung = duoc_xem
+    # Phân quyền SQL nằm trong engine. Nhánh tổng hợp tài liệu giữ bộ lọc mảng cũ.
+    if str(state.get("inputs", {}).get("nguon_so_lieu", "csdl")).lower() in ("tai_lieu", "file", "document"):
+        noi_dung = quyen.loc_mang_duoc_xem(noi_dung)
     ky = f"{nam:04d}-{thang:02d}"
     compare_to = _compare_period(ky, nam, params, assumptions)
 
@@ -321,7 +303,7 @@ async def extract_params_node(state: dict[str, Any]) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 async def _files_from_register(session, ky: str, scope: list[str] | None) -> list[tuple[str, str, str]]:
     """(mã đơn vị, tên đơn vị, đường dẫn file) của các báo cáo đã vào sổ."""
-    status = await call_tool(session, "get_reporting_status", ky=ky, ma_don_vi=scope)
+    status = await get_reporting_status(session, ky=ky, ma_don_vi=scope)
     return [(item["ma_don_vi"], item.get("ten_don_vi", ""), item.get("file_path", ""))
             for item in status.get("reported", []) if item.get("file_path")]
 
@@ -380,7 +362,7 @@ async def gather_data_node(state: dict[str, Any]) -> dict[str, Any]:
     if nguon in ("tai_lieu", "file", "document"):
         async with erp_session_scope() as session:
             try:
-                data["reporting"] = await call_tool(session, "get_reporting_status",
+                data["reporting"] = await get_reporting_status(session,
                                                     ky=params["ky"], ma_don_vi=scope)
             except ToolError as exc:
                 return {"error": f"Tham số truy vấn không hợp lệ: {exc}"}
@@ -393,7 +375,7 @@ async def gather_data_node(state: dict[str, Any]) -> dict[str, Any]:
 
     data["nguon_so_lieu"] = "csdl"
     try:
-        return await _gather_from_database(state, params, scope, data)
+        return await _gather_from_database(state, data)
     except ToolError as exc:
         return {"error": str(exc)}
     except Exception as exc:  # noqa: BLE001 - CSDL hỏng là sự cố hạ tầng, không phải lỗi yêu cầu
@@ -402,36 +384,13 @@ async def gather_data_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"error": errors.as_error(exc, "lấy số liệu từ CSDL nghiệp vụ")}
 
 
-async def _gather_from_database(state, params, scope, data) -> dict[str, Any]:
-    async with erp_session_scope() as session:
-        try:
-            status = await call_tool(session, "get_reporting_status", ky=params["ky"],
-                                     ma_don_vi=scope)
-            data["reporting"] = status
-
-            # Hai chiều gộp có tên khác nhau nên không cần hỏi "của mảng nào":
-            # "chuc_vu" chỉ nhân sự hiểu, "chung_loai" chỉ thiết bị hiểu.
-            nhom_theo = params.get("nhom_theo")
-
-            if "nhan_su" in params["noi_dung"]:
-                result = await call_tool(
-                    session, "get_personnel_statistics",
-                    ky=params["ky"], ma_don_vi=scope, compare_to=params["compare_to"],
-                    group_by="chuc_vu" if nhom_theo == "chuc_vu" else "phong_ban")
-                data["personnel"] = result.as_dict()
-                data["personnel_consistent"] = result.is_consistent
-
-            if "thiet_bi" in params["noi_dung"]:
-                result = await call_tool(
-                    session, "get_equipment_statistics",
-                    ky=params["ky"], ma_don_vi=scope, compare_to=params["compare_to"],
-                    group_by="chung_loai" if nhom_theo == "chung_loai" else "phong_ban")
-                data["equipment"] = result.as_dict()
-        except ToolError as exc:
-            return {"error": f"Tham số truy vấn không hợp lệ: {exc}"}
-
-    if not any(k in data for k in ("personnel", "equipment")):
-        return {"error": "Không có nội dung nào để tổng hợp"}
+async def _gather_from_database(state, data) -> dict[str, Any]:
+    question = state["request"]
+    history = format_history(state["history"]) if state.get("history") else ""
+    result = await query_erp(question + ("\nLịch sử để hiểu yêu cầu tiếp nối:\n" + history if history else ""))
+    if result.truncated:
+        raise ToolError("Kết quả quá nhiều dòng để lập báo cáo đầy đủ. Hãy thu hẹp kỳ/phạm vi hoặc yêu cầu SQL tổng hợp.")
+    data["queries"] = [result.as_dict()]
     return {"data": data}
 
 
@@ -603,6 +562,8 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
         return {}
 
     data, params = state["data"], state["params"]
+    if "queries" in data:
+        return {"sections": query_sections(data["queries"])}
     charts = state.get("charts", {})
     period_label = f"tháng {params['thang']}/{params['nam']}"
     sections: list[dict[str, Any]] = []
@@ -842,7 +803,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
             "so_ky_hieu": so_ky_hieu,
             "dia_danh": inputs.get("dia_danh", "Hà Nội"),
             "ngay_bao_cao": _ngay_tieng_viet(date.today()),
-            "trich_yeu": inputs.get("trich_yeu", _trich_yeu(params, period_label)),
+            "trich_yeu": inputs.get("trich_yeu") or (state["request"][:200] if "queries" in state["data"] else _trich_yeu(params, period_label)),
             "chuc_vu_ky": inputs.get("chuc_vu_ky", "TRƯỞNG PHÒNG"),
             "nguoi_ky": inputs.get("nguoi_ky", ""),
             "can_cu": inputs.get("can_cu", ""),
@@ -878,8 +839,7 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
         async with session_scope() as session:
             await VanBanRepository(session).upsert(VanBan(
                 ma_van_ban=ma_van_ban,
-                ten_van_ban=f"Báo cáo tổng hợp nhân sự và trang thiết bị "
-                            f"tháng {params['thang']}/{params['nam']}",
+                ten_van_ban=state.get("inputs", {}).get("trich_yeu") or state.get("request", "Báo cáo ERP")[:200],
                 loai_van_ban="bao_cao_tong_hop",
                 # Báo cáo tổng hợp là của cơ quan, không của đơn vị nào - để
                 # trống `ma_don_vi` thì nó không bị đếm nhầm là báo cáo đơn vị.

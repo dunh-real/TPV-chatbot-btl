@@ -96,7 +96,6 @@ def db(session, erp_session, monkeypatch):
 
     for module in (registry, template_tools):
         monkeypatch.setattr(module, "session_scope", _scope, raising=False)
-    monkeypatch.setattr(registry, "erp_session_scope", _erp_scope)
     import app.db.session as db_session
 
     monkeypatch.setattr(db_session, "session_scope", _scope)
@@ -161,32 +160,10 @@ async def test_tham_so_la_bi_chan():
         await registry.call_tool("search_documents", query="x", sql="SELECT 1")
 
 
-async def test_bi_danh_khoang_thoi_gian_quy_ve_ky(db):
-    """Người dùng nói "từ tháng 7 đến tháng 8", tool vẫn nhận đúng kỳ và kỳ đối chiếu."""
-    theo_bi_danh = await registry.call_tool(
-        "get_personnel_statistics", start_date="2026-07", end_date="2026-08", unit="00001"
-    )
-    theo_ten_that = await registry.call_tool(
-        "get_personnel_statistics", ky="2026-08", compare_to="2026-07", ma_don_vi="00001"
-    )
-    assert theo_bi_danh["period"] == "2026-08"
-    assert theo_bi_danh["compare_to"] == "2026-07"
-    assert theo_bi_danh["scope"]["units_requested"] == 1
-    assert theo_bi_danh["metrics"] == theo_ten_that["metrics"]
 
 
-async def test_ket_qua_la_du_lieu_thuan(db):
-    """Registry trả dict để mọi con số nhúng vào prompt đều đối chiếu ngược được."""
-    result = await registry.call_tool("get_personnel_statistics", ky="2026-08")
-    assert isinstance(result, dict)
-    assert result["metrics"]["total_personnel"]["value"] == 5
 
 
-async def test_ten_that_thang_bi_danh(db):
-    result = await registry.call_tool(
-        "get_personnel_statistics", ky="2026-08", end_date="2026-07"
-    )
-    assert result["period"] == "2026-08"
 
 
 # --------------------------------------------------------------------------- #
@@ -699,7 +676,7 @@ async def test_qa_khong_ra_gi_thi_thu_lai_bang_tra_so_lieu(agent_env, monkeypatc
     async def _tra_so_lieu(state, request):
         return {"answer": "Nhân sự DV01 tháng 8/2026 là 120 người.",
                 "result": {"stop_reason": "hoàn thành",
-                           "tool_log": [{"tool": "get_personnel_statistics",
+                           "tool_log": [{"tool": "query_erp",
                                          "ok": True, "empty": False}]},
                 "refs": [], "error": ""}
 
@@ -725,7 +702,7 @@ async def test_ca_hai_nguon_deu_rong_thi_noi_that_da_tra_o_dau(agent_env, monkey
         """Gọi được tool nhưng CSDL không có dữ liệu cho kỳ đó."""
         return {"answer": "Chưa có dữ liệu cho kỳ này.",
                 "result": {"stop_reason": "hoàn thành",
-                           "tool_log": [{"tool": "get_personnel_statistics",
+                           "tool_log": [{"tool": "query_erp",
                                          "ok": True, "empty": True}]},
                 "refs": [], "error": ""}
 
@@ -764,7 +741,7 @@ async def test_nguon_cua_hai_buoc_khong_dam_so_nhau(agent_env, monkeypatch):
     async def _co_nguon(state, request):
         return {"answer": "Nhân sự là 120 người [1].",
                 "result": {"stop_reason": "hoàn thành",
-                           "tool_log": [{"tool": "get_personnel_statistics",
+                           "tool_log": [{"tool": "query_erp",
                                          "ok": True, "empty": False}]},
                 "refs": [{"id": 1, "kind": "cong_cu", "label": "nhân sự",
                           "snippet": "…", "locator": {}}],
@@ -846,7 +823,7 @@ async def test_su_kien_tien_trinh_khong_mang_ket_qua_cong_cu(agent_env, monkeypa
     async def _tra_so_lieu(state, request):
         return {"answer": "Nhân sự là 120 người.",
                 "result": {"stop_reason": "hoàn thành",
-                           "tool_log": [{"tool": "get_personnel_statistics", "ok": True,
+                           "tool_log": [{"tool": "query_erp", "ok": True,
                                          "empty": False, "preview": '{"nhan_su": 120}'}]},
                 "refs": [], "error": ""}
 
@@ -974,11 +951,11 @@ async def test_mot_buoc_hong_khong_giet_ca_ke_hoach(agent_env, monkeypatch):
 def test_khong_doc_ten_ham_ra_cho_nguoi_dung():
     """`tool_log` giữ tên hàm; tên hàm là chữ của lập trình viên, không phải câu trả lời."""
     cau = graph_mod._from_tool_log({"tool_log": [
-        {"tool": "get_personnel_statistics", "ok": True},
-        {"tool": "get_reporting_status", "ok": True},
+        {"tool": "query_erp", "ok": True},
+        {"tool": "search_documents", "ok": True},
     ]})
-    assert "get_personnel_statistics" not in cau
-    assert "tra số liệu nhân sự" in cau and "tra tình hình gửi báo cáo" in cau
+    assert "query_erp" not in cau
+    assert "truy vấn dữ liệu ERP" in cau and "tìm trong kho tài liệu" in cau
 
 
 def test_luc_kho_tai_lieu_khong_ra_thi_tra_loi_nhu_nhanh_qa():
@@ -998,7 +975,7 @@ def test_luc_kho_tai_lieu_khong_ra_thi_tra_loi_nhu_nhanh_qa():
 def test_tra_so_lieu_do_dang_thi_van_noi_ro_la_chua_xong():
     """Ngược lại: có chạm công cụ số liệu thật thì không được im lặng cho qua."""
     result = {"stop_reason": "chạm trần số bước", "answer": "",
-              "tool_log": [{"tool": "get_equipment_statistics", "ok": True}]}
+              "tool_log": [{"tool": "query_erp", "ok": True}]}
     cau = graph_mod._summarize_agent(result)
 
     assert "chưa kết luận được" in cau and "Chưa tra xong" in cau
@@ -1062,7 +1039,7 @@ def test_pham_vi_khong_dinh_vao_tool_so_lieu():
     """`doc_ids` nhét vào tool ERP là gọi sai tham số, tool sẽ báo lỗi."""
     from app.agents.nodes.toolloop import ToolCall, _ep_pham_vi
 
-    call = ToolCall(id="1", name="get_personnel_statistics", arguments={"ky": "2026-08"})
+    call = ToolCall(id="1", name="query_erp", arguments={"ky": "2026-08"})
     assert _ep_pham_vi(call, {"doc_ids": ["cv1516"], "sources": []}) == {"ky": "2026-08"}
 
 

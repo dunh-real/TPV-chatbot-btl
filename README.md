@@ -1,5 +1,9 @@
 # TPV Chatbot
 
+Tài liệu bàn giao thay đổi ERP Text-to-SQL và phân quyền nhóm:
+[Tổng quan](docs/erp-discovery/README.md) · [Ảnh hưởng workflow](docs/erp-discovery/WORKFLOWS.md) ·
+[Hướng dẫn phát triển](docs/erp-discovery/DEVELOPMENT.md).
+
 Backend đa workflow (LangGraph + FastAPI). Đã hoàn thiện:
 
 - **Workflow 1** — hỏi đáp / tra cứu tài liệu (RAG hybrid 3 nhánh)
@@ -135,9 +139,7 @@ thuần** nên mọi con số vào prompt đều đối chiếu ngược lại �
 | `get_document(document_id)` | đọc trọn một văn bản, không bỏ sót đoạn | [tools/rag.py](backend/app/tools/rag.py) |
 | `analyze_document(file_id)` | soát cấu trúc + chữ nghĩa + phân rã nhiệm vụ | [tools/document.py](backend/app/tools/document.py) |
 | `get_template(template_type)` | tra mẫu, kèm `required_inputs` phải hỏi người dùng | [tools/templates.py](backend/app/tools/templates.py) |
-| `get_personnel_statistics(ky, ma_don_vi, compare_to, group_by)` | nhân sự theo kỳ, đã tính sẵn delta/tỷ lệ | [tools/data.py](backend/app/tools/data.py) |
-| `get_equipment_statistics(ky, ma_don_vi, compare_to, group_by)` | trang thiết bị theo kỳ | [tools/data.py](backend/app/tools/data.py) |
-| `get_reporting_status(...)` | đơn vị nào đã gửi / chưa gửi báo cáo | [tools/data.py](backend/app/tools/data.py) |
+| `query_erp(question)` | Text-to-SQL discovery có kiểm soát, trả cột/dòng động | [tools/data.py](backend/app/tools/data.py) |
 | `generate_docx(template_id, content)` | đổ nội dung đã chốt ra .docx | [tools/document.py](backend/app/tools/document.py) |
 | `generate_presentation(data, template_id)` | dựng .pptx từ đặc tả JSON | [tools/presentation.py](backend/app/tools/presentation.py) |
 
@@ -145,38 +147,23 @@ Hai tool sinh file cố tình "ngu": chúng dựng đúng những gì được �
 liệu, không tự suy ra người ký. Biểu đồ không đi lọt qua JSON nên luôn là PNG do code
 vẽ, truyền riêng và tham chiếu bằng `chart_key`.
 
-Tool số liệu nhận cả `start_date`/`end_date`/`unit` lẫn `ky`/`compare_to`/`ma_don_vi`:
-người dùng nói "từ tháng 6 đến tháng 9", còn kiểm kê chốt theo tháng nên một khoảng quy
-về đúng hai mốc — kỳ báo cáo và kỳ đối chiếu.
+### Truy vấn ERP bằng Text-to-SQL discovery
 
-### Biến thể truy vấn: `group_by`, không phải text-to-SQL
+`query_erp(question)` nhận câu hỏi nghiệp vụ đầy đủ. Backend lưu toàn bộ metadata
+SQL Server vào JSON và tự kiểm tra thay đổi theo chu kỳ. Quyền tài khoản được giao
+với policy bảng/cột trước khi gửi schema cho Qwen; SQL sinh ra tiếp tục được kiểm
+tra AST, binding, ép tenant/phạm vi dòng, giới hạn dòng và thời gian chạy.
 
-Model **không sinh SQL**. Muốn một chiều cắt khác, nó chọn một khoá trong danh sách
-đóng; code quyết định cột, phép nối và phép gộp:
+Kết quả là `QueryResult`: cột, dòng, số dòng trả về, trạng thái bị cắt, version
+schema/policy và bảng nguồn. Chat diễn đạt từ bảng này; Word/PowerPoint dựng bảng
+động, không yêu cầu tên chỉ tiêu cố định. Nếu bảng bị cắt, cần thu hẹp hoặc yêu cầu
+SQL tổng hợp trước khi xuất tài liệu đầy đủ. Validate không chứng minh phép tính
+đúng nghiệp vụ; định nghĩa chỉ tiêu và bộ kiểm tra gold vẫn cần thiết.
 
-| Tool | `group_by` | Bảng chi tiết |
-|---|---|---|
-| `get_personnel_statistics` | `phong_ban` (mặc định) / `chuc_vu` | nhân sự, kỳ trước, tuyển mới, nghỉ việc theo từng nhóm |
-| `get_equipment_statistics` | `phong_ban` (mặc định) / `chung_loai` | liệt kê từng đầu thiết bị, hoặc cộng theo chủng loại |
-
-Ba lý do không mở text-to-SQL, không lý do nào là sợ lệnh phá hoại (phiên ERP đã chặn
-mọi câu ghi):
-
-1. Ngữ nghĩa "as-of" quá dễ viết sai mà vẫn ra một con số trông hợp lý — bỏ sót một vế
-   `IsDeleted`/`DeletionTime` là số của kỳ cũ đổi luôn.
-2. `IN (...)` không khớp `NULL`, nên câu SQL "đúng theo trực giác" âm thầm bỏ 49/194
-   thiết bị chưa gán phòng ban.
-3. Van chắn số kiểm "con số này có trong kết quả tool không". Nếu chính câu truy vấn do
-   model đặt ra thì mọi con số đều có trong kết quả — kể cả khi nó trả lời câu hỏi khác.
-
-`group_by` đổi CHIỀU GỘP chứ không đổi phạm vi lọc: "nhân sự Phòng Kế toán theo chức vụ"
-vẫn chỉ đếm người của Phòng Kế toán. Hệ quả là phép kiểm rẻ nhất cho tính năng này —
-**chỉ tiêu tổng không được đổi theo chiều gộp**, và tổng các dòng phải bằng chỉ tiêu
-tổng. Cả hai đều có test, gồm một test `live` chạy trên ERP thật.
-
-Cột bảng do chính tool khai (`breakdown_columns`) chứ không viết cứng ở nơi dựng bảng:
-thêm một chiều gộp mà quên sửa một trong hai chỗ dựng bảng thì file in ra nhãn "Đơn vị"
-trên cột đang chứa tên chức vụ.
+Mã discovery nằm hoàn toàn trong backend, không phụ thuộc thư mục thử nghiệm
+`text_to_sql`. Xem [kiến trúc, file thay đổi và cấu hình](backend/DISCOVERY-ERP.md).
+Sổ báo cáo của app vẫn dùng truy vấn xác định trong `services/report_register.py`
+cho nhánh tổng hợp tài liệu.
 
 Định danh file đi qua [app/services/storage.py](backend/app/services/storage.py) chứ không phải
 đường dẫn trần: đó là chỗ duy nhất chặn `../../etc/passwd`.

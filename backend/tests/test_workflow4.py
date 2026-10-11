@@ -18,14 +18,8 @@ def date_to_dt(y, m, d):
 from app.documents.charts import compare_bar_chart, status_bar_chart
 from app.documents.extract_figures import extract_figures, reconcile_file
 from app.db.models import VanBan
-from app.tools.data import (
-    Metric,
-    ToolError,
-    call_tool,
-    describe_tools,
-    previous_ky,
-    validate_ky,
-)
+from app.tools.base import ToolError
+from app.services.report_register import previous_ky, validate_ky, get_reporting_status
 
 
 @pytest.fixture
@@ -80,75 +74,21 @@ def test_ky_truoc_vat_qua_nam():
     assert previous_ky("2026-01") == "2025-12"
 
 
-def test_metric_tinh_san_moi_con_so():
-    """LLM không phải tính gì: delta, phần trăm, tỷ trọng đều có sẵn."""
-    metric = Metric.build(value=133, prev=130, total=144)
-    assert metric.delta == 3
-    assert metric.delta_pct == 2.3
-    assert metric.share_pct == 92.4
 
 
-def test_metric_khong_co_ky_truoc():
-    metric = Metric.build(value=100)
-    assert metric.delta is None and metric.delta_pct is None
 
 
 # ---------------------------------------------------------- data tool ----- #
-async def test_tong_hop_nhan_su_nhieu_don_vi(session):
-    result = await call_tool(session, "get_personnel_statistics", ky="2026-08")
-    metrics = result.as_dict()["metrics"]
-
-    # Tháng 8: đơn vị 1 còn 2 người (một người nghỉ 15/8), đơn vị 2 có 3.
-    assert metrics["total_personnel"]["value"] == 2 + 3
-    assert metrics["total_personnel"]["prev"] == 3 + 2
-    assert metrics["total_personnel"]["delta"] == 0
-    # Một người vào (10/8), một người nghỉ (15/8) -> tổng đứng yên nhưng có biến động.
-    assert metrics["new_hires"]["value"] == 1
-    assert metrics["resignations"]["value"] == 1
-    assert result.is_consistent
-    assert len(result.breakdown) == 2
 
 
-async def test_gioi_han_pham_vi_don_vi(session):
-    result = await call_tool(session, "get_personnel_statistics", ky="2026-08",
-                             ma_don_vi=["00002"])
-    assert result.as_dict()["metrics"]["total_personnel"]["value"] == 3
-    assert result.scope["units_requested"] == 1
 
 
-async def test_bat_nhan_su_lech_voi_bien_dong(session, erp_session):
-    """Chênh lệch nhân sự phải giải thích được bằng tuyển mới - nghỉ việc.
-
-    Cho một người nghỉ việc mà không ghi ngày nghỉ: nhân sự tụt đi một nhưng
-    không có biến động nào giải thích, và điều đó phải được báo lên chứ không
-    để LLM viết trơn tru qua.
-    """
-    from app.db.erp_models import EmployeeProfile
-
-    nhan_vien = await erp_session.get(EmployeeProfile, 1)
-    nhan_vien.is_deleted = True
-    nhan_vien.deletion_time = date_to_dt(2026, 8, 20)
-    await erp_session.commit()
-
-    result = await call_tool(session, "get_personnel_statistics", ky="2026-08")
-    assert not result.is_consistent
-    assert "Chênh lệch" in result.consistency[0].message
 
 
-async def test_thong_ke_thiet_bi(session):
-    result = await call_tool(session, "get_equipment_statistics", ky="2026-08")
-    metrics = result.as_dict()["metrics"]
-
-    # Máy in 8 + máy chủ 6 + xe công vụ 2 = 16 (máy chiếu đã thanh lý đầu tháng 8).
-    assert metrics["total_equipment"]["value"] == 16
-    # Chưa khai báo mã trạng thái "tốt" thì hai chỉ tiêu này phải VẮNG MẶT,
-    # không được mặc định coi tất cả là tốt.
-    assert "good" not in metrics
-    assert "needs_attention" not in metrics
 
 
 async def test_biet_don_vi_nao_chua_gui_bao_cao(session):
-    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+    status = await get_reporting_status(session, ky="2026-08")
 
     assert status["units_reported"] == 1
     assert [m["ma_don_vi"] for m in status["missing"]] == ["00001"]
@@ -167,7 +107,7 @@ async def test_bao_cao_ky_thang_8_ky_ngay_thang_9_van_tinh_dung_ky(session, app_
                            ngay_van_ban=date(2026, 9, 19), file_path="", dang_file="docx"))
     await app_session.commit()
 
-    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+    status = await get_reporting_status(session, ky="2026-08")
 
     assert status["units_reported"] == 2
     assert status["missing"] == []
@@ -180,7 +120,7 @@ async def test_bao_cao_ky_khac_khong_bi_tinh_nham(session, app_session):
                            ngay_van_ban=date(2026, 8, 5), file_path="", dang_file="docx"))
     await app_session.commit()
 
-    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+    status = await get_reporting_status(session, ky="2026-08")
 
     # Ngày văn bản nằm trong tháng 8 nhưng KỲ là tháng 7 - không phải báo cáo kỳ này.
     assert [m["ma_don_vi"] for m in status["missing"]] == ["00001"]
@@ -188,25 +128,12 @@ async def test_bao_cao_ky_khac_khong_bi_tinh_nham(session, app_session):
 
 async def test_ban_ghi_cu_khong_co_ky_van_do_duoc_theo_ten(session):
     """Sổ văn bản cũ không có mã đơn vị lẫn kỳ; đổi lược đồ không được làm nó rỗng."""
-    status = await call_tool(session, "get_reporting_status", ky="2026-08")
+    status = await get_reporting_status(session, ky="2026-08")
     assert [r["ma_don_vi"] for r in status["reported"]] == ["00002"]
 
 
-async def test_chan_tham_so_va_ten_tool_la(session):
-    with pytest.raises(ToolError, match="YYYY-MM"):
-        await call_tool(session, "get_personnel_statistics", ky="tháng 8")
-    with pytest.raises(ToolError, match="không tồn tại"):
-        await call_tool(session, "get_personnel_statistics", ky="2026-08", ma_don_vi="DVXX")
-    with pytest.raises(ToolError, match="Không có công cụ"):
-        await call_tool(session, "drop_table", ky="2026-08")
-    with pytest.raises(ToolError, match="tham số không hợp lệ"):
-        await call_tool(session, "get_personnel_statistics", ky="2026-08", sql="SELECT 1")
 
 
-def test_mo_ta_tool_cho_prompt():
-    described = describe_tools()
-    assert "get_personnel_statistics" in described
-    assert "YYYY-MM" in described
 
 
 # ------------------------------------------------------------ biểu đồ ----- #
@@ -301,107 +228,18 @@ class AggLLM:
         return {"paragraphs": [self.narrative]}
 
 
-async def test_bao_cao_tong_hop_hoan_chinh(agg_env, monkeypatch):
-    from app.agents.graph import run_aggregate_workflow
-
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng nhân sự toàn công ty là 5 người."))
-
-    result = await run_aggregate_workflow("Tổng hợp nhân sự và thiết bị tháng 8/2026")
-
-    assert result["params"]["ky"] == "2026-08"
-    assert result["params"]["compare_to"] == "2026-07"
-    assert result["validation"]["status"] == "passed"
-    assert Path(result["output_path"]).exists()
-
-    titles = [s["title"] for s in result["sections"]]
-    assert any("GỬI BÁO CÁO" in t for t in titles)     # ai nộp, ai chưa
-    assert any("NHÂN SỰ" in t for t in titles)
-    assert any("TRANG THIẾT BỊ" in t for t in titles)
-    assert any(s["has_chart"] for s in result["sections"])
 
 
-async def test_llm_tu_tinh_sai_thi_bi_chan(agg_env, monkeypatch):
-    """Nhân sự thật là 5; model viết "tăng 47 người" -> không truy được về số liệu."""
-    from app.agents.graph import run_aggregate_workflow
-
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng nhân sự là 5 người, tăng 47 người so với kỳ trước."))
-
-    result = await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
-
-    assert result["validation"]["status"] == "failed"
-    assert result["output_path"] == ""              # không xuất file khi số không truy được
-    numbers = {n for issue in result["validation"]["issues"] for n in issue["numbers"]}
-    assert "47" in numbers
 
 
-async def test_gioi_han_da_biet_so_nho_trung_ngau_nhien_van_lot(agg_env, monkeypatch):
-    """Ghi nhận giới hạn của cách đối chiếu theo tập số.
-
-    Nhân sự không đổi giữa hai kỳ, model viết "tăng 1 người" - sai, nhưng số 1
-    lọt vì trùng với số tuyển mới cũng bằng 1. Van này bắt số bịa lạ (47) chứ
-    không bắt được số nhỏ trùng ngẫu nhiên, nên vẫn cần người duyệt trước khi
-    phát hành văn bản.
-    """
-    from app.agents.graph import run_aggregate_workflow
-
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng nhân sự là 5 người, tăng 1 người so với kỳ trước."))
-
-    result = await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
-    assert result["validation"]["status"] == "passed"    # lọt - đây là giới hạn đã biết
 
 
-async def test_ty_le_da_tinh_san_thi_llm_dung_lai_duoc(agg_env, monkeypatch):
-    """Tỷ lệ phần trăm do data tool tính sẵn nên LLM dùng lại được, không bị coi là bịa."""
-    from app.agents.graph import run_aggregate_workflow
-
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng nhân sự 5 người, trong kỳ tuyển mới 1 và nghỉ việc 1."))
-
-    result = await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
-    assert result["validation"]["status"] == "passed"
 
 
-async def test_so_lieu_cua_muc_khac_cung_bi_coi_la_bia(agg_env, monkeypatch):
-    """Nhận xét nhân sự đặt ở mục trang thiết bị -> số không thuộc phạm vi mục đó."""
-    from app.agents.graph import run_aggregate_workflow
-
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM(
-        "Tổng nhân sự là 5 người.",
-        equipment_narrative="Tổng nhân sự là 5 người, giảm 1 người.",
-    ))
-
-    result = await run_aggregate_workflow("Tổng hợp tháng 8/2026")
-    sections_with_issue = {i["section"] for i in result["validation"]["issues"]}
-    assert "thiet_bi" in sections_with_issue
 
 
-async def test_don_vi_chua_nop_duoc_neu_ten(agg_env, monkeypatch):
-    from app.agents.graph import run_aggregate_workflow
-
-    monkeypatch.setattr(rp, "get_llm", lambda: AggLLM("Tổng nhân sự là 5 người."))
-    result = await run_aggregate_workflow("Tổng hợp tháng 8/2026")
-
-    section = next(s for s in result["sections"] if "GỬI BÁO CÁO" in s["title"])
-    assert "Đơn vị 1" in section["paragraphs"][0]      # đơn vị 1 chưa gửi
-    assert "1 đơn vị đã gửi" in section["paragraphs"][0]
 
 
-async def test_khong_neu_ky_thi_lay_ky_gan_nhat_da_khep(agg_env, monkeypatch):
-    from app.agents.graph import run_aggregate_workflow
-
-    class NoPeriodLLM(AggLLM):
-        async def chat_json(self, messages, **kwargs):
-            if "trích tham số" in messages[0]["content"]:
-                return {"thang": None, "nam": None, "ma_don_vi": [], "noi_dung": []}
-            return {"paragraphs": [self.narrative]}
-
-    monkeypatch.setattr(rp, "get_llm", lambda: NoPeriodLLM("Không có số liệu."))
-    result = await run_aggregate_workflow("Tổng hợp báo cáo")
-
-    assert any("kỳ gần nhất đã khép" in a for a in result["assumptions"])
 
 
 # ------------------------------------------------- lịch sử hội thoại ------- #
@@ -420,15 +258,13 @@ class LichSuLLM(AggLLM):
 
 async def test_trich_tham_so_nhin_thay_luot_truoc(agg_env, monkeypatch):
     """"vẫn kỳ đó" chỉ giải được nếu lượt trước đi vào prompt trích tham số."""
-    from app.agents.graph import run_aggregate_workflow
 
     llm = LichSuLLM()
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
 
-    await run_aggregate_workflow(
-        "tổng hợp thêm thiết bị, vẫn kỳ đó",
-        history=[{"role": "user", "content": "tổng hợp nhân sự tháng 8/2026"},
-                 {"role": "assistant", "content": "Đã tổng hợp báo cáo kỳ 2026-08."}],
+    await rp.extract_params_node({"request": "tổng hợp thêm thiết bị, vẫn kỳ đó",
+        "history": [{"role": "user", "content": "tổng hợp nhân sự tháng 8/2026"},
+                 {"role": "assistant", "content": "Đã tổng hợp báo cáo kỳ 2026-08."}]}
     )
 
     assert "tổng hợp nhân sự tháng 8/2026" in llm.params_prompt
@@ -436,12 +272,11 @@ async def test_trich_tham_so_nhin_thay_luot_truoc(agg_env, monkeypatch):
 
 
 async def test_khong_truyen_lich_su_thi_prompt_bao_chua_co(agg_env, monkeypatch):
-    from app.agents.graph import run_aggregate_workflow
 
     llm = LichSuLLM()
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
 
-    await run_aggregate_workflow("Tổng hợp nhân sự tháng 8/2026")
+    await rp.extract_params_node({"request":"Tổng hợp nhân sự tháng 8/2026"})
 
     assert "(chưa có)" in llm.params_prompt
 
@@ -674,86 +509,16 @@ def test_khong_co_so_that_thi_bo_qua_chu_khong_doan():
 # --------------------------------------------------------------------------- #
 # Chiều gộp: danh sách đóng, code dựng SQL, model chỉ chọn khoá
 # --------------------------------------------------------------------------- #
-async def test_gop_nhan_su_theo_chuc_vu(session):
-    ket_qua = (await call_tool(session, "get_personnel_statistics",
-                               ky="2026-08", group_by="chuc_vu")).as_dict()
-
-    assert ket_qua["dimension"] == "chuc_vu"
-    assert [c["label"] for c in ket_qua["breakdown_columns"]][0] == "Chức vụ"
-
-    theo_ten = {r["ten_nhom"]: r for r in ket_qua["breakdown"]}
-    # Tháng 8: Trưởng phòng 2 người; Nhân viên còn 2 (một người nghỉ 15/8);
-    # một hồ sơ chưa gán chức vụ, vào làm 10/8.
-    assert theo_ten["Trưởng phòng"]["nhan_su"] == 2
-    assert theo_ten["Nhân viên"]["nhan_su"] == 2
-    assert theo_ten["(chưa gán chức vụ)"]["nhan_su"] == 1
-    assert theo_ten["(chưa gán chức vụ)"]["tuyen_moi"] == 1
 
 
-async def test_doi_chieu_gop_khong_doi_chi_tieu_tong(session):
-    """Phép kiểm rẻ nhất cho chiều gộp: cùng một tập dòng thì tổng phải bằng nhau.
-
-    Gộp là chia lại các dòng, không phải lọc. Lệch tổng nghĩa là cột gộp đang
-    làm rơi mất bản ghi - đúng cái bẫy `IN (...)` không khớp `NULL`.
-    """
-    theo_don_vi = await call_tool(session, "get_personnel_statistics", ky="2026-08")
-    theo_chuc_vu = await call_tool(session, "get_personnel_statistics", ky="2026-08",
-                                   group_by="chuc_vu")
-
-    assert theo_don_vi.as_dict()["metrics"] == theo_chuc_vu.as_dict()["metrics"]
-    assert (sum(r["nhan_su"] for r in theo_chuc_vu.as_dict()["breakdown"])
-            == theo_don_vi.as_dict()["metrics"]["total_personnel"]["value"])
 
 
-async def test_gop_thiet_bi_theo_chung_loai(session):
-    ket_qua = (await call_tool(session, "get_equipment_statistics",
-                               ky="2026-08", group_by="chung_loai")).as_dict()
-
-    assert ket_qua["dimension"] == "chung_loai"
-    assert [c["label"] for c in ket_qua["breakdown_columns"]] == [
-        "Chủng loại", "Số lượng", "Số đầu mục"]
-
-    theo_ten = {r["ten_nhom"]: r for r in ket_qua["breakdown"]}
-    # Tháng 8: máy in 8 + máy chủ 6 = 14 thiết bị; xe công vụ 2 là phương tiện.
-    assert theo_ten["Thiết bị"] == {"ma_nhom": "Thiết bị", "ten_nhom": "Thiết bị",
-                                    "so_luong": 14, "so_dau_muc": 2}
-    assert theo_ten["Phương tiện"]["so_luong"] == 2
-    assert (sum(r["so_luong"] for r in ket_qua["breakdown"])
-            == ket_qua["metrics"]["total_equipment"]["value"])
 
 
-async def test_gop_theo_chieu_la_bi_chan(session):
-    """Model đề xuất một chiều không có thật thì chặn, không im lặng chạy mặc định."""
-    with pytest.raises(ToolError, match="Chỉ dùng được"):
-        await call_tool(session, "get_personnel_statistics", ky="2026-08",
-                        group_by="gioi_tinh")
-    # Chiều của tool này không dùng được cho tool kia.
-    with pytest.raises(ToolError, match="Chỉ dùng được"):
-        await call_tool(session, "get_personnel_statistics", ky="2026-08",
-                        group_by="chung_loai")
 
 
-async def test_loc_theo_don_vi_van_giu_khi_gop_theo_chuc_vu(session):
-    """"Nhân sự Đơn vị 1 theo chức vụ" là lọc một đằng, gộp một nẻo."""
-    ket_qua = (await call_tool(session, "get_personnel_statistics", ky="2026-08",
-                               ma_don_vi="00001", group_by="chuc_vu")).as_dict()
-
-    # Đơn vị 1 tháng 8 còn 2 người: một trưởng phòng, một nhân viên.
-    assert ket_qua["metrics"]["total_personnel"]["value"] == 2
-    assert {r["ten_nhom"] for r in ket_qua["breakdown"]} == {"Trưởng phòng", "Nhân viên"}
 
 
-async def test_gop_chieu_khac_thi_bo_han_chi_tieu_theo_don_vi(session):
-    """Số đã gộp theo chức vụ thì không còn biết đơn vị nào thiếu dữ liệu.
-
-    Để nguyên `units_missing` tính từ khoá sai thì báo cáo in ra "cả 9 đơn vị
-    chưa cung cấp dữ liệu" - sai, và nghe rất giống thật.
-    """
-    scope = (await call_tool(session, "get_personnel_statistics", ky="2026-08",
-                             group_by="chuc_vu")).as_dict()["scope"]
-
-    assert "units_missing" not in scope and "units_with_data" not in scope
-    assert scope["nhom_theo"] == "Chức vụ"
 
 
 def test_cau_chu_quyet_dinh_chieu_gop():

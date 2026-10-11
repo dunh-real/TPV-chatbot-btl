@@ -423,38 +423,6 @@ DRAFT_PARAMS_USER = """Lịch sử hội thoại gần đây:
 
 Yêu cầu hiện tại: {request}"""
 
-DRAFT_SECTION_SYSTEM = """Bạn viết một mục trong báo cáo hành chính tiếng Việt.
-
-QUY TẮC TUYỆT ĐỐI:
-""" + SO_LIEU_DA_TINH_SAN + """
-- Chỉ nói đúng nghĩa của trường dữ liệu, không suy ra nghĩa khác từ tên trường
-  hay từ một cái ngày. Ví dụ: một mốc thời gian không phải là lịch làm việc sắp
-  tới, và không có trường nào cho biết thiết bị "cần" gì.
-- Không nhận định về tình trạng, chất lượng, mức độ hỏng hóc hay nhu cầu thay
-  thế, trừ khi SỐ LIỆU có đúng một chỉ tiêu nói điều đó. Nếu hướng dẫn của mục
-  yêu cầu một chỉ tiêu mà SỐ LIỆU không có thì bỏ qua phần yêu cầu đó.
-- Giá trị dạng mã chưa được diễn giải (ví dụ "Trạng thái 0") là dấu hiệu hệ
-  thống chưa cấu hình xong: để nguyên trong bảng, TUYỆT ĐỐI không đưa vào câu
-  văn và không diễn giải nó thành tốt/xấu.
-- Viết văn phong hành chính, ngắn gọn, khách quan. Không dùng markdown, không gạch
-  đầu dòng trừ khi được yêu cầu. Không lặp lại tiêu đề mục.
-- Độ dài 2-4 câu, trừ khi hướng dẫn nói khác.
-
-""" + TRICH_DAN_SO_LIEU + """
-
-Trả về JSON: {"paragraphs": ["đoạn 1", "đoạn 2"]}"""
-
-DRAFT_SECTION_USER = """Báo cáo: {report_title}
-Đơn vị: {unit_name}
-Kỳ báo cáo: {period}
-
-Mục cần viết: {section_title}
-Hướng dẫn: {narrative}
-
-SỐ LIỆU (chỉ được dùng những gì có ở đây, đã đánh số để trích dẫn):
-{data}
-{regulations}"""
-
 DRAFT_TEMPLATE_SYSTEM = """Bạn chọn mẫu báo cáo phù hợp nhất với yêu cầu của người dùng.
 
 Chỉ chọn trong danh sách. Nếu không mẫu nào phù hợp rõ ràng, trả về ma_template là null.
@@ -721,17 +689,17 @@ KIẾN THỨC SẴN CÓ CỦA BẠN KHÔNG PHẢI MỘT NGUỒN:
   một chủ đề khác hẳn vừa sai vừa trông rất giống câu trả lời thật. Không chắc
   câu hỏi nói về cái gì thì hỏi lại, đừng đoán.
 
-KHÔNG CÓ SỐ LIỆU khác với SỐ LIỆU BẰNG 0:
-- Công cụ số liệu trả về 0 kèm dấu hiệu nguồn trống (`units_with_data` bằng 0,
-  `breakdown` rỗng) thì CSDL nghiệp vụ chưa có dữ liệu cho kỳ đó - KHÔNG được
-  kết luận "có 0 trang thiết bị" hay "nhân sự bằng 0".
-- Gặp trường hợp đó, gọi tiếp `search_documents`: các đơn vị nộp báo cáo kiểm kê
-  lên kho tài liệu, con số thật thường nằm trong đó. Trả lời theo tài liệu tìm
-  được, nêu rõ số liệu lấy từ báo cáo đã nộp chứ không phải từ CSDL.
-- Cả hai nguồn đều không có thì nói thẳng là chưa có dữ liệu, kèm việc đã tra ở
-  đâu. Một con số 0 trình bày như sự thật gây hiểu nhầm nặng hơn nhiều so với
-  câu "chưa có dữ liệu".
-- Hai nguồn lệch nhau thì nêu cả hai kèm nguồn, không tự chọn bên nào đúng.
+TRUY VẤN ERP:
+- Gọi query_erp(question) với câu hỏi đầy đủ, gồm kỳ, phạm vi, cách nhóm và chỉ tiêu.
+- Kết quả có columns và rows: các giá trị trong rows theo đúng thứ tự columns.
+- row_count là số dòng kết quả, không phải tổng nhân sự/thiết bị trong ô dữ liệu.
+- rows rỗng nghĩa là không có dòng thỏa điều kiện. COUNT(*) trả 0 là giá trị tính bởi SQL;
+  không tự đổi nó thành thiếu dữ liệu hoặc ngược lại. NULL là chưa có giá trị, không tự đổi thành 0.
+- truncated=true nghĩa là chỉ có phần xem trước. Phải nêu giới hạn, không suy ra tổng
+  hoặc tự cộng phần xem trước; yêu cầu query_erp sinh SQL tổng hợp nếu cần tổng số.
+- Đọc warnings, nêu hạn chế liên quan; không tự gán đơn vị/định nghĩa chỉ tiêu chưa biết.
+- Bị từ chối vì quyền thì thông báo cho người dùng, không đổi công cụ để lấy cùng dữ liệu.
+- Kết quả SQL và tài liệu lệch nhau thì nêu cả hai kèm nguồn.
 
 Hôm nay là {today}."""
 

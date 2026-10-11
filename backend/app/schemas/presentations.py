@@ -19,6 +19,7 @@ class PresentationRequest(BaseModel):
 
 class PresentationResponse(BaseModel):
     request: str
+    data: dict[str, Any] = Field(default_factory=dict, description="QueryResult trong data.queries")
     params: dict[str, Any] = Field(default_factory=dict)
     brief: str = Field(
         default="",

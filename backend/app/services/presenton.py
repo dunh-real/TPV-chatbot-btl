@@ -12,7 +12,7 @@ bày, nên phần bịa đặt thu hẹp lại đúng bằng phần chữ dẫn 
 
 RANH GIỚI KHÔNG ĐỔI
 
-Số liệu vẫn do SQL lấy và do `app.tools.data` tính. Presenton không được nối vào
+Số liệu ERP do discovery lấy và SQL tổng hợp. Presenton không được nối vào
 CSDL, không nhận câu hỏi gốc của người dùng, chỉ nhận bản tóm tắt. Và bộ slide nó
 trả về vẫn bị đối chiếu số một lần nữa trước khi giao cho người dùng.
 

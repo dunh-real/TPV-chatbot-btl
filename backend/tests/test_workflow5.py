@@ -371,7 +371,7 @@ class WF5Settings:
 
 
 @pytest.fixture
-async def ppt_env(tmp_path, monkeypatch, erp_session):
+async def ppt_env(tmp_path, monkeypatch, erp_session, erp_query):
     """Số liệu đọc từ ERP tạm, sổ văn bản ở CSDL app tạm, output vào thư mục tạm."""
     from contextlib import asynccontextmanager
 
@@ -387,9 +387,19 @@ async def ppt_env(tmp_path, monkeypatch, erp_session):
     async def _scope():
         yield app_session
 
-    @asynccontextmanager
-    async def _erp_scope():
-        yield erp_session
+    async def _query(question):
+        result = await erp_query(erp_session, """
+            SELECT d.DisplayName AS department, COUNT(p.Id) AS personnel
+            FROM dbo.Hrm_EmployeeProfile p
+            LEFT JOIN dbo.Dms_WorkDepartment d ON p.WorkDepartmentId=d.Id
+            WHERE p.HireDate < '2026-09-01'
+              AND (p.ResignationDate IS NULL OR p.ResignationDate >= '2026-09-01')
+              AND p.IsDeleted=0 GROUP BY d.DisplayName ORDER BY d.DisplayName
+        """)
+        result.question = question
+        result.columns[0].label = "Đơn vị"
+        result.columns[1].label = "Nhân sự"
+        return result
 
     WF5Settings.output_dir = str(tmp_path)
 
@@ -397,7 +407,7 @@ async def ppt_env(tmp_path, monkeypatch, erp_session):
 
     monkeypatch.setattr(db_session, "session_scope", _scope)
     monkeypatch.setattr(rp, "session_scope", _scope)
-    monkeypatch.setattr(rp, "erp_session_scope", _erp_scope)
+    monkeypatch.setattr(rp, "query_erp", _query)
     monkeypatch.setattr(rp, "get_settings", lambda: WF5Settings)
     monkeypatch.setattr(pr, "get_settings", lambda: WF5Settings)
     yield tmp_path
@@ -455,7 +465,7 @@ async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
     from app.agents.graph import run_presentation_workflow
 
     llm = ParamsLLM()
-    gia = FakePresenton(ppt_env, ["Tổng nhân sự 5 người, tăng 1 so với kỳ trước"])
+    gia = FakePresenton(ppt_env, ["Đơn vị 1 có 2 nhân sự, Đơn vị 2 có 3 nhân sự"])
     monkeypatch.setattr(rp, "get_llm", lambda: llm)
     monkeypatch.setattr(pr, "get_presenton", lambda: gia)
 
@@ -482,7 +492,8 @@ async def test_tao_bo_slide_qua_presenton(ppt_env, monkeypatch):
     assert llm.calls == 1
     # Và Presenton chỉ thấy số liệu, không thấy câu hỏi gốc.
     assert "Tạo slide báo cáo" not in gia.brief
-    assert "Tổng nhân sự" in gia.brief
+    assert "| Đơn vị | Nhân sự |" in gia.brief
+    assert result["data"]["queries"][0]["rows"] == [["Đơn vị 1", 2], ["Đơn vị 2", 3]]
     assert "KHÔNG tự cộng" in gia.instructions
 
 
@@ -520,9 +531,9 @@ async def test_duong_lui_van_du_so_lieu(ppt_env, monkeypatch):
     presentation = Presentation(result["output_path"])
 
     assert any(sh.has_table for slide in presentation.slides for sh in slide.shapes)
-    chu = " ".join(sh.text_frame.text for slide in presentation.slides
-                   for sh in slide.shapes if sh.has_text_frame)
-    assert "Đơn vị 1" in chu
+    cells = [cell.text for slide in presentation.slides for sh in slide.shapes
+             if sh.has_table for row in sh.table.rows for cell in row.cells]
+    assert "Đơn vị 1" in cells and "Đơn vị 2" in cells
 
 
 # --------------------------------------------------------------------------- #

@@ -208,6 +208,19 @@ class Settings(BaseSettings):
     # Bỏ trống => tắt hẳn phần đọc ERP, các tool số liệu báo "chưa cấu hình".
     erp_database_url: str = ""
     erp_echo: bool = False
+    # Truy vấn số liệu ERP dùng pipeline discovery nội bộ.
+    erp_schema_file: str = "data/erp_schema.json"
+    erp_schema_refresh_seconds: float = Field(default=300, ge=10, le=86400)
+    erp_sql_policy_file: str = "config/erp_sql_policy.json"
+    erp_text2sql_base_url: str = "http://127.0.0.1:15000/v1"
+    erp_text2sql_api_key: str = "EMPTY"
+    erp_text2sql_model: str = "Qwen/Qwen3.6-35B-A3B-FP8"
+    erp_text2sql_timeout: float = Field(default=180.0, gt=0, le=600)
+    erp_text2sql_query_timeout: float = Field(default=30.0, gt=0, le=120)
+    erp_text2sql_max_tokens: int = Field(default=8192, ge=256, le=32768)
+    erp_text2sql_max_repairs: int = Field(default=2, ge=0, le=3)
+    erp_text2sql_max_tool_calls: int = Field(default=12, ge=0, le=24)
+    erp_text2sql_max_rows: int = Field(default=5000, ge=1, le=20000)
     # ERP dựng trên ABP, dữ liệu chia theo tenant. Bỏ qua giá trị này thì báo cáo
     # sẽ cộng gộp số liệu của mọi đơn vị thuê bao trên cùng một máy chủ.
     #
@@ -221,14 +234,6 @@ class Settings(BaseSettings):
     # nhận được khi chạy trong mạng nội bộ và chưa có đăng nhập; PHẢI tắt ngay khi
     # giao diện có auth, lúc đó chỉ token mới nói được danh tính.
     trust_identity_headers: bool = True
-
-    # `Asm_Assets.Status` là enum định nghĩa trong mã nguồn ERP, không có bảng tra
-    # trong CSDL. Chưa khai báo thì hệ thống KHÔNG đoán: nó bỏ hai chỉ tiêu
-    # "tình trạng tốt"/"cần xử lý" khỏi báo cáo thay vì bịa ra con số.
-    #   ERP_ASSET_STATUS_LABELS=0=Đang dùng,1=Hỏng,2=Chờ thanh lý
-    #   ERP_ASSET_STATUS_GOOD=0
-    erp_asset_status_labels: str = ""
-    erp_asset_status_good: str = ""
 
     # -------------------------------------------- Presenton (workflow 5) ---
     # Bộ slide do Presenton dựng (Docker, xem docker/presenton.yml). Nó có LLM
@@ -317,22 +322,6 @@ class Settings(BaseSettings):
     def utility_model(self) -> str:
         return self.llm_utility_model or self.llm_model
 
-    @property
-    def asset_status_labels(self) -> dict[int, str]:
-        """"0=Đang dùng,1=Hỏng" -> {0: "Đang dùng", 1: "Hỏng"}."""
-        labels: dict[int, str] = {}
-        for item in self.erp_asset_status_labels.split(","):
-            code, _, name = item.partition("=")
-            if name.strip() and code.strip().lstrip("-").isdigit():
-                labels[int(code)] = name.strip()
-        return labels
-
-    @property
-    def asset_status_good(self) -> set[int]:
-        return {
-            int(code) for code in self.erp_asset_status_good.split(",")
-            if code.strip().lstrip("-").isdigit()
-        }
 
 
 @lru_cache

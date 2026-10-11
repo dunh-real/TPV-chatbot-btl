@@ -22,26 +22,11 @@ QUYEN_THEO_NGHIEP_VU: dict[str, str] = {
     "presentation": "Ai.Slide.Create",
 }
 
-# Quyền để đọc từng mảng số liệu. Thiếu thì mảng đó bị loại khỏi báo cáo chứ
-# không làm hỏng cả yêu cầu - người dùng vẫn nhận được phần họ có quyền xem.
+# Nhánh tổng hợp tài liệu vẫn phân mảng; quyền SQL bảng/cột nằm trong SQLPolicy.
 QUYEN_THEO_MANG: dict[str, str] = {
     "nhan_su": "Hrm.EmployeeProfile.View",
     "thiet_bi": "Asm.Asset.View",
 }
-
-# `Hrm.EmployeeProfile.ViewMine` = chỉ xem hồ sơ của CHÍNH MÌNH.
-#
-# Chưa cài lọc "chỉ dòng của tôi", và đây là lý do: quét toàn CSDL không có lấy
-# một vai trò nào có `ViewMine` mà thiếu `View`. Viết một tầng lọc cho trường hợp
-# chưa tồn tại là viết thứ không ai chạy thử được.
-#
-# Hành vi hiện tại vẫn ĐÚNG HƯỚNG AN TOÀN: chốt ở `call_tool` đòi
-# `Hrm.EmployeeProfile.View`, nên người chỉ có `ViewMine` bị chặn khỏi công cụ
-# nhân sự - chặt hơn ý của ERP, nhưng không lộ dữ liệu.
-#
-# Khi nào ERP thật sự có vai trò `ViewMine`-only: cầu nối đã có sẵn,
-# `AbpUsers.Id` -> `Dms_Employee.UserId` -> `Hrm_EmployeeProfile.EmployeeId`.
-QUYEN_CHI_CUA_MINH = "Hrm.EmployeeProfile.ViewMine"
 
 _TEN_VIET: dict[str, str] = {
     "qa": "tra cứu tài liệu",

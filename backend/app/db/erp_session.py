@@ -1,21 +1,12 @@
-"""Kết nối tới CSDL ERP - CHỈ ĐỌC.
-
-Quyền được cấp cho hệ thống này là chỉ đọc trên một danh sách bảng cố định. Chốt
-chặn dưới đây không thừa: quyền trên máy chủ có thể bị cấp rộng ra lúc nào không
-biết, còn `ALLOWED_TABLES` và `_reject_writes` thì nằm ngay trong mã nguồn và đi
-theo mọi lần triển khai.
-
-Hai lớp chặn:
-  1. `_reject_writes` - mọi câu lệnh không phải đọc đều bị chặn trước khi gửi đi.
-  2. `erp_session_scope` - phiên không autoflush, không commit, rollback khi đóng.
-"""
-
+"""Kết nối ERP chỉ đọc cho định danh và danh mục; quyền SQL sinh bởi model nằm trong SQLPolicy."""
 from __future__ import annotations
 
 import logging
+import math
 import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import partial
 
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
@@ -32,20 +23,6 @@ class ErpNotConfigured(RuntimeError):
 class ReadOnlyViolation(RuntimeError):
     """Có chỗ nào đó định ghi vào ERP. Đây là lỗi lập trình, không phải lỗi dữ liệu."""
 
-
-# Danh sách bảng được phép đọc. Ngoài danh sách này là ngoài phạm vi cho phép,
-# kể cả khi login có quyền đọc cả CSDL.
-ALLOWED_TABLES = frozenset({
-    "AbpRoles", "AbpUserRoles",
-    "AbpUsers",  # mở thêm 2026-09-20: cần map email/username -> UserId cho phân quyền
-    "AbpPermissions",  # mở thêm 2026-09-20: quyền thật của từng vai trò
-    "AI_ChatConversations", "AI_ChatMessages",
-    "Asm_AssetAssignment", "Asm_AssetAssignmentDetail",
-    "Asm_AssetCategories", "Asm_Assets",
-    "Dms_Employee",  # mở thêm: Hrm_EmployeeProfile.EmployeeId bắt buộc trỏ tới đây
-    "Dms_WorkDepartment", "Dms_WorkPosition",
-    "Hrm_EmployeeProfile",
-})
 
 # Từ khoá mở đầu một câu lệnh ghi/đổi cấu trúc. Chặn theo từ khoá mở đầu thay vì
 # tìm chuỗi bất kỳ trong câu: chữ "update" nằm trong tên cột `LastModificationTime`
@@ -66,6 +43,11 @@ def _reject_writes(conn, cursor, statement: str, parameters, context, executeman
         )
 
 
+async def _configure_odbc_timeout(connection, *, seconds: float) -> None:
+    """Đặt timeout trên kết nối ODBC thật để giới hạn truy vấn của driver."""
+    connection.timeout = math.ceil(seconds)
+
+
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
 
@@ -83,6 +65,9 @@ def get_erp_engine(settings: Settings | None = None) -> AsyncEngine:
             cfg.erp_database_url,
             echo=cfg.erp_echo,
             pool_pre_ping=True,
+            **({"connect_args": {"after_created": partial(
+                _configure_odbc_timeout, seconds=cfg.erp_text2sql_query_timeout)}}
+               if cfg.erp_database_url.startswith("mssql+aioodbc") else {}),
             **({} if cfg.erp_database_url.startswith("sqlite")
                else {"pool_size": 5, "max_overflow": 10}),
         )

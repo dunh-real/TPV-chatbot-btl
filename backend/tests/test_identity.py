@@ -14,7 +14,8 @@ from fastapi import FastAPI
 from app.api.identity import IdentityMiddleware
 from app.core.config import get_settings
 from app.core.context import Principal, current_principal, use_principal
-from app.db.erp_repository import ErpDonViRepository, ErpNhanSuRepository, period_end
+from app.db.erp_repository import ErpDonViRepository
+from app.tools.base import ToolError
 
 from conftest import ERP_TENANT
 
@@ -98,12 +99,9 @@ async def test_tenant_cua_request_loc_that_o_tang_truy_van(erp_session):
     # Tenant khác: dữ liệu mẫu không thuộc về nó nên không được thấy dòng nào.
     with use_principal(Principal(tenant_id=ERP_TENANT + 1, source="header")):
         assert await don_vi.list_all() == []
-        assert await ErpNhanSuRepository(erp_session).headcount_by_dept(
-            period_end("2026-09")) == {}
 
-    # Không lọc tenant: quay lại nhìn thấy đủ.
-    with use_principal(Principal(tenant_id=None, source="header")):
-        assert len(await don_vi.list_all()) == 2
+    with use_principal(Principal(tenant_id=None, source="header")), pytest.raises(ToolError):
+        await don_vi.list_all()
 
 
 async def test_ngoai_http_thi_roi_ve_cau_hinh(erp_session, monkeypatch):

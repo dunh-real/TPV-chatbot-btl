@@ -51,6 +51,7 @@ class AssistantTurn:
     reasoning: str
     tool_calls: list[ToolCall]
     raw: dict[str, Any]
+    finish_reason: str | None = None
 
     @property
     def wants_tools(self) -> bool:
@@ -205,6 +206,7 @@ class LLMClient:
         max_tokens: int | None = None,
         tool_choice: str = "auto",
         thinking: bool | None = None,
+        parallel_tool_calls: bool | None = None,
     ) -> "AssistantTurn":
         """Một lượt của vòng lặp agent: model hoặc trả lời, hoặc đòi gọi tool.
 
@@ -217,6 +219,8 @@ class LLMClient:
             max_tokens=max_tokens, stream=False,
             extra={"tools": tools, "tool_choice": tool_choice}, thinking=thinking,
         )
+        if parallel_tool_calls is not None:
+            payload["parallel_tool_calls"] = parallel_tool_calls
         try:
             response = await self._post(payload)
             data = response.json()
@@ -251,6 +255,7 @@ class LLMClient:
             reasoning=str(message.get("reasoning") or ""),
             tool_calls=calls,
             raw=message,
+            finish_reason=data["choices"][0].get("finish_reason"),
         )
 
     async def stream_chat_with_tools(

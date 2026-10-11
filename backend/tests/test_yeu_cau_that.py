@@ -231,84 +231,11 @@ async def test_bo_slide_dung_voi_cau_hoi(cau, mang, dong_ket_noi_khi_xong):
     # chứ không phải đối tượng bảng của PowerPoint. Bất biến thật nằm ở chỗ khác
     # và chặt hơn - MỌI dòng của bảng chi tiết phải có mặt trong bộ slide. Cắt
     # 33 dòng còn 8 là trượt ngay.
-    for ten in await _ten_tung_dong(ket_qua["params"]):
+    for ten in _ten_tung_dong(ket_qua):
         assert ten in chu, f"bảng chi tiết thiếu dòng {ten!r}"
 
 
-async def _ten_tung_dong(params: dict) -> list[str]:
-    """Hỏi thẳng tool số liệu: bảng chi tiết đáng lẽ có những dòng nào."""
-    from app.db.erp_session import erp_session_scope
-    from app.tools.data import get_equipment_statistics, get_personnel_statistics
-
-    ham = {"nhan_su": get_personnel_statistics, "thiet_bi": get_equipment_statistics}
-    nhom = {"nhan_su": "chuc_vu", "thiet_bi": "chung_loai"}
-
-    ten: list[str] = []
-    async with erp_session_scope() as session:
-        for mang in params["noi_dung"]:
-            ket_qua = await ham[mang](
-                session, params["ky"], ma_don_vi=params["ma_don_vi"] or None,
-                compare_to=params["compare_to"],
-                group_by=nhom[mang] if params.get("nhom_theo") == nhom[mang]
-                else "phong_ban")
-            ten += [row["ten_nhom"] for row in ket_qua.breakdown]
-    return ten
-
-
-# --------------------------------------------------------------------------- #
-# Chiều gộp: từ câu tiếng Việt tới nhãn cột trong file
-#
-# Đây là biến thể truy vấn duy nhất model được chọn, nên nó cũng là chỗ mới để
-# sai: gộp nhầm chiều thì mọi con số vẫn đúng, chỉ có câu hỏi là khác.
-# --------------------------------------------------------------------------- #
-CORPUS_NHOM: list[tuple[str, str | None]] = [
-    ("Báo cáo tổng hợp nhân sự theo chức vụ tháng 8/2026", "chuc_vu"),
-    ("Thống kê nhân sự theo từng chức vụ", "chuc_vu"),
-    ("Tổng hợp trang thiết bị theo chủng loại tháng 8/2026", "chung_loai"),
-    ("báo cáo thiết bị theo loại thiết bị", "chung_loai"),
-    # Không nêu chiều nào thì phải là None - gộp theo đơn vị như cũ.
-    ("Báo cáo tổng hợp tháng 8/2026", None),
-    ("Báo cáo nhân sự Phòng Kế toán tháng 8/2026", None),
-]
-
-
-@pytest.mark.live
-@_pytest_asyncio_module_loop
-@pytest.mark.parametrize("cau, nhom", CORPUS_NHOM, ids=[c for c, _ in CORPUS_NHOM])
-async def test_trich_chieu_gop_that(cau, nhom, dong_ket_noi_khi_xong):
-    from app.agents.nodes.report import extract_params_node
-    from app.core.context import Principal, use_principal
-
-    with use_principal(Principal(tenant_id=64)):
-        ket_qua = await extract_params_node({"request": cau, "history": [], "inputs": {}})
-
-    assert ket_qua["params"]["nhom_theo"] == nhom
-
-
-@pytest.mark.live
-@_pytest_asyncio_module_loop
-async def test_bao_cao_gop_theo_chuc_vu_dung_nhan_va_dung_tong(dong_ket_noi_khi_xong):
-    """Gộp là chia lại các dòng, không phải lọc: tổng cột phải bằng chỉ tiêu tổng.
-
-    Kiểm trên FILE chứ không trên dict: nhãn cột sai thì chỉ nhìn file mới thấy -
-    bảng in "Đơn vị" trên một cột đang chứa tên chức vụ.
-    """
-    from docx import Document
-
-    from app.agents.graph import run_aggregate_workflow
-    from app.core.context import Principal, use_principal
-
-    with use_principal(Principal(tenant_id=64)):
-        ket_qua = await run_aggregate_workflow(
-            "Báo cáo tổng hợp nhân sự theo chức vụ tháng 8/2026", inputs={})
-
-    assert not ket_qua["error"], ket_qua["error"]
-    assert ket_qua["params"]["nhom_theo"] == "chuc_vu"
-    assert any("chức vụ" in gia_dinh for gia_dinh in ket_qua["assumptions"])
-
-    bang = [t for t in Document(ket_qua["output_path"]).tables
-            if t.rows[0].cells[0].text.strip() == "Chức vụ"]
-    assert bang, "không có bảng nào gộp theo chức vụ trong file"
-
-    tong_cot = sum(int(r.cells[1].text) for r in bang[0].rows[1:] if r.cells[1].text.isdigit())
-    assert tong_cot == ket_qua["data"]["personnel"]["metrics"]["total_personnel"]["value"]
+def _ten_tung_dong(result: dict) -> list[str]:
+    """Mọi giá trị của bảng đã dùng dựng slide đều phải có mặt trong file."""
+    return [str(value) for query in result.get("data", {}).get("queries", [])
+            for row in query["rows"] for value in row if value is not None]

@@ -262,68 +262,26 @@ thật sự xảy ra — đừng rút gọn lại cho ngắn.
 
 ---
 
-## 3b. Biến thể truy vấn: `group_by`
+## 3b. Truy vấn ERP hiện tại: Text-to-SQL discovery
 
-Model vẫn không sinh SQL. Nó chọn một khoá trong danh sách đóng, code dựng SQL:
+Các repository thống kê và tool `group_by` cố định đã được thay bằng
+`query_erp(question)`. Pipeline discovery nằm trong backend, dùng metadata tự cập
+nhật, policy bảng/cột/dòng, kiểm tra AST/binding và sửa SQL có giới hạn.
+Word/PowerPoint nhận `QueryResult` với cột/dòng động.
 
-| Tool | `group_by` |
-|---|---|
-| `get_personnel_statistics` | `phong_ban` (mặc định) / `chuc_vu` |
-| `get_equipment_statistics` | `phong_ban` (mặc định) / `chung_loai` |
-
-Đường từ câu tiếng Việt xuống: `dimension_from_request` khoanh bằng từ khoá
-trước ("theo chức vụ", "theo chủng loại"), chỉ khi câu chữ không nói rõ mới lấy
-phán đoán của model - cùng lối với `scope_from_request` đã có.
-
-**Bất biến phải giữ khi thêm chiều mới:** gộp là chia lại các dòng, không phải
-lọc, nên chỉ tiêu tổng không được đổi theo chiều gộp, và tổng các dòng phải bằng
-chỉ tiêu tổng. Đã có test cho cả hai, kể cả một test `live` trên ERP thật. Gài
-lại lỗi bỏ dòng "chưa gán" thì test đỏ đúng chỗ (`4 == 5`).
-
-**Ba chỗ dễ quên khi thêm chiều thứ ba:**
-
-1. `scope["units_with_data"]/["units_missing"]` chỉ có nghĩa khi gộp theo đơn vị.
-   Để nguyên chúng lúc gộp theo chức vụ thì `current` đang khoá theo chức vụ, tra
-   bằng id phòng ban ra 0 hết, và báo cáo in "cả 9 đơn vị chưa cung cấp dữ liệu".
-2. `reconcile_node` so số theo ĐƠN VỊ. Bảng gộp chiều khác thì không dòng nào quy
-   về được một đơn vị - phải bỏ qua, không so bừa.
-3. Cột bảng lấy từ `breakdown_columns` do tool khai. Đừng viết cứng lại ở nơi
-   dựng bảng: `report.py` và `presentation.py` từng mỗi bên giữ một danh sách.
-
-**Chưa mở** (dữ liệu có sẵn, chỉ thiếu code): gộp theo đơn vị cha
-(`Dms_WorkDepartment.ParentId`), thiết bị mua trong kỳ (`PurchaseDate`), chuỗi
-nhiều kỳ liên tiếp. Gộp theo tình trạng thiết bị thì vẫn vướng enum ở mục 4.1.
+Xem [DISCOVERY-ERP.md](DISCOVERY-ERP.md) để cấu hình quyền, endpoint Qwen và kiểm thử.
+Các mô tả sửa lỗi trước mục này là lịch sử của nhánh thống kê cũ.
 
 ---
 
-## 4. Ba việc CHẶN, không sửa bằng code được
+## 4. Định nghĩa dữ liệu cần bổ sung
 
-### 4.1 Mã trạng thái thiết bị
-`Asm_Assets.Status` có đúng một giá trị `0` trên toàn bộ 98 dòng, enum nằm trong
-mã nguồn ERP. Báo cáo và slide vì thế in `Trạng thái 0` trong bảng.
-
-Cần xin đội ERP bảng tra rồi khai vào `.env`:
-
-```
-ERP_ASSET_STATUS_LABELS=0=Đang dùng,1=Hỏng,2=Chờ thanh lý
-ERP_ASSET_STATUS_GOOD=0
-```
-
-Chưa khai thì hệ thống **cố ý** bỏ hai chỉ tiêu "tình trạng tốt"/"cần xử lý".
-Đừng khai bừa cho đẹp — cả 98 dòng đang là `0`, khai xong sẽ thành "100% tốt".
-
-### 4.2 Chưa có tool "thông tin nhân viên"
-Hỏi "báo cáo thông tin nhân viên" hiện trả về nhân sự theo đơn vị, không có tên,
-chức vụ, ngày vào làm. `Hrm_EmployeeProfile` có sẵn `FullName`,
-`WorkPositionId`, `HireDate`; `Dms_WorkPosition` đã trong `ALLOWED_TABLES` —
-thiếu đúng một tool phơi ra. Làm theo khuôn `get_personnel_statistics`, và nhớ:
-danh sách nhân sự là dữ liệu cá nhân.
-
-### 4.3 Chất lượng dữ liệu ERP
-- 49/194 đơn vị thiết bị chưa gán `WorkDepartmentId` (đang được điền dần).
-- Vị trí nằm trong `Description` dạng văn xuôi ("24 màn ở tầng 4"). Không nối
-  được với phòng ban, và **đừng** viết code đoán.
-- Tenant 78 có 52 nhân sự, 10 phòng ban, **0 thiết bị**.
+- Enum trạng thái thiết bị chưa có tài liệu nguồn thì chỉ hiển thị mã, không tự
+  gán ý nghĩa “tốt”, “hỏng”. Bổ sung định nghĩa đã xác minh vào `meaning` của policy.
+- `FullName`, liên hệ, lương và các trường nhạy cảm chưa được mở trong whitelist.
+  Chỉ cấp thêm sau khi xác định quyền ERP tương ứng và phạm vi tài khoản.
+- Phòng ban, số lượng và trạng thái hiện tại không đủ để tái dựng mọi kỳ quá khứ;
+  các câu hỏi lịch sử phải dựa trên trường thời gian hoặc bảng lịch sử có thật.
 
 ---
 

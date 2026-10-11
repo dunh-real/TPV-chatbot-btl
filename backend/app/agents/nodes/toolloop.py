@@ -65,8 +65,30 @@ EMPTY_HINT = ("NGUỒN TRỐNG: công cụ chạy đúng nhưng không có dữ 
               "(vd: search_documents để tìm trong báo cáo các đơn vị đã nộp).")
 
 
+def _model_result(result: Any) -> Any:
+    """Cắt theo dòng hoàn chỉnh và đánh dấu preview khi bảng vượt ngữ cảnh chat."""
+    if not isinstance(result, dict) or not {"query_id", "columns", "rows"} <= result.keys():
+        return result
+    if len(json.dumps(result, ensure_ascii=False, default=str)) <= MAX_RESULT_CHARS:
+        return result
+    preview = {**result, "rows": [], "truncated": True,
+               "warnings": [*result.get("warnings", []),
+                            "Bảng đã rút gọn để vừa ngữ cảnh chat; không suy ra tổng từ các dòng xem trước."]}
+    remaining = MAX_RESULT_CHARS - len(json.dumps(preview, ensure_ascii=False, default=str))
+    for row in result["rows"]:
+        size = len(json.dumps(row, ensure_ascii=False, default=str)) + 2
+        if size > remaining:
+            break
+        preview["rows"].append(row)
+        remaining -= size
+    preview["row_count"] = len(preview["rows"])
+    return preview
+
+
 def _render_result(result: Any) -> str:
     text = json.dumps(result, ensure_ascii=False, default=str)
+    if isinstance(result, dict) and "query_id" in result:
+        return text
     if len(text) <= MAX_RESULT_CHARS:
         return text
     return text[:MAX_RESULT_CHARS] + f"… (đã cắt, tổng {len(text)} ký tự)"
@@ -90,6 +112,8 @@ def looks_empty(result: Any) -> bool:
     if not isinstance(result, dict):
         return False
 
+    if result.get("query_id") and result.get("truncated"):
+        return False
     if result.get("units_with_data") == 0:
         return True
     # Có ít nhất một khoá "nội dung" mang dữ liệu thật thì không coi là trống.
@@ -131,6 +155,7 @@ async def _execute(call: ToolCall,
     except Exception as exc:  # noqa: BLE001 - tool hỏng không được làm chết vòng lặp
         logger.exception("Tool %s hỏng", call.name)
         return f"LỖI: công cụ gặp sự cố: {exc}", None
+    result = _model_result(result)
     return _render_result(result), result
 
 
@@ -275,7 +300,9 @@ async def run_tool_loop(
             if result is None:
                 tool_errors += 1
             else:
-                collect_known_numbers(result, known_numbers)
+                payload = {"rows": result["rows"], "columns": result["columns"], "question": result["question"]} \
+                    if call.name == "query_erp" and isinstance(result, dict) and "rows" in result else result
+                collect_known_numbers(payload, known_numbers)
             body = f"{content}\n{EMPTY_HINT}" if empty else content
             messages.append(_tool_message(call, f"[{ref_id}] {body}"))
 

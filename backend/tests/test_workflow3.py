@@ -56,19 +56,8 @@ def test_so_lieu_ghi_khac_dinh_dang_van_truy_duoc():
 
 
 # ----------------------------------------------------- dựng mục bằng code - #
-def test_muc_data_va_table_khong_goi_llm():
-    facts = dr._facts_paragraph({"fields": ["nhan_su", "nhan_su_kiem_ke"]}, DATA)
-    assert "65" in facts
-    assert "30/8/2026" in facts        # ngày ISO được chuyển sang cách viết tiếng Việt
-
-    table = dr._build_table({"query": "thiet_bi",
-                             "columns": ["ten_thiet_bi", "so_luong", "tinh_trang"]}, DATA)
-    assert table.columns == ["Tên thiết bị", "Số lượng", "Tình trạng"]
-    assert table.rows[0] == ["Máy chủ", "6", "Tốt"]
 
 
-def test_bang_rong_thi_khong_dung_bang():
-    assert dr._build_table({"query": "thiet_bi", "columns": ["x"]}, {"thiet_bi": []}) is None
 
 
 # ------------------------------------------------------------ xuất DOCX --- #
@@ -130,34 +119,10 @@ def test_noi_dung_va_bang_vao_dung_cho(payload, tmp_path):
 
 
 # ------------------------------------------------ dữ liệu theo kỳ --------- #
-async def test_moi_ky_ra_so_lieu_khac_nhau(erp_session):
-    """Cùng một đơn vị, hai kỳ khác nhau phải ra hai con số khác nhau."""
-    from app.db.erp_repository import ErpTaiNguyenRepository
-
-    repo = ErpTaiNguyenRepository(erp_session)
-    thang_7 = await repo.get_tai_nguyen("00002", "2026-07")
-    thang_8 = await repo.get_tai_nguyen("00002", "2026-08")
-
-    # Tháng 8 có thêm một người vào làm và một chiếc xe công vụ mới mua.
-    assert (thang_7.nhan_su, thang_7.tong_thiet_bi) == (2, 6)
-    assert (thang_8.nhan_su, thang_8.tong_thiet_bi) == (3, 8)
 
 
-async def test_ky_truoc_khi_co_du_lieu_ra_so_khong(erp_session):
-    """ERP suy số theo mốc thời gian nên kỳ quá khứ xa ra 0, không phải lỗi."""
-    from app.db.erp_repository import ErpTaiNguyenRepository
-
-    tai_nguyen = await ErpTaiNguyenRepository(erp_session).get_tai_nguyen("00002", "2025-01")
-    assert tai_nguyen.nhan_su == 0
-    assert tai_nguyen.tong_thiet_bi == 0
 
 
-async def test_ky_tuong_lai_lay_hien_trang(erp_session):
-    """Không còn cơ chế "lùi về kỳ gần nhất": mốc sau hiện tại chỉ là hiện trạng."""
-    from app.db.erp_repository import ErpTaiNguyenRepository
-
-    repo = ErpTaiNguyenRepository(erp_session)
-    assert (await repo.get_tai_nguyen("00002", "2027-12")).tong_thiet_bi == 8
 
 
 # -------------------------------------------------- toàn bộ workflow 3 ---- #
@@ -207,7 +172,6 @@ async def draft_env(tmp_path, monkeypatch, erp_session):
         yield erp_session
 
     monkeypatch.setattr(dr, "session_scope", _scope)
-    monkeypatch.setattr(dr, "erp_session_scope", _erp_scope)
     monkeypatch.setattr("app.core.config.settings.output_dir", str(tmp_path), raising=False)
     monkeypatch.setattr(dr, "get_settings", lambda: _Settings(str(tmp_path)))
     yield tmp_path
@@ -243,76 +207,14 @@ class ScriptedLLM:
         return {"paragraphs": [self.section_text]}
 
 
-async def test_soan_bao_cao_hoan_chinh(draft_env, monkeypatch):
-    from app.agents.graph import run_draft_workflow
-
-    llm = ScriptedLLM("Nhân sự đơn vị là 3 người, kiểm kê ngày 31/8/2026.")
-    monkeypatch.setattr(dr, "get_llm", lambda: llm)
-
-    result = await run_draft_workflow("Soạn báo cáo tình hình thiết bị tháng 8",
-                                      ma_don_vi="00002", inputs={"nguoi_ky": "Trần Văn B"})
-
-    assert result["params"]["ky"] == "2026-08"
-    assert result["assumptions"] == ["Không nêu năm, hiểu là năm 2026"]
-    assert result["validation"]["status"] == "passed"
-    assert Path(result["output_path"]).exists()
-    assert result["registered_as"]
 
 
-async def test_thieu_don_vi_thi_hoi_lai_chu_khong_doan(draft_env, monkeypatch):
-    from app.agents.graph import run_draft_workflow
-
-    monkeypatch.setattr(dr, "get_llm", lambda: ScriptedLLM("x"))
-    result = await run_draft_workflow("Soạn báo cáo tình hình thiết bị tháng 8")
-
-    assert result["missing_input"] == ["ma_don_vi"]
-    assert result["output_path"] == ""
 
 
-async def test_so_bia_thi_viet_lai_roi_tu_choi_xuat_file(draft_env, monkeypatch):
-    from app.agents.graph import run_draft_workflow
-
-    llm = ScriptedLLM("Nhân sự đơn vị là 70 người. Đề nghị cấp 15.000.000 đồng.")
-    monkeypatch.setattr(dr, "get_llm", lambda: llm)
-
-    result = await run_draft_workflow("Báo cáo thiết bị tháng 8/2026", ma_don_vi="00002")
-
-    assert result["validation"]["status"] == "failed"
-    assert result["retry_count"] == 2                 # đã cho viết lại
-    assert result["output_path"] == ""                # nhưng vẫn không xuất file
-    numbers = {n for issue in result["validation"]["issues"] for n in issue["numbers"]}
-    assert numbers == {"70", "15.000.000"}
 
 
-async def test_so_lieu_theo_ky_phai_kem_canh_bao_suy_nguoc(draft_env, monkeypatch):
-    """ERP không chốt số theo kỳ nên số kỳ cũ là hiện trạng suy ngược.
-
-    Người ký cần thấy cảnh báo này trong văn bản, vì cùng một báo cáo đọc lại sau
-    vài tháng có thể ra con số khác mà không ai sửa gì.
-    """
-    from app.agents.graph import run_draft_workflow
-
-    monkeypatch.setattr(dr, "get_llm", lambda: ScriptedLLM("Nhân sự đơn vị là 3 người."))
-    result = await run_draft_workflow("Báo cáo thiết bị tháng 8/2026", ma_don_vi="00002")
-
-    assert any("suy ngược" in note or "không phải số đã chốt" in note
-               for note in result["data_notes"])
 
 
-async def test_file_sinh_ra_qua_duoc_rule_engine(draft_env, monkeypatch):
-    from app.agents.graph import run_draft_workflow
-
-    llm = ScriptedLLM("Nhân sự đơn vị là 3 người, kiểm kê ngày 31/8/2026.")
-    monkeypatch.setattr(dr, "get_llm", lambda: llm)
-
-    result = await run_draft_workflow("Báo cáo thiết bị tháng 8/2026", ma_don_vi="00002",
-                                      inputs={"nguoi_ky": "Trần Văn B",
-                                              "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ",
-                                              "so_ky_hieu": "42/BC-DV02"})
-    structure = parse_document(result["output_path"])
-    check = RuleEngine().check(structure)
-
-    assert check.error_count == 0
 
 
 # ------------------------------------------------- lịch sử hội thoại ------- #
@@ -330,16 +232,13 @@ class LichSuLLM(ScriptedLLM):
 
 
 async def test_trich_tham_so_nhin_thay_luot_truoc(draft_env, monkeypatch):
-    from app.agents.graph import run_draft_workflow
 
     llm = LichSuLLM()
     monkeypatch.setattr(dr, "get_llm", lambda: llm)
 
-    await run_draft_workflow(
-        "soạn tiếp báo cáo thiết bị, vẫn đơn vị đó",
-        ma_don_vi="00002",
-        history=[{"role": "user", "content": "tổng hợp nhân sự DV02 tháng 8/2026"},
-                 {"role": "assistant", "content": "Đã tổng hợp báo cáo kỳ 2026-08."}],
+    await dr.extract_params_node({"request": "soạn tiếp báo cáo thiết bị, vẫn đơn vị đó",
+        "history": [{"role": "user", "content": "tổng hợp nhân sự DV02 tháng 8/2026"},
+                 {"role": "assistant", "content": "Đã tổng hợp báo cáo kỳ 2026-08."}]}
     )
 
     assert "tổng hợp nhân sự DV02 tháng 8/2026" in llm.params_prompt
@@ -347,11 +246,10 @@ async def test_trich_tham_so_nhin_thay_luot_truoc(draft_env, monkeypatch):
 
 
 async def test_khong_truyen_lich_su_thi_prompt_bao_chua_co(draft_env, monkeypatch):
-    from app.agents.graph import run_draft_workflow
 
     llm = LichSuLLM()
     monkeypatch.setattr(dr, "get_llm", lambda: llm)
 
-    await run_draft_workflow("Soạn báo cáo thiết bị tháng 8/2026", ma_don_vi="00002")
+    await dr.extract_params_node({"request":"Soạn báo cáo thiết bị tháng 8/2026"})
 
     assert "(chưa có)" in llm.params_prompt
