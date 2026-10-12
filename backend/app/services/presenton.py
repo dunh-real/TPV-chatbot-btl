@@ -33,6 +33,7 @@ import logging
 import time
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -275,6 +276,21 @@ class PresentonClient:
         await self._json("PATCH", "/api/v1/ppt/presentation/update", "lưu slide", json={
             "id": presentation_id, "n_slides": len(slides), "title": title,
             "theme": theme, "slides": slides})
+
+    async def upload_image(self, content: bytes, filename: str) -> str:
+        """Tải ảnh (biểu đồ PNG do code vẽ) lên Presenton, trả về đường dẫn dùng trong `ui` của slide.
+
+        Lấy phần path (`/app_data/...`) chứ không lấy URL đầy đủ: URL tuyệt đối mang host mà
+        Presenton tự thấy, còn trình duyệt xuất file bên trong container cần đường dẫn cùng
+        origin - giống ảnh tĩnh của template (`/app_data/templates/...`).
+        """
+        data = await self._json("POST", "/api/v1/ppt/images/upload", f"tải ảnh {filename}",
+                                files={"file": (filename, content, "image/png")})
+        url = str(data.get("file_url") or "")
+        path = urlparse(url).path if url else str(data.get("path") or "")
+        if not path.startswith("/"):
+            raise PresentonError(f"Presenton không trả về đường dẫn ảnh khi tải {filename}: {str(data)[:200]}")
+        return path
 
     async def get_deck(self, presentation_id: str) -> dict[str, Any]:
         return await self._json("GET", f"/api/v1/ppt/presentation/{presentation_id}", "đọc lại deck")

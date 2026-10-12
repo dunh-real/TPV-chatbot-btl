@@ -549,6 +549,17 @@ def test_duong_lui_khong_co_cau_nao_do_model_viet():
     assert [box.value for s in deck.slides for box in s.metrics] == ["28", "1"]
 
 
+def test_duong_lui_co_bieu_do_cung_ham_ve_voi_duong_presenton():
+    from app.documents import slide_deck as sd
+    from app.documents.charts import chart_for
+
+    deck = pr._fallback_deck(DATA, PARAMS)
+    charts = [s for s in deck.slides if s.kind == "chart"]
+    datasets = sd.build_datasets(DATA, PARAMS)
+    assert [c.title for c in charts] == [d.title for d in datasets]
+    assert [c.chart for c in charts] == [chart_for(d) for d in datasets]   # cùng hàm vẽ, cùng hình
+
+
 def test_o_chi_tieu_giu_nguyen_bien_dong_da_tinh_san():
     box = pr._metric_box("total_personnel", DATA["personnel"]["metrics"]["total_personnel"])
     assert box.value == "28" and box.note == "+1 (3.7%)"
@@ -646,6 +657,7 @@ class FakeDirectPresenton:
         self.slides: list[dict] = []
         self.created: list[str] = []
         self.deleted: list[str] = []
+        self.images: dict[str, bytes] = {}
 
     async def get_template(self, name=None):
         return _TEMPLATE
@@ -656,6 +668,10 @@ class FakeDirectPresenton:
         self.created.append(f"d{len(self.created) + 1}")
         return self.created[-1]
 
+    async def upload_image(self, content, filename):
+        self.images[filename] = content
+        return f"/app_data/images/{filename}"
+
     async def update_deck(self, pid, title, theme, slides):
         self.slides = slides
 
@@ -663,12 +679,12 @@ class FakeDirectPresenton:
         import copy
 
         slides = copy.deepcopy(self.slides)
-        if self.sua_bieu_do:  # renderer "lưu lệch": biểu đồ mất một đơn vị
+        if self.sua_bieu_do:  # Presenton "lưu lệch": ảnh biểu đồ bị thay bằng ảnh giữ chỗ
             for s in slides:
                 for c in s["ui"]["components"]:
                     for e in c["elements"]:
-                        if e.get("type") == "chart":
-                            e["categories"] = e["categories"][:-1]
+                        if e.get("type") == "image" and e.get("data", "").startswith("/app_data/images/"):
+                            e["data"] = "/static/images/placeholder.jpg"
         return {"id": pid, "slides": slides}
 
     async def export_deck(self, pid, export_as="pptx"):
@@ -739,7 +755,11 @@ async def test_dung_thang_tu_layout_template(ppt_env, monkeypatch, direct_mode):
     # Mọi slide đều dựng từ layout của template, không slide nào để Presenton tự sinh.
     assert {s["layout"] for s in gia.slides} <= set(_TEMPLATE["layouts"])
     kieu = {e.get("type") for s in gia.slides for c in s["ui"]["components"] for e in c["elements"]}
-    assert {"chart", "table"} <= kieu
+    assert {"image", "table"} <= kieu and "chart" not in kieu   # biểu đồ là ảnh do code vẽ
+    anh = {e["data"] for s in gia.slides for c in s["ui"]["components"] for e in c["elements"]
+           if e.get("type") == "image" and e.get("data", "").startswith("/app_data/images/")}
+    assert len(anh) == len(gia.images) == result["deck_check"]["charts_total"] >= 1
+    assert all(png[1:4] == b"PNG" for png in gia.images.values())
     assert llm.summary_calls == 1
     assert {"llm_summary", "presenton_export", "render_total"} <= set(result["timings"])
 

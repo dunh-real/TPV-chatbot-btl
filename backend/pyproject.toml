@@ -41,6 +41,7 @@ dependencies = [
     "aioodbc>=0.5.0",
     "python-docx>=1.2.0",
     "matplotlib>=3.11.2",
+    "seaborn>=0.13.2",
 ]
 
 [tool.uv.sources]

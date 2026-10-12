@@ -920,6 +920,12 @@ Presenton, xoá đi thì người dùng không còn gì để sửa.
 LLM - chỉ ô chỉ tiêu, biểu đồ, bảng, ghi chú do code viết. `engine` trong kết quả
 nói rõ file đến từ đâu (`presenton` hay `local`).
 
+**Biểu đồ: một hàm vẽ cho cả hai đường.** [charts.py](backend/app/documents/charts.py)
+(matplotlib + seaborn) vẽ PNG từ bộ dữ liệu SQL; đường Presenton tải ảnh lên
+(`/api/v1/ppt/images/upload`) và đặt vào ô biểu đồ của layout thay cho renderer của
+Presenton, đường lùi chèn đúng ảnh đó. Kiểm thử 10 mẫu:
+[test_results/wf5_charts/REPORT.md](backend/test_results/wf5_charts/REPORT.md).
+
 ### Dựng Presenton
 
 ```bash

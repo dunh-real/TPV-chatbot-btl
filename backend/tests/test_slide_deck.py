@@ -21,6 +21,19 @@ TEMPLATE = json.loads((Path(__file__).parent / "fixtures" / "presenton_modern_te
 PARAMS = {"ky": "2026-09", "thang": 9, "nam": 2026, "compare_to": "2026-08"}
 
 
+class _AnhDaTai(dict):
+    """Ảnh biểu đồ "đã tải lên Presenton" cho mọi bộ dữ liệu (đường dẫn giả, đúng dạng /app_data)."""
+
+    def get(self, key, default=None):
+        return f"/app_data/images/chart_{key}.png"
+
+    def __bool__(self):
+        return True
+
+
+IMAGES = _AnhDaTai()
+
+
 def _personnel(n: int = 3) -> dict:
     rows = [{"ma_nhom": f"{i:05d}", "ten_nhom": f"Phòng {i}", "nhan_su": 10 + i, "nhan_su_ky_truoc": 9 + i,
              "tuyen_moi": 1, "nghi_viec": 0} for i in range(1, n + 1)]
@@ -110,7 +123,7 @@ def test_bang_chi_tiet_cat_trang_du_dong_va_tieu_de_khong_bi_cat():
     assert len(pages) == 3
     assert sum(len(p.table[1]) for p in pages) == 23
     for i, p in enumerate(pages, start=1):
-        slide, rep = sd.build_slide(p, 0, "pid", TEMPLATE)
+        slide, rep = sd.build_slide(p, 0, "pid", TEMPLATE, IMAGES)
         assert f"({i}/3)" in rep.written[0]  # ô tiêu đề đã giãn: không cắt mất số trang
 
 
@@ -132,7 +145,7 @@ def test_slide_ket_luan_chi_co_khi_qwen_viet_duoc():
 def test_moi_slide_dung_duoc_tu_layout_that():
     plan = _plan(_data())
     for i, p in enumerate(plan):
-        slide, rep = sd.build_slide(p, i, "pid", TEMPLATE)
+        slide, rep = sd.build_slide(p, i, "pid", TEMPLATE, IMAGES)
         assert slide["layout"] == p.layout
         assert not rep.unmapped, (p.role, rep.unmapped)
 
@@ -151,7 +164,7 @@ def test_so_cua_code_gom_ty_le_va_so_trang():
 def test_ui_bang_chua_dung_so_lieu():
     plan = _plan(_data())
     p = next(p for p in plan if p.role == "table")
-    slide, _ = sd.build_slide(p, 0, "pid", TEMPLATE)
+    slide, _ = sd.build_slide(p, 0, "pid", TEMPLATE, IMAGES)
     texts = sd.ui_texts(slide["ui"])
     assert "Phòng 3" in texts and "13" in texts
     assert not any(e.get("type") == "chart" for c in slide["ui"]["components"] for e in c["elements"])
@@ -159,7 +172,7 @@ def test_ui_bang_chua_dung_so_lieu():
 
 # ---------------------------------------------------------------- đối chiếu -- #
 def _built(plan):
-    built = [sd.build_slide(p, i, "pid", TEMPLATE) for i, p in enumerate(plan)]
+    built = [sd.build_slide(p, i, "pid", TEMPLATE, IMAGES) for i, p in enumerate(plan)]
     return {"slides": [s for s, _ in built]}, [r for _, r in built]
 
 
@@ -171,15 +184,36 @@ def test_doi_chieu_deck_dung_thi_dat():
     assert check["charts_ok"] == check["charts_total"] == 2
 
 
-def test_doi_chieu_bat_bieu_do_bi_doi_so():
+def test_slide_bieu_do_mang_anh_do_code_ve_khong_con_o_chart():
+    plan = _plan(_data())
+    p = next(p for p in plan if p.role == "chart")
+    slide, rep = sd.build_slide(p, 0, "pid", TEMPLATE, IMAGES)
+    els = [e for c in slide["ui"]["components"] for e in c["elements"]]
+    assert not any(e.get("type") == "chart" for e in els)
+    anh = [e for e in els if e.get("type") == "image" and e.get("data") == rep.chart_image]
+    assert rep.chart_image == "/app_data/images/chart_personnel.png" and len(anh) == 1
+    # Ảnh nằm đúng ô biểu đồ của layout: bố cục slide không đổi.
+    o = next(e for c in TEMPLATE["layouts"][p.layout]["components"] for e in c["elements"]
+             if e.get("type") == "chart")
+    assert (anh[0]["position"], anh[0]["size"]) == (o["position"], o["size"])
+    assert sd.chart_slot(TEMPLATE, p.layout) == (o["size"]["width"], o["size"]["height"])
+
+
+def test_thieu_anh_bieu_do_thi_khong_dung_slide():
+    p = next(p for p in _plan(_data()) if p.role == "chart")
+    with pytest.raises(sd.DeckBuildError):
+        sd.build_slide(p, 0, "pid", TEMPLATE, {})
+
+
+def test_doi_chieu_bat_anh_bieu_do_bi_thay():
     plan = _plan(_data())
     deck, reports = _built(plan)
     deck = copy.deepcopy(deck)
     chart_slide = next(s for s, p in zip(deck["slides"], plan) if p.role == "chart")
     for c in chart_slide["ui"]["components"]:
         for e in c["elements"]:
-            if e.get("type") == "chart":
-                e["series"][0]["values"][0] += 1
+            if e.get("type") == "image" and e.get("data", "").startswith("/app_data/images/chart_"):
+                e["data"] = "/static/images/placeholder.jpg"
     check = sd.verify_deck(deck, plan, reports)
     assert not check["ok"]
     assert any(i["type"] == "chart_mismatch" for i in check["issues"])
@@ -314,7 +348,7 @@ def test_deck_tu_truy_van_dong_dung_layout_template_va_tu_doi_chieu_duoc():
     scope = next(p for p in plan if p.role == "scope").lists["card_stack"]
     assert scope[1]["card_description"] == "Hệ thống ERP của đơn vị, truy vấn chỉ đọc trên 1 bảng dữ liệu."
     assert scope[3] == {"card_title": "Nội dung báo cáo", "card_description": "Số lượng tài sản theo danh mục"}
-    built = [sd.build_slide(p, i, "pid", TEMPLATE) for i, p in enumerate(plan)]
+    built = [sd.build_slide(p, i, "pid", TEMPLATE, IMAGES) for i, p in enumerate(plan)]
     check = sd.verify_deck({"slides": [s for s, _ in built]}, plan, [r for _, r in built])
     assert check["ok"], check["issues"]
     assert check["charts_ok"] == check["charts_total"] == 1
@@ -379,7 +413,7 @@ def test_momentum_dung_layout_cua_template_va_gop_diem_noi_bat_vao_bieu_do():
 
 def test_momentum_dung_ra_ui_vua_o_khong_ten_truong_co_so_trang():
     plan = _momentum_plan()
-    built = [sd.build_slide(p, i, "pid", MOMENTUM) for i, p in enumerate(plan)]
+    built = [sd.build_slide(p, i, "pid", MOMENTUM, IMAGES) for i, p in enumerate(plan)]
     check = sd.verify_deck({"slides": [s for s, _ in built]}, plan, [r for _, r in built])
     assert check["ok"], check["issues"]
     assert check["field_like"] == []

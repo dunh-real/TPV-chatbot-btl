@@ -5,6 +5,7 @@ import copy
 import logging
 import re
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -365,14 +366,32 @@ def _output_path(params: dict[str, Any]) -> Path:
     return Path(get_settings().output_dir) / f"{stem}.pptx"
 
 
+def _chart_slides(data: dict[str, Any], params: dict[str, Any]) -> dict[str, SlideSpec]:
+    """Slide biểu đồ của đường lùi, theo đúng bộ dữ liệu và đúng hàm vẽ của đường Presenton."""
+    from app.documents import slide_deck as sd
+    from app.documents.charts import chart_for
+
+    slides: dict[str, SlideSpec] = {}
+    for ds in sd.build_datasets(data, params):
+        try:
+            png = chart_for(ds)
+        except ValueError as exc:   # bộ dữ liệu không vẽ được: bỏ biểu đồ, bảng chi tiết vẫn còn
+            logger.warning("Không vẽ được biểu đồ %s: %s", ds.key, exc)
+            continue
+        slides[ds.key] = SlideSpec(kind="chart", title=ds.title, chart=png,
+                                   caption=ds.facts[0] if ds.facts else "")
+    return slides
+
+
 def _fallback_deck(data: dict[str, Any], params: dict[str, Any]) -> DeckSpec:
     """Bộ slide đường lùi: 100% do code dựng, không một chữ nào của LLM."""
+    charts = _chart_slides(data, params)
     if "queries" in data:
-        return query_deck(data["queries"])
-    from app.agents.nodes.report import _build_charts
+        deck = query_deck(data["queries"])
+        deck.slides[1:1] = list(charts.values())      # biểu đồ ngay sau bìa, trước các bảng
+        return deck
 
     period = _period_label(params)
-    charts = _build_charts(data, params)
     specs: list[SlideSpec] = [
         SlideSpec(kind="title", title=f"Báo cáo số liệu {period}",
                   subtitle="Số liệu trích xuất từ cơ sở dữ liệu nghiệp vụ")
@@ -384,8 +403,9 @@ def _fallback_deck(data: dict[str, Any], params: dict[str, Any]) -> DeckSpec:
         specs.append(SlideSpec(
             kind="summary", title=f"Chỉ tiêu {ten} {period}",
             metrics=[_metric_box(k, m) for k, m in source["metrics"].items()][:4],
-            chart=charts.get(key),
         ))
+        if (chart := charts.get(key)):
+            specs.append(chart)
         if (table := _slide_table(f"{key}_breakdown", data)):
             specs.append(SlideSpec(kind="table", title=f"Chi tiết {ten} theo đơn vị",
                                    table=table))
@@ -440,6 +460,9 @@ async def _render_local(state: dict[str, Any], output_path: Path, ly_do: Excepti
         "output_path": str(path),
         "engine": "local",
         "slide_count": count_slides(spec.slides),
+        # Chú thích biểu đồ ("Tổng ... là 14 người, trên 9 phòng ban") là số code tính từ dữ liệu:
+        # khai cho bước đối chiếu như đường Presenton khai `so_cua_code`.
+        "so_cua_code": sorted(collect_known_numbers([s.caption for s in spec.slides if s.kind == "chart"])),
         "assumptions": [*state.get("assumptions", []),
                         f"Presenton không dùng được ({ly_do}); bộ slide này do hệ "
                         f"thống tự dựng nên chỉ có số liệu, không có phần nhận xét."],
@@ -596,6 +619,28 @@ async def _ten_don_vi(inputs: dict[str, Any]) -> str:
     return str(name).strip() if name else f"Đơn vị thuê bao {tenant}"
 
 
+async def _upload_charts(presenton: Any, template: dict[str, Any], plan: list[Any]) -> dict[str, str]:
+    """Vẽ biểu đồ của từng slide biểu đồ (đúng tỷ lệ ô của layout) và tải lên Presenton.
+
+    Vẽ một lần cho mọi lượt dựng lại deck: ảnh không đổi khi chỉ dựng lại phần slide.
+    """
+    from app.documents import slide_deck as sd
+    from app.documents.charts import chart_for
+
+    images: dict[str, str] = {}
+    for p in plan:
+        if p.role != "chart" or not p.dataset or p.dataset.key in images:
+            continue
+        ds, size = p.dataset, sd.chart_slot(template, p.layout)
+        try:
+            # Nền trong suốt: ảnh nằm trên khung màu của layout, không thành một mảng trắng.
+            png = await anyio.to_thread.run_sync(lambda: chart_for(ds, size, transparent=True))
+        except ValueError as exc:
+            raise sd.DeckBuildError(f"Không vẽ được biểu đồ {ds.key}: {exc}") from exc
+        images[ds.key] = await presenton.upload_image(png, f"chart_{ds.key}_{uuid.uuid4().hex[:8]}.png")
+    return images
+
+
 async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, Any]:
     from datetime import date
 
@@ -640,11 +685,14 @@ async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, 
         t0 = time.monotonic()
         template = await presenton.get_template()
         timings["presenton_template"] = round(time.monotonic() - t0, 1)
+        t0 = time.monotonic()
+        chart_images = await _upload_charts(presenton, template, plan)
+        timings["charts"] = round(time.monotonic() - t0, 1)
         pid = ""
         for attempt in range(1, MAX_DECK_ATTEMPTS + 1):
             t0 = time.monotonic()
             pid = await presenton.create_blank()
-            built = [sd.build_slide(p, i, pid, template) for i, p in enumerate(plan)]
+            built = [sd.build_slide(p, i, pid, template, chart_images) for i, p in enumerate(plan)]
             try:
                 await presenton.update_deck(pid, title, sd.theme_cho(ten_template, template["theme"]),
                                             [s for s, _ in built])

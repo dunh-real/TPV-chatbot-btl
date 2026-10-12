@@ -114,9 +114,12 @@ class Dataset:
     highlights: list[tuple[str, str]] = field(default_factory=list)
     grouped_others: int = 0     # số mục đã gộp vào "Các mục khác" trên biểu đồ
     total_card: tuple[str, str] | None = None   # (giá trị, chú thích) cho slide chỉ tiêu - truy vấn động
+    time_axis: bool = False     # danh mục là các kỳ (tháng, quý, năm): giữ thứ tự thời gian, cột đứng
 
     @property
     def chart_type(self) -> str:
+        if self.time_axis:
+            return "bar"
         return "horizontal_bar" if len(self.categories) >= HORIZONTAL_FROM else "bar"
 
 
@@ -308,6 +311,7 @@ def _kieu(col: dict[str, Any]) -> str:
 
 
 _COT_NHOM = re.compile(r"^(n[aă]m|th[aá]ng|qu[yý]|k[yỳ]|m[aã]|stt|year|month|quarter|period|code)\b", re.I)
+_COT_KY = re.compile(r"^(n[aă]m|th[aá]ng|qu[yý]|k[yỳ]|year|month|quarter|period)\b", re.I)
 
 
 def _la_cot_so(col: dict[str, Any], values: list[Any]) -> bool:
@@ -375,13 +379,16 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     def ten(row: list[Any]) -> str:
         return _nhan(row[cat]) if row[cat] is not None else "Chưa xác định"
 
-    # Biểu đồ xếp theo cột số đầu; bảng giữ nguyên thứ tự của truy vấn.
+    # Biểu đồ xếp theo cột số đầu; bảng giữ nguyên thứ tự của truy vấn. Trục là các kỳ (T1..T9) thì
+    # biểu đồ cũng giữ thứ tự của truy vấn: xếp tháng theo giá trị là mất luôn xu hướng.
     ordered = sorted(rows, key=lambda r: -(_so_hoc(r[main]) or 0))
+    time_axis = bool(_COT_KY.search(str(cols[cat].get("name") or ""))
+                     or _COT_KY.search(str(cols[cat].get("label") or "")))
     cong = _cong_duoc(cols[main])
     series_cols = num_cols[:len(PALETTE) - 1]
-    pairs = [(ten(r), [(_so_hoc(r[i]) or 0) for i in series_cols]) for r in ordered]
+    pairs = [(ten(r), [(_so_hoc(r[i]) or 0) for i in series_cols]) for r in (rows if time_axis else ordered)]
     others = 0
-    if len(pairs) > CHART_MAX_BARS:
+    if len(pairs) > CHART_MAX_BARS and not time_axis:   # kỳ không gộp: "Các tháng khác" vô nghĩa
         others = len(pairs) - (CHART_MAX_BARS - 1 if cong else CHART_MAX_BARS)
         if cong:      # số đếm/tổng: phần còn lại gộp thành một cột, vẫn đúng tổng
             rest = pairs[CHART_MAX_BARS - 1:]
@@ -398,7 +405,7 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
                  table_columns=[_nhan_cot(c) for c in cols],
                  table_rows=[[_chu_so(v) if j in num_cols else (_nhan(v) if v is not None else "—")
                               for j, v in enumerate(r)] for r in rows],
-                 grouped_others=others)
+                 grouped_others=others, time_axis=time_axis)
 
     values = [(ten(r), _so_hoc(r[main])) for r in ordered if _so_hoc(r[main]) is not None]
     total = sum(v for _, v in values) if cong else None
@@ -842,6 +849,7 @@ class FillReport:
     unmapped: list[str] = field(default_factory=list)
     icon_i: int = 0
     page: int = 0
+    chart_image: str = ""       # đường dẫn ảnh biểu đồ đã đặt vào slide (Presenton)
 
 
 _O_TRANG = re.compile(r"(marker|pagination|page_number|folio|page_label|footer_index)", re.I)
@@ -899,19 +907,35 @@ def chart_payload(ds: Dataset) -> dict[str, Any]:
             "series": [{"name": n, "values": list(v)} for n, v in ds.series]}
 
 
-def _fill_chart(ui: dict[str, Any], ds: Dataset) -> None:
-    pay = chart_payload(ds)
-    for c in ui["components"]:
+# Ô biểu đồ khi layout không khai kích thước (px của slide 1280x720).
+DEFAULT_CHART_SLOT = (560.0, 334.0)
+
+
+def chart_slot(template: dict[str, Any], layout: str) -> tuple[float, float]:
+    """Kích thước ô biểu đồ của layout: ảnh biểu đồ vẽ đúng tỷ lệ ô này."""
+    for c in (template["layouts"].get(layout) or {}).get("components", []):
         for el in c["elements"]:
+            if el.get("type") == "chart" and (size := el.get("size")):
+                return float(size["width"]), float(size["height"])
+    return DEFAULT_CHART_SLOT
+
+
+def _fill_chart(ui: dict[str, Any], image_url: str) -> bool:
+    """Ô biểu đồ của layout -> ô ảnh mang biểu đồ PNG do code vẽ (`app.documents.charts`).
+
+    Không để renderer của Presenton vẽ: nó ẩn bớt nhãn khi nhiều danh mục, màu theo theme,
+    và .pptx xuất ra vẫn là ảnh chụp - còn đường tự dựng thì ra một hình khác hẳn. Giữ nguyên
+    vị trí, kích thước và tên ô nên bố cục slide không đổi.
+    """
+    replaced = False
+    for c in ui["components"]:
+        for i, el in enumerate(c["elements"]):
             if el.get("type") == "chart":
-                el.update(pay)
-                el["legend"] = len(pay["series"]) > 1
-                el["x_axis_title"] = ""
-                el["y_axis_title"] = ""
-                # Một chuỗi: Presenton tô từng cột theo `colors` -> mỗi nhóm một màu thay vì cả biểu đồ một màu.
-                n = len(pay["categories"]) if len(pay["series"]) == 1 else len(pay["series"])
-                el["colors"] = [PALETTE[i % len(PALETTE)] for i in range(max(n, 1))]
-                el["data_labels"] = "top"
+                c["elements"][i] = {"type": "image", "position": el["position"], "size": el["size"],
+                                    "data": image_url, "fit": "contain", "decorative": False,
+                                    "name": el.get("name") or "chart_image", "is_icon": False}
+                replaced = True
+    return replaced
 
 
 def _cell(proto: dict[str, Any], text: str) -> dict[str, Any]:
@@ -1007,8 +1031,9 @@ def _thu_tieu_de(ui: dict[str, Any], size: float = 68.0) -> None:
             walk(e)
 
 
-def build_slide(p: SlidePlan, index: int, presentation_id: str,
-                template: dict[str, Any]) -> tuple[dict[str, Any], FillReport]:
+def build_slide(p: SlidePlan, index: int, presentation_id: str, template: dict[str, Any],
+                chart_images: dict[str, str] | None = None) -> tuple[dict[str, Any], FillReport]:
+    """`chart_images`: khoá bộ dữ liệu -> đường dẫn ảnh biểu đồ đã tải lên Presenton."""
     layouts = template["layouts"]
     if p.layout not in layouts:
         raise DeckBuildError(f"Template thiếu layout {p.layout}")
@@ -1021,7 +1046,12 @@ def build_slide(p: SlidePlan, index: int, presentation_id: str,
     for c in ui["components"]:
         _fill(c["elements"], p.texts, p.lists, p.icons, rep)
     if p.role == "chart" and p.dataset:
-        _fill_chart(ui, p.dataset)
+        url = (chart_images or {}).get(p.dataset.key)
+        if not url:
+            raise DeckBuildError(f"Chưa có ảnh biểu đồ cho bộ dữ liệu {p.dataset.key}")
+        if not _fill_chart(ui, url):
+            raise DeckBuildError(f"Layout {p.layout} không có ô biểu đồ")
+        rep.chart_image = url
     if p.table is not None:
         rep.written += [*p.table[0], *(v for row in p.table[1] for v in row)]
     content: dict[str, Any] = {}
@@ -1180,10 +1210,11 @@ def theme_cho(template: str, theme: dict[str, Any]) -> dict[str, Any]:
 def verify_deck(presentation: dict[str, Any], plan: list[SlidePlan],
                 reports: list[FillReport]) -> dict[str, Any]:
     """Đọc lại deck Presenton đã lưu: đủ slide, đúng layout, chữ đúng nguyên văn,
-    biểu đồ đúng số SQL, không chữ hệ lạ.
+    đúng ảnh biểu đồ đã vẽ, không chữ hệ lạ.
 
-    Số lạ trong CHỮ thì `verify_node` soi trên file .pptx; ở đây kiểm thứ chỉ đọc
-    được trên JSON của Presenton - biểu đồ, vì trong .pptx nó là ảnh.
+    Số lạ trong CHỮ thì `verify_node` soi trên file .pptx. Số trên biểu đồ do code vẽ
+    thẳng từ bộ dữ liệu; ở đây chỉ cần chắc slide mang đúng ảnh đó và Presenton không
+    còn ô biểu đồ nào tự vẽ.
     """
     slides = sorted(presentation.get("slides") or [], key=lambda s: s.get("index", 0))
     issues: list[dict[str, Any]] = []
@@ -1201,12 +1232,9 @@ def verify_deck(presentation: dict[str, Any], plan: list[SlidePlan],
                 issues.append({"type": "foreign_script", "slide": s.get("index"), "detail": "".join(la)})
         if p.role == "chart" and p.dataset:
             charts_total += 1
-            exp = chart_payload(p.dataset)
-            els = [e for c in (s.get("ui") or {}).get("components", []) for e in c["elements"]
-                   if e.get("type") == "chart"]
-            ok = bool(els) and all(e.get("categories") == exp["categories"]
-                                   and [x["values"] for x in e.get("series") or []]
-                                   == [x["values"] for x in exp["series"]] for e in els)
+            els = [e for c in (s.get("ui") or {}).get("components", []) for e in c["elements"]]
+            ok = (bool(rep.chart_image) and not any(e.get("type") == "chart" for e in els)
+                  and any(e.get("type") == "image" and e.get("data") == rep.chart_image for e in els))
             charts_ok += ok
             if not ok:
                 issues.append({"type": "chart_mismatch", "slide": s.get("index"), "detail": p.dataset.key})
