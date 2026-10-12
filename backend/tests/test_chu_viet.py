@@ -45,8 +45,8 @@ def test_khong_ten_truong_nao_len_tieu_de_cot():
                  [[3, nfd, "2026-06"]])
     lam_sach_ket_qua(r)
     labels = [c["label"] for c in r["columns"]]
-    assert labels[0] == "Số lượng" and labels[2] == "Tháng năm" and labels[1] == "Cột 2"
-    assert all(nhan_hop_le(lb) or lb.startswith("Cột ") for lb in labels)
+    # Chốt chặn không đoán/ánh xạ: nhãn tên trường hoặc rỗng -> nhãn trung tính (Qwen đặt ở bước trước).
+    assert labels == ["Cột 1", "Cột 2", "Cột 3"]
     assert r["columns"][0]["unit"] == ""                      # "nguoi" không dấu: bỏ, không in sai
     assert r["rows"][0][1] == "Vào làm" and r["rows"][0][1] != nfd   # về NFC
 
@@ -127,14 +127,3 @@ def test_nhan_dien_chu_mat_dau():
     assert _MAT_DAU.search("B�o c�o")
     assert not _MAT_DAU.search("Tại sao số liệu giảm?")
     assert not _MAT_DAU.search("Tồn cuối kỳ")
-
-
-def test_tu_dien_nhan_du_phong_cho_ten_cot_erp():
-    from app.documents.nhan_cot import nhan_tu_ten
-
-    assert nhan_tu_ten("tinh_trang") == "Tình trạng"            # từ ghép qua dấu gạch dưới
-    assert nhan_tu_ten("chung_loai") == "Chủng loại"
-    assert nhan_tu_ten("nhom_tham_nien") == "Nhóm thâm niên"
-    assert nhan_tu_ten("cuoi_thang_8") == "Cuối tháng 8"        # token số giữ nguyên
-    assert nhan_tu_ten("dang_cap_phat") == "Đang cấp phát"
-    assert nhan_tu_ten("mahocvan") == "Mã học vấn"

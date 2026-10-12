@@ -171,6 +171,9 @@ async def fetch_data_node(state: dict[str, Any]) -> dict[str, Any]:
 async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or state.get("missing_input"):
         return {}
+    from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+    await gan_nhan_moi_truy_van(state["data"], state.get("request", ""))
     return {"sections": query_sections(state["data"]["queries"])}
 
 

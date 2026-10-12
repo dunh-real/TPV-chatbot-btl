@@ -567,6 +567,9 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
     data, params = state["data"], state["params"]
     if "queries" in data:
+        from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+        await gan_nhan_moi_truy_van(data, state.get("request", ""))
         return {"sections": query_sections(data["queries"])}
     charts = state.get("charts", {})
     period_label = f"tháng {params['thang']}/{params['nam']}"

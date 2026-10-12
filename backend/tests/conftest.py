@@ -132,3 +132,17 @@ def erp_query(tmp_path, monkeypatch):
         return await session.run_sync(lambda sync: run_discovery("Kiểm tra nghiệp vụ", principal=principal,
             client=client, connection=sync.connection(), store=SchemaStore(tmp_path / "schema.json", 300)))
     return query
+
+
+@pytest.fixture(autouse=True)
+def _qwen_dat_nhan_khong_goi_mang(request, monkeypatch):
+    """Bước Qwen đặt nhãn/vai trò cột chạy ở mọi node dựng tài liệu. Test không có vLLM: để nó báo lỗi
+    ngay (như khi Qwen tắt) thay vì chờ kết nối tới timeout. test_nhan_cot tự giả lập LLM; test live dùng thật."""
+    if request.module.__name__.endswith("test_nhan_cot") or request.node.get_closest_marker("live"):
+        return
+
+    async def _khong_co_qwen(*args, **kwargs):
+        raise RuntimeError("Qwen không chạy trong test")
+
+    import app.documents.nhan_cot as nhan_cot
+    monkeypatch.setattr(nhan_cot, "_hoi_qwen", _khong_co_qwen)

@@ -477,6 +477,10 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
     output_path = _output_path(state["params"])
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    # Qwen đặt nhãn cột trước khi dựng: không tên trường CSDL nào lên slide, kể cả dữ liệu từ đường khác.
+    from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+    await gan_nhan_moi_truy_van(state.get("data") or {}, state.get("request", ""))
 
     if getattr(get_settings(), "presenton_render_mode", "direct") == "generate":
         return await _render_generate(state, output_path)

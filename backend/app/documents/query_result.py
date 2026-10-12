@@ -1,13 +1,15 @@
 """Dựng bảng Word và slide trực tiếp từ QueryResult, không phụ thuộc tên chỉ tiêu cố định."""
 from __future__ import annotations
 
-from app.documents.nhan_cot import lam_sach_ket_qua, nfc
+from app.documents.nhan_cot import lam_sach_ket_qua
 from app.schemas.erp import QueryResult
 from app.tools.base import ToolError
 
 
 def cell(value):
-    return "—" if value is None else nfc(str(value))
+    from app.documents.slide_deck import gia_tri_chu
+
+    return "—" if value is None else gia_tri_chu(value)
 
 
 def table(result):
