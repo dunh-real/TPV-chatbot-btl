@@ -412,9 +412,18 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     elif len(ghep) > 1:
         group = " - ".join(_nhan(cols[i].get("label") or cols[i].get("name")) for i in ghep)
 
+    # Tháng dạng số trần (3, 4, 6) đọc như số đếm - Qwen từng viết "Có 4 tháng cao nhất" thay vì "tháng 4":
+    # cột kỳ là số 1-12 thì hiện "T4", kèm năm nếu bảng có cột năm không đổi ("T4/2026").
+    thang_so = (cols[cat].get("role") == "ky" and len(ghep) == 1
+                and all(isinstance(_so_hoc(r[cat]), int) and 1 <= _so_hoc(r[cat]) <= 12 for r in rows))
+    nam_co_dinh = next((int(_so_hoc(rows[0][i])) for i in group_cols if i != cat and hang(i)
+                        and isinstance(_so_hoc(rows[0][i]), int) and 1900 <= _so_hoc(rows[0][i]) <= 2100), None)
+
     def ten(row: list[Any]) -> str:
         if nam_thang:
             return f"T{int(_so_hoc(row[nam_thang[1]]) or 0)}/{int(_so_hoc(row[nam_thang[0]]) or 0)}"
+        if thang_so:
+            return f"T{_so_hoc(row[cat])}" + (f"/{nam_co_dinh}" if nam_co_dinh else "")
         vals = [gia_tri_chu(row[i]) for i in ghep if row[i] is not None]
         return " - ".join(vals) if vals else "Chưa xác định"
 
@@ -851,7 +860,14 @@ def fit(text: str, limit: int) -> str:
         i = cut.rfind(sep)
         if i > limit // 3:
             return cut[:i].rstrip(" ,;:-") + "."
-    return cut.rsplit(" ", 1)[0].rstrip(" ,;:-")
+    words = cut.rsplit(" ", 1)[0].rstrip(" ,;:-").split(" ")
+    # Cắt theo từ dễ để lại giới từ/liên từ treo cuối ("Số nhân viên tuyển mới theo"): bỏ luôn từ đó.
+    while len(words) > 1 and words[-1].lower() in _TU_NOI:
+        words.pop()
+    return " ".join(words).rstrip(" ,;:-")
+
+
+_TU_NOI = {"theo", "của", "và", "với", "trên", "tại", "cho", "từ", "đến", "trong", "về", "các", "những", "có", "là"}
 
 
 # Ô tiêu đề/nhãn (không chấm câu) và ô đoạn văn (luôn kết thúc bằng dấu câu).

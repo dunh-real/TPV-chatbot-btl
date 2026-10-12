@@ -2321,10 +2321,10 @@
   drawerScrim.addEventListener('click', closeDrawer);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeDrawer(); hidePopover(); } });
 
-  function kvRow(listId, key, value) {
+  function kvRow(listId, key, value, hint) {
     var row = el('div', { class: 'kv-row' });
     row.innerHTML = '<input class="kv-key" placeholder="tên trường" value="' + esc(key || '') + '" />' +
-      '<input class="kv-val" placeholder="giá trị" value="' + esc(value || '') + '" />';
+      '<input class="kv-val" placeholder="' + esc(hint || 'giá trị') + '" value="' + esc(value || '') + '" />';
     var del = el('button', { class: 'icon-btn', title: 'Bỏ trường' },
       '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>');
     del.addEventListener('click', function () {
@@ -2433,9 +2433,16 @@
     location.reload();
   });
 
-  // mẫu inputs mặc định cho từng workflow
+  // mẫu inputs mặc định cho từng workflow. Số văn bản và ngày ban hành đứng trước người ký, theo đúng thứ tự
+  // trên văn bản ("Số: ..." rồi "Hà Nội, ngày ... tháng ... năm ..."); để trống thì hệ thống tự cấp.
+  var HINT_SO = 'số văn bản, VD 15/BC-HCQT — trống: cấp số tiếp theo';
+  var HINT_NGAY = 'ngày ban hành dd/mm/yyyy — trống: hôm nay';
+  kvRow('draftInputs', 'so_ky_hieu', '', HINT_SO);
+  kvRow('draftInputs', 'ngay_ban_hanh', '', HINT_NGAY);
   kvRow('draftInputs', 'nguoi_ky', prefs.inputs.nguoi_ky || '');
   kvRow('draftInputs', 'chuc_vu_ky', prefs.inputs.chuc_vu_ky || '');
+  kvRow('aggInputs', 'so_ky_hieu', '', HINT_SO);
+  kvRow('aggInputs', 'ngay_ban_hanh', '', HINT_NGAY);
   kvRow('aggInputs', 'nguoi_ky', prefs.inputs.nguoi_ky || '');
   kvRow('slideInputs', 'nguoi_trinh_bay', '');
 

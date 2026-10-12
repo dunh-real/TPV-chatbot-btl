@@ -258,3 +258,22 @@ def test_ngay_iso_hien_kieu_viet_nam():
     assert sd.gia_tri_chu("Phòng A") == "Phòng A"
     from app.documents.query_result import cell
     assert cell("2026-04-02T00:00:00") == "02/04/2026"
+
+
+def test_thang_so_tran_hien_T_kem_nam_co_dinh():
+    """Text-to-SQL thật trả (nam=2026 mọi dòng, thang=3,4,6): trục "T3/2026", không phải "3" - Qwen từng đọc
+    "4 cao nhất" thành "Có 4 tháng cao nhất"."""
+    q = {"question": "Tuyển mới theo tháng 2026", "source_tables": [], "warnings": [],
+         "columns": [{"name": "nam", "data_type": "int", "label": "Năm", "unit": "", "role": "ky"},
+                     {"name": "thang", "data_type": "int", "label": "Tháng", "unit": "", "role": "ky"},
+                     {"name": "n", "data_type": "int", "label": "Số nhân viên tuyển mới", "unit": "người",
+                      "role": "so", "cong_duoc": True}],
+         "rows": [[2026, 3, 1], [2026, 4, 3], [2026, 6, 3]]}
+    ds, = sd.query_parts({"queries": [q]}).datasets
+    assert ds.categories == ["T3/2026", "T4/2026", "T6/2026"]
+    assert any(f.startswith("T4/2026 cao nhất") for f in ds.facts)
+
+
+def test_cat_tieu_de_khong_de_gioi_tu_treo():
+    assert sd.fit("Số nhân viên tuyển mới theo tháng", 28) == "Số nhân viên tuyển mới"
+    assert sd.fit("Nhân sự của phòng ban", 12) == "Nhân sự"

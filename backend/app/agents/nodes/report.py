@@ -29,6 +29,7 @@ from app.documents.docx_builder import (
     build_docx,
 )
 from app.documents.extract_figures import reconcile_file
+from app.documents.the_thuc import doc_ngay_ban_hanh, kiem_so_van_ban, ngay_ban_hanh_an_toan, so_nguoi_dung
 from app.documents.verify import (
     check_numbers,
     collect_known_numbers,
@@ -795,11 +796,18 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     params = state["params"]
     inputs = state.get("inputs", {})
     period_label = f"tháng {params['thang']}/{params['nam']}"
+    try:
+        ngay_ban_hanh = doc_ngay_ban_hanh(inputs)
+    except ValueError as exc:
+        return {"output_path": "", "error": str(exc)}
+    so_nhap = so_nguoi_dung(inputs)
 
     async with session_scope() as session:
+        if (trung := await kiem_so_van_ban(session, so_nhap)):
+            return {"output_path": "", "error": trung}
         template = await TemplateRepository(session).get("BC_TONGHOP")
         template_file = template.file_path if template else ""
-        so_ky_hieu = inputs.get("so_ky_hieu") or await next_so_ky_hieu(
+        so_ky_hieu = so_nhap or await next_so_ky_hieu(
             session, params["nam"], "BC-HCQT"
         )
 
@@ -809,7 +817,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
             "noi_nhan": inputs.get("noi_nhan", "Ban Giám đốc"),
             "so_ky_hieu": so_ky_hieu,
             "dia_danh": inputs.get("dia_danh", "Hà Nội"),
-            "ngay_bao_cao": _ngay_tieng_viet(date.today()),
+            "ngay_bao_cao": _ngay_tieng_viet(ngay_ban_hanh),
             "trich_yeu": inputs.get("trich_yeu") or (state["request"][:200] if "queries" in state["data"] else _trich_yeu(params, period_label)),
             "chuc_vu_ky": inputs.get("chuc_vu_ky", "TRƯỞNG PHÒNG"),
             "nguoi_ky": inputs.get("nguoi_ky", ""),
@@ -854,7 +862,7 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
                 noi_gui="Phòng Hành chính nhân sự",
                 noi_nhan="Ban Giám đốc",
                 mo_ta=f"Tổng hợp kỳ {params['ky']}",
-                ngay_van_ban=date.today(),
+                ngay_van_ban=ngay_ban_hanh_an_toan(state.get("inputs")),
                 file_path=output_path, dang_file="docx",
             ))
     except Exception as exc:  # noqa: BLE001
