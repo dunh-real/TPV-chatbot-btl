@@ -87,6 +87,10 @@ def _ngay_tieng_viet(value: date) -> str:
     return f"ngày {value.day:02d} tháng {value.month} năm {value.year}"
 
 
+# Đơn vị ban hành mặc định của báo cáo tổng hợp - giao diện điền sẵn giá trị này vào ô `noi_gui`.
+NOI_GUI_MAC_DINH = "PHÒNG HÀNH CHÍNH QUẢN TRỊ"
+
+
 # Cột mặc định cho số liệu cũ không khai `breakdown_columns` (báo cáo đọc từ tài
 # liệu, dữ liệu đã lưu từ phiên trước).
 _COT_MAC_DINH = {
@@ -813,7 +817,8 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
 
     payload = DocumentPayload(
         meta={
-            "noi_gui": inputs.get("noi_gui", "PHÒNG HÀNH CHÍNH QUẢN TRỊ"),
+            # `or`: ô để trống trên giao diện gửi "" - không in dòng đơn vị ban hành rỗng.
+            "noi_gui": inputs.get("noi_gui") or NOI_GUI_MAC_DINH,
             "noi_nhan": inputs.get("noi_nhan", "Ban Giám đốc"),
             "so_ky_hieu": so_ky_hieu,
             "dia_danh": inputs.get("dia_danh", "Hà Nội"),

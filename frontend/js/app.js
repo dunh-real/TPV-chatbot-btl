@@ -2441,6 +2441,7 @@
   kvRow('draftInputs', 'ngay_ban_hanh', '', HINT_NGAY);
   kvRow('draftInputs', 'nguoi_ky', prefs.inputs.nguoi_ky || '');
   kvRow('draftInputs', 'chuc_vu_ky', prefs.inputs.chuc_vu_ky || '');
+  kvRow('aggInputs', 'noi_gui', prefs.inputs.noi_gui || 'PHÒNG HÀNH CHÍNH QUẢN TRỊ', 'đơn vị ban hành');
   kvRow('aggInputs', 'so_ky_hieu', '', HINT_SO);
   kvRow('aggInputs', 'ngay_ban_hanh', '', HINT_NGAY);
   kvRow('aggInputs', 'nguoi_ky', prefs.inputs.nguoi_ky || '');
