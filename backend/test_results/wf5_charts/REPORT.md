@@ -79,6 +79,37 @@ lớn là bước export của Presenton).
   `test_erp_groups` và segfault ở `test_converter` - cùng kết quả trên HEAD gốc (lỗi mã hoá Windows, pymupdf),
   không do thay đổi này.
 
+## Sửa 3 lỗi chữ tiếng Việt / tên trường / file không mở được trên Windows (mẫu `output/ERROR.pptx`)
+
+ERROR.pptx do bản production cũ (8434523) sinh ra; mỗi lỗi có một nguyên nhân riêng:
+
+| Lỗi | Nguyên nhân (đã kiểm chứng) | Sửa |
+|---|---|---|
+| #1 tên trường CSDL trên slide ("soluong", "thangnam", "loaichuyendong") | Nhãn cột chỉ do `gan_nhan_cot` đặt ở bước lấy số liệu; dữ liệu tới đường khác, hoặc nhãn lỗi, thì `query_result.table` lùi về `c.label or c.name` = tên trường | `nhan_cot.lam_sach_ket_qua`: chốt chặn không gọi LLM, chạy ở mọi cửa ra (Word, slide Presenton, slide tự dựng) - nhãn không dấu/tên trường -> từ điển -> "Cột n"; từ điển thêm từ ghép qua "_" ("tinh_trang" -> "Tình trạng"), token số ("cuoi_thang_8" -> "Cuối tháng 8"); bỏ "Tổng tổng" |
+| #2 biểu đồ/bảng lỗi chữ ("T?n cu?i k?", "R?i kh?i") | Text-to-SQL viết chuỗi literal thiếu `N''`; DB collation `SQL_Latin1_General_CP1_CI_AS` ép về varchar CP1252: ồ, ố, ờ, ỏ thành `?` (chạy thật: `'Tồn cuối kỳ'` -> `T?n cu?i k?`). Tệ hơn: `LIKE '%đ%'` thiếu N trả 0 dòng - **số liệu sai không báo** | `erp_sql_policy._chuoi_unicode`: mọi chuỗi literal có ký tự ngoài ASCII thành `N'...'` trước khi chạy (kiểm trên SQL Server thật: cả hai trường hợp ra đúng). Thêm NFC cho mọi chữ từ dữ liệu (Unikey "Unicode tổ hợp"/macOS cho chữ NFD, dấu tách khỏi chữ trên biểu đồ) |
+| #3 PowerPoint trên Windows không hiển thị/đòi sửa file | Presenton ghi icon/nền/đường kẻ thành SVG thuần: `<a:blip>` không có `r:embed`, chỉ có `svgBlip` trong extLst (ERROR.pptx: 18 ảnh như vậy). Chuẩn Office cần ảnh raster ở blip | `pptx_svg.them_png_du_phong`: vẽ SVG thành PNG (PyMuPDF) gắn vào `r:embed`, giữ SVG cho bản đọc được; chạy sau mỗi lần tải .pptx từ Presenton (0,6 s/file) |
+
+Thêm cảnh báo trên file thành phẩm (`verify_node`): `lost_diacritics` ("T?n", ký tự U+FFFD) và
+`field_name` - nếu còn lọt thì kết quả nói rõ slide nào.
+
+Biểu đồ: chú thích nhiều chuỗi đo bề ngang thật, tràn thì xuống hàng; nhãn số co theo độ dày cột, cột
+quá mỏng thì bỏ nhãn (bảng chi tiết ngay sau có đủ số).
+
+### Kết quả lượt r5 (sau sửa) so với r2 (trước sửa)
+
+| Chỉ số trên 20 file .pptx (10 Presenton + 10 tự dựng), 1.484 đoạn chữ | r2 | r5 |
+|---|---|---|
+| Đoạn chứa tên cột gốc của chính truy vấn | 41 | 0 |
+| Đoạn dạng tên trường (`la_ten_truong`) | 49 | 0 |
+| Nhãn dự phòng "Cột n" | - | 0 |
+| Chữ mất dấu / NFD | 0 / 0 | 0 / 0 |
+| Ảnh SVG không có PNG dự phòng (file Presenton) | chưa đo | 0 |
+| Câu đạt (deck, ảnh biểu đồ, đối chiếu số) | 10/10 | 10/10 |
+| Biểu đồ khớp SQL | 17/17 | 17/17 |
+
+`scan_text.py` quét chữ, `check_nprefix.py` kiểm `N''` trên SQL Server (`CHECK=nprefix ./run_eval.sh`).
+Test mới: `tests/test_chu_viet.py`.
+
 ## Chạy lại
 
 ```bash

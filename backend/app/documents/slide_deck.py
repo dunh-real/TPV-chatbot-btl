@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import copy
 import re
+import unicodedata
 import uuid
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
@@ -93,7 +94,7 @@ def _dau(delta: float) -> str:
 
 
 def _nhan(text: Any) -> str:
-    return " ".join(str(text or "").split())
+    return unicodedata.normalize("NFC", " ".join(str(text or "").split()))
 
 
 # --------------------------------------------------------------------------- #
@@ -413,9 +414,11 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     cards: list[tuple[str, str]] = []
     nhom = group.lower()
     if total is not None:
-        facts.append(f"Tổng {label.lower()} là {_chu_so(total)}{don_vi}, trên {len(rows)} {nhom}.")
-        cards.append((f"Tổng {label.lower()}", f"{_chu_so(total)}{don_vi} trên {len(rows)} {nhom}."))
-        ds.total_card = (f"{_chu_so(total)}{don_vi}", f"Tổng {label.lower()}")
+        # Cột đã là tổng ("Tổng", "Tổng số thiết bị"): không ghép thành "Tổng tổng".
+        ten_tong = label if label.lower().startswith("tổng") else f"Tổng {label.lower()}"
+        facts.append(f"{ten_tong} là {_chu_so(total)}{don_vi}, trên {len(rows)} {nhom}.")
+        cards.append((ten_tong, f"{_chu_so(total)}{don_vi} trên {len(rows)} {nhom}."))
+        ds.total_card = (f"{_chu_so(total)}{don_vi}", ten_tong)
     if values:
         top_name, top = values[0]
         share = f", chiếm {ty_le(top, total)}" if total else ""
@@ -453,8 +456,11 @@ def canh_bao_doc_duoc(warning: str) -> str:
 
 
 def query_parts(data: dict[str, Any]) -> QueryParts:
+    from app.documents.nhan_cot import lam_sach_ket_qua
+
     parts = QueryParts()
     for index, result in enumerate(data.get("queries") or []):
+        lam_sach_ket_qua(result)      # nhãn cột luôn đọc được, chữ NFC - dù dữ liệu tới bằng đường nào
         cols, rows = result.get("columns") or [], result.get("rows") or []
         parts.sources += [s for s in result.get("source_tables") or [] if s not in parts.sources]
         question = noi_dung_cau_hoi(str(result.get("question") or ""))

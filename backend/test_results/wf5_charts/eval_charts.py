@@ -131,6 +131,16 @@ def pictures_by_slide(path: Path) -> list[list[bytes]]:
     return out
 
 
+def svg_only_blips(path: Path) -> int:
+    """Ảnh SVG không có PNG dự phòng - PowerPoint trên Windows không hiển thị/đòi sửa file."""
+    from pptx import Presentation
+    from pptx.oxml.ns import qn
+
+    prs = Presentation(str(path))
+    parts = [s.part for s in prs.slides] + [m.part for m in prs.slide_masters]
+    return sum(1 for p in parts for b in p._element.iter(qn("a:blip")) if not b.get(qn("r:embed")))
+
+
 def pdf_to_png(pdf: bytes, out_dir: Path, prefix: str) -> int:
     import pymupdf
 
@@ -177,6 +187,7 @@ async def run_one(q: dict[str, Any], datasets: dict[str, Any], conn, out_root: P
         rec_p["validation"] = val["validation"].get("status")
         rec_p["validation_issues"] = val["validation"].get("issues", [])[:5]
         pics = pictures_by_slide(Path(res["output_path"]))
+        rec_p["svg_only_blips"] = svg_only_blips(Path(res["output_path"]))
         chart_idx = [i for i, p in enumerate(res["brief"].split("\n\n---\n\n")) if p.startswith("[chart]")]
         rec_p["chart_slides_with_picture"] = sum(1 for i in chart_idx if i < len(pics) and pics[i])
         rec_p["chart_slides"] = len(chart_idx)

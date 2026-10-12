@@ -12,5 +12,7 @@ unset MSSQL_SA_PASSWORD MSSQL_RO_PASSWORD
 export PRESENTON_URL=http://127.0.0.1:5002 PRESENTON_TEMPLATE="${PRESENTON_TEMPLATE:-momentum}" \
        PRESENTON_RENDER_MODE=direct PRESENTON_SUMMARY=false OUTPUT_DIR="$WORK/output" MPLBACKEND=Agg
 export PYTHONPATH="$WORK/backend:$WORK/pydeps"
-exec "$HOME/loi_workspace/TPV-chatbot-btl/backend/.venv/bin/python" test_results/wf5_charts/eval_charts.py \
-  --questions "$HOME/loi_workspace/report_pipeline" "$@"
+PY="$HOME/loi_workspace/TPV-chatbot-btl/backend/.venv/bin/python"
+# CHECK=nprefix: chỉ kiểm chuỗi N'' trên SQL Server (check_nprefix.py), không dựng slide.
+if [ "${CHECK:-}" = nprefix ]; then exec "$PY" test_results/wf5_charts/check_nprefix.py; fi
+exec "$PY" test_results/wf5_charts/eval_charts.py --questions "$HOME/loi_workspace/report_pipeline" "$@"

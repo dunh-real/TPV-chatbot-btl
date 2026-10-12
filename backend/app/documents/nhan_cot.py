@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -38,10 +39,14 @@ _AM_TIET = {
     "vao": "vào", "ra": "ra", "hoc": "học", "trinh": "trình", "do": "độ", "dia": "địa",
     "lien": "liên", "he": "hệ", "nghiep": "nghiệp", "dau": "đầu", "cuoi": "cuối", "con": "còn", "lai": "lại",
     "tien": "tiền", "gio": "giờ", "luot": "lượt", "mua": "mua", "lan": "lần", "diem": "điểm",
+    "phat": "phát", "ton": "tồn", "roi": "rời", "khoi": "khỏi", "tang": "tăng", "giam": "giảm",
+    "tieu": "tiêu", "nhap": "nhập", "xuat": "xuất", "hien": "hiện", "han": "hạn", "ngoai": "ngoài", "trong": "trong",
 }
 # Từ ghép có nghĩa riêng khi đứng cạnh nhau (âm tiết trùng chữ cần dấu khác).
 _GHEP = {"congty": "công ty", "hoatdong": "hoạt động", "tinhtrang": "tình trạng", "diachi": "địa chỉ",
-         "nhanvien": "nhân viên", "nhansu": "nhân sự", "phongban": "phòng ban"}
+         "nhanvien": "nhân viên", "nhansu": "nhân sự", "phongban": "phòng ban",
+         "chungloai": "chủng loại", "chitieu": "chỉ tiêu", "hocvan": "học vấn", "thamnien": "thâm niên", "biendong": "biến động",
+         "chuyendong": "chuyển động", "sudung": "sử dụng", "capphat": "cấp phát"}
 # Từ tiếng Anh hay gặp trong alias.
 _ANH = {"count": "Số lượng", "total": "Tổng", "name": "Tên", "department": "Phòng ban", "employee": "Nhân viên",
         "employees": "Nhân viên", "asset": "Tài sản", "assets": "Tài sản", "category": "Danh mục",
@@ -88,15 +93,29 @@ def nhan_tu_ten(name: str) -> str:
         label = " ".join(_ANH[p.lower()].lower() for p in reversed(parts))
         return label[:1].upper() + label[1:]
     words: list[str] = []
+    run = ""            # các phần không dấu liền nhau, tách âm tiết chung: "tinh_trang" khớp từ ghép "tình trạng"
+
+    def flush() -> bool:
+        nonlocal run
+        if run:
+            syl = _tach_am_tiet(run)
+            if syl is None:
+                return False
+            words.extend(_GHEP.get(s) or _AM_TIET[s] for s in syl)
+            run = ""
+        return True
+
     for p in parts:
         low = p.lower()
-        if low in _ANH:
-            words.append(_ANH[low].lower())
+        if low.isdigit() or low in _ANH:
+            if not flush():
+                return ""
+            # "cuoi_thang_8" -> "Cuối tháng 8"
+            words.append(low if low.isdigit() else _ANH[low].lower())
             continue
-        syl = _tach_am_tiet(low)
-        if syl is None:
-            return ""
-        words += [_GHEP.get(s) or _AM_TIET[s] for s in syl]
+        run += low
+    if not flush():
+        return ""
     label = " ".join(words).strip()
     return label[:1].upper() + label[1:] if label else ""
 
@@ -130,12 +149,55 @@ async def _hoi_qwen(cols: list[dict[str, Any]], rows: list[list[Any]], question:
     return out
 
 
+def nfc(value: Any) -> Any:
+    """Chữ tiếng Việt về dạng dựng sẵn (NFC). Unikey ở chế độ "Unicode tổ hợp" và dữ liệu nhập từ
+    macOS cho chữ NFD - dấu là ký tự rời: font vẽ dấu lệch/tách khỏi chữ trên biểu đồ và slide,
+    và "Phòng" NFD không bằng "Phòng" NFC khi so khớp."""
+    return unicodedata.normalize("NFC", value) if isinstance(value, str) else value
+
+
+_DON_VI_ASCII = {"kg", "km", "m2", "m3", "usd", "vnd", "đ", "%", "h", "gb", "tb", "mb"}
+
+
+def nhan_an_toan(col: dict[str, Any], index: int) -> str:
+    """Nhãn chắc chắn đọc được: nhãn sẵn có nếu hợp lệ, không thì từ điển, cuối cùng "Cột n"."""
+    name = str(col.get("name") or "")
+    label = nfc(" ".join(str(col.get("label") or "").split()))
+    if nhan_hop_le(label, name):
+        return label
+    tu = nhan_tu_ten(name)
+    if tu and nhan_hop_le(tu, name):
+        tu = re.sub(r"^Tên (?=\S)", "", tu)
+        return tu[:1].upper() + tu[1:]
+    return f"Cột {index + 1}"
+
+
+def lam_sach_ket_qua(result: dict[str, Any]) -> dict[str, Any]:
+    """Chốt chặn CUỐI trước khi kết quả truy vấn lên Word/slide - không gọi LLM, luôn chạy.
+
+    `gan_nhan_cot` (có Qwen) chạy ở bước lấy số liệu, nhưng dữ liệu còn có thể tới bằng đường khác
+    (agent nhiều bước, kết quả cũ trong hội thoại, test). Ở đây không cho bất kỳ nhãn cột nào là tên
+    trường CSDL hay chữ không dấu ("soluong", "thangnam") đi tiếp, và đưa mọi chữ về NFC.
+    Sửa tại chỗ, trả lại chính `result`.
+    """
+    for index, col in enumerate(result.get("columns") or []):
+        col["label"] = nhan_an_toan(col, index)
+        unit = nfc(" ".join(str(col.get("unit") or "").split()))
+        if la_ten_truong(unit) or (unit.isascii() and unit.lower() not in _DON_VI_ASCII):
+            unit = ""        # "nguoi", "so_luong": đơn vị không dấu/tên trường thì bỏ, không in sai
+        col["unit"] = unit or don_vi_mac_dinh(col["label"])
+    result["rows"] = [[nfc(v) for v in row] for row in result.get("rows") or []]
+    if "question" in result:
+        result["question"] = nfc(result.get("question"))
+    return result
+
+
 async def gan_nhan_cot(result: dict[str, Any], question: str = "") -> dict[str, Any]:
     """Điền `label`/`unit` cho mọi cột của một kết quả `QueryResult.as_dict()` (sửa tại chỗ, trả lại)."""
     cols = result.get("columns") or []
     thieu = [c for c in cols if not nhan_hop_le(c.get("label"), c.get("name", ""))]
     if not thieu:
-        return result
+        return lam_sach_ket_qua(result)
     goi_y: dict[str, dict[str, str]] = {}
     try:
         goi_y = await _hoi_qwen(cols, result.get("rows") or [], question or str(result.get("question") or ""))
@@ -156,4 +218,4 @@ async def gan_nhan_cot(result: dict[str, Any], question: str = "") -> dict[str, 
                 col["label"] = f"Cột {index + 1}"
         if not col.get("unit"):
             col["unit"] = don_vi_mac_dinh(str(col.get("label") or ""))
-    return result
+    return lam_sach_ket_qua(result)

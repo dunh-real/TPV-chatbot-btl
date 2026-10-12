@@ -17,6 +17,15 @@ from app.core.context import current_principal
 from app.services.erp_sql_catalog import fingerprint
 from app.tools.base import ToolError
 
+def _chuoi_unicode(node: exp.Expression) -> exp.Expression:
+    """'Tồn cuối kỳ' -> N'Tồn cuối kỳ'. Chuỗi không có tiền tố N là varchar theo code page của DB:
+    ký tự ngoài code page (ồ, ố, ờ, ỏ...) thành '?' trên nhãn kết quả, và tệ hơn, điều kiện lọc
+    như LIKE N'%đ%' viết thiếu N sẽ so với '%?%' - ra số sai mà không báo lỗi."""
+    if isinstance(node, exp.Literal) and node.is_string and not str(node.this).isascii():
+        return exp.National(this=node.this)
+    return node
+
+
 SAFE_FUNCTIONS = frozenset("AND OR CASE COUNT COUNT_BIG SUM AVG MIN MAX COALESCE NULLIF IF IIF CAST TRY_CAST CONVERT TRY_CONVERT ABS ROUND CEIL CEILING FLOOR ROW_NUMBER RANK DENSE_RANK LAG LEAD FIRST_VALUE LAST_VALUE LENGTH CHAR_LENGTH LEN TRIM LTRIM RTRIM LOWER UPPER SUBSTRING REPLACE CONCAT CONCAT_WS DATE_ADD DATEADD DATE_DIFF DATEDIFF DATEDIFF_BIG DATE_FROM_PARTS DATEFROMPARTS EXTRACT YEAR MONTH DAY ISNULL CURRENT_DATE CURRENT_TIMESTAMP".split())
 
 
@@ -215,6 +224,7 @@ class SQLPolicy:
                 tree.limit(min(int(count.this), max_rows + 1), copy=False)
             else:
                 tree.limit(max_rows + 1, copy=False)
+            tree = tree.transform(_chuoi_unicode)
             binding = tree.transform(lambda n: exp.Parameter(this=exp.Var(this="__erp_tenant")) if isinstance(n, exp.Placeholder) else n)
             return tree.sql(dialect="tsql"), binding.sql(dialect="tsql"), {"__erp_tenant": self.tenant_id}, sorted(sources)
         except Exception as exc:

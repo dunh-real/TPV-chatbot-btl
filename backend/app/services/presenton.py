@@ -39,6 +39,7 @@ import httpx
 
 from app.core.config import Settings, get_settings
 from app.documents.font_slide import doi_font
+from app.documents.pptx_svg import them_png_du_phong
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ class PresentonClient:
 
         # Ép font ngay sau khi tải: Presenton không có tham số font, và file
         # xuống đây đã là .pptx thật nên sửa ở đây là chỗ rẻ nhất.
-        noi_dung = await self._download(remote_path)
+        noi_dung = await asyncio.to_thread(them_png_du_phong, await self._download(remote_path))
         if self.settings.presenton_font:
             noi_dung = await asyncio.to_thread(
                 doi_font, noi_dung, self.settings.presenton_font)
@@ -303,6 +304,9 @@ class PresentonClient:
         if not (path := str(data.get("path") or "")):
             raise PresentonError("Presenton xuất xong nhưng không trả về đường dẫn file.")
         content = await self._download(path)
+        if export_as == "pptx":
+            # Ảnh SVG thuần (không PNG dự phòng): PowerPoint trên Windows không hiển thị/đòi sửa file.
+            content = await asyncio.to_thread(them_png_du_phong, content)
         if export_as == "pptx" and self.settings.presenton_font:
             content = await asyncio.to_thread(doi_font, content, self.settings.presenton_font)
         return content
