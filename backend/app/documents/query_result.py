@@ -1,19 +1,23 @@
 """Dựng bảng Word và slide trực tiếp từ QueryResult, không phụ thuộc tên chỉ tiêu cố định."""
 from __future__ import annotations
 
+from app.documents.nhan_cot import lam_sach_ket_qua
 from app.schemas.erp import QueryResult
 from app.tools.base import ToolError
 
 
 def cell(value):
-    return "—" if value is None else str(value)
+    from app.documents.slide_deck import gia_tri_chu
+
+    return "—" if value is None else gia_tri_chu(value)
 
 
 def table(result):
-    query = QueryResult.model_validate(result)
+    # Không bao giờ in tên trường CSDL làm tiêu đề cột: nhãn thiếu/không dấu thay bằng nhãn đọc được.
+    query = QueryResult.model_validate(lam_sach_ket_qua(result))
     if query.truncated:
         raise ToolError("Kết quả bị cắt; cần thu hẹp hoặc tổng hợp dữ liệu trước khi xuất tài liệu")
-    columns = [(c.label or c.name) + (f" ({c.unit})" if c.unit else "") for c in query.columns]
+    columns = [c.label + (f" ({c.unit})" if c.unit else "") for c in query.columns]
     return query, {"columns": columns, "rows": [[cell(v) for v in row] for row in query.rows]}
 
 

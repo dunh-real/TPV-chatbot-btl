@@ -58,16 +58,12 @@ def _gia_tri(value: Any) -> Any:
 
 
 def fetch(conn, key: str, spec: dict[str, Any]) -> dict[str, Any]:
-    from app.documents.nhan_cot import don_vi_mac_dinh, nhan_tu_ten
-
     cur = conn.cursor()
     cur.execute(spec["sql"])
     desc = cur.description
     rows = [[_gia_tri(v) for v in r] for r in cur.fetchall()]
-    columns = []
-    for d in desc:
-        label = nhan_tu_ten(d[0]) or d[0]
-        columns.append({"name": d[0], "data_type": _kieu(d[1]), "label": label, "unit": don_vi_mac_dinh(label)})
+    # Như Text-to-SQL thật: cột chỉ có tên alias, chưa có nhãn - nhãn do Qwen đặt ở bước dựng tài liệu.
+    columns = [{"name": d[0], "data_type": _kieu(d[1]), "label": None, "unit": None} for d in desc]
     # Đủ trường của app.schemas.erp.QueryResult: đường lùi dựng bảng từ chính schema đó.
     return {"query_id": key, "question": spec["title"], "columns": columns, "rows": rows,
             "row_count": len(rows), "truncated": False, "schema_version": "eval", "policy_version": "eval",
@@ -131,6 +127,16 @@ def pictures_by_slide(path: Path) -> list[list[bytes]]:
     return out
 
 
+def svg_only_blips(path: Path) -> int:
+    """Ảnh SVG không có PNG dự phòng - PowerPoint trên Windows không hiển thị/đòi sửa file."""
+    from pptx import Presentation
+    from pptx.oxml.ns import qn
+
+    prs = Presentation(str(path))
+    parts = [s.part for s in prs.slides] + [m.part for m in prs.slide_masters]
+    return sum(1 for p in parts for b in p._element.iter(qn("a:blip")) if not b.get(qn("r:embed")))
+
+
 def pdf_to_png(pdf: bytes, out_dir: Path, prefix: str) -> int:
     import pymupdf
 
@@ -150,6 +156,15 @@ async def run_one(q: dict[str, Any], datasets: dict[str, Any], conn, out_root: P
     out.mkdir(parents=True, exist_ok=True)
     queries = [fetch(conn, k, datasets[k]) for k in q["datasets"]]
     data = {"queries": [{k: v for k, v in x.items() if k != "dataset_key"} for x in queries]}
+    # Đúng bước render_node của backend làm trước khi dựng: Qwen đặt nhãn cột.
+    from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+    t_nhan = time.monotonic()
+    await gan_nhan_moi_truy_van(data, q["question"])
+    # Theo TỪNG truy vấn (cùng tên cột ở hai bảng có thể khác nghĩa - Q06 "so_luong").
+    labels = [{"bang": x["question"], "cot": [[c["name"], c["label"], c.get("unit"), c.get("role"), c.get("cong_duoc")]
+                                            for c in x["columns"]]} for x in data["queries"]]
+    t_nhan = round(time.monotonic() - t_nhan, 1)
     (out / "data.json").write_text(json.dumps(queries, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
 
     dsets = sd.build_datasets(data, PARAMS)
@@ -161,13 +176,15 @@ async def run_one(q: dict[str, Any], datasets: dict[str, Any], conn, out_root: P
     state = {"request": q["question"], "data": data, "params": PARAMS, "assumptions": [],
              "inputs": {"don_vi_trinh_bay": TEN_DON_VI.get(q["tenant"], "Đơn vị")}}
     rec: dict[str, Any] = {"id": q["id"], "question": q["question"], "datasets": len(dsets),
+                           "labels": labels, "label_seconds": t_nhan,
                            "rows": [len(x["rows"]) for x in queries], "chart_value_problems": chart_problems}
 
     # --- đường Presenton
     t0 = time.monotonic()
     res = await pr._render_direct(dict(state), out / "presenton.pptx")
     rec_p: dict[str, Any] = {"engine": res.get("engine"), "seconds": round(time.monotonic() - t0, 1),
-                             "slides": res.get("slide_count"), "assumptions": res.get("assumptions", [])}
+                             "slides": res.get("slide_count"), "assumptions": res.get("assumptions", []),
+                             "summary_source": res.get("summary_source")}
     if res.get("engine") == "presenton":
         dc = res.get("deck_check") or {}
         rec_p.update(deck_ok=dc.get("ok"), charts_ok=dc.get("charts_ok"), charts_total=dc.get("charts_total"),
@@ -177,6 +194,7 @@ async def run_one(q: dict[str, Any], datasets: dict[str, Any], conn, out_root: P
         rec_p["validation"] = val["validation"].get("status")
         rec_p["validation_issues"] = val["validation"].get("issues", [])[:5]
         pics = pictures_by_slide(Path(res["output_path"]))
+        rec_p["svg_only_blips"] = svg_only_blips(Path(res["output_path"]))
         chart_idx = [i for i, p in enumerate(res["brief"].split("\n\n---\n\n")) if p.startswith("[chart]")]
         rec_p["chart_slides_with_picture"] = sum(1 for i in chart_idx if i < len(pics) and pics[i])
         rec_p["chart_slides"] = len(chart_idx)

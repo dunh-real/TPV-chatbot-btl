@@ -164,6 +164,24 @@ class QdrantVectorStore:
         result = await self._client.count(self.collection, exact=True)
         return result.count
 
+    async def document_summary(self, doc_id: str) -> dict[str, Any] | None:
+        """Tra đúng tài liệu, chỉ lấy metadata và đếm chunk, không tải text/vector."""
+        query_filter = models.Filter(must=[
+            models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))
+        ])
+        points, _ = await self._client.scroll(
+            collection_name=self.collection, scroll_filter=query_filter, limit=1,
+            with_payload=["doc_title", "source"], with_vectors=False,
+        )
+        if not points:
+            return None
+        count = await self._client.count(
+            self.collection, count_filter=query_filter, exact=True,
+        )
+        payload = points[0].payload or {}
+        return {"doc_id": doc_id, "doc_title": str(payload.get("doc_title") or doc_id),
+                "source": str(payload.get("source") or ""), "chunk_count": count.count}
+
     async def scroll_document(self, doc_id: str, page_size: int = 256) -> list[dict[str, Any]]:
         """Toàn bộ chunk của một tài liệu, xếp theo đúng thứ tự trong file gốc.
 

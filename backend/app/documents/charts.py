@@ -21,6 +21,7 @@ from __future__ import annotations
 import io
 import logging
 import textwrap
+import unicodedata
 from contextlib import contextmanager
 from typing import Iterator, Sequence
 
@@ -86,10 +87,10 @@ def _finish(fig, *, transparent: bool = False) -> bytes:
     return buffer.getvalue()
 
 
-def _label_bars(axes, bars, values: Sequence[float], *, skip_zero: bool = False) -> None:
+def _label_bars(axes, bars, values: Sequence[float], *, skip_zero: bool = False, fontsize: float = 8.5) -> None:
     """Ghi số ngay trên/cạnh cột: người đọc không phải ước lượng theo chiều cao."""
     labels = ["" if skip_zero and not v else _vn(v) for v in values]
-    axes.bar_label(bars, labels=labels, padding=3, fontsize=8.5, color=TEXT_COLOR)
+    axes.bar_label(bars, labels=labels, padding=3, fontsize=fontsize, color=TEXT_COLOR)
 
 
 def _headroom(axes, *, horizontal: bool) -> None:
@@ -124,8 +125,9 @@ def dataset_chart(
     `size_px` là kích thước ô đặt ảnh trên slide (đơn vị px của slide 1280x720): ảnh vẽ đúng
     tỷ lệ ô nên không bị méo hay thừa viền, và chữ giữ cùng cỡ ở mọi ô.
     """
-    categories = [str(c) for c in categories]
-    series = [(str(name), [float(v or 0) for v in values]) for name, values in series]
+    # NFC: chữ "Unicode tổ hợp" (Unikey, macOS) có dấu rời - font vẽ dấu lệch khỏi chữ.
+    categories = [unicodedata.normalize("NFC", str(c)) for c in categories]
+    series = [(unicodedata.normalize("NFC", str(name)), [float(v or 0) for v in values]) for name, values in series]
     if not categories or not series:
         raise ValueError("Biểu đồ cần ít nhất một danh mục và một chuỗi số liệu")
     for name, values in series:
@@ -144,6 +146,10 @@ def dataset_chart(
     label_size = 9.0 if row_px >= 34 else 8.0 if row_px >= 24 else 7.0
     wrap = 24 if row_px >= 34 else 34
     counts = all(float(v).is_integer() for _, values in series for v in values)
+    # Nhãn số co theo độ dày cột (px của ô): nhiều chuỗi trong ô thấp thì số chồng lên nhau. Cột mỏng
+    # tới mức chữ không đọc được thì bỏ nhãn - lưới trục vẫn còn, bảng chi tiết ngay sau có đủ số.
+    bar_px = (size_px[1] if horizontal else size_px[0]) * 0.8 / len(categories) * bar * 0.92
+    value_font = 0.0 if bar_px < 6 else min(8.5, max(6.5, bar_px * 0.75))
     with _style():
         fig, axes = plt.subplots(figsize=(width_in, height_in))
         positions = list(range(len(categories)))
@@ -156,7 +162,8 @@ def dataset_chart(
             else:
                 bars = axes.bar(where, values, width=bar * 0.92, color=color, label=name)
             # Nhiều chuỗi: hàng loạt nhãn "0" chen nhau che mất số thật; cột rỗng tự nói là 0.
-            _label_bars(axes, bars, values, skip_zero=n > 1)
+            if value_font:
+                _label_bars(axes, bars, values, skip_zero=n > 1, fontsize=value_font)
         _headroom(axes, horizontal=horizontal)
 
         value_axis = axes.xaxis if horizontal else axes.yaxis
@@ -179,8 +186,16 @@ def dataset_chart(
         if title:
             axes.set_title(title, loc="left", pad=10)
         if n > 1:
-            axes.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=min(n, 4), frameon=False,
-                        handlelength=1.2, borderaxespad=0.3)
+            # Ô hẹp (cạnh khối "Điểm nổi bật"): 4 chuỗi trên một hàng tràn mép phải. Đo chú thích thật
+            # rồi bớt cột tới khi vừa bề ngang hình - ước lượng theo số ký tự thì sai theo font.
+            fig.tight_layout()
+            renderer = fig.canvas.get_renderer()
+            for ncol in range(min(n, 4), 0, -1):
+                legend = axes.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=ncol, frameon=False,
+                                     handlelength=1.2, borderaxespad=0.3, columnspacing=1.2)
+                if legend.get_window_extent(renderer).x1 <= fig.bbox.width or ncol == 1:
+                    break
+                legend.remove()
         fig.tight_layout()
         return _finish(fig, transparent=transparent)
 

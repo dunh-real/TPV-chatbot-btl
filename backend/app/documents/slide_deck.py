@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import copy
 import re
+import unicodedata
 import uuid
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
@@ -93,7 +94,19 @@ def _dau(delta: float) -> str:
 
 
 def _nhan(text: Any) -> str:
-    return " ".join(str(text or "").split())
+    return unicodedata.normalize("NFC", " ".join(str(text or "").split()))
+
+
+_ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?)?$")
+
+
+def gia_tri_chu(value: Any) -> str:
+    """Giá trị chữ trên slide/Word: ngày ISO "2025-11-01T00:00:00" -> "01/11/2025" (kèm giờ nếu có)."""
+    text = _nhan(value)
+    if (m := _ISO.match(text)):
+        y, mo, d, hh, mm = m.groups()
+        return f"{d}/{mo}/{y}" + (f" {hh}:{mm}" if hh and (hh, mm) != ("00", "00") else "")
+    return text
 
 
 # --------------------------------------------------------------------------- #
@@ -333,7 +346,7 @@ def _so_hoc(value: Any) -> int | float | None:
     if isinstance(value, (int, float)):
         return value
     try:
-        d = Decimal(str(value))
+        d = Decimal(str(value).strip().rstrip("%").strip())   # "12.5%" là số (tỷ lệ) để vẽ được
     except (InvalidOperation, ValueError):
         return None
     return int(d) if d == d.to_integral_value() else float(d)
@@ -362,6 +375,19 @@ def _la_cot_ma(col: dict[str, Any]) -> bool:
     return label.startswith(("Mã", "STT")) or name.startswith(("ma", "code")) or name.endswith(("code", "id"))
 
 
+def _cap_nam_thang(rows: list[list[Any]], idx: list[int]) -> tuple[int, int] | None:
+    """(cột năm, cột tháng) nếu hai cột nhóm là năm (19xx/20xx) và tháng (1-12) dạng số."""
+    def toan_so(i: int, lo: int, hi: int) -> bool:
+        vals = [_so_hoc(r[i]) for r in rows]
+        return all(isinstance(v, int) and lo <= v <= hi for v in vals)
+    a, b = idx
+    if toan_so(a, 1900, 2100) and toan_so(b, 1, 12):
+        return a, b
+    if toan_so(b, 1900, 2100) and toan_so(a, 1, 12):
+        return b, a
+    return None
+
+
 def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
                    num_cols: list[int]) -> Dataset:
     cols, rows = result["columns"], result["rows"]
@@ -375,16 +401,42 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     label = _nhan(cols[main].get("label") or cols[main].get("name"))
     unit = str(cols[main].get("unit") or "")
     don_vi = f" {unit}" if unit else ""
+    # Một cột nhóm không phân biệt được các dòng (năm + tháng: "2025, 2025, 2026"): ghép các cột nhóm thành
+    # nhãn trục, không thì biểu đồ có cột trùng tên và nhận xét gán số của một tháng cho cả năm.
+    ghep = [cat]
+    if len(rows) > 1 and len({str(r[cat]) for r in rows}) < len(rows):
+        ghep = [i for i in group_cols if not hang(i) and not _la_cot_ma(cols[i])] or [cat]
+    nam_thang = _cap_nam_thang(rows, ghep) if len(ghep) == 2 else None
+    if nam_thang:
+        group = _nhan(cols[nam_thang[1]].get("label") or cols[nam_thang[1]].get("name"))
+    elif len(ghep) > 1:
+        group = " - ".join(_nhan(cols[i].get("label") or cols[i].get("name")) for i in ghep)
+
+    # Tháng dạng số trần (3, 4, 6) đọc như số đếm - Qwen từng viết "Có 4 tháng cao nhất" thay vì "tháng 4":
+    # cột kỳ là số 1-12 thì hiện "T4", kèm năm nếu bảng có cột năm không đổi ("T4/2026").
+    thang_so = (cols[cat].get("role") == "ky" and len(ghep) == 1
+                and all(isinstance(_so_hoc(r[cat]), int) and 1 <= _so_hoc(r[cat]) <= 12 for r in rows))
+    nam_co_dinh = next((int(_so_hoc(rows[0][i])) for i in group_cols if i != cat and hang(i)
+                        and isinstance(_so_hoc(rows[0][i]), int) and 1900 <= _so_hoc(rows[0][i]) <= 2100), None)
 
     def ten(row: list[Any]) -> str:
-        return _nhan(row[cat]) if row[cat] is not None else "Chưa xác định"
+        if nam_thang:
+            return f"T{int(_so_hoc(row[nam_thang[1]]) or 0)}/{int(_so_hoc(row[nam_thang[0]]) or 0)}"
+        if thang_so:
+            return f"T{_so_hoc(row[cat])}" + (f"/{nam_co_dinh}" if nam_co_dinh else "")
+        vals = [gia_tri_chu(row[i]) for i in ghep if row[i] is not None]
+        return " - ".join(vals) if vals else "Chưa xác định"
 
     # Biểu đồ xếp theo cột số đầu; bảng giữ nguyên thứ tự của truy vấn. Trục là các kỳ (T1..T9) thì
     # biểu đồ cũng giữ thứ tự của truy vấn: xếp tháng theo giá trị là mất luôn xu hướng.
     ordered = sorted(rows, key=lambda r: -(_so_hoc(r[main]) or 0))
-    time_axis = bool(_COT_KY.search(str(cols[cat].get("name") or ""))
-                     or _COT_KY.search(str(cols[cat].get("label") or "")))
-    cong = _cong_duoc(cols[main])
+    # Vai trò do bước đặt nhãn khai (Qwen + dấu hiệu dữ liệu) đi trước; regex chỉ cho dữ liệu chưa có vai trò.
+    if cols[cat].get("role"):
+        time_axis = any(cols[i].get("role") == "ky" for i in ghep)
+    else:
+        time_axis = bool(_COT_KY.search(str(cols[cat].get("name") or ""))
+                         or _COT_KY.search(str(cols[cat].get("label") or "")))
+    cong = cols[main]["cong_duoc"] if isinstance(cols[main].get("cong_duoc"), bool) else _cong_duoc(cols[main])
     series_cols = num_cols[:len(PALETTE) - 1]
     pairs = [(ten(r), [(_so_hoc(r[i]) or 0) for i in series_cols]) for r in (rows if time_axis else ordered)]
     others = 0
@@ -403,7 +455,7 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     ds = Dataset(key=key, title=title, short=label if len(num_cols) == 1 else "Số liệu",
                  group_label=group, unit=unit, categories=[n for n, _ in pairs], series=series,
                  table_columns=[_nhan_cot(c) for c in cols],
-                 table_rows=[[_chu_so(v) if j in num_cols else (_nhan(v) if v is not None else "—")
+                 table_rows=[[_chu_so(v) if j in num_cols else (gia_tri_chu(v) if v is not None else "—")
                               for j, v in enumerate(r)] for r in rows],
                  grouped_others=others, time_axis=time_axis)
 
@@ -413,9 +465,11 @@ def _query_dataset(key: str, result: dict[str, Any], group_cols: list[int],
     cards: list[tuple[str, str]] = []
     nhom = group.lower()
     if total is not None:
-        facts.append(f"Tổng {label.lower()} là {_chu_so(total)}{don_vi}, trên {len(rows)} {nhom}.")
-        cards.append((f"Tổng {label.lower()}", f"{_chu_so(total)}{don_vi} trên {len(rows)} {nhom}."))
-        ds.total_card = (f"{_chu_so(total)}{don_vi}", f"Tổng {label.lower()}")
+        # Cột đã là tổng ("Tổng", "Tổng số thiết bị"): không ghép thành "Tổng tổng".
+        ten_tong = label if label.lower().startswith("tổng") else f"Tổng {label.lower()}"
+        facts.append(f"{ten_tong} là {_chu_so(total)}{don_vi}, trên {len(rows)} {nhom}.")
+        cards.append((ten_tong, f"{_chu_so(total)}{don_vi} trên {len(rows)} {nhom}."))
+        ds.total_card = (f"{_chu_so(total)}{don_vi}", ten_tong)
     if values:
         top_name, top = values[0]
         share = f", chiếm {ty_le(top, total)}" if total else ""
@@ -453,8 +507,11 @@ def canh_bao_doc_duoc(warning: str) -> str:
 
 
 def query_parts(data: dict[str, Any]) -> QueryParts:
+    from app.documents.nhan_cot import lam_sach_ket_qua
+
     parts = QueryParts()
     for index, result in enumerate(data.get("queries") or []):
+        lam_sach_ket_qua(result)      # nhãn cột luôn đọc được, chữ NFC - dù dữ liệu tới bằng đường nào
         cols, rows = result.get("columns") or [], result.get("rows") or []
         parts.sources += [s for s in result.get("source_tables") or [] if s not in parts.sources]
         question = noi_dung_cau_hoi(str(result.get("question") or ""))
@@ -465,7 +522,10 @@ def query_parts(data: dict[str, Any]) -> QueryParts:
             parts.notes.append(("Không có dữ liệu", "Không có số liệu thỏa điều kiện"
                                 + (f" của nội dung \"{question[:80]}\"." if question else ".")))
             continue
-        num_cols = [i for i, c in enumerate(cols) if _la_cot_so(c, [r[i] for r in rows])]
+        if all(c.get("role") for c in cols):      # vai trò đã khai cho mọi cột: không đoán bằng regex
+            num_cols = [i for i, c in enumerate(cols) if c["role"] == "so"]
+        else:
+            num_cols = [i for i, c in enumerate(cols) if _la_cot_so(c, [r[i] for r in rows])]
         group_cols = [i for i in range(len(cols)) if i not in num_cols]
         if num_cols and group_cols:
             parts.datasets.append(_query_dataset(f"bang_{index + 1}", result, group_cols, num_cols))
@@ -475,7 +535,7 @@ def query_parts(data: dict[str, Any]) -> QueryParts:
         else:
             title = question[:60] or f"Kết quả tra cứu {index + 1}"
             parts.tables.append((title, [_nhan_cot(c) for c in cols],
-                                 [[_chu_so(v) if i in num_cols else (_nhan(v) if v is not None else "—")
+                                 [[_chu_so(v) if i in num_cols else (gia_tri_chu(v) if v is not None else "—")
                                    for i, v in enumerate(r)] for r in rows]))
     return parts
 
@@ -800,7 +860,14 @@ def fit(text: str, limit: int) -> str:
         i = cut.rfind(sep)
         if i > limit // 3:
             return cut[:i].rstrip(" ,;:-") + "."
-    return cut.rsplit(" ", 1)[0].rstrip(" ,;:-")
+    words = cut.rsplit(" ", 1)[0].rstrip(" ,;:-").split(" ")
+    # Cắt theo từ dễ để lại giới từ/liên từ treo cuối ("Số nhân viên tuyển mới theo"): bỏ luôn từ đó.
+    while len(words) > 1 and words[-1].lower() in _TU_NOI:
+        words.pop()
+    return " ".join(words).rstrip(" ,;:-")
+
+
+_TU_NOI = {"theo", "của", "và", "với", "trên", "tại", "cho", "từ", "đến", "trong", "về", "các", "những", "có", "là"}
 
 
 # Ô tiêu đề/nhãn (không chấm câu) và ô đoạn văn (luôn kết thúc bằng dấu câu).

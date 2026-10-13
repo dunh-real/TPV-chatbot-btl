@@ -29,6 +29,7 @@ from app.documents.docx_builder import (
     build_docx,
 )
 from app.documents.extract_figures import reconcile_file
+from app.documents.the_thuc import doc_ngay_ban_hanh, kiem_so_van_ban, ngay_ban_hanh_an_toan, so_nguoi_dung
 from app.documents.verify import (
     check_numbers,
     collect_known_numbers,
@@ -84,6 +85,10 @@ async def next_so_ky_hieu(session, nam: int, ky_hieu: str) -> str:
 
 def _ngay_tieng_viet(value: date) -> str:
     return f"ngày {value.day:02d} tháng {value.month} năm {value.year}"
+
+
+# Đơn vị ban hành mặc định của báo cáo tổng hợp - giao diện điền sẵn giá trị này vào ô `noi_gui`.
+NOI_GUI_MAC_DINH = "PHÒNG HÀNH CHÍNH QUẢN TRỊ"
 
 
 # Cột mặc định cho số liệu cũ không khai `breakdown_columns` (báo cáo đọc từ tài
@@ -567,6 +572,9 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
     data, params = state["data"], state["params"]
     if "queries" in data:
+        from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+        await gan_nhan_moi_truy_van(data, state.get("request", ""))
         return {"sections": query_sections(data["queries"])}
     charts = state.get("charts", {})
     period_label = f"tháng {params['thang']}/{params['nam']}"
@@ -792,21 +800,29 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     params = state["params"]
     inputs = state.get("inputs", {})
     period_label = f"tháng {params['thang']}/{params['nam']}"
+    try:
+        ngay_ban_hanh = doc_ngay_ban_hanh(inputs)
+    except ValueError as exc:
+        return {"output_path": "", "error": str(exc)}
+    so_nhap = so_nguoi_dung(inputs)
 
     async with session_scope() as session:
+        if (trung := await kiem_so_van_ban(session, so_nhap)):
+            return {"output_path": "", "error": trung}
         template = await TemplateRepository(session).get("BC_TONGHOP")
         template_file = template.file_path if template else ""
-        so_ky_hieu = inputs.get("so_ky_hieu") or await next_so_ky_hieu(
+        so_ky_hieu = so_nhap or await next_so_ky_hieu(
             session, params["nam"], "BC-HCQT"
         )
 
     payload = DocumentPayload(
         meta={
-            "noi_gui": inputs.get("noi_gui", "PHÒNG HÀNH CHÍNH QUẢN TRỊ"),
+            # `or`: ô để trống trên giao diện gửi "" - không in dòng đơn vị ban hành rỗng.
+            "noi_gui": inputs.get("noi_gui") or NOI_GUI_MAC_DINH,
             "noi_nhan": inputs.get("noi_nhan", "Ban Giám đốc"),
             "so_ky_hieu": so_ky_hieu,
             "dia_danh": inputs.get("dia_danh", "Hà Nội"),
-            "ngay_bao_cao": _ngay_tieng_viet(date.today()),
+            "ngay_bao_cao": _ngay_tieng_viet(ngay_ban_hanh),
             "trich_yeu": inputs.get("trich_yeu") or (state["request"][:200] if "queries" in state["data"] else _trich_yeu(params, period_label)),
             "chuc_vu_ky": inputs.get("chuc_vu_ky", "TRƯỞNG PHÒNG"),
             "nguoi_ky": inputs.get("nguoi_ky", ""),
@@ -851,7 +867,7 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
                 noi_gui="Phòng Hành chính nhân sự",
                 noi_nhan="Ban Giám đốc",
                 mo_ta=f"Tổng hợp kỳ {params['ky']}",
-                ngay_van_ban=date.today(),
+                ngay_van_ban=ngay_ban_hanh_an_toan(state.get("inputs")),
                 file_path=output_path, dang_file="docx",
             ))
     except Exception as exc:  # noqa: BLE001

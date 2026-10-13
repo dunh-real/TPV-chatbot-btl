@@ -298,7 +298,7 @@ def build_from_scratch(payload: DocumentPayload, output_path: Path) -> Path:
         _apply_spacing(paragraph)
         return paragraph
 
-    para(meta.get("noi_gui", ""), bold=True)
+    para(meta.get("noi_gui", ""), bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
     para("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
     para("Độc lập - Tự do - Hạnh phúc", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
     para(f"Số: {meta.get('so_ky_hieu', '')}")

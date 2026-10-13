@@ -60,7 +60,7 @@ def build() -> Path:
     section.right_margin = Mm(MARGINS_MM["right"])
 
     # --- thể thức đầu văn bản ---
-    _para(document, "{{noi_gui}}", bold=True, align=WD_ALIGN_PARAGRAPH.LEFT)
+    _para(document, "{{noi_gui}}", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
     _para(document, "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", bold=True,
           align=WD_ALIGN_PARAGRAPH.CENTER)
     _para(document, "Độc lập - Tự do - Hạnh phúc", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)

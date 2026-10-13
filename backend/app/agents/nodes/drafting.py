@@ -26,6 +26,7 @@ from app.services.erp_discovery import query_erp
 from app.documents.query_result import query_sections
 from app.services import errors
 from app.agents.nodes.report import next_so_ky_hieu
+from app.documents.the_thuc import doc_ngay_ban_hanh, kiem_so_van_ban, ngay_ban_hanh_an_toan, so_nguoi_dung
 from app.db.repository import TemplateRepository, VanBanRepository
 from app.db.session import session_scope
 from app.services.llm import LLMError, get_llm
@@ -171,6 +172,9 @@ async def fetch_data_node(state: dict[str, Any]) -> dict[str, Any]:
 async def render_sections_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("error") or state.get("missing_input"):
         return {}
+    from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+    await gan_nhan_moi_truy_van(state["data"], state.get("request", ""))
     return {"sections": query_sections(state["data"]["queries"])}
 
 
@@ -228,7 +232,8 @@ def _resolve_meta(template: dict[str, Any], state: dict[str, Any]) -> dict[str, 
     data = state.get("data", {})
     inputs = state.get("inputs", {})
     params = state.get("params", {})
-    today = date.today()
+    # Ngày ban hành người dùng nhập thay cho ngày lập (đã kiểm định dạng ở export_node).
+    today = ngay_ban_hanh_an_toan(inputs)
 
     meta: dict[str, str] = {}
     for key, spec in (template["fields"].get("meta") or {}).items():
@@ -246,8 +251,10 @@ def _resolve_meta(template: dict[str, Any], state: dict[str, Any]) -> dict[str, 
 
     # Trường người dùng nhập mà mẫu không khai báo vẫn phải được điền: mẫu .docx
     # có thể chứa {{chuc_vu_ky}} trong khi JSON của mẫu quên khai báo nó.
+    # Ô để trống (giao diện gửi "so_ky_hieu": "") không được chiếm chỗ giá trị hệ thống tự cấp bên dưới.
     for key, value in inputs.items():
-        meta.setdefault(key, str(value))
+        if str(value or "").strip():
+            meta.setdefault(key, str(value))
 
     period = f"tháng {params['thang']}/{params['nam']}" if params.get("ky") else "hiện tại"
     meta.setdefault("dia_danh", inputs.get("dia_danh", "Hà Nội"))
@@ -281,16 +288,23 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     inputs = state.get("inputs", {})
     ma_don_vi = state.get("ma_don_vi", "")
     try:
+        doc_ngay_ban_hanh(inputs)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    so_nhap = so_nguoi_dung(inputs)
+    try:
         async with session_scope() as session:
+            if (trung := await kiem_so_van_ban(session, so_nhap)):
+                return {"error": trung}
             # Không có đơn vị (nhánh soạn từ tài liệu) thì ký hiệu là "BC" trần.
             # Ghép thẳng thành "BC-" cho ra số cụt đuôi kiểu "01/BC-" ngay dòng
             # đầu văn bản trình ký.
             ky_hieu = f"BC-{ma_don_vi}" if ma_don_vi else "BC"
-            so_ky_hieu = inputs.get("so_ky_hieu") or await next_so_ky_hieu(
+            so_ky_hieu = so_nhap or await next_so_ky_hieu(
                 session, state["params"].get("nam") or date.today().year, ky_hieu)
     except Exception as exc:  # noqa: BLE001 - sổ hỏng không được chặn việc xuất file
         logger.warning("Không cấp được số ký hiệu từ sổ văn bản: %s", exc)
-        so_ky_hieu = inputs.get("so_ky_hieu") or (
+        so_ky_hieu = so_nhap or (
             f"01/BC-{ma_don_vi}" if ma_don_vi else "01/BC")
     state = {**state, "so_ky_hieu": so_ky_hieu}
 
@@ -346,7 +360,7 @@ async def register_node(state: dict[str, Any]) -> dict[str, Any]:
                 noi_gui=str(state["data"].get("ten_don_vi", "")),
                 noi_nhan=meta.get("noi_nhan", ""),
                 mo_ta=state["params"].get("loai_bao_cao", ""),
-                ngay_van_ban=date.today(),
+                ngay_van_ban=ngay_ban_hanh_an_toan(state.get("inputs")),
                 file_path=output_path,
                 dang_file="docx",
             ))

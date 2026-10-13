@@ -27,6 +27,7 @@ from app.db.erp_repository import ErpDonViRepository
 from app.db.erp_session import erp_session_scope
 from app.services import storage
 from app.tools.base import ToolError
+from app.documents.the_thuc import doc_ngay_ban_hanh
 from app.tools.templates import get_template
 
 logger = logging.getLogger(__name__)
@@ -147,8 +148,12 @@ async def generate_docx(
         template_name = template.get("ten_bao_cao") or ""
 
     # Hai trường này thuần cơ học nên điền hộ; mọi trường còn lại thiếu là thiếu,
-    # tool không bịa người ký hay số ký hiệu.
-    meta.setdefault("ngay_bao_cao", _ngay_tieng_viet(date.today()))
+    # tool không bịa người ký hay số ký hiệu. Có ngày ban hành thì dùng nó thay ngày lập.
+    try:
+        ngay = doc_ngay_ban_hanh(meta)
+    except ValueError as exc:
+        raise ToolError(f"generate_docx: {exc}") from exc
+    meta.setdefault("ngay_bao_cao", _ngay_tieng_viet(ngay))
     meta.setdefault("dia_danh", "Hà Nội")
 
     stem = filename or f"{template_id or 'VANBAN'}_{date.today():%Y%m%d}"

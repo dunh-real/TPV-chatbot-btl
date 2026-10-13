@@ -17,7 +17,7 @@ class DraftRequest(BaseModel):
     )
     inputs: dict[str, str] = Field(
         default_factory=dict,
-        description="Các trường người dùng phải nhập: nguoi_ky, chuc_vu_ky, so_ky_hieu...",
+        description="Các trường người dùng nhập: nguoi_ky, chuc_vu_ky, so_ky_hieu (số văn bản, trống = cấp số tiếp theo), ngay_ban_hanh (dd/mm/yyyy, trống = hôm nay)...",
         examples=[{"nguoi_ky": "Trần Văn B", "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ"}],
     )
     nguon: Literal["csdl", "tai_lieu"] = Field(
@@ -117,7 +117,7 @@ class AggregateRequest(BaseModel):
                          examples=["Tổng hợp báo cáo nhân sự và trang thiết bị tháng 8"])
     inputs: dict[str, str] = Field(
         default_factory=dict,
-        description="nguoi_ky, chuc_vu_ky, so_ky_hieu, noi_nhan... nếu muốn ghi đè mặc định",
+        description="nguoi_ky, chuc_vu_ky, so_ky_hieu (số văn bản), ngay_ban_hanh (dd/mm/yyyy), noi_nhan... nếu muốn ghi đè mặc định",
     )
 
 

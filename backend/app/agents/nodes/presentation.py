@@ -21,6 +21,7 @@ from app.documents.pptx_builder import (
     build_pptx,
     count_slides,
 )
+from app.documents.nhan_cot import la_ten_truong
 from app.documents.slide_deck import so as so_vn
 from app.documents.verify import (
     check_numbers,
@@ -476,6 +477,10 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
     output_path = _output_path(state["params"])
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    # Qwen đặt nhãn cột trước khi dựng: không tên trường CSDL nào lên slide, kể cả dữ liệu từ đường khác.
+    from app.documents.nhan_cot import gan_nhan_moi_truy_van
+
+    await gan_nhan_moi_truy_van(state.get("data") or {}, state.get("request", ""))
 
     if getattr(get_settings(), "presenton_render_mode", "direct") == "generate":
         return await _render_generate(state, output_path)
@@ -800,6 +805,10 @@ def doc_text_slide(path: str | Path) -> tuple[int, list[tuple[int, str, str]]]:
     return len(slides), ket_qua
 
 
+# Ký tự thay thế, hoặc "?" kẹp giữa hai chữ cái ("T?n", "cu?i") - câu hỏi thường có "?" ở cuối từ.
+_MAT_DAU = re.compile(r"�|[^\W\d_]\?[^\W\d_]")
+
+
 async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
     """Đọc lại file vừa dựng và soi từng con số trong đó.
 
@@ -844,6 +853,14 @@ async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
         if (la := tim_chu_ngoai_he(dong)):
             issues.append({"type": "foreign_script", "section": tieu_de,
                            "slide": index, "characters": sorted(set(la)),
+                           "severity": "warning", "quote": dong[:160]})
+        # "T?n cu?i k?": chữ có dấu đã mất trước khi tới slide (chuỗi SQL thiếu N'', dữ liệu nhập sai
+        # bảng mã). Không sửa được ở đây - nhưng phải chỉ ra, không để người dùng tự phát hiện.
+        if _MAT_DAU.search(dong):
+            issues.append({"type": "lost_diacritics", "section": tieu_de, "slide": index,
+                           "severity": "warning", "quote": dong[:160]})
+        if la_ten_truong(dong):
+            issues.append({"type": "field_name", "section": tieu_de, "slide": index,
                            "severity": "warning", "quote": dong[:160]})
 
     return {
