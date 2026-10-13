@@ -114,6 +114,7 @@ app = FastAPI(
                 "tổng hợp báo cáo, tạo slide.",
     version="0.1.0",
     lifespan=lifespan,
+    swagger_ui_parameters={"deepLinking": False},
 )
 
 # Danh tính phải được đặt TRƯỚC khi handler chạy, và mọi handler đều cần nó - nên
