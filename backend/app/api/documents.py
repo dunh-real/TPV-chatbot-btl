@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import asdict
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from fastapi.responses import FileResponse
 
 from app.api.files import output_file_response
 from app.core.config import get_settings
-from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline
+from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline, make_doc_id_file
 from app.rag.vectorstore import get_vector_store
 from app.agents.graph import run_document_workflow
 from app.db.erp_repository import ErpDonViRepository
@@ -47,7 +48,9 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 async def upload_document(
     file: UploadFile = File(...),
     doc_type: str = Form(default=""),
+    force_reingest: bool = Form(default=False),
 ) -> IngestResponse:
+    started = time.perf_counter()
     # Đuôi file phải đọc trên tên ĐÃ làm sạch, không phải tên thô: cổng ABP gửi
     # tên tiếng Việt dưới dạng "=?utf-8?B?...?=" và đuôi thật nằm trong base64.
     ten_sach = storage.safe_name(file.filename or "")
@@ -65,6 +68,15 @@ async def upload_document(
         await file.close()
 
     try:
+        if not force_reingest:
+            # Băm bytes trước converter: file trùng không phải chạy lại OCR/embedding.
+            doc_id = make_doc_id_file(target.name, target)
+            store = get_vector_store()
+            await store.ensure_collection()
+            existing = await store.document_summary(doc_id)
+            if existing is not None:
+                return IngestResponse(**existing, already_exists=True,
+                                      elapsed_ms=(time.perf_counter() - started) * 1000)
         result = await get_ingestion_pipeline().ingest_file(target, doc_type=doc_type)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc

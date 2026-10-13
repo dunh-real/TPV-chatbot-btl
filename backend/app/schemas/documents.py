@@ -24,6 +24,7 @@ class IngestResponse(BaseModel):
     chunk_count: int
     elapsed_ms: float
     source: str = ""
+    already_exists: bool = Field(default=False, description="True khi bỏ qua ingest vì file đã có trong kho")
 
 
 class CollectionStats(BaseModel):
