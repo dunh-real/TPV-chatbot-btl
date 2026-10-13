@@ -2,7 +2,8 @@
 # Khởi động lại toàn bộ dịch vụ TPV trên máy đã cài (sau reboot, sau khi tmux bị tắt...).
 # Dịch vụ nào đang chạy thì giữ nguyên; chỉ bật những gì chưa chạy.
 #
-#   ./scripts/start_services.sh                  # docker -> vllm -> backend
+#   ./scripts/start_services.sh                  # docker -> sqlserver -> vllm -> backend
+#   ./scripts/start_services.sh sqlserver       # bật SQL Server và chờ cổng sẵn sàng
 #   ./scripts/start_services.sh docker vllm      # chỉ các bước được nêu
 #   ./scripts/start_services.sh check            # chỉ kiểm tra, không bật gì
 #
@@ -36,6 +37,10 @@ VLLM_MAX_LEN="${VLLM_MAX_LEN:-262144}"
 VLLM_WAIT_SECONDS="${VLLM_WAIT_SECONDS:-3600}"
 
 BACKEND_PORT="${BACKEND_PORT:-8080}"
+MSSQL_SERVICE="${MSSQL_SERVICE:-mssql-server}"
+MSSQL_CHECK_HOST="${MSSQL_CHECK_HOST:-127.0.0.1}"
+MSSQL_PORT="${MSSQL_PORT:-1433}"
+MSSQL_WAIT_SECONDS="${MSSQL_WAIT_SECONDS:-60}"
 # Supervisor của repo nếu có; máy production (~/loi_workspace) dùng script riêng chạy embedding trên CPU.
 # Đặt BACKEND_RUN_SCRIPT để chọn script khác.
 if [ -z "${BACKEND_RUN_SCRIPT:-}" ]; then
@@ -46,6 +51,7 @@ fi
 BACKEND_RUN_SCRIPT="${BACKEND_RUN_SCRIPT:-$REPO_DIR/scripts/run_backend.sh}"
 
 QDRANT_PORT="${QDRANT_PORT:-6333}"
+DOCKER_BIND_HOST="${DOCKER_BIND_HOST:-0.0.0.0}"
 REDIS_PORT="${REDIS_PORT:-6382}"
 PRESENTON_PORT="${PRESENTON_PORT:-5002}"
 QDRANT_CONTAINER="${QDRANT_CONTAINER:-tpv-qdrant}"
@@ -55,7 +61,7 @@ QDRANT_IMAGE="${QDRANT_IMAGE:-qdrant/qdrant:v1.19.2}"
 REDIS_IMAGE="${REDIS_IMAGE:-redis:7-alpine}"
 PRESENTON_IMAGE="${PRESENTON_IMAGE:-tpv-btl-presenton:qwen}"
 
-ALL_STEPS=(docker vllm backend check)
+ALL_STEPS=(docker sqlserver vllm backend check)
 STEP=init
 log()  { printf '\033[1;34m[%s]\033[0m %s\n' "$STEP" "$*"; }
 warn() { printf '\033[1;33m[%s] CẢNH BÁO:\033[0m %s\n' "$STEP" "$*" >&2; }
@@ -110,16 +116,16 @@ ensure_container() {
 create_qdrant() {
   image_exists "$QDRANT_IMAGE" || "${DOCKER[@]}" pull "$QDRANT_IMAGE"
   mkdir -p "$BACKEND_DIR/qdrant_storage"
-  # Chỉ loopback: Qdrant mặc định không có xác thực.
+  # Bind theo cấu hình; mặc định nhận kết nối từ các máy khác.
   "${DOCKER[@]}" run -d --name "$QDRANT_CONTAINER" --restart unless-stopped \
-    -p "127.0.0.1:$QDRANT_PORT:6333" -v "$BACKEND_DIR/qdrant_storage:/qdrant/storage" \
+    -p "$DOCKER_BIND_HOST:$QDRANT_PORT:6333" -v "$BACKEND_DIR/qdrant_storage:/qdrant/storage" \
     "$QDRANT_IMAGE" >/dev/null
 }
 
 create_redis() {
   image_exists "$REDIS_IMAGE" || "${DOCKER[@]}" pull "$REDIS_IMAGE"
   "${DOCKER[@]}" run -d --name "$REDIS_CONTAINER" --restart unless-stopped \
-    -p "127.0.0.1:$REDIS_PORT:6379" -v tpv-redis-data:/data \
+    -p "$DOCKER_BIND_HOST:$REDIS_PORT:6379" -v tpv-redis-data:/data \
     "$REDIS_IMAGE" redis-server --save 60 1 >/dev/null
 }
 
@@ -129,9 +135,9 @@ create_presenton() {
     log "Build $PRESENTON_IMAGE (lần đầu kéo image gốc vài GB) ..."
     "${DOCKER[@]}" build -t "$PRESENTON_IMAGE" "$BACKEND_DIR/docker/presenton_vllm"
   fi
-  # Chỉ mở loopback vì bộ slide chứa số liệu nhân sự; DISABLE_AUTH chỉ an toàn khi không ai ngoài máy gọi được.
+  # Publish theo DOCKER_BIND_HOST; Presenton hiện dùng DISABLE_AUTH=true.
   "${DOCKER[@]}" run -d --name "$PRESENTON_CONTAINER" --restart unless-stopped \
-    -p "127.0.0.1:$PRESENTON_PORT:80" --add-host host.docker.internal:host-gateway \
+    -p "$DOCKER_BIND_HOST:$PRESENTON_PORT:80" --add-host host.docker.internal:host-gateway \
     -v tpv-btl-presenton-data:/app_data \
     -e LLM=custom -e "CUSTOM_LLM_URL=http://host.docker.internal:$VLLM_PORT/v1" \
     -e "CUSTOM_LLM_API_KEY=$(vllm_key)" -e "CUSTOM_MODEL=$VLLM_SERVED_NAME" \
@@ -140,6 +146,40 @@ create_presenton() {
 }
 
 # -------------------------------------------------------------------- bước --
+sqlserver_ready() {
+  systemctl is-active --quiet "$MSSQL_SERVICE" &&
+    timeout 3 bash -c 'exec 3<>/dev/tcp/"$1"/"$2"' _ "$MSSQL_CHECK_HOST" "$MSSQL_PORT"
+}
+
+step_sqlserver() {
+  have systemctl || die "không có systemctl để quản lý SQL Server"
+  have timeout || die "không có timeout để kiểm tra cổng SQL Server"
+  [[ "$MSSQL_WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "MSSQL_WAIT_SECONDS phải là số nguyên dương"
+  if systemctl is-active --quiet "$MSSQL_SERVICE"; then
+    log "$MSSQL_SERVICE đang chạy"
+  else
+    log "Khởi động $MSSQL_SERVICE ..."
+    if [ "$EUID" -eq 0 ]; then
+      systemctl start "$MSSQL_SERVICE" || die "không khởi động được $MSSQL_SERVICE"
+    else
+      sudo systemctl start "$MSSQL_SERVICE" || die "không khởi động được $MSSQL_SERVICE"
+    fi
+  fi
+  local deadline=$((SECONDS + MSSQL_WAIT_SECONDS))
+  log "Chờ SQL Server tại $MSSQL_CHECK_HOST:$MSSQL_PORT (tối đa ${MSSQL_WAIT_SECONDS}s) ..."
+  while (( SECONDS < deadline )); do
+    if sqlserver_ready >/dev/null 2>&1; then
+      log "SQL Server sẵn sàng: service active, TCP $MSSQL_CHECK_HOST:$MSSQL_PORT nhận kết nối"
+      return 0
+    fi
+    if systemctl is-failed --quiet "$MSSQL_SERVICE"; then
+      die "$MSSQL_SERVICE bị lỗi - xem: sudo journalctl -u $MSSQL_SERVICE -n 50 --no-pager"
+    fi
+    sleep 2
+  done
+  die "SQL Server chưa sẵn sàng - xem: sudo journalctl -u $MSSQL_SERVICE -n 50 --no-pager"
+}
+
 step_docker() {
   pick_docker
   ensure_container "$QDRANT_CONTAINER" "$QDRANT_PORT" create_qdrant
@@ -217,7 +257,7 @@ step_backend() {
   [ -d "$REPO_DIR/frontend" ] || warn "không có thư mục $REPO_DIR/frontend - backend sẽ bỏ qua /ui"
   wait_http "http://127.0.0.1:$BACKEND_PORT/ui/" 60 ${token:+"X-Access-Token: $token"} \
     || die "backend chạy nhưng /ui/ không trả về giao diện - xem $BACKEND_DIR/backend.log"
-  log "giao diện: http://127.0.0.1:$BACKEND_PORT/ui/  (máy khác: ssh -L $BACKEND_PORT:127.0.0.1:$BACKEND_PORT ...)"
+  log "giao diện local: http://127.0.0.1:$BACKEND_PORT/ui/ ; máy khác: http://<IP-máy-chủ>:$BACKEND_PORT/ui/ (khi backend bind 0.0.0.0)"
 }
 
 step_check() {
@@ -229,6 +269,7 @@ step_check() {
   chk "vLLM :$VLLM_PORT"           curl -fsS -m 10 ${key:+-H "Authorization: Bearer $key"} "http://127.0.0.1:$VLLM_PORT/v1/models"
   chk "Qdrant :$QDRANT_PORT"       curl -fsS -m 5 "http://127.0.0.1:$QDRANT_PORT/healthz"
   chk "Redis :$REDIS_PORT"         bash -c "exec 3<>/dev/tcp/127.0.0.1/$REDIS_PORT"
+  chk "SQL Server $MSSQL_CHECK_HOST:$MSSQL_PORT (service + TCP)" sqlserver_ready
   chk "Presenton :$PRESENTON_PORT" curl -fsS -m 10 "http://127.0.0.1:$PRESENTON_PORT/"
   chk "Backend :$BACKEND_PORT"     curl -fsS -m 10 ${token:+-H "X-Access-Token: $token"} "http://127.0.0.1:$BACKEND_PORT/health"
   chk "Giao diện /ui/"             curl -fsS -m 10 ${token:+-H "X-Access-Token: $token"} "http://127.0.0.1:$BACKEND_PORT/ui/"
