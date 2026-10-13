@@ -1,5 +1,6 @@
 """Kiểm tra nhóm tài khoản, giới hạn tenant/cột/dòng và liên kết nhân viên mơ hồ."""
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -95,3 +96,49 @@ def test_null_department_has_no_rows(db):
     db[0].execute(text("UPDATE Dms_Employee SET WorkDepartmentId=NULL WHERE TenantId=64 AND UserId=1"))
     _, executor = build(db, principal(roles=(161,)))
     assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == []
+
+
+def expanded_account(admin=True, tenant=64):
+    who = principal(admin=admin, tenant=tenant)
+    return replace(who, user_id="153", access=replace(who.access, user_id=153))
+
+
+def test_expanded_grant_only_for_named_admin_and_tenant(db):
+    policy, executor = build(db, expanded_account())
+    assert policy.group == "account_read_grant"
+    result = executor.execute("SELECT Id,IdentityNumber FROM dbo.Hrm_EmployeeProfile WHERE 1=1 OR 1=1")
+    assert result["ok"], result
+    assert sorted(row[0] for row in result["rows"]) == [1, 2, 3]
+    assert not executor.validate("SELECT * FROM dbo.AbpUsers")["ok"]
+    assert not executor.validate("DELETE FROM dbo.Hrm_EmployeeProfile")["ok"]
+    _, other = build(db, principal(admin=True))
+    assert not other.validate("SELECT IdentityNumber FROM dbo.Hrm_EmployeeProfile")["ok"]
+    other_policy, other_tenant = build(db, expanded_account(tenant=94))
+    assert other_policy.group == "admin"
+    assert not other_tenant.validate("SELECT IdentityNumber FROM dbo.Hrm_EmployeeProfile")["ok"]
+    assert other_tenant.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[4]]
+
+
+def test_expanded_account_losing_admin_is_denied(db):
+    with pytest.raises(ToolError, match="Admin ERP"):
+        build(db, expanded_account(admin=False))
+
+
+def test_expanded_grant_does_not_auto_open_new_columns(db, tmp_path):
+    conn, _ = db
+    conn.execute(text("ALTER TABLE Hrm_EmployeeProfile ADD NewlyAddedField TEXT"))
+    snapshot = SchemaStore(tmp_path / "new-schema.json", 300).refresh(conn)
+    policy = SQLPolicy(snapshot, POLICY, expanded_account(), connection=conn)
+    executor = GuardedExecutor(conn, policy, 100)
+    assert not executor.validate("SELECT NewlyAddedField FROM dbo.Hrm_EmployeeProfile")["ok"]
+
+
+def test_expanded_grant_still_obeys_user_restrictions(db, tmp_path):
+    source = json.loads(POLICY.read_text())
+    source["users"] = {"64:153": {"dbo.Hrm_EmployeeProfile": {
+        "columns": ["Id"], "row_filters": {"WorkDepartmentId": [200]}}}}
+    path = tmp_path / "policy.json"
+    path.write_text(json.dumps(source))
+    _, executor = build(db, expanded_account(), path)
+    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[3]]
+    assert not executor.validate("SELECT IdentityNumber FROM dbo.Hrm_EmployeeProfile")["ok"]

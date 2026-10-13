@@ -58,6 +58,8 @@ class PolicyDocument(BaseModel):
     default_group: str | None = None
     # Nếu khai tài khoản thì chỉ được đọc các bảng/cột/dòng trong mục của tài khoản đó.
     users: dict[str, dict[str, UserScope]] = {}
+    # Ngoại lệ đọc mở rộng chỉ dành cho Admin đã xác minh, khóa tenant:UserId.
+    account_read_grants: dict[str, dict[str, list[str]]] = {}
 
 
 class SQLPolicy:
@@ -73,7 +75,24 @@ class SQLPolicy:
         self.tenant_id, self.tables, self.rules = principal.tenant_id, {}, {}
         self.group = None
         group = None
-        if document.groups:
+        account_key = f"{self.tenant_id}:{access.user_id}"
+        expanded = document.account_read_grants.get(account_key)
+        rules = document.tables
+        if expanded is not None:
+            if not access.is_static_admin:
+                raise ToolError("Quyền đọc mở rộng yêu cầu tài khoản vẫn là Admin ERP đã xác minh")
+            self.group = "account_read_grant"
+            # Whitelist riêng, không thay đổi quyền của các Admin khác.
+            rules = {name: Rule(permissions_any=["*"], columns=columns,
+                meaning=document.tables[name].meaning if name in document.tables else "Bảng ERP được cấp đọc riêng cho tài khoản; không tự suy đoán mã enum hoặc quan hệ nghiệp vụ.")
+                for name, columns in expanded.items()}
+            for name, rule in rules.items():
+                rule.meaning = "Quyền đọc mở rộng trong tenant. " + rule.meaning
+            if "dbo.Hrm_EmployeeProfile" in rules:
+                rules["dbo.Hrm_EmployeeProfile"].meaning = (
+                    "Hồ sơ nhân sự được cấp đọc mở rộng trong tenant. Số cuối tháng suy từ "
+                    "HireDate/CreationTime và ResignationDate; không phải snapshot lịch sử đầy đủ.")
+        elif document.groups:
             matches = [(name, item) for name, item in document.groups.items()
                        if (item.static_admin and access.is_static_admin)
                        or set(access.role_ids).intersection(item.tenant_roles.get(str(self.tenant_id), []))]
@@ -100,8 +119,8 @@ class SQLPolicy:
             if len(rows) != 1:
                 raise ToolError("Tài khoản cần đúng một liên kết nhân viên ERP đang hoạt động trong tenant")
             employee = rows[0]
-        user_scope = document.users.get(f"{self.tenant_id}:{access.user_id}")
-        for name, rule in document.tables.items():
+        user_scope = document.users.get(account_key)
+        for name, rule in rules.items():
             key = name.lower()
             grouped = group.tables.get(name) if group else None
             if group and grouped is None:

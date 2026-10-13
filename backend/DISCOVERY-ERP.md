@@ -102,6 +102,23 @@ hỗ trợ quyền bổ sung theo từng cột. Model chỉ thấy schema đã l
 phạm vi ở từng bảng vật lý, kể cả JOIN/CTE/UNION. Kết quả có cảnh báo phạm vi để
 không diễn giải số liệu cá nhân/phòng ban thành số liệu toàn công ty.
 
+### Ngoại lệ đọc mở rộng của tài khoản Lâm Hải
+
+`account_read_grants["64:153"]` cấp riêng cho tài khoản `LH` (UserId 153,
+tenant 64), không dựa vào tên hiển thị. Tài khoản phải vẫn có vai trò Admin tĩnh
+được ERP xác minh; mất vai trò thì quyền mở rộng bị từ chối.
+
+Whitelist hiện có 91 bảng nghiệp vụ, 1.682 cột từ snapshot DB đã kiểm tra:
+nhân sự, tài chính, chấm công, tài sản, danh mục, tuyển dụng và phê duyệt.
+Bao gồm các trường cá nhân/tài chính từng bị chặn trong policy thống kê chung.
+Không cấp bảng hệ thống ABP/HangFire, bí mật đăng nhập hoặc bảng thiếu TenantId
+(chưa có bộ lọc tenant qua quan hệ an toàn). Mọi SELECT vẫn bị ép tenant,
+giới hạn dòng, timeout và kiểm tra AST. Các Admin khác giữ quyền cũ.
+
+Đây là danh sách cột tường minh, không phải wildcard: schema thay đổi không tự
+mở quyền. Muốn cấp thêm phải cập nhật danh sách này. Mục `users` vẫn giao thêm
+để giới hạn tài khoản. Xóa khóa `64:153` để trở về chính sách nhóm thông thường.
+
 Ví dụ giới hạn thêm tài khoản ERP Id 123 của tenant 94:
 
 ```json

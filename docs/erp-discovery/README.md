@@ -54,6 +54,11 @@ Quyền hiệu lực = quyền module ERP ∩ bảng/cột của policy ∩ ph�
 Admin cũng chịu whitelist. Họ tên/mã nhân viên đã được mở; giấy tờ, liên hệ cá nhân,
 ngân hàng và lương chưa được cấp. Mapping role Id kèm tenant nằm trong JSON.
 
+Ngoại lệ `account_read_grants["64:153"]` mở 91 bảng/1.682 cột nghiệp vụ cho tài
+khoản Admin `LH`, bao gồm dữ liệu cá nhân/tài chính. Các tài khoản khác giữ
+whitelist cũ. Ngoại lệ vẫn giới hạn tenant, chỉ SELECT và không tự mở cột mới.
+Bảng hệ thống, bí mật đăng nhập và bảng chưa lọc tenant an toàn không được cấp.
+
 ## Giới hạn cần biết
 
 - Validate chứng minh SQL được phép và có thể chạy, chưa chứng minh đúng nghiệp vụ.
