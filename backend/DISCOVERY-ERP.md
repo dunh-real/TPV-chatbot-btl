@@ -188,31 +188,6 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8001
 endpoint hỗ trợ `tool_choice=auto`; lỗi HTTP 400 về auto-tool-choice/parser là
 cấu hình vLLM, không phải lỗi SQL Server. Không cần chạy `run_qwen.py` để dùng TPV.
 
-## Log SQL theo từng câu hỏi
-
-`ERP_SQL_LOG_DIR=data/sql_logs` (mặc định) tạo một file Markdown cho mỗi lượt
-sinh SQL, tên gồm thời gian UTC và query ID. Để trống biến này để tắt.
-
-File gồm câu hỏi vào engine, tenant/user/nhóm, version schema/policy, SQL cuối
-model sinh, các lần sửa lỗi, SQL thực thi sau khi ép quyền/tenant, tham số binding
-và trạng thái/số dòng. Ghi cả lượt sinh/validate/thực thi thất bại; yêu cầu bị chặn
-trước khi vào pipeline không có SQL để ghi. Không ghi dòng dữ liệu kết quả.
-Lỗi ghi file chỉ cảnh báo, không làm hỏng truy vấn.
-
-Trong terminal server, từ thư mục `backend`:
-
-```bash
-ls -lt data/sql_logs/ | head
-# Chọn file cần xem:
-cat data/sql_logs/TEN_FILE.md
-# Xem đường dẫn log mới ghi:
-rg 'ERP SQL log' data/server.log | tail
-```
-
-File được tạo quyền 600, thư mục log mới quyền 700. Log chứa câu hỏi và literal
-SQL nên chỉ cấp cho người vận hành; không phục vụ công khai qua API. Cần dọn/lưu
-trữ log theo chính sách vận hành; chưa có cơ chế tự xóa theo thời gian.
-
 ## Semantic nghiệp vụ
 
 `ERP_SEMANTIC_FILE=config/erp_semantic.yaml` chứa mô tả bảng/cột và lưu ý nghiệp vụ,
@@ -232,7 +207,7 @@ tự có mô tả hoặc quyền mới. Thay kiểu dữ liệu/ý nghĩa/enum v
 không thể phát hiện đầy đủ chỉ bằng kiểm tra tên.
 
 Full schema được cấp vẫn giữ nguyên; semantic ghi đè mô tả nghiệp vụ cũ ở bảng
-đã khai báo, không thay bộ lọc tenant/cá nhân/phòng ban. Kết quả và SQL log có
+đã khai báo, không thay bộ lọc tenant/cá nhân/phòng ban. Kết quả có
 `semantic_version` (version + hash nội dung) để biết bản định nghĩa đã dùng.
 
 Danh mục ban đầu có 15 bảng trọng tâm. Đã kiểm tra cột/FK trên DB ngày 15/10/2026;

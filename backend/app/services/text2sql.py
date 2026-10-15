@@ -108,8 +108,7 @@ class DiscoveryPipeline:
                 validation = self.executor.validate(sql)
                 self.remaining()
                 result = self.executor.execute(sql) if validation["ok"] else validation
-                self.attempts.append({"attempt": attempt, "sql": sql,
-                    "valid": validation["ok"], "ok": result["ok"], "error": result.get("error")})
+                self.attempts.append({"attempt": attempt, "valid": validation["ok"], "ok": result["ok"]})
                 if result["ok"] or attempt == self.max_repairs:
                     break
                 messages.append({"role": "user", "content": json.dumps({

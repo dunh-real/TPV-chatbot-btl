@@ -212,7 +212,6 @@ class Settings(BaseSettings):
     erp_schema_file: str = "data/erp_schema.json"
     erp_schema_refresh_seconds: float = Field(default=300, ge=10, le=86400)
     erp_sql_policy_file: str = "config/erp_sql_policy.json"
-    erp_sql_log_dir: str = "data/sql_logs"
     erp_semantic_file: str = "config/erp_semantic.yaml"
     erp_text2sql_base_url: str = "http://127.0.0.1:15000/v1"
     erp_text2sql_api_key: str = "EMPTY"
