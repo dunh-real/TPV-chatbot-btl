@@ -48,6 +48,8 @@ def database(tmp_path, monkeypatch):
         path = tmp_path / "engine_policy.json"
         path.write_text(json.dumps(source))
         monkeypatch.setattr(get_settings(), "erp_sql_policy_file", str(path))
+        monkeypatch.setattr(get_settings(), "erp_sql_log_dir", "")
+        monkeypatch.setattr(get_settings(), "erp_semantic_file", "")
         yield conn, SchemaStore(tmp_path / "schema.json", 300)
     engine.dispose()
 
@@ -165,8 +167,46 @@ def test_discovery_tools_repair_and_output(database):
     assert model.requests[0]["extra_body"]["chat_template_kwargs"]["enable_thinking"] is False
     assert model.requests[1]["messages"][-1]["role"] == "tool"
     assert "Missing" in model.requests[2]["messages"][-1]["content"]
+    # Slide dùng nhãn hiển thị, không phụ thuộc alias SQL sau bước đặt nhãn cột.
+    result.columns[0].label = "Tổng hồ sơ"
     assert query_sections([result.as_dict()])[0]["table"]["rows"] == [["2"]]
-    assert "total" in "\n".join(query_slides([result.as_dict()]))
+    assert "Tổng hồ sơ" in "\n".join(query_slides([result.as_dict()]))
+
+
+def test_sql_log_has_question_and_executed_sql_without_result_rows(database, tmp_path, monkeypatch):
+    conn, store = database
+    folder = tmp_path / "sql_logs"
+    monkeypatch.setattr(get_settings(), "erp_sql_log_dir", str(folder))
+    result = run_discovery("Đếm hồ sơ", principal=identity(), connection=conn, store=store,
+        client=Model(response("SELECT COUNT(*) AS total FROM dbo.Hrm_EmployeeProfile")))
+    files = list(folder.glob("*.md"))
+    assert len(files) == 1 and result.query_id in files[0].name
+    content = files[0].read_text()
+    assert "Đếm hồ sơ" in content and "THÀNH CÔNG" in content
+    assert "__erp_tenant" in content and "SQL đã áp quyền" in content
+    assert "secret one" not in content and "secret two" not in content
+    assert files[0].stat().st_mode & 0o777 == 0o600
+
+
+def test_failed_generation_also_has_sql_log(database, tmp_path, monkeypatch):
+    conn, store = database
+    folder = tmp_path / "sql_logs"
+    monkeypatch.setattr(get_settings(), "erp_sql_log_dir", str(folder))
+    with pytest.raises(ToolError):
+        run_discovery("Cột không tồn tại", principal=identity(), connection=conn, store=store,
+            client=Model(*[response("SELECT Missing FROM dbo.Hrm_EmployeeProfile") for _ in range(3)]))
+    content = next(folder.glob("*.md")).read_text()
+    assert "THẤT BẠI" in content and "Missing" in content and "Kiểm tra/sửa lỗi" in content
+
+
+def test_log_disk_error_does_not_fail_query(database, tmp_path, monkeypatch):
+    conn, store = database
+    blocked = tmp_path / "not-a-directory"
+    blocked.write_text("occupied")
+    monkeypatch.setattr(get_settings(), "erp_sql_log_dir", str(blocked))
+    result = run_discovery("Đếm hồ sơ", principal=identity(), connection=conn, store=store,
+        client=Model(response("SELECT COUNT(*) AS total FROM dbo.Hrm_EmployeeProfile")))
+    assert result.rows == [[2]]
 
 
 def test_truncated_results_are_preview_only(database, monkeypatch):

@@ -122,6 +122,7 @@ def erp_query(tmp_path, monkeypatch):
     from app.services.erp_discovery import run_discovery
     from app.services.erp_sql_catalog import SchemaStore
 
+    monkeypatch.setattr(get_settings(), "erp_semantic_file", "")
     monkeypatch.setattr(get_settings(), "erp_sql_policy_file", str(Path(__file__).parents[1] / "config/erp_sql_policy.json"))
     principal = Principal(tenant_id=ERP_TENANT, user_id="1", access=AccountAccess(
         1, ERP_TENANT, "test", "Test", "", is_static_admin=True,

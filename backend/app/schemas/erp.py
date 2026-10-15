@@ -23,6 +23,7 @@ class QueryResult(BaseModel):
     truncated: bool
     schema_version: str
     policy_version: str
+    semantic_version: str = ""
     source_tables: list[str]
     warnings: list[str] = Field(default_factory=list)
 

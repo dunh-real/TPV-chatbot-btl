@@ -7,6 +7,7 @@ import os
 import tempfile
 import threading
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -128,8 +129,12 @@ class SchemaStore:
 
 class AuthorizedCatalog:
     """Giao diện metadata của pipeline discovery; không giữ kết nối DB chưa giới hạn quyền."""
-    def __init__(self, snapshot, policy):
-        self.tables, self.policy = policy.tables, policy
+    def __init__(self, snapshot, policy, semantic_path=""):
+        from app.services.erp_semantic import enrich_semantics
+        self.tables, self.policy = deepcopy(policy.tables), policy
+        for name, table in self.tables.items():
+            table["access_scope"] = policy.rules[name]["scope"]
+        self.semantic_version = enrich_semantics(snapshot, self.tables, semantic_path)
         self.schema_version = snapshot["schema_version"]
         self.lookup_columns = {f"{name}.{col}" for name, rule in policy.rules.items()
                                for col in rule["lookup_columns"]}

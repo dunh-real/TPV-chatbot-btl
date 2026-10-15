@@ -187,3 +187,56 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8001
 `ERP_TEXT2SQL_BASE_URL` là endpoint vLLM truy cập được từ backend. Discovery cần
 endpoint hỗ trợ `tool_choice=auto`; lỗi HTTP 400 về auto-tool-choice/parser là
 cấu hình vLLM, không phải lỗi SQL Server. Không cần chạy `run_qwen.py` để dùng TPV.
+
+## Log SQL theo từng câu hỏi
+
+`ERP_SQL_LOG_DIR=data/sql_logs` (mặc định) tạo một file Markdown cho mỗi lượt
+sinh SQL, tên gồm thời gian UTC và query ID. Để trống biến này để tắt.
+
+File gồm câu hỏi vào engine, tenant/user/nhóm, version schema/policy, SQL cuối
+model sinh, các lần sửa lỗi, SQL thực thi sau khi ép quyền/tenant, tham số binding
+và trạng thái/số dòng. Ghi cả lượt sinh/validate/thực thi thất bại; yêu cầu bị chặn
+trước khi vào pipeline không có SQL để ghi. Không ghi dòng dữ liệu kết quả.
+Lỗi ghi file chỉ cảnh báo, không làm hỏng truy vấn.
+
+Trong terminal server, từ thư mục `backend`:
+
+```bash
+ls -lt data/sql_logs/ | head
+# Chọn file cần xem:
+cat data/sql_logs/TEN_FILE.md
+# Xem đường dẫn log mới ghi:
+rg 'ERP SQL log' data/server.log | tail
+```
+
+File được tạo quyền 600, thư mục log mới quyền 700. Log chứa câu hỏi và literal
+SQL nên chỉ cấp cho người vận hành; không phục vụ công khai qua API. Cần dọn/lưu
+trữ log theo chính sách vận hành; chưa có cơ chế tự xóa theo thời gian.
+
+## Semantic nghiệp vụ
+
+`ERP_SEMANTIC_FILE=config/erp_semantic.yaml` chứa mô tả bảng/cột và lưu ý nghiệp vụ,
+tách khỏi policy quyền. Đọc lại mỗi truy vấn; sửa YAML không cần restart. Để trống
+biến này nếu chủ động tắt semantic. Các entry dùng tên đầy đủ `dbo.TenBang`.
+
+- `meaning`: mô tả bảng, không đặt tên/trường nhạy cảm trong mô tả chung.
+- `columns`: mô tả từng cột; chỉ nạp mô tả của cột được cấp quyền.
+- `caveats`: các mục `text`, `requires` (bảng hoặc `schema.table.column`). Nếu lưu ý
+  nhắc đến nguồn/cột khác, phải khai đủ `requires`; chỉ nạp khi đủ quyền mọi nguồn.
+- `references`: bảng liên quan; chỉ nạp bảng được cấp, không tự tạo FK hoặc mở quyền.
+
+Tên cột và tham chiếu của các bảng được cấp được kiểm tra với snapshot DB. Tham
+chiếu bị xóa/đổi tên thì truy vấn dừng với lỗi semantic, cần người sửa DB cập nhật
+YAML; không tự viết lại ý nghĩa. Bảng ngoài quyền được bỏ qua. Bảng/cột mới không
+tự có mô tả hoặc quyền mới. Thay kiểu dữ liệu/ý nghĩa/enum vẫn cần đội ERP review,
+không thể phát hiện đầy đủ chỉ bằng kiểm tra tên.
+
+Full schema được cấp vẫn giữ nguyên; semantic ghi đè mô tả nghiệp vụ cũ ở bảng
+đã khai báo, không thay bộ lọc tenant/cá nhân/phòng ban. Kết quả và SQL log có
+`semantic_version` (version + hash nội dung) để biết bản định nghĩa đã dùng.
+
+Danh mục ban đầu có 15 bảng trọng tâm. Đã kiểm tra cột/FK trên DB ngày 15/10/2026;
+DB chưa cung cấp MS_Description ở các bảng đã khảo sát, bảng cấp phát còn rỗng.
+Mô tả tổng quan là bản biên soạn ban đầu, chưa thay thế xác nhận của đội ERP.
+Enum, điều kiện cấp phát còn hiệu lực, quy tắc hoàn trả/lương/tiền tệ và giá trị
+NULL chưa rõ được ghi là chưa xác nhận. Không lưu số liệu hiện tại vào định nghĩa.
