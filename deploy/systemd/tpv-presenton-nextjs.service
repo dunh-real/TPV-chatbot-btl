@@ -1,0 +1,23 @@
+[Unit]
+Description=TPV Presenton Next.js
+After=network.target
+
+[Service]
+Type=simple
+User=abc
+Group=abc
+WorkingDirectory=/home/abc/opt/presenton/app/servers/nextjs
+
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=13000
+EnvironmentFile=/home/abc/opt/presenton/presenton.env
+
+ExecStart=/usr/bin/node /home/abc/opt/presenton/app/servers/nextjs/server.js
+
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

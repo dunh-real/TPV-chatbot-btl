@@ -1,0 +1,25 @@
+[Unit]
+Description=TPV Redis 7.4.9
+After=network.target
+
+[Service]
+Type=simple
+
+User=abc
+Group=abc
+
+WorkingDirectory=/home/abc/opt/redis/7.4.9/redis-7.4.9
+
+ExecStart=/home/abc/opt/redis/7.4.9/redis-7.4.9/src/redis-server /home/abc/kien_workspace/TPV-chatbot-btl/deploy/redis/redis.conf
+
+Restart=on-failure
+RestartSec=5
+
+TimeoutStopSec=60
+KillMode=control-group
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -17,6 +17,7 @@ import hashlib
 import logging
 import os
 import shutil
+import signal
 import subprocess
 import tempfile
 from pathlib import Path
@@ -63,13 +64,47 @@ def doc_to_docx(path: str | Path, settings: Settings | None = None) -> Path:
                    "soffice", "-env:UserInstallation=file:///tmp/lo_profile", "--headless",
                    "--convert-to", "docx", "--outdir", "/work/out", "/work/in.doc"]
         else:
-            cmd = ["soffice", "--headless", "--convert-to", "docx", "--outdir", str(out_dir), str(staged)]
+            profile = tmp_dir / "lo_profile"
+            cmd = [
+                "soffice",
+                f"-env:UserInstallation={profile.as_uri()}",
+                "--headless",
+                "--convert-to", "docx",
+                "--outdir", str(out_dir),
+                str(staged),
+            ]
+
+        proc = None
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=cfg.doc_convert_timeout)
+            with subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                start_new_session=True,
+            ) as process:
+                try:
+                    stdout, stderr = process.communicate(
+                        timeout=cfg.doc_convert_timeout
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    os.killpg(process.pid, signal.SIGTERM)
+                    try:
+                        process.communicate(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL)
+                        process.communicate()
+                    raise DocConvertError(
+                        f"Chuyển .doc quá {cfg.doc_convert_timeout:.0f}s: {src.name}"
+                    ) from exc
+
+                proc = subprocess.CompletedProcess(
+                    cmd, process.returncode, stdout, stderr
+                )
         except FileNotFoundError as exc:
-            raise DocConvertError(f"Không tìm thấy công cụ chuyển .doc ({cmd[0]})") from exc
-        except subprocess.TimeoutExpired as exc:
-            raise DocConvertError(f"Chuyển .doc quá {cfg.doc_convert_timeout:.0f}s: {src.name}") from exc
+            raise DocConvertError(
+                f"Không tìm thấy công cụ chuyển .doc ({cmd[0]})"
+            ) from exc
         result = out_dir / "in.docx"
         if proc.returncode != 0 or not result.exists():
             raise DocConvertError(

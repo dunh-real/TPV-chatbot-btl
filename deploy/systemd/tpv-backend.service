@@ -1,0 +1,29 @@
+[Unit]
+Description=TPV Chatbot FastAPI Backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User=abc
+Group=abc
+
+WorkingDirectory=/home/abc/kien_workspace/TPV-chatbot-btl
+
+Environment=HOME=/home/abc
+Environment=PATH=/home/abc/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+ExecStart=/bin/bash /home/abc/kien_workspace/TPV-chatbot-btl/scripts/run_backend_systemd.sh
+
+Restart=on-failure
+RestartSec=5
+
+TimeoutStopSec=30
+KillMode=control-group
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
