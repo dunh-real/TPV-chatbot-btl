@@ -142,6 +142,18 @@ async def app_data(path: str, request: Request) -> Response:
     return await _forward(request, f"/app_data/{path}")
 
 
+@router.post("/api/export-presentation")
+async def export_presentation_proxy(request: Request) -> Response:
+    """Chuyển tiếp yêu cầu xuất PPTX/PDF tới Presenton."""
+    return await _forward(request, "/api/export-presentation")
+
+
+@router.get("/api/export-presentation/file")
+async def download_exported_presentation(request: Request) -> Response:
+    """Chuyển tiếp yêu cầu tải PPTX/PDF đã xuất từ Presenton."""
+    return await _forward(request, "/api/export-presentation/file")
+
+
 @router.api_route("/api/v1/{path:path}",
                   methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"])
 async def presenton_api(path: str, request: Request) -> Response:

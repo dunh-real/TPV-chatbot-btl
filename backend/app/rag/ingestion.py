@@ -75,21 +75,21 @@ def make_doc_id(source: str, text: str) -> str:
 
 
 def make_doc_id_file(source: str, path: Path) -> str:
-    """Id theo nguồn + BYTES CỦA FILE: cùng file thì luôn cùng id.
+    """ID theo bytes file; đổi tên không tạo tài liệu mới.
 
-    Không băm chữ đã trích, vì chữ đã trích không tái lập được. Tài liệu scan đi
-    qua OCR, mà OCR chạy trên vLLM: greedy chỉ tất định khi batch giống nhau, còn
-    batch thì đổi theo tải lúc đó. Cùng một file scan nạp hai lần lệch vài ký tự
-    là đủ ra hai `doc_id`, và kho có hai bản gần giống nhau tranh nhau chỗ trong
-    kết quả tra cứu - đã gặp thật, cùng một file ra ba id trong một buổi tối.
-
-    Băm theo file còn gỡ một cái bẫy thứ hai: mọi thay đổi ở `app.rag.converter`
-    đều đổi chữ trích ra, tức đổi id của TOÀN BỘ tài liệu đã nạp. Nạp lại sinh
-    bản mới, bản cũ nằm lại làm mồ côi, phải xoá tay từng cái. Băm theo file thì
-    nạp lại là ghi đè đúng chỗ.
+    Giữ tham số source để tương thích các caller hiện tại.
     """
-    digest = hashlib.sha256(source.encode("utf-8") + b"|" + path.read_bytes()).hexdigest()
-    return digest[:16]
+    with path.open("rb") as content:
+        return hashlib.file_digest(content, "sha256").hexdigest()[:16]
+
+
+def make_legacy_doc_id_file(source: str, path: Path) -> str:
+    """ID cũ theo tên + bytes, dùng tra cứu dữ liệu chưa chuyển đổi."""
+    digest = hashlib.sha256(source.encode("utf-8") + b"|")
+    with path.open("rb") as content:
+        while block := content.read(1024 * 1024):
+            digest.update(block)
+    return digest.hexdigest()[:16]
 
 
 # --------------------------------------------------------------------------- #

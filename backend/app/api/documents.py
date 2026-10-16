@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse
 
 from app.api.files import output_file_response
 from app.core.config import get_settings
-from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline, make_doc_id_file
+from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline, make_doc_id_file, make_legacy_doc_id_file
 from app.rag.vectorstore import get_vector_store
 from app.agents.graph import run_document_workflow
 from app.db.erp_repository import ErpDonViRepository
@@ -74,6 +74,10 @@ async def upload_document(
             store = get_vector_store()
             await store.ensure_collection()
             existing = await store.document_summary(doc_id)
+            if existing is None:
+                # Tương thích tài liệu đã ingest bằng ID phụ thuộc tên file.
+                legacy_id = make_legacy_doc_id_file(target.name, target)
+                existing = await store.document_summary(legacy_id)
             if existing is not None:
                 return IngestResponse(**existing, already_exists=True,
                                       elapsed_ms=(time.perf_counter() - started) * 1000)
