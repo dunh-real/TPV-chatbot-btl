@@ -1,0 +1,18 @@
+[Unit]
+Description=TPV Presenton Dedicated Nginx
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/home/abc/opt/presenton/nginx.pid
+
+ExecStartPre=/usr/sbin/nginx -t -c /home/abc/kien_workspace/TPV-chatbot-btl/deploy/presenton/nginx.conf
+ExecStart=/usr/sbin/nginx -c /home/abc/kien_workspace/TPV-chatbot-btl/deploy/presenton/nginx.conf
+ExecReload=/usr/sbin/nginx -s reload -c /home/abc/kien_workspace/TPV-chatbot-btl/deploy/presenton/nginx.conf
+ExecStop=/usr/sbin/nginx -s quit -c /home/abc/kien_workspace/TPV-chatbot-btl/deploy/presenton/nginx.conf
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,20 @@
+[Unit]
+Description=TPV Presenton FastAPI
+After=network.target
+
+[Service]
+Type=simple
+User=abc
+Group=abc
+WorkingDirectory=/home/abc/opt/presenton/app/servers/fastapi
+
+EnvironmentFile=/home/abc/opt/presenton/presenton.env
+
+ExecStart=/home/abc/opt/presenton/.venv/bin/python server.py --port 18000 --reload false
+
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

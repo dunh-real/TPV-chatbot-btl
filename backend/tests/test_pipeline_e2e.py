@@ -264,11 +264,11 @@ def test_id_tai_lieu_bam_theo_file_khong_bam_theo_chu_trich_ra(tmp_path):
     # Cùng file nhưng OCR đọc lệch vài ký tự -> cách cũ ra hai id khác nhau.
     assert make_doc_id(f.name, "Kính gửi: các đơn vị") != make_doc_id(f.name, "Kính gửi: cac đơn vị")
 
-    # Đổi bytes thì đổi id; đổi tên cũng đổi id.
+    # Đổi bytes thì đổi id; đổi tên giữ nguyên id.
     khac = tmp_path / "cong_van_2.pdf"
     khac.write_bytes(b"%PDF-1.4 noi dung nhi phan khac")
     assert make_doc_id_file(f.name, f) != make_doc_id_file(khac.name, khac)
-    assert make_doc_id_file("ten_khac.pdf", f) != make_doc_id_file(f.name, f)
+    assert make_doc_id_file("ten_khac.pdf", f) == make_doc_id_file(f.name, f)
 
 
 async def test_nap_lai_cung_mot_file_thi_ghi_de_chu_khong_sinh_ban_thu_hai(tmp_path, monkeypatch):
