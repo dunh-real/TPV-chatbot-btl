@@ -149,6 +149,27 @@ class QdrantVectorStore:
             total += len(points)
         return total
 
+    async def link_source(self, doc_id: str, metadata: dict) -> None:
+        """Chỉ bổ sung trường thiếu; từ chối nếu có nguồn khác, không đổi vector."""
+        query = models.Filter(must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))])
+        points, offset = [], None
+        while True:
+            page, offset = await self.client.scroll(
+                self.collection, scroll_filter=query, limit=256, offset=offset,
+                with_vectors=False, with_payload=list(metadata))
+            points.extend(page)
+            if offset is None:
+                break
+        for point in points:
+            payload = point.payload or {}
+            for key in ("storage_bucket", "storage_object_key", "checksum_sha256"):
+                if payload.get(key) and payload[key] != metadata[key]:
+                    raise ValueError("Tài liệu đã liên kết tới nguồn khác; giữ nguyên nguồn hiện tại")
+        for key, value in metadata.items():
+            ids = [p.id for p in points if (p.payload or {}).get(key) in (None, "")]
+            for start in range(0, len(ids), 256):
+                await self.client.set_payload(self.collection, {key: value}, points=ids[start:start + 256], wait=True)
+
     async def delete_document(self, doc_id: str) -> None:
         await self._client.delete(
             collection_name=self.collection,

@@ -1,0 +1,45 @@
+{
+  "started_at": "2026-10-27T08:03:53.332773+00:00",
+  "read_only": true,
+  "app_database": {
+    "status": "ok",
+    "read_only_probe": true
+  },
+  "qdrant": {
+    "status": "ok",
+    "collection": "tpv_documents",
+    "points_count": 1103093
+  },
+  "erp_database": {
+    "status": "ok",
+    "read_only_probe": true
+  },
+  "uploads": {
+    "status": "ok",
+    "root": "data/uploads",
+    "files": 2,
+    "bytes": 1399321
+  },
+  "outputs": {
+    "status": "missing",
+    "root": "data/output"
+  },
+  "minio": {
+    "status": "failed",
+    "configured_bucket": "tpv-documents",
+    "buckets": {
+      "vanbantrunguong": {
+        "status": "failed",
+        "error": "S3Error",
+        "code": "SignatureDoesNotMatch"
+      },
+      "vanbandiaphuong": {
+        "status": "failed",
+        "error": "S3Error",
+        "code": "SignatureDoesNotMatch"
+      }
+    }
+  },
+  "status": "attention",
+  "finished_at": "2026-10-27T08:03:53.731538+00:00"
+}

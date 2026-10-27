@@ -1,0 +1,21 @@
+{
+  "run_id": "20261027085150",
+  "collection": "tpv_minio_yuu_test_20261027085150",
+  "bucket": "tpv-minio-yuu-test-20261027085150",
+  "steps": [
+    "ERP tunnel and actual write permission",
+    "Real upload -> MinIO -> converter/chunk/embedding -> Qdrant source metadata",
+    "Duplicate retains doc_id and skips ingest",
+    "Same filename different bytes creates distinct object and document",
+    "Existing object downloads/ingests and preserves full prefix",
+    "Conflicting source rejected with 409",
+    "Bucket outside allowlist rejected",
+    "Simulated ingest failure retains real MinIO original",
+    "Both endpoints deny principal without ERP write permission",
+    "Temporary input files cleaned on success and failure"
+  ],
+  "kien_touched": false,
+  "first_document_id": "bd411c7a2cc51c4f",
+  "points": 3,
+  "status": "passed"
+}

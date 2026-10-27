@@ -27,6 +27,13 @@ class IngestResponse(BaseModel):
     already_exists: bool = Field(default=False, description="True khi bỏ qua ingest vì file đã có trong kho")
 
 
+class MinioIngestRequest(BaseModel):
+    bucket: str = Field(min_length=1, max_length=255)
+    object_key: str = Field(min_length=1, max_length=1024)
+    doc_type: str = ""
+    force_reingest: bool = False
+
+
 class CollectionStats(BaseModel):
     collection: str
     points: int

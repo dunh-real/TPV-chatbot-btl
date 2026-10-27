@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import logging
 import time
+import shutil
+import tempfile
+
+import anyio
 from dataclasses import asdict
 from pathlib import Path
 
@@ -22,6 +26,7 @@ from app.db.erp_session import erp_session_scope
 from app.documents.giao_viec import MetaGiaoViec, build_giao_viec
 from app.documents.rules import available_rule_sets
 from app.services import storage
+from app.services.object_storage import ObjectStorage
 from app.schemas.documents import (
     BatchDeleteRequest,
     BatchDeleteResponse,
@@ -31,6 +36,7 @@ from app.schemas.documents import (
     GiaoViecRequest,
     GiaoViecResponse,
     IngestResponse,
+    MinioIngestRequest,
     IngestTextRequest,
     ReviewResponse,
     RuleSetInfo,
@@ -43,52 +49,83 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
-@router.post("/upload", response_model=IngestResponse, summary="Tải file lên và nạp vào kho",
+async def _ingest_source(path, filename, metadata, doc_type, force):
+    started = time.perf_counter()
+    store = get_vector_store()
+    await store.ensure_collection()
+    doc_id = make_doc_id_file(filename, path)
+    existing = await store.document_summary(doc_id)
+    if existing is None:
+        existing = await store.document_summary(make_legacy_doc_id_file(filename, path))
+    if existing is not None:
+        try:
+            await store.link_source(existing["doc_id"], metadata)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        if not force:
+            return IngestResponse(**existing, already_exists=True,
+                                  elapsed_ms=(time.perf_counter() - started) * 1000)
+        doc_id = existing["doc_id"]
+    result = await get_ingestion_pipeline().ingest_file(
+        path, doc_id=doc_id, source=filename, metadata=metadata, doc_type=doc_type)
+    if result.chunk_count == 0:
+        raise ValueError("Tài liệu không tạo được đoạn nội dung; file gốc vẫn được giữ trên MinIO")
+    return IngestResponse(**asdict(result))
+
+
+def _check_filename(filename):
+    name = storage.safe_name(filename)
+    if Path(name).suffix.lower() not in SUPPORTED_SUFFIXES:
+        raise HTTPException(status_code=415, detail=f"Chỉ hỗ trợ: {', '.join(sorted(SUPPORTED_SUFFIXES))}")
+    return name
+
+
+@router.post("/upload", response_model=IngestResponse, summary="Lưu MinIO và nạp vào kho",
              dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_GHI, "nạp tài liệu vào kho"))])
 async def upload_document(
-    file: UploadFile = File(...),
-    doc_type: str = Form(default=""),
+    file: UploadFile = File(...), doc_type: str = Form(default=""),
     force_reingest: bool = Form(default=False),
 ) -> IngestResponse:
-    started = time.perf_counter()
-    # Đuôi file phải đọc trên tên ĐÃ làm sạch, không phải tên thô: cổng ABP gửi
-    # tên tiếng Việt dưới dạng "=?utf-8?B?...?=" và đuôi thật nằm trong base64.
-    ten_sach = storage.safe_name(file.filename or "")
-    suffix = Path(ten_sach).suffix.lower()
-    if suffix not in SUPPORTED_SUFFIXES:
-        await file.close()
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"Chỉ hỗ trợ: {', '.join(sorted(SUPPORTED_SUFFIXES))}",
-        )
-
     try:
-        target = storage.save_upload(file.file, file.filename or "tai-lieu", kind="upload").path
+        filename = _check_filename(file.filename or "")
+        with tempfile.TemporaryDirectory(prefix="tpv-ingest-") as folder:
+            path = Path(folder) / filename
+            def copy():
+                with path.open("wb") as target:
+                    shutil.copyfileobj(file.file, target)
+            await anyio.to_thread.run_sync(copy)
+            metadata = await anyio.to_thread.run_sync(lambda: ObjectStorage().upload(path, filename))
+            return await _ingest_source(path, filename, metadata, doc_type, force_reingest)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception:
+        logger.exception("Lưu hoặc nạp tài liệu thất bại")
+        raise HTTPException(status_code=502, detail="Không lưu/nạp được tài liệu. Kiểm tra MinIO và Qdrant.")
     finally:
         await file.close()
 
-    try:
-        if not force_reingest:
-            # Băm bytes trước converter: file trùng không phải chạy lại OCR/embedding.
-            doc_id = make_doc_id_file(target.name, target)
-            store = get_vector_store()
-            await store.ensure_collection()
-            existing = await store.document_summary(doc_id)
-            if existing is None:
-                # Tương thích tài liệu đã ingest bằng ID phụ thuộc tên file.
-                legacy_id = make_legacy_doc_id_file(target.name, target)
-                existing = await store.document_summary(legacy_id)
-            if existing is not None:
-                return IngestResponse(**existing, already_exists=True,
-                                      elapsed_ms=(time.perf_counter() - started) * 1000)
-        result = await get_ingestion_pipeline().ingest_file(target, doc_type=doc_type)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("Nạp tài liệu thất bại")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
-    return IngestResponse(**asdict(result))
+@router.post("/ingest-minio", response_model=IngestResponse, summary="Nạp object MinIO có sẵn",
+             dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_GHI, "nạp tài liệu vào kho"))])
+async def ingest_minio(request: MinioIngestRequest) -> IngestResponse:
+    filename = _check_filename(request.object_key)
+    try:
+        with tempfile.TemporaryDirectory(prefix="tpv-ingest-") as folder:
+            path = Path(folder) / filename
+            metadata = await anyio.to_thread.run_sync(lambda: ObjectStorage().download(
+                request.bucket, request.object_key, path, filename))
+            return await _ingest_source(path, filename, metadata, request.doc_type, request.force_reingest)
+    except HTTPException:
+        raise
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception:
+        logger.exception("Nạp object MinIO thất bại")
+        raise HTTPException(status_code=502, detail="Không đọc/nạp được object. File gốc được giữ nguyên trên MinIO.")
 
 
 @router.post("/ingest-text", response_model=IngestResponse, summary="Nạp văn bản thô",

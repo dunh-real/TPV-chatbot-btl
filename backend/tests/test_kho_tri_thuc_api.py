@@ -27,7 +27,7 @@ from app.rag.ingestion import IngestResult
 
 
 @pytest.fixture
-def pipeline_gia(monkeypatch):
+def pipeline_gia(monkeypatch, fake_object_storage):
     """Pipeline giả trả về đúng kiểu `IngestResult` mà bản thật trả về."""
     ket_qua = IngestResult(
         doc_id="abc123",
@@ -38,12 +38,17 @@ def pipeline_gia(monkeypatch):
     )
 
     class PipelineGia:
-        async def ingest_file(self, path, doc_type=""):
+        async def ingest_file(self, path, doc_type="", **kwargs):
             return ket_qua
 
         async def ingest_text(self, **kwargs):
             return ket_qua
 
+    from qdrant_client import AsyncQdrantClient
+    from app.rag.vectorstore import QdrantVectorStore
+    from app.core.config import Settings
+    store = QdrantVectorStore(Settings(), client=AsyncQdrantClient(":memory:"))
+    monkeypatch.setattr(documents_api, "get_vector_store", lambda: store)
     monkeypatch.setattr(documents_api, "get_ingestion_pipeline", lambda: PipelineGia())
     return ket_qua
 

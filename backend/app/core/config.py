@@ -282,6 +282,7 @@ class Settings(BaseSettings):
     minio_secret_key: str = "minioadmin"
     minio_secure: bool = False
     minio_bucket: str = "tpv-documents"
+    minio_ingest_buckets: list[str] = Field(default_factory=list)
 
     upload_dir: str = "./data/uploads"
     output_dir: str = "./data/output"

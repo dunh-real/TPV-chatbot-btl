@@ -1,0 +1,29 @@
+{
+  "local_tests": {
+    "passed": 61,
+    "files": [
+      "test_upload_duplicates.py",
+      "test_kho_tri_thuc_api.py",
+      "test_minio_storage.py",
+      "test_ocr_tai_lieu.py",
+      "test_db_permissions.py"
+    ],
+    "services": "mock MinIO / in-memory Qdrant / test DB"
+  },
+  "server_yuu": {
+    "path": "/home/abc/yuu_workspace/TPV-chatbot-btl",
+    "deployed": true,
+    "unit_tests_passed": 44,
+    "live_tested": true,
+    "live_status": "passed",
+    "live_report": "yuu-live-validation.json",
+    "running_service_restarted": false,
+    "dependencies_synced": [
+      "ingestion ID functions (compatibility overlay)",
+      "current Mac core/context.py",
+      "current Mac agents/quyen.py"
+    ]
+  },
+  "kien_workspace_touched": false,
+  "sql_migration": false
+}

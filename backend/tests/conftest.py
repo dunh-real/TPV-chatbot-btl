@@ -145,5 +145,35 @@ def _qwen_dat_nhan_khong_goi_mang(request, monkeypatch):
     async def _khong_co_qwen(*args, **kwargs):
         raise RuntimeError("Qwen không chạy trong test")
 
-    import app.documents.nhan_cot as nhan_cot
+    try:
+        import app.documents.nhan_cot as nhan_cot
+    except ModuleNotFoundError as exc:
+        if exc.name == "app.documents.nhan_cot":  # Bản yuu cũ chưa có tính năng này.
+            return
+        raise
     monkeypatch.setattr(nhan_cot, "_hoi_qwen", _khong_co_qwen)
+
+@pytest.fixture
+def fake_object_storage(monkeypatch):
+    """MinIO giả cho test API; không gọi mạng hoặc ghi vào kho thật."""
+    from app.api import documents
+    from app.services.object_storage import ObjectStorage
+    class FakeStorage:
+        def __init__(self):
+            self.objects = {}
+            self.paths = []
+        def upload(self, path, filename):
+            digest = ObjectStorage.checksum(path)
+            key = f"uploads/{digest}{path.suffix}"
+            self.objects[("test", key)] = path.read_bytes()
+            self.paths.append(path)
+            return ObjectStorage.metadata(path, filename, "test", key, digest)
+        def download(self, bucket, key, path, filename):
+            if bucket != "test":
+                raise PermissionError("Bucket không được phép nạp")
+            path.write_bytes(self.objects[(bucket, key)])
+            self.paths.append(path)
+            return ObjectStorage.metadata(path, filename, bucket, key, ObjectStorage.checksum(path))
+    fake = FakeStorage()
+    monkeypatch.setattr(documents, "ObjectStorage", lambda: fake)
+    return fake
