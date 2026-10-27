@@ -41,6 +41,10 @@ class ObjectStorage:
         self.client.fget_object(bucket, key, str(path))
         return self.metadata(path, filename, bucket, key, self.checksum(path))
 
+    def open(self, bucket: str, key: str):
+        self.validate_bucket(bucket)
+        return self.client.get_object(bucket, key)
+
     @staticmethod
     def checksum(path):
         with path.open("rb") as content:

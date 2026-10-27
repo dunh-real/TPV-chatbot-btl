@@ -203,6 +203,26 @@ class QdrantVectorStore:
         return {"doc_id": doc_id, "doc_title": str(payload.get("doc_title") or doc_id),
                 "source": str(payload.get("source") or ""), "chunk_count": count.count}
 
+    async def document_metadata(self, doc_ids: Sequence[str]) -> dict[str, dict]:
+        """Metadata và số chunk hiện hành; không tải text/vector hoặc quét toàn kho."""
+        import asyncio
+        gate = asyncio.Semaphore(8)
+        fields = ["doc_title", "source", "doc_type", "ingested_at", "storage_bucket",
+                  "storage_object_key", "original_filename", "file_size_bytes", "checksum_sha256"]
+        async def read(doc_id):
+            async with gate:
+                query = models.Filter(
+                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))],
+                    must_not=[models.FieldCondition(key="latest", match=models.MatchValue(value=False))])
+                points, _ = await self.client.scroll(self.collection, scroll_filter=query,
+                    limit=1, with_payload=fields, with_vectors=False)
+                if not points:
+                    return doc_id, None
+                count = await self.client.count(self.collection, count_filter=query, exact=True)
+                return doc_id, {**(points[0].payload or {}), "chunk_count": count.count}
+        return {key: value for key, value in await asyncio.gather(*(read(d) for d in dict.fromkeys(doc_ids)))
+                if value is not None}
+
     async def scroll_document(self, doc_id: str, page_size: int = 256) -> list[dict[str, Any]]:
         """Toàn bộ chunk của một tài liệu, xếp theo đúng thứ tự trong file gốc.
 

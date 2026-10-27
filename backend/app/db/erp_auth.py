@@ -99,14 +99,14 @@ class ErpAuthRepository:
         else:
             return None
 
-        row = (await self.session.execute(text(sql), tham_so)).fetchone()
-        if row is None:
+        row = (await self.session.execute(text(sql), tham_so)).fetchmany(2)
+        if len(row) != 1:
             return None
 
-        uid, tenant_id, user_name, name, surname, email = row
-        roles = await self._roles_of(uid)
+        uid, tenant_id, user_name, name, surname, email = row[0]
+        roles = await self._roles_of(uid, tenant_id)
         role_ids = tuple(r[0] for r in roles)
-        perms = await self._permissions_of(role_ids) if role_ids else frozenset()
+        perms = await self._permissions_of(role_ids, tenant_id) if role_ids else frozenset()
 
         return AccountAccess(
             user_id=uid,
@@ -120,7 +120,7 @@ class ErpAuthRepository:
             is_static_admin=any(r[2] for r in roles),
         )
 
-    async def _roles_of(self, user_id: int) -> list[tuple[int, str, bool]]:
+    async def _roles_of(self, user_id: int, tenant_id: int | None) -> list[tuple[int, str, bool]]:
         """(id, tên hiển thị, có phải Admin tĩnh) của từng vai trò.
 
         `IsStatic` một mình chưa đủ: vai trò `User` cũng tĩnh mà chẳng có quyền
@@ -131,13 +131,15 @@ class ErpAuthRepository:
             FROM AbpUserRoles ur
             JOIN AbpRoles r ON r.Id = ur.RoleId
             WHERE ur.UserId = :uid AND r.IsDeleted = 0
-            ORDER BY r.Id"""), {"uid": user_id})).fetchall()
+              AND (ur.TenantId = :tenant OR (ur.TenantId IS NULL AND :tenant IS NULL))
+              AND (r.TenantId = :tenant OR (r.TenantId IS NULL AND :tenant IS NULL))
+            ORDER BY r.Id"""), {"uid": user_id, "tenant": tenant_id})).fetchall()
         return [
             (x[0], (x[1] or x[2] or "").strip(), bool(x[3]) and (x[2] or "").lower() == "admin")
             for x in rows
         ]
 
-    async def _permissions_of(self, role_ids: tuple[int, ...]) -> frozenset[str]:
+    async def _permissions_of(self, role_ids: tuple[int, ...], tenant_id: int | None) -> frozenset[str]:
         """Hợp của các quyền ĐƯỢC CẤP trên mọi vai trò người đó mang.
 
         `IsGranted = 0` là một dòng từ chối tường minh. Người mang hai vai trò,
@@ -148,9 +150,11 @@ class ErpAuthRepository:
             return frozenset()
         cho = ", ".join(f":r{i}" for i in range(len(role_ids)))
         tham_so = {f"r{i}": rid for i, rid in enumerate(role_ids)}
+        tham_so["tenant"] = tenant_id
         rows = (await self.session.execute(text(
             f"SELECT DISTINCT Name FROM AbpPermissions "
-            f"WHERE IsGranted = 1 AND RoleId IN ({cho})"), tham_so)).fetchall()
+            f"WHERE IsGranted = 1 AND RoleId IN ({cho}) "
+            "AND (TenantId = :tenant OR (TenantId IS NULL AND :tenant IS NULL))"), tham_so)).fetchall()
         return frozenset(x[0] for x in rows)
 
     async def list_accounts(self, tenant_id: int | None, limit: int = 50) -> list[dict]:

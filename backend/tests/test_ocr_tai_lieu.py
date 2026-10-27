@@ -19,7 +19,7 @@ from app.api import ocr as ocr_api
 from app.documents import ocr_tai_lieu as odt
 from app.main import app
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.usefixtures("authorized_account")]
 
 
 # --------------------------------------------------------------------------- #

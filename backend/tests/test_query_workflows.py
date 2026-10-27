@@ -83,6 +83,14 @@ async def test_draft_no_longer_requires_fixed_template_fields(environment):
 
 
 async def test_local_powerpoint_contains_every_dynamic_value(environment, monkeypatch):
+    async def no_llm(*args, **kwargs):
+        return None, {"attempts": []}
+
+    async def local_unit(*args, **kwargs):
+        return "Đơn vị thử nghiệm"
+
+    monkeypatch.setattr(presentation, "_summarize", no_llm)
+    monkeypatch.setattr(presentation, "_ten_don_vi", local_unit)
     state = initial()
     state.update(await report.gather_data_node(state))
     state.update(await presentation.brief_node(state))

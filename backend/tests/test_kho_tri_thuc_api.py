@@ -21,6 +21,8 @@ import io
 import httpx
 import pytest
 
+pytestmark = pytest.mark.usefixtures("authorized_account")
+
 from app.api import documents as documents_api
 from app.main import app
 from app.rag.ingestion import IngestResult

@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/mindmap", tags=["mindmap"])
 
-DOC_READ = Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xem sơ đồ tư duy"))
+DOC_READ = Depends(quyen.can_quyen("Ai.MindMap", "xem sơ đồ tư duy"))
 
 # Dưới mức này thì cây không đáng gọi là sơ đồ - thường là model trả về rác hoặc
 # tài liệu quá ngắn. Báo lỗi còn hơn lưu lại một cây trống rồi để người dùng
@@ -218,7 +218,7 @@ async def section(doc_id: str, request: SectionRequest) -> SectionResponse:
 
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT,
-               dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xoá sơ đồ tư duy"))],
+               dependencies=[Depends(quyen.can_quyen("Ai.MindMap", "xoá sơ đồ tư duy"))],
                summary="Xoá sơ đồ tư duy đã dựng")
 async def delete_mindmap(doc_id: str) -> None:
     try:

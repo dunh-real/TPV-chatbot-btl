@@ -291,6 +291,7 @@ class Settings(BaseSettings):
     # lần đọc cả tài liệu - dựng lại tốn vài lượt LLM nên phải giữ được qua các
     # lần khởi động lại.
     mindmap_dir: str = "./data/mindmaps"
+    saved_documents_dir: str = "./data/saved_documents"
 
     # ------------------------------------------------------- Sơ đồ tư duy ---
     # Pha MAP đọc từng mẻ chunk, pha REDUCE gộp lại thành một cây. Hạn mức token

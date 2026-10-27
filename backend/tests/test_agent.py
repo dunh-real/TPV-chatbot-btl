@@ -333,7 +333,7 @@ def test_tu_khoa_phan_biet_slide_soan_va_tong_hop():
 # Agent tổng
 # --------------------------------------------------------------------------- #
 @pytest.fixture
-def agent_env(monkeypatch):
+def agent_env(monkeypatch, authorized_account):
     """Cache trong tiến trình + Qdrant nhúng: đủ để kiểm tra cả hai tầng bộ nhớ."""
     from qdrant_client import AsyncQdrantClient
 

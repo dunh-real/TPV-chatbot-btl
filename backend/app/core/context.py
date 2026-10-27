@@ -62,8 +62,7 @@ class Principal:
     # request đó đã lấy tenant từ đâu.
     source: str = "default"
     # Quyền đọc từ ERP. `None` nghĩa là CHƯA TRA ĐƯỢC, khác hẳn "tra rồi và rỗng":
-    # chưa tra được thì không có căn cứ để chặn ai, còn tra rồi mà rỗng thì đúng
-    # là người này không có quyền gì. Hai trường hợp xử lý khác nhau ở `can()`.
+    # cả hai trường hợp đều không cấp quyền cho nghiệp vụ được bảo vệ.
     access: Any | None = None
 
     @property
@@ -71,14 +70,9 @@ class Principal:
         return bool(self.access and self.access.is_static_admin)
 
     def can(self, permission: str) -> bool:
-        """Được làm việc này không.
-
-        Chưa tra được quyền (`access is None`) thì trả True - hệ thống chạy như
-        trước khi có phân quyền. Chặn người dùng chỉ vì ERP tạm thời không tra
-        được là đổi một sự cố hạ tầng thành một sự cố nghiệp vụ.
-        """
-        if self.access is None:
-            return True
+        """Chỉ cấp quyền khi đã tra được tài khoản ERP; mất ERP không mở quyền."""
+        if self.access is None or not self.user_id:
+            return False
         return self.access.has(permission)
 
     def describe(self) -> str:

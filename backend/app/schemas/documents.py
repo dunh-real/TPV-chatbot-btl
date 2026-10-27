@@ -2,11 +2,86 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 from app.schemas.common import ReferenceModel
+from app.schemas.chat import RetrievalFilters
+
+
+class DocumentSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=4000)
+    filters: RetrievalFilters = Field(default_factory=RetrievalFilters)
+    limit: int = Field(default=10, ge=1, le=50)
+    use_rerank: bool = True
+
+
+class DocumentSnippet(BaseModel):
+    text: str
+    section: str = ""
+    page: int | None = None
+
+
+class DocumentDetail(BaseModel):
+    doc_id: str
+    title: str
+    source: str = ""
+    doc_type: str = ""
+    chunk_count: int = 0
+    ingested_at: float | None = None
+    original_filename: str = ""
+    file_size_bytes: int | None = None
+    original_available: bool = False
+    detail_url: str
+    original_url: str | None = None
+    so_hieu: str = ""
+    loai: str = ""
+    ngay_hieu_luc: str | None = None
+
+
+class DocumentSearchItem(DocumentDetail):
+    score: float
+    snippets: list[DocumentSnippet]
+
+
+class DocumentSearchResponse(BaseModel):
+    items: list[DocumentSearchItem]
+    returned_count: int
+    candidate_documents: int
+    score_kind: Literal["rerank", "rrf"]
+
+
+class DocumentSelection(BaseModel):
+    doc_ids: list[Annotated[str, Field(min_length=1, max_length=160)]] = Field(min_length=1, max_length=200)
+
+
+class SaveDocumentList(DocumentSelection):
+    name: str = Field(min_length=1, max_length=160)
+
+
+class SavedDocumentList(SaveDocumentList):
+    saved_id: str
+    created_at: datetime
+
+
+class SavedDocumentListDetail(SavedDocumentList):
+    items: list[DocumentDetail]
+    missing_doc_ids: list[str]
+
+
+class LegalRelatedItem(DocumentDetail):
+    relation: str
+    direction: Literal["outgoing", "incoming"]
+
+
+class RelatedDocuments(BaseModel):
+    doc_id: str
+    same_topic: list[DocumentSearchItem]
+    same_number: list[DocumentDetail]
+    legal_relations: list[LegalRelatedItem]
+    legal_status: Literal["ok", "disabled", "unavailable", "not_registered"]
 
 
 class IngestTextRequest(BaseModel):

@@ -35,7 +35,7 @@ async def list_templates() -> list[TemplateSummary]:
 
 
 @router.post("/draft", response_model=DraftResponse, summary="Soạn báo cáo theo mẫu",
-             dependencies=[Depends(quyen.can_quyen("Ai.ReportSummary.Create", "soạn văn bản"))])
+             dependencies=[Depends(quyen.can_quyen("Ai.ReportDrafting", "soạn văn bản"))])
 async def draft(request: DraftRequest) -> DraftResponse:
     """Soạn một báo cáo từ MỘT nguồn. `nguon` chọn nguồn đó là gì.
 

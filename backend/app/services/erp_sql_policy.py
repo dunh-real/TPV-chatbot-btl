@@ -1,4 +1,4 @@
-"""Phân quyền nhóm ERP, lọc bảng/cột và ép phạm vi tenant/cá nhân/phòng ban trên SQL."""
+"""Cấp quyền từ permission ERP; hợp đồng schema chỉ giới hạn bảng/cột SQL được đọc."""
 from __future__ import annotations
 
 import json
@@ -53,9 +53,6 @@ class GroupTable(UserScope):
 
 class AccountGroup(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    priority: int = 0
-    static_admin: bool = False
-    tenant_roles: dict[str, list[int]] = {}
     tables: dict[str, GroupTable]
 
 
@@ -63,8 +60,6 @@ class PolicyDocument(BaseModel):
     model_config = ConfigDict(extra="forbid")
     version: str
     tables: dict[str, Rule]
-    groups: dict[str, AccountGroup] = {}
-    default_group: str | None = None
     # Nếu khai tài khoản thì chỉ được đọc các bảng/cột/dòng trong mục của tài khoản đó.
     users: dict[str, dict[str, UserScope]] = {}
     # Ngoại lệ đọc mở rộng chỉ dành cho Admin đã xác minh, khóa tenant:UserId.
@@ -101,20 +96,25 @@ class SQLPolicy:
                 rules["dbo.Hrm_EmployeeProfile"].meaning = (
                     "Hồ sơ nhân sự được cấp đọc mở rộng trong tenant. Số cuối tháng suy từ "
                     "HireDate/CreationTime và ResignationDate; không phải snapshot lịch sử đầy đủ.")
-        elif document.groups:
-            matches = [(name, item) for name, item in document.groups.items()
-                       if (item.static_admin and access.is_static_admin)
-                       or set(access.role_ids).intersection(item.tenant_roles.get(str(self.tenant_id), []))]
-            if matches:
-                matches.sort(key=lambda pair: pair[1].priority, reverse=True)
-                if len(matches) > 1 and matches[0][1].priority == matches[1][1].priority:
-                    raise ToolError("Tài khoản khớp nhiều nhóm cùng mức ưu tiên; cần kiểm tra policy")
-                self.group, group = matches[0]
-            elif document.default_group in document.groups:
-                self.group = document.default_group
-                group = document.groups[self.group]
-            else:
-                raise ToolError("Tài khoản chưa được ánh xạ vào nhóm truy vấn ERP")
+        else:
+            # Role membership and effective grants come from ERP, never role IDs/names
+            # in JSON. View grants tenant reads of the safe column contract; ViewMine
+            # only grants the account's employee profile. Unknown permissions grant nothing.
+            self.group = "db_permissions"
+            entries = {}
+            full_hr = access.has("Hrm.EmployeeProfile.View")
+            for name, rule in rules.items():
+                if not any(access.has(grant) for grant in rule.permissions_any):
+                    continue
+                entry = GroupTable()
+                if name == "dbo.Hrm_EmployeeProfile" and not full_hr:
+                    entry = GroupTable(scope="self", scope_column="EmployeeId")
+                elif name == "dbo.Dms_WorkDepartment" and not (
+                    full_hr or access.has("Asm.Asset.View")
+                ):
+                    entry = GroupTable(scope="department", scope_column="Id")
+                entries[name] = entry
+            group = AccountGroup(tables=entries)
         # Chỉ đọc liên kết định danh khi nhóm cần phạm vi cá nhân/phòng ban.
         employee = None
         if group and any(t.scope != "tenant" for t in group.tables.values()):

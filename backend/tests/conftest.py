@@ -20,6 +20,28 @@ def settings():
 # để truy vấn trong test đi qua đúng nhánh lọc tenant mà chạy thật sẽ đi.
 ERP_TENANT = 64
 
+
+@pytest.fixture
+def authorized_account(monkeypatch):
+    """Explicit verified account for functional tests; security tests do not use it."""
+    from dataclasses import replace
+    from app.api import identity
+    from app.core.context import Principal, use_principal
+    from app.db.erp_auth import AccountAccess
+
+    access = AccountAccess(900000, ERP_TENANT, "test", "Test", "", permissions=frozenset({
+        "Ai.AiChatbot", "Ai.DocumentReview", "Ai.ReportDrafting", "Ai.ReportSummary.Create",
+        "Ai.Slide.Create", "Ai.Ocr", "Ai.MindMap", "Hrm.EmployeeProfile.View", "Asm.Asset.View",
+    }))
+
+    async def attach(principal):
+        return replace(principal, user_id=str(access.user_id),
+                       access=replace(access, tenant_id=principal.tenant_id))
+
+    monkeypatch.setattr(identity, "_kem_quyen", attach)
+    with use_principal(Principal(tenant_id=ERP_TENANT, user_id=str(access.user_id), access=access)):
+        yield access
+
 # (id, mã, tên) - "đơn vị" trong báo cáo chính là phòng ban bên ERP.
 ERP_DEPARTMENTS = [(1, "00001", "Đơn vị 1"), (2, "00002", "Đơn vị 2")]
 

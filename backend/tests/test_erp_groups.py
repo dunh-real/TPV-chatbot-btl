@@ -1,4 +1,4 @@
-"""Kiểm tra nhóm tài khoản, giới hạn tenant/cột/dòng và liên kết nhân viên mơ hồ."""
+"""Quyền DB quyết định phạm vi SQL, không phụ thuộc RoleId hoặc nhóm JSON."""
 import json
 from dataclasses import replace
 from pathlib import Path
@@ -41,12 +41,12 @@ def build(db, who, path=POLICY):
 
 
 @pytest.mark.parametrize("who,group,ids", [
-    (principal(), "employee", [1]),
-    (principal(roles=(161,)), "department_manager", [1, 2]),
-    (principal(roles=(159,)), "director", [1, 2, 3]),
-    (principal(admin=True), "admin", [1, 2, 3]),
-    (principal(roles=(159, 161)), "director", [1, 2, 3]),
-    (principal(roles=(999,)), "employee", [1]),
+    (principal(), "db_permissions", [1, 2, 3]),
+    (principal(roles=(161,)), "db_permissions", [1, 2, 3]),
+    (principal(roles=(159,)), "db_permissions", [1, 2, 3]),
+    (principal(admin=True), "db_permissions", [1, 2, 3]),
+    (principal(roles=(159, 161)), "db_permissions", [1, 2, 3]),
+    (principal(roles=(251,), grants=("Hrm.EmployeeProfile.ViewMine",)), "db_permissions", [1]),
 ])
 def test_group_scope_survives_cte_union_and_or(db, who, group, ids):
     policy, executor = build(db, who)
@@ -64,20 +64,20 @@ def test_group_cannot_replace_module_permission(db):
         build(db, principal(roles=(159,), grants=()))
     _, executor = build(db, principal(grants=("Hrm.EmployeeProfile.ViewMine",)))
     assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[1]]
-    with pytest.raises(ToolError):
-        build(db, principal(roles=(161,), grants=("Hrm.EmployeeProfile.ViewMine",)))
+    _, executor = build(db, principal(roles=(161,), grants=("Hrm.EmployeeProfile.ViewMine",)))
+    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[1]]
 
 
 @pytest.mark.parametrize("change", ["DELETE FROM Dms_Employee WHERE TenantId=64 AND UserId=1", "INSERT INTO Dms_Employee VALUES (40,64,1,200,0)"])
 def test_missing_or_ambiguous_employee_is_denied(db, change):
     db[0].execute(text(change))
     with pytest.raises(ToolError, match="đúng một liên kết"):
-        build(db, principal(roles=(161,)))
+        build(db, principal(grants=("Hrm.EmployeeProfile.ViewMine",)))
 
 
 def test_role_ids_cannot_grant_another_tenant(db):
     policy, executor = build(db, principal(roles=(159,), tenant=94))
-    assert policy.group == "employee"
+    assert policy.group == "db_permissions"
     assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[4]]
 
 
@@ -88,14 +88,14 @@ def test_user_restrictions_intersect_with_group(db, tmp_path):
     path = tmp_path / "policy.json"
     path.write_text(json.dumps(source))
     _, executor = build(db, principal(roles=(161,)), path)
-    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == []
+    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[3]]
     assert not executor.validate("SELECT FullName FROM dbo.Hrm_EmployeeProfile")["ok"]
 
 
-def test_null_department_has_no_rows(db):
+def test_null_department_does_not_remove_own_profile(db):
     db[0].execute(text("UPDATE Dms_Employee SET WorkDepartmentId=NULL WHERE TenantId=64 AND UserId=1"))
-    _, executor = build(db, principal(roles=(161,)))
-    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == []
+    _, executor = build(db, principal(grants=("Hrm.EmployeeProfile.ViewMine",)))
+    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[1]]
 
 
 def expanded_account(admin=True, tenant=64):
@@ -114,7 +114,7 @@ def test_expanded_grant_only_for_named_admin_and_tenant(db):
     _, other = build(db, principal(admin=True))
     assert not other.validate("SELECT IdentityNumber FROM dbo.Hrm_EmployeeProfile")["ok"]
     other_policy, other_tenant = build(db, expanded_account(tenant=94))
-    assert other_policy.group == "admin"
+    assert other_policy.group == "db_permissions"
     assert not other_tenant.validate("SELECT IdentityNumber FROM dbo.Hrm_EmployeeProfile")["ok"]
     assert other_tenant.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[4]]
 
@@ -142,3 +142,19 @@ def test_expanded_grant_still_obeys_user_restrictions(db, tmp_path):
     _, executor = build(db, expanded_account(), path)
     assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[3]]
     assert not executor.validate("SELECT IdentityNumber FROM dbo.Hrm_EmployeeProfile")["ok"]
+
+
+def test_role_name_or_id_never_grants_sql_access(db):
+    with pytest.raises(ToolError):
+        build(db, principal(roles=(159, 168, 251), grants=()))
+
+
+def test_full_view_does_not_require_employee_link(db):
+    db[0].execute(text("DELETE FROM Dms_Employee"))
+    _, executor = build(db, principal(roles=(999,)))
+    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile")["rows"] == [[1], [2], [3]]
+
+
+def test_view_mine_cannot_be_widened_by_role_ids(db):
+    _, executor = build(db, principal(roles=(159, 168), grants=("Hrm.EmployeeProfile.ViewMine",)))
+    assert executor.execute("SELECT Id FROM dbo.Hrm_EmployeeProfile WHERE 1=1 OR 1=1")["rows"] == [[1]]

@@ -6,6 +6,7 @@ import logging
 import time
 import shutil
 import tempfile
+import mimetypes
 
 import anyio
 from dataclasses import asdict
@@ -14,7 +15,8 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import Depends, APIRouter, File, Form, HTTPException, Query, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse, Response
+from minio.error import S3Error
 
 from app.api.files import output_file_response
 from app.core.config import get_settings
@@ -26,7 +28,9 @@ from app.db.erp_session import erp_session_scope
 from app.documents.giao_viec import MetaGiaoViec, build_giao_viec
 from app.documents.rules import available_rule_sets
 from app.services import storage
+from app.services import document_lists
 from app.services.object_storage import ObjectStorage
+from app.services.document_search import describe, search_documents, related_documents
 from app.schemas.documents import (
     BatchDeleteRequest,
     BatchDeleteResponse,
@@ -37,6 +41,14 @@ from app.schemas.documents import (
     GiaoViecResponse,
     IngestResponse,
     MinioIngestRequest,
+    DocumentSearchRequest,
+    DocumentSearchResponse,
+    DocumentDetail,
+    DocumentSelection,
+    SaveDocumentList,
+    SavedDocumentList,
+    SavedDocumentListDetail,
+    RelatedDocuments,
     IngestTextRequest,
     ReviewResponse,
     RuleSetInfo,
@@ -47,6 +59,160 @@ from app.agents import quyen
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
+
+_READ = [Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "đọc tài liệu trong kho"))]
+
+
+async def _enrich(items):
+    legal = await _legal_info([item.doc_id for item in items])
+    for item in items:
+        for key, value in legal.get(item.doc_id, {}).items():
+            setattr(item, key, value)
+
+
+async def _list_io(action, *args):
+    try:
+        return await anyio.to_thread.run_sync(lambda: action(*args))
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Không tìm thấy danh mục")
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Không được phép truy cập danh mục")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Danh mục hoặc định danh không hợp lệ") from exc
+    except OSError:
+        logger.exception("Không truy cập được danh mục đã lưu")
+        raise HTTPException(status_code=503, detail="Không truy cập được danh mục đã lưu")
+
+
+async def _details(doc_ids):
+    try:
+        metadata = await get_vector_store().document_metadata(doc_ids)
+    except Exception:
+        logger.exception("Không đọc được metadata danh mục")
+        raise HTTPException(status_code=503, detail="Không truy cập được kho tài liệu")
+    items = {key: describe(key, value) for key, value in metadata.items()}
+    await _enrich(list(items.values()))
+    return items
+
+
+@router.post("/saved", response_model=SavedDocumentList, status_code=201, dependencies=_READ)
+async def save_document_list(request: SaveDocumentList):
+    return await _list_io(document_lists.save, request)
+
+
+@router.get("/saved", response_model=list[SavedDocumentList], dependencies=_READ)
+async def saved_document_lists():
+    return await _list_io(document_lists.list_saved)
+
+
+@router.get("/saved/{saved_id}", response_model=SavedDocumentListDetail, dependencies=_READ)
+async def saved_document_list(saved_id: str):
+    record = await _list_io(document_lists.load, saved_id)
+    details = await _details(record.doc_ids)
+    return SavedDocumentListDetail(**record.model_dump(),
+        items=[details[key] for key in record.doc_ids if key in details],
+        missing_doc_ids=[key for key in record.doc_ids if key not in details])
+
+
+@router.delete("/saved/{saved_id}", status_code=204, dependencies=_READ)
+async def delete_saved_document_list(saved_id: str):
+    await _list_io(document_lists.delete, saved_id)
+    return Response(status_code=204)
+
+
+@router.post("/export", dependencies=_READ, response_class=Response,
+             responses={200: {"content": {"text/csv": {}}}})
+async def export_documents(request: DocumentSelection):
+    details = await _details(request.doc_ids)
+    content = await anyio.to_thread.run_sync(lambda: document_lists.export_csv(request.doc_ids, details))
+    return Response(content, media_type="text/csv", headers={
+        "Content-Disposition": 'attachment; filename="documents.csv"', "Cache-Control": "private, no-store"})
+
+
+@router.post("/search", response_model=DocumentSearchResponse, dependencies=_READ)
+async def search(request: DocumentSearchRequest):
+    try:
+        result = await search_documents(request)
+    except Exception:
+        logger.exception("Tìm kiếm tài liệu thất bại")
+        raise HTTPException(status_code=503, detail="Không truy cập được kho tìm kiếm")
+    await _enrich(result.items)
+    return result
+
+
+async def _metadata(doc_id):
+    try:
+        metadata = (await get_vector_store().document_metadata([doc_id])).get(doc_id)
+    except Exception:
+        logger.exception("Đọc metadata tài liệu thất bại")
+        raise HTTPException(status_code=503, detail="Không truy cập được kho tài liệu")
+    if metadata is None:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
+    return metadata
+
+
+@router.get("/{doc_id}/detail", response_model=DocumentDetail, dependencies=_READ)
+async def detail(doc_id: str):
+    metadata = await _metadata(doc_id)
+    legal = await _legal_info([doc_id])
+    return describe(doc_id, metadata, legal.get(doc_id))
+
+
+@router.get("/{doc_id}/related", response_model=RelatedDocuments, dependencies=_READ)
+async def related(doc_id: str, limit: int = Query(default=5, ge=1, le=20)):
+    metadata = await _metadata(doc_id)
+    try:
+        result = await related_documents(doc_id, metadata, limit)
+    except Exception:
+        logger.exception("Không tìm được tài liệu liên quan")
+        raise HTTPException(status_code=503, detail="Không truy cập được kho tìm kiếm")
+    await _enrich([*result.same_topic, *result.same_number, *result.legal_relations])
+    return result
+
+
+class _OriginalResponse(StreamingResponse):
+    """Đóng MinIO kể cả ngắt kết nối trước khi đọc chunk đầu tiên."""
+    def __init__(self, stream, **kwargs):
+        self.stream = stream
+        super().__init__(iter(lambda: stream.read(64 * 1024), b""), **kwargs)
+
+    async def __call__(self, scope, receive, send):
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            def close():
+                try:
+                    self.stream.close()
+                finally:
+                    self.stream.release_conn()
+            with anyio.CancelScope(shield=True):
+                await anyio.to_thread.run_sync(close)
+
+
+@router.get("/{doc_id}/original", dependencies=_READ)
+async def original(doc_id: str, download: bool = False):
+    metadata = await _metadata(doc_id)
+    bucket, key = metadata.get("storage_bucket"), metadata.get("storage_object_key")
+    if not bucket or not key:
+        raise HTTPException(status_code=404, detail="Tài liệu chưa liên kết bản gốc MinIO")
+    filename = storage.safe_name(metadata.get("original_filename") or metadata.get("source") or "document")
+    media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    disposition = "inline" if media_type == "application/pdf" and not download else "attachment"
+    try:
+        stream = await anyio.to_thread.run_sync(lambda: ObjectStorage().open(bucket, key))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Bucket nguồn chưa được phép đọc")
+    except S3Error as exc:
+        if exc.code in {"NoSuchKey", "NoSuchObject", "NoSuchBucket"}:
+            raise HTTPException(status_code=404, detail="Không tìm thấy file gốc trên MinIO")
+        logger.exception("Đọc MinIO thất bại")
+        raise HTTPException(status_code=502, detail="Không đọc được file gốc")
+    except Exception:
+        logger.exception("Đọc MinIO thất bại")
+        raise HTTPException(status_code=502, detail="Không đọc được file gốc")
+    return _OriginalResponse(stream, media_type=media_type, headers={
+        "Content-Disposition": f"{disposition}; filename*=UTF-8''{quote(filename, safe='')}",
+        "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
 
 
 async def _ingest_source(path, filename, metadata, doc_type, force):
@@ -158,7 +324,7 @@ async def rule_sets() -> list[RuleSetInfo]:
 
 
 @router.post("/review", response_model=ReviewResponse, summary="Soát tài liệu (workflow 2)",
-             dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "soát tài liệu"))])
+             dependencies=[Depends(quyen.can_quyen("Ai.DocumentReview", "soát tài liệu"))])
 async def review_document(
     file: UploadFile = File(...),
     noi_gui: str = Form(default=""),
@@ -203,7 +369,7 @@ async def review_document(
 
 @router.post("/giao-viec", response_model=GiaoViecResponse,
              summary="Soạn công văn / quyết định giao nhiệm vụ từ bảng phân công",
-             dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "soạn văn bản giao việc"))])
+             dependencies=[Depends(quyen.can_quyen("Ai.DocumentReview", "soạn văn bản giao việc"))])
 async def giao_viec(request: GiaoViecRequest) -> GiaoViecResponse:
     """Đổ bảng phân công của `/review` ra một văn bản .docx để cán bộ sửa rồi trình ký.
 
@@ -285,12 +451,10 @@ async def list_documents(
 async def _legal_info(doc_ids: list[str]) -> dict[str, dict]:
     if not get_settings().legal_versioning_enabled or not doc_ids:
         return {}
-    from sqlalchemy import select
-
-    from app.db.models import LegalDocument
-    from app.db.session import session_scope
-
     try:
+        from sqlalchemy import select
+        from app.db.models import LegalDocument
+        from app.db.session import session_scope
         async with session_scope() as s:
             rows = (await s.execute(select(LegalDocument).where(LegalDocument.doc_id.in_(doc_ids)))).scalars().all()
     except Exception:  # noqa: BLE001 - thiếu thông tin VBQPPL không được làm hỏng danh sách
