@@ -952,40 +952,19 @@ curl -X POST localhost:8080/api/presentations/create -H 'Content-Type: applicati
 }'
 ```
 
-## CSDL nghiệp vụ
+## CSDL nghiệp vụ và pháp lý
 
-Số liệu nghiệp vụ (nhân sự, trang thiết bị, phòng ban) nay đọc thẳng từ **ERP,
-chỉ đọc** — xem mục ERP bên dưới. CSDL của riêng ứng dụng chỉ còn hai bảng:
+- `AI_DATABASE_URL`: MSSQL nghiệp vụ, dùng các bảng `AI_*` có sẵn cho mẫu,
+  tài liệu và sản phẩm đầu ra. Thiếu cấu hình thì báo lỗi, không dùng dữ liệu demo SQLite.
+- `ERP_DATABASE_URL`: kết nối chỉ đọc tài khoản/quyền và số liệu nguồn ERP.
+- `DATABASE_URL`: SQLite riêng cho tám bảng pháp lý, mặc định
+  `sqlite+aiosqlite:///./legal_data/legal.db`. Không đổi URL này sang MSSQL.
 
-| Bảng | Vai trò |
-|---|---|
-| `template_bao_cao` | mẫu báo cáo; `mo_ta` để chọn mẫu, `truong_du_lieu` (JSON) để điền |
-| `van_ban` | sổ văn bản. `ma_don_vi` + `ky` trả lời "đơn vị nào đã gửi báo cáo kỳ này"; `doc_id` nối sang Qdrant của workflow 1 |
+Không nạp hoặc chuyển dữ liệu nghiệp vụ demo cũ. Script `seed_demo.py` đã ngừng dùng.
+`gen_schema.py` chỉ xuất DDL SQLite pháp lý; không chạy DDL tự động trên MSSQL.
+Mẫu SQL cần có phiên bản Published; báo cáo dùng `inputs.so_ky_hieu` được cấp từ sổ chính thức.
 
-Trước đây hai trường `ma_don_vi`/`ky` không có: phải dò TÊN đơn vị trong `noi_gui`
-và lấy `ngay_van_ban` làm kỳ. Báo cáo kỳ tháng 8 thì ký vào tháng 9, nên mục
-"tình hình gửi báo cáo" luôn in 0/9 đơn vị dù sổ có đủ bản ghi.
-
-Bảng cũ thiếu cột thì `create_all()` tự thêm bằng một câu `ALTER TABLE` lúc khởi
-động (chỉ cột nullable — xem `_them_cot_con_thieu`); dự án chưa dùng migration.
-
-```bash
-# Nạp mẫu báo cáo + văn bản demo cho máy cài mới. Chỉ ghi hai bảng hệ thống này
-# sở hữu (`template_bao_cao`, `van_ban`); nhân sự/thiết bị đọc từ ERP lúc chạy.
-uv run python scripts/seed_demo.py
-uv run python scripts/seed_demo.py --reset        # xoá ĐÚNG dòng nó tạo rồi nạp lại
-uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql   # DDL cho SQL Server
-```
-
-`--reset` **không** `drop_all`: sổ `van_ban` trên máy đang chạy giữ các báo cáo
-đã phát hành, và số ký hiệu của báo cáo mới đếm từ sổ đó - xoá cả bảng là tua
-bộ đếm về `01` rồi ghi đè lên bản đã ký.
-
-Chuyển sang SQL Server chỉ cần đổi `DATABASE_URL` trong `.env`, không sửa code:
-
-```
-DATABASE_URL=mssql+aioodbc://sa:MatKhau@localhost:1433/tpv?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
-```
+Chi tiết: [tách lưu trữ nghiệp vụ/pháp lý](docs/STORAGE_SPLIT.md).
 
 **Nguyên tắc bắt buộc khi sinh báo cáo:** mọi số liệu đi qua [repository.py](backend/app/db/repository.py),
 LLM chỉ nhận `dict` đã truy vấn sẵn và diễn đạt thành văn. Không bao giờ để LLM tự

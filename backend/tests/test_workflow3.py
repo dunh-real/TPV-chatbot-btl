@@ -128,54 +128,9 @@ def test_noi_dung_va_bang_vao_dung_cho(payload, tmp_path):
 # -------------------------------------------------- toàn bộ workflow 3 ---- #
 @pytest.fixture
 async def draft_env(tmp_path, monkeypatch, erp_session):
-    """Hai nguồn tách rời: số liệu đọc từ ERP, mẫu báo cáo ghi ở CSDL app."""
-    import json
-    from contextlib import asynccontextmanager
-
-    from app.db.models import Base, TemplateBaoCao
-
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-
-    fields = {
-        "meta": {"noi_gui": {"source": "unit.ten_don_vi"},
-                 "noi_nhan": {"source": "literal", "value": "Ban Giám đốc"},
-                 "nguoi_ky": {"source": "input", "label": "Người ký"}},
-        "sections": [
-            {"id": "nhan_su", "title": "I. TÌNH HÌNH NHÂN SỰ", "type": "data",
-             "query": "don_vi", "fields": ["nhan_su", "nhan_su_kiem_ke"],
-             "narrative": "Nhận xét về nhân sự."},
-            {"id": "thiet_bi", "title": "II. TRANG THIẾT BỊ", "type": "table",
-             "query": "thiet_bi", "columns": ["ten_thiet_bi", "so_luong", "tinh_trang"]},
-        ],
-    }
-
-    async with factory() as session:
-        session.add(TemplateBaoCao(
-            ma_template="BC_TAINGUYEN",
-            ten_bao_cao="Báo cáo nhân sự và trang thiết bị",
-            loai_bao_cao="bao_cao_dinh_ky", mo_ta="Dùng khi báo cáo thiết bị",
-            file_path="data/templates/bao_cao_tai_nguyen.docx",
-            truong_du_lieu=json.dumps(fields, ensure_ascii=False)))
-        await session.commit()
-
-    @asynccontextmanager
-    async def _scope():
-        async with factory() as session:
-            yield session
-            await session.commit()
-
-    @asynccontextmanager
-    async def _erp_scope():
-        yield erp_session
-
-    monkeypatch.setattr(dr, "session_scope", _scope)
-    monkeypatch.setattr("app.core.config.settings.output_dir", str(tmp_path), raising=False)
+    """Kiểm tra node trích tham số, không mở DB nghiệp vụ hoặc SQLite."""
     monkeypatch.setattr(dr, "get_settings", lambda: _Settings(str(tmp_path)))
     yield tmp_path
-    await engine.dispose()
 
 
 class _Settings:

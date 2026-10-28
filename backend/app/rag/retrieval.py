@@ -193,6 +193,8 @@ class HybridRetriever:
         top_k: int | None = None,
     ) -> tuple[list[FusedHit], dict[str, int], dict[str, float]]:
         """Chạy 3 nhánh cho mọi biến thể truy vấn rồi gộp bằng RRF."""
+        from app.services.ai_documents import restrict
+        query_filter = await restrict(query_filter)
         cfg = self.settings
         branch_limit = branch_limit or cfg.retrieval_branch_limit
         top_k = top_k or cfg.rrf_top_k

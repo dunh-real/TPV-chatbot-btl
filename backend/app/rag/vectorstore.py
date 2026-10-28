@@ -205,6 +205,10 @@ class QdrantVectorStore:
 
     async def document_metadata(self, doc_ids: Sequence[str]) -> dict[str, dict]:
         """Metadata và số chunk hiện hành; không tải text/vector hoặc quét toàn kho."""
+        from app.db.ai_session import enabled
+        if enabled():
+            from app.services.ai_documents import document_metadata
+            return await document_metadata(doc_ids)
         import asyncio
         gate = asyncio.Semaphore(8)
         fields = ["doc_title", "source", "doc_type", "ingested_at", "storage_bucket",
@@ -229,6 +233,9 @@ class QdrantVectorStore:
         Khác `search`: không xếp hạng và không được bỏ sót đoạn nào - dùng khi
         người dùng muốn đọc lại nguyên văn bản chứ không phải tìm đoạn liên quan.
         """
+        from app.db.ai_session import enabled
+        if enabled() and doc_id not in await self.document_metadata([doc_id]):
+            return []
         payloads: list[dict[str, Any]] = []
         offset = None
         while True:
@@ -252,6 +259,8 @@ class QdrantVectorStore:
 
     async def scroll_filtered(self, query_filter: models.Filter, limit: int = 256) -> list[dict[str, Any]]:
         """Payload (kèm text) của các chunk khớp bộ lọc, theo thứ tự trong file gốc."""
+        from app.services.ai_documents import restrict
+        query_filter = await restrict(query_filter)
         points, _ = await self._client.scroll(collection_name=self.collection, scroll_filter=query_filter,
                                               limit=limit, with_payload=True, with_vectors=False)
         return sorted((dict(p.payload or {}) for p in points), key=lambda p: p.get("chunk_index", 0))
@@ -263,6 +272,15 @@ class QdrantVectorStore:
         collection rồi gộp, và chỉ lấy đúng vài trường payload cần cho danh sách
         chứ không kéo cả `text` về: trường đó là toàn bộ nội dung kho.
         """
+        from app.db.ai_session import enabled, repository
+        if enabled():
+            from app.services.ai_documents import metadata
+            async with repository() as repo:
+                table = repo.table("KnowledgeDocuments")
+                allowed = set(await repo.document_ids())
+                rows = await repo.rows("KnowledgeDocuments", table.c.IndexStatus == "Indexed", owned=True)
+            return [{"doc_id": row["AiServerDocId"] if row["AiServerDocId"] in allowed else f"sql:{row['Id']}",
+                     **metadata(row)} for row in rows]
         docs: dict[str, dict[str, Any]] = {}
         offset = None
         while True:

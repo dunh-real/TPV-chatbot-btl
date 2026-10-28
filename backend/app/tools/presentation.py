@@ -24,6 +24,7 @@ from app.documents.pptx_builder import (
     count_slides,
 )
 from app.services import storage
+from app.services.ai_outputs import tracked_workflow
 from app.tools.base import ToolError
 from app.tools.templates import get_template
 
@@ -109,6 +110,7 @@ async def _template_file(template_id: str) -> str:
         raise ToolError(f"generate_presentation: không tìm thấy mẫu {template_id!r} ({exc})") from exc
 
 
+@tracked_workflow("Slide")
 async def generate_presentation(
     data: dict[str, Any],
     template_id: str | None = None,
@@ -136,7 +138,7 @@ async def generate_presentation(
     deck = DeckSpec(title=title, subtitle=str(data.get("subtitle") or ""), slides=slides)
 
     stem = filename or f"SLIDE_{date.today():%Y%m%d}"
-    output_path = storage.new_output(stem, ".pptx")
+    output_path = storage.new_output(storage.versioned_stem(stem), ".pptx")
     path = await anyio.to_thread.run_sync(
         lambda: build_pptx(deck, output_path, template_file or None)
     )

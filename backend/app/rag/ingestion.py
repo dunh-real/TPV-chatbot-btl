@@ -71,7 +71,8 @@ def make_doc_id(source: str, text: str) -> str:
     thì dùng `make_doc_id_file`, xem docstring ở đó để biết vì sao.
     """
     digest = hashlib.sha256(f"{source}|{text[:4096]}".encode("utf-8")).hexdigest()[:16]
-    return digest
+    from app.services.ai_documents import scoped_id
+    return scoped_id(digest)
 
 
 def make_doc_id_file(source: str, path: Path) -> str:
@@ -80,7 +81,8 @@ def make_doc_id_file(source: str, path: Path) -> str:
     Giữ tham số source để tương thích các caller hiện tại.
     """
     with path.open("rb") as content:
-        return hashlib.file_digest(content, "sha256").hexdigest()[:16]
+        from app.services.ai_documents import scoped_id
+        return scoped_id(hashlib.file_digest(content, "sha256").hexdigest()[:16])
 
 
 def make_legacy_doc_id_file(source: str, path: Path) -> str:
@@ -95,6 +97,9 @@ def make_legacy_doc_id_file(source: str, path: Path) -> str:
 # --------------------------------------------------------------------------- #
 # Pipeline
 # --------------------------------------------------------------------------- #
+from app.services.ai_documents import tracked_ingestion
+
+
 class IngestionPipeline:
     def __init__(
         self,
@@ -105,6 +110,7 @@ class IngestionPipeline:
         self.store = store or get_vector_store()
         self.chunker = Chunker(self.settings)
 
+    @tracked_ingestion
     async def ingest_text(
         self,
         text: str,

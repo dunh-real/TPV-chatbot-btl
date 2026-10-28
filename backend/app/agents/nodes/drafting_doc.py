@@ -116,12 +116,21 @@ async def read_document_node(state: dict[str, Any]) -> dict[str, Any]:
 async def outline_node(state: dict[str, Any]) -> dict[str, Any]:
     """LLM đề xuất các mục, bám nội dung thật của tài liệu.
 
-    Dàn ý được nhét vào chỗ `template` mà các node sau (`validate`, `export`,
-    `register`) vốn đã đọc - nhánh này vì thế dùng lại nguyên ba node đó thay vì
-    chép lại logic xuất file và ghi sổ.
+    Cấu trúc nằm trong `template` để dùng lại các node validate/export.
+    Workflow đăng ký sản phẩm qua MSSQL, không ghi sổ SQLite.
     """
     if state.get("error") or state.get("missing_input"):
         return {}
+
+    from app.db.ai_session import enabled
+    if enabled():
+        from app.tools.templates import get_template
+        template = await get_template(state.get("inputs", {}).get("ma_template") or state["request"])
+        if not template.get("found"):
+            return {"missing_input": ["ma_template: mã mẫu SQL có phiên bản đang công bố"]}
+        if not template["fields"].get("sections"):
+            return {"error": "Phiên bản mẫu SQL chưa khai báo các mục nội dung"}
+        return {"template": template, "template_choice": {"confidence": 1.0, "reason": "Mẫu SQL đã công bố"}}
 
     data = state["data"]
     tieu_de_mac_dinh = f"Báo cáo tổng hợp nội dung {data['ten_tai_lieu']}"

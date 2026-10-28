@@ -199,3 +199,31 @@ def fake_object_storage(monkeypatch):
     fake = FakeStorage()
     monkeypatch.setattr(documents, "ObjectStorage", lambda: fake)
     return fake
+
+
+@pytest.fixture
+def business_store(monkeypatch, tmp_path):
+    """Giả lập biên ghi MSSQL/MinIO cho test dựng file, không dùng SQLite nghiệp vụ."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock, MagicMock
+    from app.db import ai_session
+    from app.services import ai_outputs, ai_templates
+    from app.services.object_storage import ObjectStorage
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "output_dir", str(tmp_path))
+    repo = AsyncMock()
+    repo.user_id = 900000
+    repo.document.return_value = None
+    repo.templates.return_value = []
+    repo.number_exists.return_value = False
+    repo.add.side_effect = range(1, 1000)
+    repo.table = MagicMock()
+    @asynccontextmanager
+    async def scope():
+        yield repo
+    monkeypatch.setattr(ai_session, "repository", scope)
+    monkeypatch.setattr(ai_outputs, "repository", scope)
+    monkeypatch.setattr(ai_templates, "repository", scope)
+    monkeypatch.setattr(ObjectStorage, "upload", lambda self, path, name:
+        {"storage_bucket": "test", "storage_object_key": "outputs/"+name})
+    return repo

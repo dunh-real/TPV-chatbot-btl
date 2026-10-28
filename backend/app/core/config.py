@@ -194,11 +194,14 @@ class Settings(BaseSettings):
     cache_ttl_seconds: int = 3600
     history_max_turns: int = 20
 
-    # ------------------------------------------------- CSDL app tự quản lý ---
-    # Sổ văn bản, mẫu báo cáo: những thứ hệ thống này TỰ SINH ra và phải ghi lại.
-    # Không nằm trên ERP vì ERP chỉ cho đọc.
-    database_url: str = "sqlite+aiosqlite:///./data/demo.db"
+    # ------------------------------------------------- SQLite pháp lý ---
+    # Chỉ quản lý điều khoản, phiên bản và bằng chứng câu trả lời.
+    database_url: str = "sqlite+aiosqlite:///./legal_data/legal.db"
     database_echo: bool = False
+
+    # MSSQL nghiệp vụ bắt buộc cho mẫu, văn bản và đăng ký đầu ra.
+    ai_database_url: str = ""
+    ai_default_partition_id: int | None = None
 
     # ------------------------------------------------- CSDL ERP (CHỈ ĐỌC) ---
     # Nguồn sự thật về phòng ban / thiết bị / nhân sự. Quyền được cấp là chỉ đọc,

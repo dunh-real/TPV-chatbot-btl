@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-"""Sinh DDL SQL Server từ chính model SQLAlchemy - schema luôn khớp với code.
-
-    uv run python scripts/gen_schema.py            # in ra màn hình
-    uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql
-"""
+"""Sinh DDL SQLite của tám bảng pháp lý; không sinh schema nghiệp vụ MSSQL."""
 
 from __future__ import annotations
 
@@ -13,27 +9,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from sqlalchemy.dialects import mssql  # noqa: E402
+from sqlalchemy.dialects import sqlite  # noqa: E402
 from sqlalchemy.schema import CreateIndex, CreateTable  # noqa: E402
 
 from app.db.models import Base  # noqa: E402
 
-HEADER = """-- Schema CSDL nghiệp vụ TPV cho SQL Server 2016+.
--- KHÔNG sửa tay: sinh từ app/db/models.py bằng
---     uv run python scripts/gen_schema.py -o scripts/schema_sqlserver.sql
---
--- Bảng tài nguyên được tách làm hai (don_vi / thiet_bi) thay vì gộp một bảng:
--- gộp lại thì nhân sự bị lặp theo từng dòng thiết bị, sửa sót một dòng là báo
--- cáo ra số sai.
---
--- Cột truong_du_lieu của template_bao_cao là JSON lưu dạng NVARCHAR(MAX)
--- (SQL Server không có kiểu JSON riêng).
-"""
+HEADER = "-- Schema SQLite pháp lý; nghiệp vụ MSSQL dùng bảng có sẵn.\n"
 
 
 def generate() -> str:
-    dialect = mssql.dialect(deprecate_large_types=True)   # NVARCHAR(MAX) thay vì NTEXT
-    dialect.server_version_info = (15, 0, 0)              # để cột ngày ra DATE, không DATETIME
+    dialect = sqlite.dialect()
 
     parts = [HEADER]
     for table in Base.metadata.sorted_tables:
@@ -44,7 +29,7 @@ def generate() -> str:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Sinh DDL SQL Server từ model")
+    parser = argparse.ArgumentParser(description="Sinh DDL SQLite pháp lý từ model")
     parser.add_argument("-o", "--output", help="Ghi ra file thay vì in màn hình")
     ns = parser.parse_args()
 

@@ -10,6 +10,18 @@ from urllib3 import PoolManager, Timeout
 from app.core.config import get_settings
 
 
+def parse_reference(value):
+    """Nhận minio://bucket/key, minio:bucket/key và s3://bucket/key."""
+    url = urlsplit(value or "")
+    if url.scheme not in {"s3", "minio"}:
+        raise ValueError("Tham chiếu file phải thuộc MinIO")
+    bucket, key = (url.netloc, url.path.lstrip("/")) if url.netloc else (
+        url.path.lstrip("/").partition("/")[0], url.path.lstrip("/").partition("/")[2])
+    if not bucket or not key or url.query or url.fragment:
+        raise ValueError("Tham chiếu MinIO thiếu bucket/object hoặc có tham số lạ")
+    return bucket, key
+
+
 class ObjectStorage:
     def __init__(self):
         self.cfg = get_settings()

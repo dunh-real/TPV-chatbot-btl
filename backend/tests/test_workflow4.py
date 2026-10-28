@@ -17,47 +17,37 @@ def date_to_dt(y, m, d):
     return datetime(y, m, d)
 from app.documents.charts import compare_bar_chart, status_bar_chart
 from app.documents.extract_figures import extract_figures, reconcile_file
-from app.db.models import VanBan
+import json
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from app.tools.base import ToolError
 from app.services.report_register import previous_ky, validate_ky, get_reporting_status
 
 
 @pytest.fixture
-async def app_session():
-    """CSDL app: chỉ còn sổ văn bản (dùng để biết đơn vị nào đã gửi báo cáo)."""
-    from app.db.models import Base
-
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    async with factory() as session:
-        session.add(VanBan(ma_van_ban="10/BC-DV02", ten_van_ban="Báo cáo Đơn vị 2",
-                           loai_van_ban="bao_cao_di", noi_gui="Đơn vị 2",
-                           noi_nhan="Ban Giám đốc", ngay_van_ban=date(2026, 8, 20),
-                           file_path="", dang_file="docx"))
-        await session.commit()
-        yield session
-    await engine.dispose()
+async def app_session(monkeypatch):
+    """Bản ghi đầu ra MSSQL giả lập, tách khỏi phiên ERP."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import MagicMock
+    from app.db import ai_session
+    records = []
+    def add(record):
+        records.append({"Id": len(records)+1, "RelatedEntityId": len(records)+1, "OutputFileUrl": "",
+            "ResultJson": json.dumps({"ma_don_vi": record.ma_don_vi, "params": {"ky": record.ky},
+                "so_ky_hieu": record.ma_van_ban, "ngay_van_ban": str(record.ngay_van_ban)})})
+    add(SimpleNamespace(ma_don_vi="00002", ky="2026-08", ma_van_ban="10/BC-DV02", ngay_van_ban=date(2026,8,20)))
+    repo = AsyncMock()
+    repo.table = MagicMock()
+    repo.rows.return_value = records
+    @asynccontextmanager
+    async def scope():
+        yield repo
+    monkeypatch.setattr(ai_session, "repository", scope)
+    return SimpleNamespace(add=add, commit=AsyncMock(), records=records)
 
 
 @pytest.fixture
-async def session(erp_session, app_session, monkeypatch):
-    """Phiên ERP để đọc số liệu, kèm sổ văn bản tạm cho `get_reporting_status`.
-
-    Tool đọc sổ văn bản tự mở phiên CSDL app của nó, nên phải trỏ phiên đó về
-    CSDL tạm của test thay vì file thật.
-    """
-    from contextlib import asynccontextmanager
-
-    import app.db.session as db_session
-
-    @asynccontextmanager
-    async def _app_scope():
-        yield app_session
-
-    monkeypatch.setattr(db_session, "session_scope", _app_scope)
+async def session(erp_session, app_session):
     return erp_session
 
 
@@ -101,7 +91,7 @@ async def test_bao_cao_ky_thang_8_ky_ngay_thang_9_van_tinh_dung_ky(session, app_
     mốc kỳ thì nó rơi ra ngoài khoảng tháng 8 và đơn vị bị coi là chưa gửi -
     trong khi sổ văn bản đang có đúng bản báo cáo đó.
     """
-    app_session.add(VanBan(ma_van_ban="11/BC-00001", ten_van_ban="Báo cáo Đơn vị 1",
+    app_session.add(SimpleNamespace(ma_van_ban="11/BC-00001", ten_van_ban="Báo cáo Đơn vị 1",
                            loai_van_ban="bao_cao_di", ma_don_vi="00001", ky="2026-08",
                            noi_gui="Đơn vị 1", noi_nhan="Ban Giám đốc",
                            ngay_van_ban=date(2026, 9, 19), file_path="", dang_file="docx"))
@@ -114,7 +104,7 @@ async def test_bao_cao_ky_thang_8_ky_ngay_thang_9_van_tinh_dung_ky(session, app_
 
 
 async def test_bao_cao_ky_khac_khong_bi_tinh_nham(session, app_session):
-    app_session.add(VanBan(ma_van_ban="12/BC-00001", ten_van_ban="Báo cáo Đơn vị 1",
+    app_session.add(SimpleNamespace(ma_van_ban="12/BC-00001", ten_van_ban="Báo cáo Đơn vị 1",
                            loai_van_ban="bao_cao_di", ma_don_vi="00001", ky="2026-07",
                            noi_gui="Đơn vị 1", noi_nhan="Ban Giám đốc",
                            ngay_van_ban=date(2026, 8, 5), file_path="", dang_file="docx"))
@@ -126,8 +116,9 @@ async def test_bao_cao_ky_khac_khong_bi_tinh_nham(session, app_session):
     assert [m["ma_don_vi"] for m in status["missing"]] == ["00001"]
 
 
-async def test_ban_ghi_cu_khong_co_ky_van_do_duoc_theo_ten(session):
-    """Sổ văn bản cũ không có mã đơn vị lẫn kỳ; đổi lược đồ không được làm nó rỗng."""
+async def test_khong_doan_don_vi_ky_tu_ten_bao_cao(session, app_session):
+    app_session.records.append({"Id": 99, "RelatedEntityId": 99, "OutputFileUrl": "",
+                               "ResultJson": '{"noi_gui":"Đơn vị 1"}'})
     status = await get_reporting_status(session, ky="2026-08")
     assert [r["ma_don_vi"] for r in status["reported"]] == ["00002"]
 
@@ -196,7 +187,6 @@ async def agg_env(tmp_path, monkeypatch, session, app_session):
         yield app_session
 
     monkeypatch.setattr(rp, "erp_session_scope", _erp_scope)
-    monkeypatch.setattr(rp, "session_scope", _app_scope)
     monkeypatch.setattr(rp, "get_settings", lambda: _Settings(str(tmp_path)))
     return tmp_path
 

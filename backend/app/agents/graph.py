@@ -42,7 +42,6 @@ from app.agents.nodes.drafting import (
     export_node,
     extract_params_node,
     fetch_data_node,
-    register_node,
     render_sections_node,
     select_template_node,
     validate_node,
@@ -53,7 +52,6 @@ from app.agents.nodes.report import (
     extract_params_node as agg_extract_params_node,
     gather_data_node,
     reconcile_node,
-    register_node as agg_register_node,
     render_node as agg_render_node,
     validate_node as agg_validate_node,
 )
@@ -77,6 +75,7 @@ from app.agents.state import (
     StepResult,
 )
 from app.services.conversation import get_memory
+from app.services.ai_outputs import tracked_workflow
 from app.services import errors, session_files
 from app.tools.base import ToolError
 
@@ -200,6 +199,7 @@ def get_document_graph():
     return build_document_graph()
 
 
+@tracked_workflow("Review")
 async def run_document_workflow(
     file_path: str,
     file_name: str = "",
@@ -268,7 +268,6 @@ def build_draft_graph():
     graph.add_node("count_retry", _count_retry)
     graph.add_node("validate", validate_node)
     graph.add_node("export", export_node)
-    graph.add_node("register", register_node)
 
     graph.set_entry_point("extract_params")
     graph.add_conditional_edges("extract_params", route_after_params,
@@ -280,8 +279,7 @@ def build_draft_graph():
     graph.add_conditional_edges("validate", route_after_validate,
                                 {"render_sections": "count_retry", "export": "export"})
     graph.add_edge("count_retry", "render_sections")
-    graph.add_edge("export", "register")
-    graph.add_edge("register", END)
+    graph.add_edge("export", END)
     return graph.compile()
 
 
@@ -295,7 +293,7 @@ def build_draft_doc_graph():
 
     Ngắn hơn nhánh CSDL vì bỏ được ba bước không còn nghĩa: không tra ERP,
     không chọn mẫu (dàn ý dựng từ chính tài liệu), không tra quy định làm căn cứ.
-    Ba bước cuối - `validate`, `export`, `register` - dùng LẠI của nhánh CSDL,
+    Hai bước cuối - `validate`, `export` - dùng lại của nhánh CSDL,
     nên van chắn số, cách cấp số ký hiệu và cách ghi sổ văn bản giống hệt nhau.
     """
     from app.agents.nodes.drafting_doc import outline_node, read_document_node
@@ -308,7 +306,6 @@ def build_draft_doc_graph():
     graph.add_node("count_retry", _count_retry)
     graph.add_node("validate", validate_node)
     graph.add_node("export", export_node)
-    graph.add_node("register", register_node)
 
     graph.set_entry_point("read_document")
     graph.add_conditional_edges("read_document", route_after_document,
@@ -320,8 +317,7 @@ def build_draft_doc_graph():
     graph.add_conditional_edges("validate", route_after_validate,
                                 {"render_sections": "count_retry", "export": "export"})
     graph.add_edge("count_retry", "render_sections")
-    graph.add_edge("export", "register")
-    graph.add_edge("register", END)
+    graph.add_edge("export", END)
     return graph.compile()
 
 
@@ -330,6 +326,7 @@ def get_draft_doc_graph():
     return build_draft_doc_graph()
 
 
+@tracked_workflow("Draft")
 async def run_draft_workflow(
     request: str,
     ma_don_vi: str | None = None,
@@ -348,7 +345,7 @@ async def run_draft_workflow(
         "nguon": "tai_lieu" if tu_tai_lieu else "csdl",
         "file_id": file_id or "",
         # `params` phải có sẵn kể cả nhánh tài liệu (không có bước trích tham số):
-        # `export_node` và `register_node` đọc `params["ky"]` để đặt tên file và
+        # `export_node` đọc `params["ky"]` để đặt tên file và
         # ghi sổ, thiếu là KeyError ngay trước lúc xuất file.
         "params": {} if not tu_tai_lieu else {"loai_bao_cao": request, "thang": None,
                                               "nam": None, "ky": None, "ghi_chu": ""},
@@ -364,11 +361,14 @@ async def run_draft_workflow(
         "ma_don_vi": result.get("ma_don_vi", ""),
         "template": result.get("template", {}).get("ma_template", ""),
         "template_name": result.get("template", {}).get("ten_bao_cao", ""),
+        "template_id": result.get("template", {}).get("template_id"),
+        "template_version": result.get("template", {}).get("template_version"),
         "data": result.get("data", {}),
         "sections": result.get("sections", []),
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
         "registered_as": result.get("registered_as", ""),
+        "so_ky_hieu": result.get("so_ky_hieu", ""),
         "regulations": result.get("regulations", []),
         "assumptions": result.get("assumptions", []),
         "data_notes": result.get("data_notes", []),
@@ -395,7 +395,6 @@ def build_aggregate_graph():
     graph.add_node("render", agg_render_node)
     graph.add_node("validate", agg_validate_node)
     graph.add_node("export", agg_export_node)
-    graph.add_node("register", agg_register_node)
 
     graph.set_entry_point("extract_params")
     graph.add_edge("extract_params", "gather_data")
@@ -406,8 +405,7 @@ def build_aggregate_graph():
     graph.add_edge("charts", "render")
     graph.add_edge("render", "validate")
     graph.add_edge("validate", "export")
-    graph.add_edge("export", "register")
-    graph.add_edge("register", END)
+    graph.add_edge("export", END)
     return graph.compile()
 
 
@@ -416,6 +414,7 @@ def get_aggregate_graph():
     return build_aggregate_graph()
 
 
+@tracked_workflow("Aggregate")
 async def run_aggregate_workflow(
     request: str,
     inputs: dict[str, Any] | None = None,
@@ -433,6 +432,8 @@ async def run_aggregate_workflow(
     return {
         "request": request,
         "params": result.get("params", {}),
+        "template_id": result.get("template_id"),
+        "template_version": result.get("template_version"),
         "data": result.get("data", {}),
         "sections": sections,
         "reconciliation": result.get("reconciliation", []),
@@ -440,6 +441,7 @@ async def run_aggregate_workflow(
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
         "registered_as": result.get("registered_as", ""),
+        "so_ky_hieu": result.get("so_ky_hieu", ""),
         "assumptions": result.get("assumptions", []),
         "error": result.get("error", ""),
     }
@@ -477,6 +479,7 @@ def get_presentation_graph():
     return build_presentation_graph()
 
 
+@tracked_workflow("Slide")
 async def run_presentation_workflow(
     request: str,
     inputs: dict[str, Any] | None = None,

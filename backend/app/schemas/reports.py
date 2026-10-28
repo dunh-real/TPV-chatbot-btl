@@ -72,6 +72,7 @@ class RegulationRef(BaseModel):
 
 
 class DraftResponse(BaseModel):
+    ai_task_id: int | None = None
     nguon: str = Field(default="csdl", description="Nguồn số liệu đã dùng")
     source_document: dict[str, Any] = Field(
         default_factory=dict,
@@ -147,6 +148,7 @@ class AggregateSection(BaseModel):
 
 
 class AggregateResponse(BaseModel):
+    ai_task_id: int | None = None
     request: str
     params: dict[str, Any] = Field(default_factory=dict)
     data: dict[str, Any] = Field(

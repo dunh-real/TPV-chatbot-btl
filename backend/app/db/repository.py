@@ -11,10 +11,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import TemplateBaoCao, VanBan
+from app.db.business_types import DocumentInfo
 
 
 @dataclass(slots=True)
@@ -68,55 +66,41 @@ class TaiNguyenDonVi:
 
 
 class TemplateRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+    """Mẫu nghiệp vụ luôn đọc từ MSSQL, không dùng session pháp lý."""
 
-    async def list_all(self, loai_bao_cao: str | None = None) -> list[TemplateBaoCao]:
-        stmt = select(TemplateBaoCao).order_by(TemplateBaoCao.ma_template)
-        if loai_bao_cao:
-            stmt = stmt.where(TemplateBaoCao.loai_bao_cao == loai_bao_cao)
-        result = await self.session.execute(stmt)
-        return list(result.scalars())
+    async def list_all(self, loai_bao_cao=None):
+        from app.services.ai_templates import list_templates
+        return await list_templates(loai_bao_cao)
 
-    async def get(self, ma_template: str) -> TemplateBaoCao | None:
-        return await self.session.get(TemplateBaoCao, ma_template)
+    async def get(self, ma_template):
+        from app.services.ai_templates import materialize
+        template = next((t for t in await self.list_all() if t.ma_template == ma_template), None)
+        return await materialize(template) if template else None
 
-    async def catalog(self) -> list[dict[str, str]]:
-        """Chỉ tên + loại + mô tả: đủ để LLM chọn, không cần cấu trúc trường."""
-        return [
-            {"ma_template": t.ma_template, "ten_bao_cao": t.ten_bao_cao,
-             "loai_bao_cao": t.loai_bao_cao, "mo_ta": t.mo_ta}
-            for t in await self.list_all()
-        ]
+    async def catalog(self):
+        return [{"ma_template": t.ma_template, "ten_bao_cao": t.ten_bao_cao,
+                 "loai_bao_cao": t.loai_bao_cao, "mo_ta": t.mo_ta}
+                for t in await self.list_all()]
 
 
-class VanBanRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class DocumentRepository:
+    """Tra tài liệu nguồn trong MSSQL; báo cáo đầu ra có bảng sản phẩm riêng."""
 
-    async def get(self, ma_van_ban: str) -> VanBan | None:
-        return await self.session.get(VanBan, ma_van_ban)
+    async def get(self, key):
+        from sqlalchemy import or_
+        from app.db.ai_session import repository
+        async with repository() as repo:
+            table = repo.table("KnowledgeDocuments")
+            rows = await repo.rows("KnowledgeDocuments", or_(table.c.DocumentNumber == key,
+                table.c.DocCode == key, table.c.AiServerDocId == key), owned=True)
+            if not rows:
+                return None
+            if len(rows) != 1:
+                raise ValueError("Định danh văn bản không duy nhất")
+            row = rows[0]
+            return DocumentInfo(ma_van_ban=row["DocCode"] or row["DocumentNumber"],
+                ten_van_ban=row["Title"], noi_gui=row["IssuingAgency"] or "",
+                ngay_van_ban=row["IssuedDate"], doc_id=row["AiServerDocId"])
 
-    async def get_by_doc_id(self, doc_id: str) -> VanBan | None:
-        """Tra ngược từ doc_id trong Qdrant về sổ văn bản."""
-        result = await self.session.execute(select(VanBan).where(VanBan.doc_id == doc_id).limit(1))
-        return result.scalar_one_or_none()
-
-    async def list_recent(self, limit: int = 50, loai_van_ban: str | None = None) -> list[VanBan]:
-        stmt = select(VanBan).order_by(VanBan.ngay_van_ban.desc()).limit(limit)
-        if loai_van_ban:
-            stmt = stmt.where(VanBan.loai_van_ban == loai_van_ban)
-        result = await self.session.execute(stmt)
-        return list(result.scalars())
-
-    async def upsert(self, van_ban: VanBan) -> VanBan:
-        merged = await self.session.merge(van_ban)
-        await self.session.flush()
-        return merged
-
-    async def link_doc_id(self, ma_van_ban: str, doc_id: str) -> None:
-        """Nối văn bản với doc_id trong Qdrant để tra cứu được nội dung."""
-        van_ban = await self.session.get(VanBan, ma_van_ban)
-        if van_ban is not None:
-            van_ban.doc_id = doc_id
-            await self.session.flush()
+    async def get_by_doc_id(self, doc_id):
+        return await self.get(doc_id)

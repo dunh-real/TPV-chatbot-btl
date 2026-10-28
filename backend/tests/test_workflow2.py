@@ -965,7 +965,7 @@ def fake_llm(monkeypatch):
     return llm
 
 
-async def test_workflow_chay_ca_bon_nhanh(cong_van, fake_llm):
+async def test_workflow_chay_ca_bon_nhanh(cong_van, fake_llm, business_store):
     from app.agents.graph import run_document_workflow
 
     result = await run_document_workflow(
@@ -981,7 +981,7 @@ async def test_workflow_chay_ca_bon_nhanh(cong_van, fake_llm):
     assert {"llm_review", "totals"} <= result.keys()
 
 
-async def test_dan_y_duoc_tra_ve_cho_giao_dien(huong_dan, fake_llm):
+async def test_dan_y_duoc_tra_ve_cho_giao_dien(huong_dan, fake_llm, business_store):
     from app.agents.graph import run_document_workflow
 
     result = await run_document_workflow(file_path=str(huong_dan), departments=[])
@@ -992,7 +992,7 @@ async def test_dan_y_duoc_tra_ve_cho_giao_dien(huong_dan, fake_llm):
     assert all({"block_id", "level", "text"} == set(m) for m in dan_y)
 
 
-async def test_noi_nhan_ngoai_danh_muc_van_duoc_giu(cong_van, fake_llm):
+async def test_noi_nhan_ngoai_danh_muc_van_duoc_giu(cong_van, fake_llm, business_store):
     """Ban Giám đốc không phải một dòng trong bảng phòng ban, nhưng văn bản giao
     việc cho họ thì người đọc vẫn phải thấy - trước đây bị lọc bỏ im lặng."""
     from app.agents.graph import run_document_workflow
@@ -1006,7 +1006,7 @@ async def test_noi_nhan_ngoai_danh_muc_van_duoc_giu(cong_van, fake_llm):
     assert ngoai["department"] == ""       # không có mã thì không giả vờ có
 
 
-async def test_ma_phong_ban_model_tu_nghi_ra_bi_ha_xuong_ngoai_danh_muc(cong_van, fake_llm):
+async def test_ma_phong_ban_model_tu_nghi_ra_bi_ha_xuong_ngoai_danh_muc(cong_van, fake_llm, business_store):
     """Mã bịa thì bỏ mã, nhưng vẫn giữ tên để không nuốt mất một nơi nhận."""
     from app.agents.graph import run_document_workflow
 
@@ -1017,7 +1017,7 @@ async def test_ma_phong_ban_model_tu_nghi_ra_bi_ha_xuong_ngoai_danh_muc(cong_van
     assert bia["department"] == "" and bia["in_catalog"] is False
 
 
-async def test_muc_khong_xac_dinh_duoc_noi_nhan_thi_bo(cong_van, fake_llm):
+async def test_muc_khong_xac_dinh_duoc_noi_nhan_thi_bo(cong_van, fake_llm, business_store):
     from app.agents.graph import run_document_workflow
 
     result = await run_document_workflow(file_path=str(cong_van), departments=DEPARTMENTS)
@@ -1026,7 +1026,7 @@ async def test_muc_khong_xac_dinh_duoc_noi_nhan_thi_bo(cong_van, fake_llm):
     assert "Không rõ ai phải làm" not in [t["task"] for t in result["tasks"]]
 
 
-async def test_loi_bia_bi_loai_va_lo_theo_khoi(cong_van, fake_llm):
+async def test_loi_bia_bi_loai_va_lo_theo_khoi(cong_van, fake_llm, business_store):
     from app.agents.graph import run_document_workflow
 
     result = await run_document_workflow(file_path=str(cong_van), departments=DEPARTMENTS)
@@ -1039,7 +1039,7 @@ async def test_loi_bia_bi_loai_va_lo_theo_khoi(cong_van, fake_llm):
     assert all(all(f["block_id"] == key for f in group) for key, group in review.items())
 
 
-async def test_khong_co_danh_muc_van_phan_loai_duoc(cong_van, fake_llm):
+async def test_khong_co_danh_muc_van_phan_loai_duoc(cong_van, fake_llm, business_store):
     """Phân loại chỉ đọc nội dung tài liệu nên không cần danh mục phòng ban."""
     from app.agents.graph import run_document_workflow
 
@@ -1051,7 +1051,7 @@ async def test_khong_co_danh_muc_van_phan_loai_duoc(cong_van, fake_llm):
         "P.TCCB", "Ban Giám đốc", "Phòng Bịa"]
 
 
-async def test_file_hong_khong_lam_vo_workflow(tmp_path, fake_llm):
+async def test_file_hong_khong_lam_vo_workflow(tmp_path, fake_llm, business_store):
     from app.agents.graph import run_document_workflow
 
     path = tmp_path / "hong.docx"
@@ -1062,7 +1062,7 @@ async def test_file_hong_khong_lam_vo_workflow(tmp_path, fake_llm):
     assert result["rule_check"]["status"] == "skipped"
 
 
-async def test_tai_lieu_bat_ky_van_ra_ket_qua(tmp_path, fake_llm):
+async def test_tai_lieu_bat_ky_van_ra_ket_qua(tmp_path, fake_llm, business_store):
     """Tài liệu kỹ thuật không có thành phần thể thức nào - vẫn phải soát được."""
     from app.agents.graph import run_document_workflow
 

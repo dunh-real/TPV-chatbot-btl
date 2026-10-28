@@ -46,4 +46,4 @@ async def download(filename: str) -> FileResponse:
     Tên file đoán được (`SLIDE_2026-08__t64.pptx`), nên nếu chỉ kiểm "có nằm trong
     thư mục output không" thì bất kỳ ai cũng tải được bộ slide của đơn vị khác.
     """
-    return output_file_response(filename)
+    return await output_file_response(filename)

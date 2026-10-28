@@ -371,7 +371,7 @@ class WF5Settings:
 
 
 @pytest.fixture
-async def ppt_env(tmp_path, monkeypatch, erp_session, erp_query):
+async def ppt_env(tmp_path, monkeypatch, erp_session, erp_query, business_store):
     """Số liệu đọc từ ERP tạm, sổ văn bản ở CSDL app tạm, output vào thư mục tạm."""
     from contextlib import asynccontextmanager
 
@@ -406,7 +406,7 @@ async def ppt_env(tmp_path, monkeypatch, erp_session, erp_query):
     import app.db.session as db_session
 
     monkeypatch.setattr(db_session, "session_scope", _scope)
-    monkeypatch.setattr(rp, "session_scope", _scope)
+
     monkeypatch.setattr(rp, "query_erp", _query)
     monkeypatch.setattr(rp, "get_settings", lambda: WF5Settings)
     monkeypatch.setattr(pr, "get_settings", lambda: WF5Settings)

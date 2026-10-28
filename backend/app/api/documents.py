@@ -221,7 +221,8 @@ async def _ingest_source(path, filename, metadata, doc_type, force):
     await store.ensure_collection()
     doc_id = make_doc_id_file(filename, path)
     existing = await store.document_summary(doc_id)
-    if existing is None:
+    from app.db.ai_session import enabled, repository
+    if existing is None and not enabled():
         existing = await store.document_summary(make_legacy_doc_id_file(filename, path))
     if existing is not None:
         try:
@@ -229,6 +230,12 @@ async def _ingest_source(path, filename, metadata, doc_type, force):
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         if not force:
+            if enabled():
+                async with repository() as repo:
+                    row_id = await repo.begin_document(existing["doc_id"], existing["doc_title"], metadata)
+                    from app.db.ai_repository import now
+                    await repo.patch("KnowledgeDocuments", row_id, IndexStatus="Indexed",
+                        ProcessingStatus="Extracted", ChunkCount=existing["chunk_count"], LastIndexedTime=now())
             return IngestResponse(**existing, already_exists=True,
                                   elapsed_ms=(time.perf_counter() - started) * 1000)
         doc_id = existing["doc_id"]
@@ -408,7 +415,10 @@ async def giao_viec(request: GiaoViecRequest) -> GiaoViecResponse:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=str(exc)) from exc
 
+    from app.services.ai_outputs import register_file
+    registered = await register_file(path)
     return GiaoViecResponse(
+        ai_task_id=registered["ai_task_id"],
         loai=request.loai, file_name=path.name,
         download_url=f"/api/documents/download/{quote(path.name)}",
         task_count=len(tasks),
@@ -418,7 +428,7 @@ async def giao_viec(request: GiaoViecRequest) -> GiaoViecResponse:
 @router.get("/download/{filename}", summary="Tải văn bản giao việc đã sinh")
 async def download(filename: str) -> FileResponse:
     # Chặn cả vượt thư mục, đọc chéo thuê bao, lẫn bản cũ trong cache trình duyệt.
-    return output_file_response(filename)
+    return await output_file_response(filename)
 
 
 @router.get("", response_model=DocumentPage, summary="Danh sách tài liệu đã nạp (phân trang)",
@@ -432,8 +442,9 @@ async def list_documents(
     try:
         docs = await get_vector_store().list_documents()
     except Exception as exc:  # noqa: BLE001
+        logger.exception("Không đọc được danh sách tài liệu")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=f"Không đọc được kho tài liệu: {exc}") from exc
+                            detail="Không đọc được kho tài liệu") from exc
     legal = await _legal_info([d["doc_id"] for d in docs])
     items = [DocumentItem(**d, **legal.get(d["doc_id"], {})) for d in docs]
     if q.strip():
@@ -467,6 +478,15 @@ async def _legal_info(doc_ids: list[str]) -> dict[str, dict]:
 async def remove_document(doc_id: str) -> list[str]:
     """Xoá tài liệu khỏi kho: chunk trong Qdrant + cây phiên bản VBQPPL (nếu bật). Trả về doc_id các
     văn bản gốc đã dựng lại chunk vì văn bản sửa đổi của chúng vừa bị xoá."""
+    from app.db.ai_session import enabled, repository
+    if enabled():
+        async with repository() as repo:
+            row = await repo.document(doc_id, include_unready=True)
+            if row is None:
+                raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
+            from app.db.ai_repository import now
+            await repo.patch("KnowledgeDocuments", row["Id"], IsDeleted=True,
+                DeletionTime=now(), DeleterUserId=repo.user_id)
     await get_vector_store().delete_document(doc_id)
     if not get_settings().legal_versioning_enabled:
         return []

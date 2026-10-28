@@ -304,6 +304,7 @@ class GiaoViecRequest(BaseModel):
 
 
 class GiaoViecResponse(BaseModel):
+    ai_task_id: int | None = None
     loai: str
     file_name: str
     download_url: str
@@ -311,6 +312,7 @@ class GiaoViecResponse(BaseModel):
 
 
 class ReviewResponse(BaseModel):
+    ai_task_id: int | None = None
     document: DocumentInfoModel
     blocks: list[BlockModel] = Field(
         default_factory=list,

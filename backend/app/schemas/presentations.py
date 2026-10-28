@@ -18,6 +18,7 @@ class PresentationRequest(BaseModel):
 
 
 class PresentationResponse(BaseModel):
+    ai_task_id: int | None = None
     request: str
     data: dict[str, Any] = Field(default_factory=dict, description="QueryResult trong data.queries")
     params: dict[str, Any] = Field(default_factory=dict)

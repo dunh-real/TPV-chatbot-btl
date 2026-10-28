@@ -78,13 +78,15 @@ class _Repo:
 
 
 async def test_so_trung_trong_so_thi_bao_loi(monkeypatch):
-    from types import SimpleNamespace
-
-    import app.db.repository as repo
-
-    cu = SimpleNamespace(ten_van_ban="Báo cáo tháng 8", ngay_van_ban=date(2026, 9, 3))
-    monkeypatch.setattr(repo, "VanBanRepository", lambda session: _Repo({"15/BC-PA": cu}))
-    loi = await tt.kiem_so_van_ban(None, "15/BC-PA")
-    assert "đã có trong sổ" in loi and "03/09/2026" in loi
-    assert await tt.kiem_so_van_ban(None, "16/BC-PA") == ""
-    assert await tt.kiem_so_van_ban(None, "") == ""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+    from app.db import ai_session
+    repo = AsyncMock()
+    repo.number_exists.side_effect = lambda number, **kw: number == "15/BC-PA"
+    @asynccontextmanager
+    async def scope():
+        yield repo
+    monkeypatch.setattr(ai_session, "repository", scope)
+    assert "đã có trong sổ MSSQL" in await tt.kiem_so_van_ban("15/BC-PA")
+    assert await tt.kiem_so_van_ban("16/BC-PA") == ""
+    assert await tt.kiem_so_van_ban("") == ""

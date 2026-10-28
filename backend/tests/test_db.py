@@ -10,31 +10,18 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.db.erp_repository import ErpDonViRepository
-from app.db.models import Base, TemplateBaoCao, VanBan
-from app.db.repository import TemplateRepository, VanBanRepository
+from app.db.models import Base
 
 
 @pytest.fixture
 async def session():
-    """CSDL app - chỉ còn mẫu báo cáo và sổ văn bản."""
+    """SQLite chỉ tạo bảng pháp lý."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 
     factory = async_sessionmaker(engine, expire_on_commit=False)
     async with factory() as session:
-        session.add_all([
-            TemplateBaoCao(
-                ma_template="BC_THANG", ten_bao_cao="Báo cáo tháng",
-                loai_bao_cao="dinh_ky", mo_ta="Báo cáo định kỳ hằng tháng",
-                truong_du_lieu=json.dumps({"muc": ["nhan_su", "thiet_bi"]}),
-            ),
-            VanBan(ma_van_ban="10/BC-DV02", ten_van_ban="Báo cáo Đơn vị 2",
-                   loai_van_ban="bao_cao_di", noi_gui="Đơn vị 2",
-                   noi_nhan="Ban Giám đốc", ngay_van_ban=date(2026, 8, 20),
-                   file_path="", dang_file="docx"),
-        ])
-        await session.commit()
         yield session
     await engine.dispose()
 
@@ -73,20 +60,13 @@ def test_chot_chan_khong_can_tro_cau_doc():
 
 
 # --------------------------------------------- dữ liệu app tự quản lý ---- #
-async def test_danh_muc_mau_bao_cao(session):
-    catalog = await TemplateRepository(session).catalog()
-    assert catalog[0]["ma_template"] == "BC_THANG"
 
 
-async def test_truong_du_lieu_doc_ra_json(session):
-    template = await TemplateRepository(session).get("BC_THANG")
-    assert template.fields["muc"] == ["nhan_su", "thiet_bi"]
 
 
-async def test_so_van_ban_ghi_va_doc_lai(session):
-    repo = VanBanRepository(session)
-    await repo.link_doc_id("10/BC-DV02", "doc-abc")
-    assert (await repo.get_by_doc_id("doc-abc")).ma_van_ban == "10/BC-DV02"
+
+
+
 
 
 async def test_erp_va_app_la_hai_co_so_du_lieu_tach_roi(erp_session, session):

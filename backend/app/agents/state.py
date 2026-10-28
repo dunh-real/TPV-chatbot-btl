@@ -135,6 +135,8 @@ class AggregateState(TypedDict, total=False):
 
     # --- đầu vào ---
     request: str
+    template_id: int | None
+    template_version: int | None
     history: list[dict[str, str]]
     inputs: dict[str, Any]
 

@@ -5,6 +5,8 @@ __pycache__/
 .ruff_cache/
 
 .env
+.env.ai-test
 data/
+legal_data/
 qdrant_storage/
 *.log

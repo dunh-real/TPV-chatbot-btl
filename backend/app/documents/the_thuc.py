@@ -57,18 +57,11 @@ def so_nguoi_dung(inputs: dict[str, Any] | None) -> str:
     return " ".join(str((inputs or {}).get(KHOA_SO) or "").split())
 
 
-async def kiem_so_van_ban(session, so_ky_hieu: str) -> str:
-    """Lỗi nếu số văn bản người dùng nhập đã có trong sổ (rỗng = dùng được).
-
-    Sổ ghi bằng upsert theo số văn bản: số trùng sẽ ghi đè lặng lẽ bản ghi của văn bản cũ.
-    """
-    from app.db.repository import VanBanRepository
-
+async def kiem_so_van_ban(so_ky_hieu: str) -> str:
+    """Kiểm tra số đã đăng ký trên MSSQL; không đọc sổ SQLite cũ."""
     if not so_ky_hieu:
         return ""
-    cu = await VanBanRepository(session).get(so_ky_hieu)
-    if cu is None:
-        return ""
-    ngay = f" ngày {cu.ngay_van_ban:%d/%m/%Y}" if cu.ngay_van_ban else ""
-    return (f"Số văn bản \"{so_ky_hieu}\" đã có trong sổ ({cu.ten_van_ban[:80]}{ngay}). "
-            "Dùng số khác, hoặc để trống để hệ thống cấp số tiếp theo.")
+    from app.db.ai_session import repository, current_task_id
+    async with repository() as repo:
+        exists = await repo.number_exists(so_ky_hieu, exclude_task=current_task_id.get())
+    return f'Số văn bản "{so_ky_hieu}" đã có trong sổ MSSQL. Vui lòng dùng số khác.' if exists else ""

@@ -66,7 +66,11 @@ async def lifespan(app: FastAPI):
     except Exception as exc:  # noqa: BLE001 - vẫn cho app chạy để /health báo lỗi
         logger.error("Không khởi tạo được Qdrant: %s", exc)
     try:
-        await conversations.ensure_collection()
+        from app.db import ai_session
+        if ai_session.enabled():
+            await ai_session.tables()
+        else:
+            await conversations.ensure_collection()
         logger.info("Collection hội thoại sẵn sàng: %s", conversations.collection)
     except Exception as exc:  # noqa: BLE001
         # Không chặn app, nhưng phải kêu to: đây là bản gốc của lịch sử chat,
@@ -105,6 +109,8 @@ async def lifespan(app: FastAPI):
     await get_cache().close()
     await dispose_engine()
     await dispose_erp_engine()
+    from app.db.ai_session import dispose
+    await dispose()
 
 
 app = FastAPI(
@@ -221,20 +227,33 @@ async def health() -> HealthResponse:
     conversations = get_memory().store
     conversation_turns = 0
     try:
-        conversation_turns = await conversations.count()
+        from app.db import ai_session
+        if ai_session.enabled():
+            from sqlalchemy import func, select
+            async with ai_session.repository() as repo:
+                table = repo.table("ChatConversations")
+                ids = select(table.c.Id).where(repo.scope(table), table.c.UserId == repo.user_id)
+                messages = repo.table("ChatMessages")
+                conversation_turns = (await repo.conn.execute(select(func.count()).select_from(messages)
+                    .where(messages.c.ConversationId.in_(ids)))).scalar_one()
+        else:
+            conversation_turns = await conversations.count()
     except Exception as exc:  # noqa: BLE001
         logger.debug("Health check collection hội thoại lỗi: %s", exc)
 
     llm_ok = await get_llm().health()
-    database_ok = await healthcheck()
+    from app.db import ai_session
+    database_ok = await ai_session.healthcheck()
+    legal_ok = await healthcheck() if settings.legal_versioning_enabled else None
     return HealthResponse(
-        status="ok" if (qdrant_ok and llm_ok and database_ok) else "degraded",
+        status="ok" if (qdrant_ok and llm_ok and database_ok and legal_ok is not False) else "degraded",
         qdrant=qdrant_ok,
         llm=llm_ok,
         database=database_ok,
         collection=store.collection,
         points=points,
-        details={"llm_model": settings.llm_model, "embedding_model": settings.embedding_model,
+        details={"business_database": database_ok, "legal_database": legal_ok,
+                 "llm_model": settings.llm_model, "embedding_model": settings.embedding_model,
                  "reranker_model": settings.reranker_model,
                  "conversation_collection": conversations.collection,
                  "conversation_turns": str(conversation_turns)},
@@ -337,6 +356,24 @@ async def _thieu_quyen(request: Request, exc: ThieuQuyen) -> JSONResponse:
     """
     logger.info("403 %s - %s", request.url.path, current_principal().describe())
     return JSONResponse(status_code=403, content={"detail": exc.message})
+
+
+@app.exception_handler(PermissionError)
+async def _sai_pham_vi(request: Request, exc: PermissionError) -> JSONResponse:
+    return JSONResponse(status_code=403, content={"detail": "Không có quyền truy cập phạm vi dữ liệu này"})
+
+
+from app.db.ai_session import AINotConfigured, DocumentNumberConflict
+
+
+@app.exception_handler(AINotConfigured)
+async def _chua_co_mssql(request: Request, exc: AINotConfigured) -> JSONResponse:
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
+@app.exception_handler(DocumentNumberConflict)
+async def _trung_so_van_ban(request: Request, exc: DocumentNumberConflict) -> JSONResponse:
+    return JSONResponse(status_code=409, content={"detail": str(exc)})
 
 
 @app.get("/whoami", tags=["system"], summary="Backend đang thấy request này là ai")

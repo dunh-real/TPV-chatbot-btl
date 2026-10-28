@@ -16,8 +16,7 @@ import logging
 from typing import Any
 
 from app.core.config import get_settings
-from app.db.repository import VanBanRepository
-from app.db.session import session_scope
+from app.db.repository import DocumentRepository
 from app.rag.retrieval import get_retriever
 from app.rag.vectorstore import build_filter, get_vector_store
 from app.tools.base import ToolError
@@ -94,9 +93,8 @@ async def get_document(document_id: str, max_chars: int | None = None) -> dict[s
     # Sổ văn bản biết số ký hiệu, ngày tháng, file gốc; kho vector biết nội dung.
     record = None
     try:
-        async with session_scope() as session:
-            repo = VanBanRepository(session)
-            record = await repo.get(document_id) or await repo.get_by_doc_id(document_id)
+        repo = DocumentRepository()
+        record = await repo.get(document_id) or await repo.get_by_doc_id(document_id)
     except Exception as exc:  # noqa: BLE001 - mất CSDL thì vẫn đọc được nội dung từ kho
         logger.warning("Không tra được sổ văn bản: %s", exc)
 

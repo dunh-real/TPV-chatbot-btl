@@ -165,7 +165,7 @@ async def _post(path: str, **kwargs) -> httpx.Response:
         return await client.post(path, **kwargs)
 
 
-async def test_endpoint_tra_ve_duong_tai_ve(authorized_account):
+async def test_endpoint_tra_ve_duong_tai_ve(authorized_account, business_store):
     res = await _post("/api/documents/giao-viec",
                       json={"loai": "quyet_dinh", "co_quan": "Công ty TPV", "tasks": TASKS})
 

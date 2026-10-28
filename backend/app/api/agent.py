@@ -247,4 +247,4 @@ async def tools() -> list[ToolInfo]:
 
 @router.get("/download/{filename}", summary="Tải file agent vừa tạo")
 async def download(filename: str) -> FileResponse:
-    return output_file_response(filename)
+    return await output_file_response(filename)
