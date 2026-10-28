@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20260920l" />
+<link rel="stylesheet" href="styles.css?v=20261028" />
 </head>
 <body>
 <div class="app" id="app">
@@ -75,6 +75,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h12M3 18h7"/></svg>
         <span>Truy hồi (debug)</span>
       </button>
+      <button class="nav-item" data-view="tasks"><span>Tác vụ AI</span><em class="nav-hint" id="uc37Badge">UC37</em></button>
       <button class="nav-item" data-view="tools">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1 5 5L21 13l-4 4-9.5 4.5L3 17l4.5-9.5L11 4l1.7 1.3Z"/><circle cx="12" cy="12" r="2.5"/></svg>
         <span>Công cụ &amp; hệ thống</span>
@@ -381,6 +382,29 @@
     </section>
 
     <!-- ========== VIEW: TOOLS / SYSTEM ========== -->
+    <section class="view" id="view-tasks">
+      <div class="uc37-wrap">
+        <div class="uc37-toolbar">
+          <select id="uc37Status" aria-label="Trạng thái"><option value="">Mọi trạng thái</option><option value="Queued">Đang chờ</option><option value="Processing">Đang xử lý</option><option value="Completed">Hoàn thành</option><option value="Failed">Lỗi</option><option value="Cancelled">Đã dừng</option></select>
+          <select id="uc37Kind" aria-label="Loại tác vụ"><option value="">Mọi loại</option><option value="Review">Soát tài liệu</option><option value="Summarize">Tóm tắt</option><option value="TaskExtract">Trích nhiệm vụ</option><option value="Draft">Soạn báo cáo</option><option value="Aggregate">Tổng hợp báo cáo</option><option value="Slide">Tạo slide</option></select>
+          <button class="btn" id="uc37Refresh">Làm mới</button>
+          <label><input type="checkbox" id="uc37Notify"> Nhận thông báo khi tác vụ hoàn thành hoặc lỗi</label>
+        </div>
+        <div id="uc37Message" role="status"></div><div id="uc37Notices" aria-label="Thông báo tác vụ"></div>
+        <details class="uc37-panel"><summary>Tạo tác vụ chạy nền</summary>
+          <form id="uc37Form" class="uc37-form">
+            <select id="uc37CreateKind" aria-label="Nghiệp vụ"><option value="Review">Soát tài liệu</option><option value="Summarize">Tóm tắt tài liệu</option><option value="TaskExtract">Trích nhiệm vụ</option><option value="Draft">Soạn báo cáo từ tài liệu</option><option value="Aggregate">Tổng hợp báo cáo</option><option value="Slide">Tạo slide</option></select>
+            <textarea id="uc37Request" placeholder="Yêu cầu, kỳ báo cáo và phạm vi cần xử lý" rows="3"></textarea>
+            <label>File nguồn (soát, tóm tắt, trích nhiệm vụ, soạn từ tài liệu)<input type="file" id="uc37File" accept=".pdf,.docx,.txt,.md"></label>
+            <input id="uc37Number" placeholder="Số ký hiệu được cấp nếu xuất báo cáo" aria-label="Số ký hiệu">
+            <button class="btn" type="submit" id="uc37Submit">Gửi tác vụ</button>
+          </form>
+        </details>
+        <div class="uc37-grid"><div class="uc37-panel"><div id="uc37List"></div>
+          <div class="uc37-toolbar"><button class="btn" id="uc37Prev">Trang trước</button><span id="uc37Page"></span><button class="btn" id="uc37Next">Trang sau</button></div>
+        </div><div class="uc37-panel" id="uc37Detail">Chọn tác vụ để xem kết quả.</div></div>
+      </div>
+    </section>
     <section class="view" id="view-tools">
       <div class="page" id="toolsPage"></div>
     </section>
@@ -426,7 +450,8 @@
 <div class="popover" id="popover" hidden></div>
 
 <script src="js/markdown.js?v=20260920l"></script>
-<script src="js/api.js?v=20260920l"></script>
-<script src="js/app.js?v=20260920l"></script>
+<script src="js/api.js?v=20261028"></script>
+<script src="js/tasks.js?v=20261028"></script>
+<script src="js/app.js?v=20261028"></script>
 </body>
 </html>

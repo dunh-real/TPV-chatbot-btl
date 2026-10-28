@@ -65,7 +65,7 @@ async def test_giu_so_truoc_khi_chay_workflow(monkeypatch):
     with pytest.raises(ai_session.DocumentNumberConflict):
         await wrapped(request="Thử", inputs={"so_ky_hieu": " 15/BC "})
     repo.lock.assert_awaited_once_with("number:15/BC", shared=True)
-    repo.number_exists.assert_awaited_once_with("15/BC")
+    repo.number_exists.assert_awaited_once_with("15/BC", exclude_task=None)
     repo.add.assert_not_awaited()
     work.assert_not_awaited()
 

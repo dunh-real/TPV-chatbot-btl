@@ -93,9 +93,15 @@ async def lifespan(app: FastAPI):
         await _warmup()
 
     schema_task = asyncio.create_task(watch_schema()) if settings.erp_database_url else None
+    from app.services.task_queue import serve as serve_tasks
+    task_worker = asyncio.create_task(serve_tasks()) if settings.task_worker_enabled and settings.ai_database_url else None
     try:
         yield
     finally:
+        if task_worker:
+            task_worker.cancel()
+            with suppress(asyncio.CancelledError):
+                await task_worker
         if schema_task:
             schema_task.cancel()
             with suppress(asyncio.CancelledError):
@@ -212,6 +218,8 @@ app.include_router(reports.router)
 app.include_router(presentations.router)
 app.include_router(mindmap.router)
 app.include_router(ocr.router)
+from app.api import tasks as tasks_api
+app.include_router(tasks_api.router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])

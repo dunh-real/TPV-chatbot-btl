@@ -12,6 +12,8 @@ _engine = None
 _tables = None
 _lock = asyncio.Lock()
 current_task_id = ContextVar("ai_task_id", default=None)
+execution_task = ContextVar("queued_execution_task", default=None)
+notify_on_finish = ContextVar("notify_on_finish", default=False)
 
 
 class AINotConfigured(RuntimeError):

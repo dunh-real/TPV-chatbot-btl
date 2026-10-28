@@ -202,6 +202,11 @@ class Settings(BaseSettings):
     # MSSQL nghiệp vụ bắt buộc cho mẫu, văn bản và đăng ký đầu ra.
     ai_database_url: str = ""
     ai_default_partition_id: int | None = None
+    # Worker UC37 dùng hàng đợi MSSQL có sẵn, không tạo bảng riêng.
+    task_worker_enabled: bool = True
+    task_worker_poll_seconds: float = Field(default=2, ge=0.2, le=60)
+    task_lease_seconds: int = Field(default=120, ge=30, le=3600)
+    task_execution_timeout_seconds: int = Field(default=1800, ge=10, le=86400)
 
     # ------------------------------------------------- CSDL ERP (CHỈ ĐỌC) ---
     # Nguồn sự thật về phòng ban / thiết bị / nhân sự. Quyền được cấp là chỉ đọc,

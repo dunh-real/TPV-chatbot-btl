@@ -126,6 +126,7 @@
     ocr: ['OCR tài liệu', 'Mô hình thị giác đọc chữ trong ảnh trang, trả về Markdown giữ nguyên cấu trúc'],
     corpus: ['Kho tri thức', 'Nạp tài liệu vào Qdrant và xem thống kê collection'],
     retrieval: ['Truy hồi (debug)', 'Xem hạng từng nhánh, điểm RRF và điểm rerank'],
+    tasks: ['Tác vụ AI', 'Theo dõi xử lý, sản phẩm đầu ra và thông báo'],
     tools: ['Công cụ & hệ thống', 'Danh mục tool của agent và trạng thái hạ tầng'],
   };
 
@@ -138,7 +139,8 @@
     $('#viewTitle').textContent = VIEWS[name][0];
     $('#viewSub').textContent = VIEWS[name][1];
     app.classList.remove('nav-open');
-    location.hash = name;
+    if (!(name === 'tasks' && location.hash.indexOf('#tasks/') === 0)) location.hash = name;
+    if (name === 'tasks' && window.TaskUI) window.TaskUI.show();
     if (name === 'tools') loadToolsPage();
     if (name === 'corpus') loadStats();
     if (name === 'review' && !ruleSetsLoaded) loadRuleSets();
@@ -3255,12 +3257,13 @@
 
   /* ─────────────────────────────── khởi động ─────────────────────────── */
   renderConvos();
-  var initial = (location.hash || '').replace('#', '');
+  var initial = (location.hash || '').replace('#', '').split('/')[0];
   showView(VIEWS[initial] ? initial : 'chat');
   chatInput.focus();
 
   window.addEventListener('hashchange', function () {
-    var name = (location.hash || '').replace('#', '');
+    var name = (location.hash || '').replace('#', '').split('/')[0];
     if (VIEWS[name] && name !== currentView) showView(name);
+    else if (name === "tasks" && window.TaskUI) window.TaskUI.show();
   });
 })();

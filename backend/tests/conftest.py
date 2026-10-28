@@ -207,7 +207,8 @@ def business_store(monkeypatch, tmp_path):
     from contextlib import asynccontextmanager
     from unittest.mock import AsyncMock, MagicMock
     from app.db import ai_session
-    from app.services import ai_outputs, ai_templates
+    from app.services import ai_outputs, ai_templates, task_queue, tasks
+    import json
     from app.services.object_storage import ObjectStorage
     from app.core.config import get_settings
     monkeypatch.setattr(get_settings(), "output_dir", str(tmp_path))
@@ -226,4 +227,7 @@ def business_store(monkeypatch, tmp_path):
     monkeypatch.setattr(ai_templates, "repository", scope)
     monkeypatch.setattr(ObjectStorage, "upload", lambda self, path, name:
         {"storage_bucket": "test", "storage_object_key": "outputs/"+name})
+    async def fence(repo, task_id, token):
+        return {"InputJson": json.dumps({"_uc37": {"managed": True, "lease_token": token, "lease_until": tasks.deadline()}})}
+    monkeypatch.setattr(task_queue, "fence", fence)
     return repo

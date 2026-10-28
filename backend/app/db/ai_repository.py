@@ -74,7 +74,7 @@ class AIRepository:
         tasks = self.table("Tasks")
         def field(column, path):
             return func.json_value(case((func.isjson(column) == 1, column), else_="{}"), path)
-        query = select(tasks.c.Id).where(self.scope(tasks), tasks.c.Status.in_(["Processing", "Completed"]),
+        query = select(tasks.c.Id).where(self.scope(tasks), tasks.c.Status.in_(["Queued", "Processing", "Completed"]),
             or_(field(tasks.c.InputJson, "$.inputs.so_ky_hieu") == number,
                 field(tasks.c.ResultJson, "$.so_ky_hieu") == number))
         if exclude_task is not None:

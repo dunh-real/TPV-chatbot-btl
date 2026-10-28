@@ -219,6 +219,17 @@ async def run_document_workflow(
     return result.get("result", {})
 
 
+@tracked_workflow("Summarize")
+async def run_analysis_workflow(file_path: str, file_name: str = "", noi_gui: str = "", rule_set: str = ""):
+    """Tóm tắt/trích nhiệm vụ chỉ parse và phân tích nội dung, không chạy toàn bộ soát lỗi."""
+    state = {"file_path": file_path, "file_name": file_name, "departments": [], "trace": {}}
+    state.update(await parse_node(state))
+    state.update(await tasks_node(state))
+    if not state.get("error") and not state.get("summary") and not state.get("tasks"):
+        state["error"] = "Không phân tích được nội dung tài liệu; vui lòng chạy lại"
+    return {key: state.get(key) for key in ("summary", "summary_refs", "tasks", "all_refs", "error")}
+
+
 # --------------------------------------------------------------------------- #
 # Workflow 3: soạn văn bản theo mẫu
 # --------------------------------------------------------------------------- #

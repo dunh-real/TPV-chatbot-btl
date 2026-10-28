@@ -1199,3 +1199,22 @@ mark.loi.src-llm:hover, mark.loi.src-llm.on { background: rgba(0,0,0,.05); }
 .doc-table input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
 .pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 .pager .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* UC37: màn hình tác vụ và sản phẩm đầu ra. */
+.uc37-wrap { padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; }
+.uc37-wrap .btn { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 7px 11px; cursor: pointer; }
+.uc37-wrap .btn:hover { background: var(--surface-2); }
+.uc37-wrap .btn:disabled { opacity: .45; cursor: default; }
+.uc37-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.uc37-toolbar select, .uc37-form input, .uc37-form select, .uc37-form textarea { padding: 9px; border: 1px solid var(--border, #ddd); border-radius: 8px; background: var(--bg, #fff); color: inherit; }
+.uc37-grid { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr); gap: 16px; margin-top: 18px; }
+.uc37-panel { border: 1px solid var(--border, #ddd); padding: 18px; border-radius: 12px; min-width: 0; }
+.uc37-panel table { width: 100%; border-collapse: collapse; }
+.uc37-panel td, .uc37-panel th { text-align: left; padding: 10px 6px; border-bottom: 1px solid var(--border, #ddd); }
+.uc37-panel small { display: block; opacity: .65; font-size: 11px; margin-top: 5px; overflow-wrap: anywhere; }
+.uc37-open { border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; font-weight: 600; }
+.uc37-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 500px; overflow: auto; }
+.uc37-form { display: grid; gap: 12px; padding-top: 16px; }
+.uc37-error, #uc37Message { color: #b54708; margin-bottom: 12px; }
+#uc37Notices { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+@media (max-width: 950px) { .uc37-grid { grid-template-columns: 1fr; } .uc37-wrap { padding: 14px; } }

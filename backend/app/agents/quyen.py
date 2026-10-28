@@ -12,6 +12,11 @@ from __future__ import annotations
 
 from app.core.context import Principal, current_principal
 
+# Quyền UC37 đã có trên ERP; không đặt thêm quyền riêng trong backend.
+QUYEN_TAC_VU = "Ai.AiTask"
+QUYEN_TAC_VU_XOA = "Ai.AiTask.Delete"
+QUYEN_TAC_VU_XEM_TAT_CA = "Ai.AiTask.ViewAll"
+
 # Quyền tối thiểu để chạy một nghiệp vụ.
 QUYEN_THEO_NGHIEP_VU: dict[str, str] = {
     "qa": "Ai.AiChatbot",

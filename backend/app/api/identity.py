@@ -46,10 +46,15 @@ class IdentityMiddleware:
             return
 
         with use_principal(principal):
+            from app.db.ai_session import notify_on_finish
+            notification_token = notify_on_finish.set(headers.get("x-notify-on-finish", "").lower() == "true")
             _ghi_log_nguon(headers, scope)
             logger.debug("%s %s - %s", scope.get("method"), scope.get("path"),
                          principal.describe())
-            await self.app(scope, receive, send)
+            try:
+                await self.app(scope, receive, send)
+            finally:
+                notify_on_finish.reset(notification_token)
 
 
 # Đường dẫn bị thăm dò liên tục; ghi log chúng thì phần đáng đọc bị đẩy trôi.
