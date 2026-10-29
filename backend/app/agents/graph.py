@@ -1,0 +1,1356 @@
+"""Lắp workflow 1 (hỏi đáp / tra cứu) thành đồ thị LangGraph.
+
+    quyet_dinh_tra_cuu -┬-> rewrite_query -> retrieve -┬-> build_context -> generate -> END
+                        │                              └-> no_context ---------------> END
+                        └-> no_context ------------------------------------------------> END
+
+Bước đầu là quyết định của MODEL: lượt này có cần lục kho tài liệu không. Không
+cần thì đi thẳng `no_context` - không truy hồi, không trích dẫn, không tốn gì.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import uuid
+from functools import lru_cache
+from pathlib import Path
+from typing import Any, Literal
+
+from langgraph.graph import END, StateGraph
+
+from app.agents.prompts import NO_CONTEXT_ANSWER
+from app.agents.nodes.qa import (
+    build_context_node,
+    generate_node,
+    no_context_node,
+    quyet_dinh_tra_cuu_node,
+    retrieve_node,
+    rewrite_query_node,
+)
+from app.agents.nodes.document import (
+    assemble_node,
+    chinh_ta_llm_node,
+    chinh_ta_node,
+    classify_node,
+    llm_review_node,
+    parse_node,
+    rule_check_node,
+    tasks_node,
+)
+from app.agents.nodes.drafting import (
+    export_node,
+    extract_params_node,
+    fetch_data_node,
+    register_node,
+    render_sections_node,
+    select_template_node,
+    validate_node,
+)
+from app.agents.nodes.report import (
+    charts_node,
+    export_node as agg_export_node,
+    extract_params_node as agg_extract_params_node,
+    gather_data_node,
+    reconcile_node,
+    register_node as agg_register_node,
+    render_node as agg_render_node,
+    validate_node as agg_validate_node,
+)
+from app.agents.nodes.presentation import (
+    brief_node as ppt_brief_node,
+    render_node as ppt_render_node,
+    verify_node as ppt_verify_node,
+)
+from app.agents import progress, references
+from app.agents import quyen
+from app.core.context import current_principal
+from app.agents.planner import Plan, PlanStep, make_plan
+from app.agents.router import MIN_CONFIDENCE
+from app.agents.state import (
+    AgentState,
+    AggregateState,
+    DocumentState,
+    DraftState,
+    PresentationState,
+    QAState,
+    StepResult,
+)
+from app.services.conversation import get_memory
+from app.services import errors, session_files
+from app.tools.base import ToolError
+
+logger = logging.getLogger(__name__)
+
+
+def route_after_retrieve(state: QAState) -> Literal["build_context", "no_context"]:
+    """Không có chunk nào vượt ngưỡng rerank -> không để LLM tự do suy diễn."""
+    return "build_context" if state.get("chunks") else "no_context"
+
+
+def route_after_quyet_dinh(state: QAState) -> Literal["rewrite_query", "no_context"]:
+    """Model nói không cần tra cứu -> bỏ hẳn nhánh truy hồi, không chạy cho vui."""
+    return "rewrite_query" if state.get("can_tra_cuu", True) else "no_context"
+
+
+def build_qa_graph():
+    graph = StateGraph(QAState)
+    graph.add_node("quyet_dinh_tra_cuu", quyet_dinh_tra_cuu_node)
+    graph.add_node("rewrite_query", rewrite_query_node)
+    graph.add_node("retrieve", retrieve_node)
+    graph.add_node("build_context", build_context_node)
+    graph.add_node("generate", generate_node)
+    graph.add_node("no_context", no_context_node)
+
+    graph.set_entry_point("quyet_dinh_tra_cuu")
+    graph.add_conditional_edges(
+        "quyet_dinh_tra_cuu",
+        route_after_quyet_dinh,
+        {"rewrite_query": "rewrite_query", "no_context": "no_context"},
+    )
+    graph.add_edge("rewrite_query", "retrieve")
+    graph.add_conditional_edges(
+        "retrieve",
+        route_after_retrieve,
+        {"build_context": "build_context", "no_context": "no_context"},
+    )
+    graph.add_edge("build_context", "generate")
+    graph.add_edge("generate", END)
+    graph.add_edge("no_context", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_qa_graph():
+    return build_qa_graph()
+
+
+async def build_initial_state(
+    question: str,
+    conversation_id: str | None = None,
+    doc_ids: list[str] | None = None,
+    sources: list[str] | None = None,
+    doc_types: list[str] | None = None,
+    top_n: int | None = None,
+    use_rerank: bool = True,
+    load_history: bool = True,
+) -> QAState:
+    conversation_id = conversation_id or str(uuid.uuid4())
+    history = await get_memory().get_history(conversation_id) if load_history else []
+    state: QAState = {
+        "question": question,
+        "conversation_id": conversation_id,
+        "history": history,
+        "doc_ids": doc_ids or [],
+        "sources": sources or [],
+        "doc_types": doc_types or [],
+        "use_rerank": use_rerank,
+        "trace": {},
+    }
+    if top_n:
+        state["top_n"] = top_n
+    return state
+
+
+# --------------------------------------------------------------------------- #
+# Workflow 2: xử lý văn bản
+# --------------------------------------------------------------------------- #
+PHAN_TICH = ("rule_check", "chinh_ta", "chinh_ta_llm", "llm_review", "classify", "tasks")
+
+
+def build_document_graph():
+    """Sáu nhánh phân tích chạy song song sau khi parse xong.
+
+        parse ─┬─> rule_check    tất định: dàn ý, thứ bậc mục, phông, lề
+               ├─> chinh_ta      tất định: dấu cách, dấu câu, lặp từ, ngoặc
+               ├─> chinh_ta_llm  LLM: chính tả                    ─┐ hai prompt
+               ├─> llm_review    LLM: ngữ pháp, diễn đạt, logic   ─┘ tách riêng
+               ├─> classify      định tuyến, dùng danh mục phòng ban
+               └─> tasks         tóm tắt + phân rã nhiệm vụ
+                                                └─> assemble -> ReviewResult
+
+    Chúng độc lập nhau nên không có lý do gì phải chờ nhau; mỗi node ghi vào một
+    khoá riêng của state.
+
+    Chính tả và chữ nghĩa là HAI nhánh LLM riêng, không gộp: prompt chính tả phải
+    dành gần hết chỗ cho bẫy "hai từ đúng đứng cạnh nhau trông như một từ sai" cùng
+    bảng lỗi hay gặp, mà đó là phần quyết định bản soát có báo oan hay không. Nhét
+    chung vào một prompt lo năm việc thì phần đó bị loãng.
+    """
+    graph = StateGraph(DocumentState)
+    graph.add_node("parse", parse_node)
+    graph.add_node("rule_check", rule_check_node)
+    graph.add_node("chinh_ta", chinh_ta_node)
+    graph.add_node("chinh_ta_llm", chinh_ta_llm_node)
+    graph.add_node("llm_review", llm_review_node)
+    graph.add_node("classify", classify_node)
+    graph.add_node("tasks", tasks_node)
+    graph.add_node("assemble", assemble_node)
+
+    graph.set_entry_point("parse")
+    for node in PHAN_TICH:
+        graph.add_edge("parse", node)
+        graph.add_edge(node, "assemble")
+    graph.add_edge("assemble", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_document_graph():
+    return build_document_graph()
+
+
+async def run_document_workflow(
+    file_path: str,
+    file_name: str = "",
+    noi_gui: str = "",
+    departments: list[dict[str, str]] | None = None,
+    rule_set: str = "",
+) -> dict[str, Any]:
+    state: DocumentState = {
+        "file_path": file_path,
+        "file_name": file_name or file_path,
+        "noi_gui": noi_gui,
+        "departments": departments or [],
+        "rule_set": rule_set,
+        "trace": {},
+    }
+    result = await get_document_graph().ainvoke(state)
+    return result.get("result", {})
+
+
+# --------------------------------------------------------------------------- #
+# Workflow 3: soạn văn bản theo mẫu
+# --------------------------------------------------------------------------- #
+MAX_DRAFT_RETRIES = 2
+
+
+def route_after_params(state: DraftState) -> Literal["select_template", "__end__"]:
+    """Thiếu tham số bắt buộc thì dừng để hỏi lại, không soạn nhầm đơn vị."""
+    return "__end__" if state.get("missing_input") else "select_template"
+
+
+def route_after_template(state: DraftState) -> Literal["fetch_data", "__end__"]:
+    return "__end__" if (state.get("missing_input") or state.get("error")) else "fetch_data"
+
+
+def route_after_document(state: DraftState) -> Literal["outline", "__end__"]:
+    """Không mở được tài liệu thì dừng hẳn - không có gì để soạn báo cáo từ đó.
+
+    Xét cả `error` chứ không chỉ `missing_input`: file hỏng, sai định dạng hay
+    rỗng đều cho `error`, và đi tiếp thì chỉ ra một báo cáo trống.
+    """
+    return "__end__" if (state.get("missing_input") or state.get("error")) else "outline"
+
+
+def route_after_validate(state: DraftState) -> Literal["render_sections", "export"]:
+    """Số liệu không truy được về CSDL thì cho viết lại, tối đa vài lần.
+
+    Chỉ lặp với lỗi nội dung; lỗi thể thức là lỗi của code sinh DOCX, LLM viết lại
+    bao nhiêu lần cũng không sửa được.
+    """
+    failed = state.get("validation", {}).get("status") == "failed"
+    if failed and state.get("retry_count", 0) < MAX_DRAFT_RETRIES:
+        return "render_sections"
+    return "export"
+
+
+async def _count_retry(state: DraftState) -> dict[str, Any]:
+    return {"retry_count": state.get("retry_count", 0) + 1}
+
+
+def build_draft_graph():
+    graph = StateGraph(DraftState)
+    graph.add_node("extract_params", extract_params_node)
+    graph.add_node("select_template", select_template_node)
+    graph.add_node("fetch_data", fetch_data_node)
+    graph.add_node("render_sections", render_sections_node)
+    graph.add_node("count_retry", _count_retry)
+    graph.add_node("validate", validate_node)
+    graph.add_node("export", export_node)
+    graph.add_node("register", register_node)
+
+    graph.set_entry_point("extract_params")
+    graph.add_conditional_edges("extract_params", route_after_params,
+                                {"select_template": "select_template", "__end__": END})
+    graph.add_conditional_edges("select_template", route_after_template,
+                                {"fetch_data": "fetch_data", "__end__": END})
+    graph.add_edge("fetch_data", "render_sections")
+    graph.add_edge("render_sections", "validate")
+    graph.add_conditional_edges("validate", route_after_validate,
+                                {"render_sections": "count_retry", "export": "export"})
+    graph.add_edge("count_retry", "render_sections")
+    graph.add_edge("export", "register")
+    graph.add_edge("register", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_draft_graph():
+    return build_draft_graph()
+
+
+def build_draft_doc_graph():
+    """Soạn báo cáo từ MỘT tài liệu tải lên.
+
+    Ngắn hơn nhánh CSDL vì bỏ được ba bước không còn nghĩa: không tra ERP,
+    không chọn mẫu (dàn ý dựng từ chính tài liệu), không tra quy định làm căn cứ.
+    Ba bước cuối - `validate`, `export`, `register` - dùng LẠI của nhánh CSDL,
+    nên van chắn số, cách cấp số ký hiệu và cách ghi sổ văn bản giống hệt nhau.
+    """
+    from app.agents.nodes.drafting_doc import outline_node, read_document_node
+    from app.agents.nodes.drafting_doc import render_node as doc_render_node
+
+    graph = StateGraph(DraftState)
+    graph.add_node("read_document", read_document_node)
+    graph.add_node("outline", outline_node)
+    graph.add_node("render_sections", doc_render_node)
+    graph.add_node("count_retry", _count_retry)
+    graph.add_node("validate", validate_node)
+    graph.add_node("export", export_node)
+    graph.add_node("register", register_node)
+
+    graph.set_entry_point("read_document")
+    graph.add_conditional_edges("read_document", route_after_document,
+                                {"outline": "outline", "__end__": END})
+    graph.add_edge("outline", "render_sections")
+    graph.add_edge("render_sections", "validate")
+    # Giữ nguyên vòng viết lại của nhánh CSDL: số không truy được về tài liệu thì
+    # cho model viết lại, vẫn sai thì không xuất file.
+    graph.add_conditional_edges("validate", route_after_validate,
+                                {"render_sections": "count_retry", "export": "export"})
+    graph.add_edge("count_retry", "render_sections")
+    graph.add_edge("export", "register")
+    graph.add_edge("register", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_draft_doc_graph():
+    return build_draft_doc_graph()
+
+
+async def run_draft_workflow(
+    request: str,
+    ma_don_vi: str | None = None,
+    inputs: dict[str, Any] | None = None,
+    history: list[dict[str, str]] | None = None,
+    nguon: str = "csdl",
+    file_id: str = "",
+) -> dict[str, Any]:
+    nguon = (nguon or "csdl").strip().lower()
+    tu_tai_lieu = nguon in ("tai_lieu", "file", "document")
+    state: DraftState = {
+        "request": request,
+        "ma_don_vi": ma_don_vi or "",
+        "history": history or [],
+        "inputs": inputs or {},
+        "nguon": "tai_lieu" if tu_tai_lieu else "csdl",
+        "file_id": file_id or "",
+        # `params` phải có sẵn kể cả nhánh tài liệu (không có bước trích tham số):
+        # `export_node` và `register_node` đọc `params["ky"]` để đặt tên file và
+        # ghi sổ, thiếu là KeyError ngay trước lúc xuất file.
+        "params": {} if not tu_tai_lieu else {"loai_bao_cao": request, "thang": None,
+                                              "nam": None, "ky": None, "ghi_chu": ""},
+        "retry_count": 0,
+    }
+    graph = get_draft_doc_graph() if tu_tai_lieu else get_draft_graph()
+    result = await graph.ainvoke(state)
+    return {
+        "nguon": state["nguon"],
+        "source_document": result.get("source_document", {}),
+        "request": request,
+        "params": result.get("params", {}),
+        "ma_don_vi": result.get("ma_don_vi", ""),
+        "template": result.get("template", {}).get("ma_template", ""),
+        "template_name": result.get("template", {}).get("ten_bao_cao", ""),
+        "data": result.get("data", {}),
+        "sections": result.get("sections", []),
+        "validation": result.get("validation", {}),
+        "output_path": result.get("output_path", ""),
+        "registered_as": result.get("registered_as", ""),
+        "regulations": result.get("regulations", []),
+        "assumptions": result.get("assumptions", []),
+        "data_notes": result.get("data_notes", []),
+        "missing_input": result.get("missing_input", []),
+        "retry_count": result.get("retry_count", 0),
+        "error": result.get("error", ""),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Workflow 4: tổng hợp báo cáo
+# --------------------------------------------------------------------------- #
+def route_after_gather(state: AggregateState) -> Literal["reconcile", "__end__"]:
+    return "__end__" if state.get("error") else "reconcile"
+
+
+def build_aggregate_graph():
+    """Đối chiếu file và vẽ biểu đồ độc lập nhau nên chạy song song."""
+    graph = StateGraph(AggregateState)
+    graph.add_node("extract_params", agg_extract_params_node)
+    graph.add_node("gather_data", gather_data_node)
+    graph.add_node("reconcile", reconcile_node)
+    graph.add_node("charts", charts_node)
+    graph.add_node("render", agg_render_node)
+    graph.add_node("validate", agg_validate_node)
+    graph.add_node("export", agg_export_node)
+    graph.add_node("register", agg_register_node)
+
+    graph.set_entry_point("extract_params")
+    graph.add_edge("extract_params", "gather_data")
+    graph.add_conditional_edges("gather_data", route_after_gather,
+                                {"reconcile": "reconcile", "__end__": END})
+    graph.add_edge("gather_data", "charts")
+    graph.add_edge("reconcile", "render")
+    graph.add_edge("charts", "render")
+    graph.add_edge("render", "validate")
+    graph.add_edge("validate", "export")
+    graph.add_edge("export", "register")
+    graph.add_edge("register", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_aggregate_graph():
+    return build_aggregate_graph()
+
+
+async def run_aggregate_workflow(
+    request: str,
+    inputs: dict[str, Any] | None = None,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    state: AggregateState = {"request": request, "history": history or [],
+                             "inputs": inputs or {}}
+    result = await get_aggregate_graph().ainvoke(state)
+
+    # Biểu đồ là bytes - trả đường dẫn file thay vì nhồi vào JSON response.
+    sections = [
+        {k: v for k, v in section.items() if k != "image"} | {"has_chart": bool(section.get("image"))}
+        for section in result.get("sections", [])
+    ]
+    return {
+        "request": request,
+        "params": result.get("params", {}),
+        "data": result.get("data", {}),
+        "sections": sections,
+        "reconciliation": result.get("reconciliation", []),
+        "has_discrepancy": result.get("has_discrepancy", False),
+        "validation": result.get("validation", {}),
+        "output_path": result.get("output_path", ""),
+        "registered_as": result.get("registered_as", ""),
+        "assumptions": result.get("assumptions", []),
+        "error": result.get("error", ""),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Workflow 5: tạo bộ slide
+# --------------------------------------------------------------------------- #
+def build_presentation_graph():
+    """Tái dùng nguyên phần lấy số liệu của workflow 4, rồi giao việc trình bày
+    cho Presenton.
+
+    Chuỗi thẳng, không nhánh song song: bản tóm tắt phải dựng xong mới gọi được
+    Presenton, và chỉ đối chiếu số được sau khi đã có file trong tay.
+    """
+    graph = StateGraph(PresentationState)
+    graph.add_node("extract_params", agg_extract_params_node)
+    graph.add_node("gather_data", gather_data_node)
+    graph.add_node("brief", ppt_brief_node)
+    graph.add_node("render", ppt_render_node)
+    graph.add_node("verify", ppt_verify_node)
+
+    graph.set_entry_point("extract_params")
+    graph.add_edge("extract_params", "gather_data")
+    graph.add_conditional_edges("gather_data", route_after_gather,
+                                {"reconcile": "brief", "__end__": END})
+    graph.add_edge("brief", "render")
+    graph.add_edge("render", "verify")
+    graph.add_edge("verify", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_presentation_graph():
+    return build_presentation_graph()
+
+
+async def run_presentation_workflow(
+    request: str,
+    inputs: dict[str, Any] | None = None,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    state: PresentationState = {"request": request, "history": history or [],
+                                "inputs": inputs or {}}
+    result = await get_presentation_graph().ainvoke(state)
+
+    # `brief` là thứ đã gửi cho Presenton. Trả về luôn để khi bộ slide có câu
+    # lạ, người kiểm tra biết ngay là số liệu đưa vào sai hay bên kia viết thêm.
+    return {
+        "request": request,
+        "params": result.get("params", {}),
+        "brief": result.get("brief", ""),
+        "data": result.get("data", {}),
+        "engine": result.get("engine", ""),
+        "validation": result.get("validation", {}),
+        "output_path": result.get("output_path", ""),
+        "slide_count": result.get("slide_count", 0),
+        "edit_url": result.get("edit_url", ""),
+        "elapsed_seconds": result.get("elapsed_seconds", 0.0),
+        "presentation_id": result.get("presentation_id", ""),
+        "summary_source": result.get("summary_source", ""),
+        "deck_check": result.get("deck_check", {}),
+        "timings": result.get("timings", {}),
+        "assumptions": result.get("assumptions", []),
+        "error": result.get("error", ""),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Agent tổng: một câu yêu cầu -> một kế hoạch -> nhiều bước
+#
+#                          START
+#                            │
+#                          plan             phân rã yêu cầu, tối đa MAX_STEPS bước
+#                            │
+#              ┌─────────────┴─────────────┐
+#           clarify                     execute
+#              │                           │
+#              │      đợt 1: các bước độc lập -> chạy SONG SONG
+#              │      đợt 2: bước phụ thuộc, nhận bối cảnh từ đợt trước
+#              │      bước không ra kết quả -> thử lại bằng nghiệp vụ khác, 1 lần
+#              │                           │
+#              └─────────────┬─────────────┘
+#                         finalize          ghép câu trả lời, gom file, ghi nhớ
+#                            │
+#                           END
+#
+# Trước đây tầng này chỉ chọn MỘT nghiệp vụ, nên "tổng hợp nhân sự tháng 8 rồi
+# làm slide" luôn mất một nửa. Giờ nó lập kế hoạch: bước nào chạy, bước nào phụ
+# thuộc bước nào, và bước nào chạy song song được.
+#
+# Nhánh `clarify` tồn tại vì đoán bừa tốn kém hơn hỏi lại: soạn nhầm loại báo cáo
+# thì người dùng phải đọc hết mới phát hiện, còn một câu hỏi lại chỉ mất 5 giây.
+# --------------------------------------------------------------------------- #
+
+# Một bước được chạy tối đa hai lần: lần đầu theo kế hoạch, lần sau bằng nghiệp
+# vụ thay thế. Lần thứ ba không bao giờ đổi được kết quả - cùng câu hỏi, cùng
+# nguồn dữ liệu - nên nó chỉ làm người dùng chờ lâu hơn.
+MAX_STEP_ATTEMPTS = 2
+
+# Bước không ra gì thì thử lại bằng nghiệp vụ nào. Nguyên tắc: ĐỔI NGUỒN, không
+# phải hỏi lại cùng một nguồn to hơn.
+#   qa rỗng      -> kho tài liệu không có; số liệu có thể nằm trong CSDL nghiệp vụ
+#   agent rỗng   -> CSDL không có; con số có thể nằm trong báo cáo đã nộp (RAG)
+#   báo cáo hỏng -> tra xem kỳ đó thật sự có dữ liệu gì, để trả lời được điều gì đó
+# `document` không có đường lùi: file hỏng thì chạy lại lần nào cũng hỏng.
+RETRY_AS: dict[str, str] = {
+    "qa": "agent",
+    "agent": "qa",
+    "draft": "agent",
+    "report": "agent",
+    "presentation": "agent",
+}
+
+# Nhãn tiếng Việt của từng nghiệp vụ, dùng khi ghép câu trả lời nhiều bước.
+# Phải khớp `INTENT_LABEL` trong frontend/js/app.js - xem ghi chú ở đó.
+# "Tra cứu tài liệu" chứ không phải "Tra cứu": cạnh "Tra số liệu" của nhánh agent,
+# hai chữ đó phải phân biệt được nguồn, vì đó đúng là thứ ngăn hai nhánh này.
+INTENT_VI = {
+    "qa": "Tra cứu tài liệu", "document": "Soát tài liệu", "draft": "Soạn văn bản",
+    "report": "Tổng hợp báo cáo", "presentation": "Tạo slide", "agent": "Tra số liệu",
+}
+
+
+async def plan_node(state: AgentState) -> dict[str, Any]:
+    """Phân rã yêu cầu. `routing` giữ nguyên hình dạng cũ cho client đang dùng."""
+    plan = await make_plan(
+        request=state["request"],
+        has_file=bool(state.get("file_id")),
+        history=state.get("history"),
+    )
+    primary = plan.primary
+    # Phát ở ĐÂY chứ không phải trong `make_plan`: node này là nơi kế hoạch trở
+    # thành thứ sẽ được chạy, nên sự kiện đúng dù kế hoạch tới từ LLM, từ đường
+    # lùi từ khoá, hay từ một bản dựng sẵn trong test.
+    progress.emit("plan", **plan.as_dict())
+    if plan.reason:
+        progress.emit("thinking", text=plan.reason)
+    return {
+        "plan": plan.as_dict(),
+        "intent": primary.intent if primary else "",
+        "routing": {"intent": primary.intent if primary else "",
+                    "confidence": round(plan.confidence, 2), "reason": plan.reason,
+                    "clarify": plan.clarify, "source": plan.source},
+    }
+
+
+def route_after_plan(state: AgentState) -> Literal["execute", "clarify"]:
+    """Chỉ hỏi lại khi vừa có câu hỏi vừa KHÔNG chắc phải làm gì.
+
+    Model nói chuyện dài dòng hay kèm sẵn một câu hỏi lịch sự; cứ thấy `clarify`
+    là dừng thì agent không bao giờ làm việc gì. Thiếu đầu vào cụ thể đã có
+    workflow tự hỏi.
+    """
+    plan = state.get("plan", {})
+    if not plan.get("steps"):
+        return "clarify"
+    if plan.get("clarify") and plan.get("confidence", 0.0) < MIN_CONFIDENCE:
+        return "clarify"
+    return "execute"
+
+
+# ------------------------------- các nhánh --------------------------------- #
+# Mỗi nhánh nhận yêu cầu CON của bước đang chạy, không phải câu gốc của người
+# dùng: ở kế hoạch nhiều bước, hai bước có hai yêu cầu khác nhau.
+async def qa_branch(state: AgentState, request: str) -> dict[str, Any]:
+    qa_state = await build_initial_state(
+        question=request,
+        conversation_id=state.get("conversation_id"),
+        # Người dùng đã tích tài liệu trong panel thì chỉ tra trong đó. Thiếu hai
+        # dòng này là giao diện hiện banner "đang dùng tài liệu X" mà máy vẫn lục
+        # cả kho - sai mà không ai thấy, vì câu trả lời vẫn có trích dẫn tử tế.
+        doc_ids=state.get("doc_ids"),
+        sources=state.get("sources"),
+        load_history=False,
+    )
+    qa_state["history"] = state.get("history", [])
+    # Gọi thẳng đồ thị chứ không qua `run_qa`: việc ghi hội thoại do `finalize`
+    # làm một lần cho cả kế hoạch, chạy hai bước qa thì không được ghi hai lần.
+    result = await get_qa_graph().ainvoke(qa_state)
+    return {
+        "answer": result.get("answer", ""),
+        "citations": result.get("used_citations", []),
+        # Lượt xã giao KHÔNG phải là tra cứu hụt - xem `_step_is_empty`.
+        "xa_giao": bool(result.get("trace", {}).get("xa_giao")),
+        "result": {"standalone_query": result.get("standalone_query", ""),
+                   "query_variants": result.get("query_variants", []),
+                   "chunk_count": len(result.get("chunks", []))},
+        "trace": result.get("trace", {}),
+        "error": result.get("error", ""),
+    }
+
+
+async def document_branch(state: AgentState, request: str) -> dict[str, Any]:
+    from app.tools.document import analyze_document
+
+    try:
+        result = await analyze_document(state["file_id"])
+    except ToolError as exc:
+        return {"answer": f"Không xử lý được văn bản: {exc}", "error": str(exc)}
+    return {"answer": _summarize_document(result), "result": result,
+            # Nguồn của phần tóm tắt; nguồn của từng nhiệm vụ nằm trong result["tasks"].
+            "refs": result.get("summary_refs", []), "error": result.get("error", "")}
+
+
+async def draft_branch(state: AgentState, request: str) -> dict[str, Any]:
+    """Soạn văn bản. Có file đính kèm thì soạn TỪ FILE ĐÓ, không phải từ CSDL.
+
+    Người dùng đính kèm một tài liệu rồi bảo "soạn báo cáo về trang thiết bị" thì
+    ý họ là tổng hợp lại chính tài liệu vừa gửi. Trước đây nhánh này bỏ quên
+    `file_id`, nên nó lặng lẽ rơi về `nguon="csdl"`: file bị vứt đi, báo cáo dựng
+    từ CSDL, và ra đúng những con số không liên quan gì tới thứ người dùng gửi.
+    Cả một năng lực (soạn báo cáo từ tài liệu) vì thế không gọi tới được từ màn
+    agent, dù workflow bên dưới đã có sẵn.
+    """
+    file_id = (state.get("file_id") or "").strip()
+    result = await run_draft_workflow(
+        request=request,
+        ma_don_vi=state.get("ma_don_vi"),
+        inputs=state.get("inputs", {}),
+        history=state.get("history"),
+        nguon="tai_lieu" if file_id else "csdl",
+        file_id=file_id,
+    )
+    return {"answer": _summarize_draft(result), "result": result,
+            "missing_input": result.get("missing_input", []),
+            "error": result.get("error", "")}
+
+
+async def report_branch(state: AgentState, request: str) -> dict[str, Any]:
+    result = await run_aggregate_workflow(request, inputs=state.get("inputs", {}),
+                                          history=state.get("history"))
+    return {"answer": _summarize_report(result), "result": result,
+            "error": result.get("error", "")}
+
+
+async def presentation_branch(state: AgentState, request: str) -> dict[str, Any]:
+    result = await run_presentation_workflow(request, inputs=state.get("inputs", {}),
+                                             history=state.get("history"))
+    return {"answer": _summarize_presentation(result), "result": result,
+            "error": result.get("error", "")}
+
+
+async def agent_branch(state: AgentState, request: str) -> dict[str, Any]:
+    """Nhánh duy nhất để MODEL tự chọn công cụ, thay vì code chọn hộ."""
+    from app.agents.nodes.toolloop import run_tool_loop
+
+    # Khoá cả vòng lặp công cụ: model tự gọi `search_documents` được, nên không
+    # ép phạm vi vào đây thì nó vẫn lục ra ngoài phạm vi bằng đường vòng.
+    result = await run_tool_loop(request, history=state.get("history"),
+                                 doc_ids=state.get("doc_ids"),
+                                 sources=state.get("sources"))
+    return {"answer": _summarize_agent(result), "result": result,
+            "refs": result.get("refs", []), "error": result.get("error", "")}
+
+
+BRANCHES: dict[str, Any] = {
+    "qa": qa_branch, "document": document_branch, "draft": draft_branch,
+    "report": report_branch, "presentation": presentation_branch, "agent": agent_branch,
+}
+
+
+# ------------------------------ chạy kế hoạch ------------------------------ #
+def _step_is_empty(intent: str, out: dict[str, Any]) -> bool:
+    """Bước đã chạy xong nhưng không mang về thứ người dùng cần.
+
+    Phân biệt với LỖI: thiếu đầu vào bắt buộc không phải là rỗng - chạy lại bằng
+    nghiệp vụ khác cũng vẫn thiếu, việc phải làm là hỏi người dùng.
+    """
+    if out.get("missing_input"):
+        return False
+    # Từ chối vì thiếu quyền KHÔNG phải là rỗng. Coi nó là rỗng thì hệ thống chạy
+    # lại bằng nghiệp vụ khác - tức tự đi tìm đường vòng qua chính cái chốt vừa
+    # chặn, và người dùng nhận về một câu trả lời thay vì lời từ chối.
+    if out.get("tu_choi_quyen"):
+        return False
+    # Chào hỏi / cảm ơn cũng KHÔNG phải là rỗng. Lượt này cố tình không truy hồi
+    # nên `chunk_count` bằng 0, mà luật của `qa` bên dưới đọc đúng con số đó và
+    # kết luận là tra hụt - rồi `RETRY_AS` đẩy lời chào sang nhánh `agent`, tức
+    # cho nó chạy trọn một vòng công cụ ERP để nói lại đúng câu "chào bạn".
+    if out.get("xa_giao"):
+        return False
+    # Không có lấy một chữ để đưa cho người dùng thì rỗng, bất kể nghiệp vụ nào.
+    if not (out.get("answer") or "").strip():
+        return True
+    result = out.get("result") or {}
+
+    if intent == "qa":
+        # Không chunk nào vượt ngưỡng: kho tài liệu không trả lời được câu này.
+        return not result.get("chunk_count")
+    if intent == "agent":
+        if result.get("pending_approval"):
+            return False
+        if result.get("stop_reason") in ("gọi lặp", "quá nhiều lỗi công cụ", "lỗi LLM"):
+            return True
+        ran = [item for item in result.get("tool_log", []) if item.get("ok")]
+        # Gọi được tool nhưng nguồn nào cũng trống -> chưa trả lời được gì.
+        return bool(ran) and all(item.get("empty") for item in ran)
+    # draft | report | presentation | document: lỗi ở đây gần như luôn là "kỳ đó
+    # không có dữ liệu" hoặc "không đọc được file" - đáng đổi nguồn mà tra lại.
+    # Còn chạy xong mà chỉ vướng van đối chiếu số thì KHÔNG phải rỗng: workflow
+    # đã tự lặp lại vài lần và đã nói rõ lý do, hỏi lại bằng nghiệp vụ khác cũng
+    # không đổi được gì ngoài việc bắt người dùng chờ thêm.
+    return bool(out.get("error"))
+
+
+def _context_line(upstream: list[dict[str, Any]]) -> str:
+    """Bối cảnh cho bước phụ thuộc, dựng bằng CODE từ tham số bước trước.
+
+    Bước sau thường được model viết là "làm slide từ số liệu đó". Một mình câu đó
+    không đủ để trích lại kỳ báo cáo, nên nối thêm đúng những gì bước trước đã
+    chốt - lấy từ kết quả thật, không phải từ trí nhớ của model.
+    """
+    parts: list[str] = []
+    for item in upstream:
+        params = (item.get("result") or {}).get("params") or {}
+        if (ky := params.get("ky")):
+            parts.append(f"kỳ báo cáo {ky}")
+        if (don_vi := params.get("ma_don_vi")):
+            ma = ", ".join(map(str, don_vi)) if isinstance(don_vi, list) else str(don_vi)
+            parts.append(f"đơn vị {ma}")
+        if (ten := (item.get("result") or {}).get("template_name")):
+            parts.append(f"mẫu {ten}")
+    if not parts:
+        return ""
+    # Bỏ trùng nhưng giữ thứ tự: hai bước trước cùng chốt một kỳ là chuyện thường.
+    seen: dict[str, None] = dict.fromkeys(parts)
+    return " (Bối cảnh đã chốt ở bước trước: " + "; ".join(seen) + ".)"
+
+
+async def _call_branch(intent: str, state: AgentState, request: str) -> dict[str, Any]:
+    """Chạy một nhánh, biến sự cố hạ tầng thành một bước hỏng có kiểm soát.
+
+    Không có lớp này thì một lỗi CSDL ở bước 1 ném thẳng lên trên và giết cả kế
+    hoạch: bước 2 không chạy, người dùng không nhận được gì ngoài traceback. Bọc
+    ở đây thì bước đó báo hỏng, những bước độc lập với nó vẫn xong.
+    """
+    # Chốt quyền đặt ở ĐÂY chứ không ở từng endpoint: mọi nhánh đều đi qua hàm
+    # này, cả `/chat` lẫn `/chat/stream`, cả bước chính lẫn bước chạy lại. Gắn ở
+    # endpoint thì thêm một nghiệp vụ mới là thêm một chỗ có thể quên.
+    if not quyen.duoc_chay(intent):
+        tu_choi = quyen.cau_tu_choi(intent)
+        logger.info("Từ chối nhánh %s: %s", intent, current_principal().describe())
+        return {"answer": tu_choi, "result": {}, "error": "", "tu_choi_quyen": True}
+
+    try:
+        return await BRANCHES[intent](state, request)
+    except Exception as exc:  # noqa: BLE001 - một nhánh hỏng không phải cả agent hỏng
+        message = errors.as_error(exc, f"chạy nhánh {intent}")
+        return {"answer": message, "result": {}, "error": message}
+
+
+async def _run_step(
+    state: AgentState, step: dict[str, Any], upstream: list[dict[str, Any]]
+) -> StepResult:
+    """Chạy một bước, thử lại bằng nghiệp vụ khác nếu không ra kết quả."""
+    intent = step["intent"]
+    request = step["request"] + _context_line(upstream)
+
+    progress.emit("step_start", id=step["id"], intent=intent, request=request,
+                  label=INTENT_VI.get(intent, intent))
+    out = await _call_branch(intent, state, request)
+    record: StepResult = {
+        "id": step["id"], "intent": intent, "planned_intent": intent, "request": request,
+        "answer": out.get("answer", ""), "result": out.get("result", {}),
+        "citations": out.get("citations", []), "refs": out.get("refs", []),
+        "missing_input": out.get("missing_input", []), "attempts": 1, "retried_as": "",
+        "empty": False, "error": out.get("error", ""),
+    }
+    if not _step_is_empty(intent, out):
+        progress.emit("step_done", **_step_event(record))
+        return record
+
+    retry_as = RETRY_AS.get(intent, "")
+    if not retry_as or record["attempts"] >= MAX_STEP_ATTEMPTS:
+        record["empty"] = True
+        progress.emit("step_done", **_step_event(record))
+        return record
+
+    logger.info("Bước %s (%s) không ra kết quả, thử lại bằng %s", step["id"], intent, retry_as)
+    progress.emit("step_retry", id=step["id"], **{"from": intent}, to=retry_as,
+                  label=INTENT_VI.get(retry_as, retry_as))
+    retry = await _call_branch(retry_as, state, request)
+    record["attempts"] = 2
+    record["retried_as"] = retry_as
+    if _step_is_empty(retry_as, retry):
+        # Cả hai nguồn đều không có: giữ câu trả lời của lần đầu (nó nói đúng về
+        # nguồn mà người dùng hỏi tới) và nói thẳng là đã tra ở đâu.
+        record["empty"] = True
+        record["answer"] = (record["answer"] or "Chưa tra được thông tin này.").rstrip() + \
+            f" (Đã tra thêm bằng {INTENT_VI.get(retry_as, retry_as).lower()} nhưng cũng không có dữ liệu.)"
+        progress.emit("step_done", **_step_event(record))
+        return record
+
+    record["intent"] = retry_as
+    record["answer"] = retry.get("answer", "")
+    record["result"] = retry.get("result", {})
+    record["citations"] = retry.get("citations", [])
+    record["refs"] = retry.get("refs", [])
+    record["error"] = retry.get("error", "")
+    progress.emit("step_done", **_step_event(record))
+    return record
+
+
+def _step_event(record: StepResult) -> dict[str, Any]:
+    """Phần của một bước được phép lên màn hình.
+
+    Không kèm `result`: đó là số liệu thô chưa qua van đối chiếu, và nó nặng.
+    Người dùng cần biết bước nào xong, bằng nghiệp vụ gì, có phải thử lại không.
+    """
+    return {"id": record["id"], "intent": record["intent"],
+            "planned_intent": record["planned_intent"],
+            "label": INTENT_VI.get(record["intent"], record["intent"]),
+            "attempts": record["attempts"], "retried_as": record["retried_as"],
+            "empty": record["empty"], "error": record["error"]}
+
+
+async def execute_node(state: AgentState) -> dict[str, Any]:
+    """Chạy kế hoạch theo từng đợt; trong một đợt thì các bước chạy song song."""
+    plan = Plan(steps=[PlanStep(**item) for item in state.get("plan", {}).get("steps", [])])
+    done: dict[str, StepResult] = {}
+
+    for wave in plan.waves():
+        if len(wave) > 1:
+            logger.info("Chạy song song %d bước: %s", len(wave), [s.intent for s in wave])
+        results = await asyncio.gather(*(
+            _run_step(state, step.as_dict(), [done[d] for d in step.depends_on if d in done])
+            for step in wave
+        ))
+        done.update({step.id: record for step, record in zip(wave, results, strict=True)})
+
+    # Giữ đúng thứ tự kế hoạch, không phải thứ tự chạy xong.
+    steps = [done[step.id] for step in plan.steps if step.id in done]
+    return {"steps": steps} | _stitch(steps)
+
+
+def _stitch(steps: list[StepResult]) -> dict[str, Any]:
+    """Ghép kết quả các bước thành một câu trả lời với MỘT dãy nguồn duy nhất.
+
+    Mỗi bước tự đánh số nguồn từ [1]; nối thẳng lại thì hai cái [1] trỏ hai chỗ
+    khác nhau. Dời dãy số của bước sau ra sau bước trước là cách rẻ nhất để câu
+    trả lời ghép vẫn bấm được vào từng nguồn.
+    """
+    if not steps:
+        return {"answer": "", "citations": [], "refs": [], "result": {},
+                "missing_input": [], "error": ""}
+
+    parts: list[str] = []
+    citations: list[dict[str, Any]] = []
+    refs: list[dict[str, Any]] = []
+    offset = 0
+    multi = len(steps) > 1
+
+    for index, step in enumerate(steps, start=1):
+        answer = step.get("answer", "")
+        step_citations = list(step.get("citations") or [])
+        step_refs = list(step.get("refs") or [])
+
+        (answer,), step_citations = references.shift([answer], step_citations, offset)  # type: ignore[arg-type]
+        offset += len(step_citations)
+        (answer,), step_refs = references.shift([answer], step_refs, offset)  # type: ignore[arg-type]
+        offset += len(step_refs)
+
+        citations += step_citations
+        refs += step_refs
+        parts.append(f"{index}. {INTENT_VI.get(step.get('intent', ''), '')} — {answer}".strip()
+                     if multi else answer)
+
+    primary = steps[-1]
+    return {
+        "answer": "\n\n".join(p for p in parts if p),
+        "citations": citations,
+        "refs": refs,
+        # Hợp đồng cũ: `result` là kết quả thô của workflow. Kế hoạch nhiều bước
+        # thì lấy bước cuối - đó là sản phẩm người dùng đang chờ.
+        "result": primary.get("result", {}),
+        "missing_input": [m for step in steps for m in step.get("missing_input", [])],
+        "error": next((step["error"] for step in steps if step.get("error")), ""),
+    }
+
+
+async def clarify_node(state: AgentState) -> dict[str, Any]:
+    """Yêu cầu mơ hồ -> hỏi lại, không chạy workflow nào cả."""
+    return {"answer": state.get("plan", {}).get("clarify")
+            or state.get("routing", {}).get("clarify")
+            or "Bạn có thể nói rõ hơn mong muốn của mình không?",
+            "result": {}, "steps": []}
+
+
+# ----------------------------- dựng câu trả lời ---------------------------- #
+# Mọi câu dưới đây do CODE dựng từ kết quả workflow. Không gọi LLM: đây là thông
+# báo trạng thái, để model diễn đạt lại thì nó có cơ hội nói sai điều đã xảy ra.
+VALIDATION_VI = {
+    "passed": "số liệu khớp với dữ liệu gốc",
+    "warning": "có cảnh báo cần xem lại",
+    "failed": "có số liệu không truy được về dữ liệu gốc nên chưa xuất file",
+    "skipped": "chưa kiểm tra số liệu",
+}
+
+
+def _validation_note(result: dict[str, Any]) -> str:
+    status = result.get("validation", {}).get("status", "")
+    return VALIDATION_VI.get(status, "")
+
+
+# Tên tiếng Việt của từng tiêu chí, để dòng "Đạt:" đọc được như tiếng người.
+RULE_VI = {
+    "structure.title": "có tiêu đề", "structure.heading_levels": "thứ bậc mục",
+    "structure.empty_section": "mục nào cũng có nội dung",
+    "structure.duplicate_heading": "không trùng tên mục",
+    "structure.numbering": "đánh số liên tục",
+    "structure.paragraph_length": "độ dài đoạn",
+    "consistency.font": "phông chữ nhất quán", "consistency.size_pt": "cỡ chữ nhất quán",
+    "consistency.alignment": "canh lề nhất quán",
+    "consistency.line_spacing": "giãn dòng nhất quán",
+    "consistency.paragraph_spacing_pt": "khoảng cách đoạn nhất quán",
+    "page.size_mm": "khổ giấy", "page.margin_mm": "lề trang",
+}
+
+
+def _format_section(result: dict[str, Any]) -> list[str]:
+    """Mục 1: cấu trúc và trình bày. Gộp lỗi cùng loại để không đổ ra bức tường chữ."""
+    rule_check = result.get("rule_check", {})
+    totals = result.get("totals", {})
+    errors, warnings = totals.get("errors", 0), totals.get("warnings", 0)
+
+    if rule_check.get("status") == "skipped":
+        return [f"1. CẤU TRÚC: chưa kiểm được. {rule_check.get('reason', '')}".strip()]
+
+    lines = ["1. CẤU TRÚC: đạt, không phát hiện lỗi."
+             if not errors and not warnings
+             else f"1. CẤU TRÚC: {errors} lỗi, {warnings} cảnh báo cần xem lại."]
+
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for f in rule_check.get("findings", []):
+        grouped.setdefault(f["rule"], []).append(f)
+
+    # Lỗi trước, cảnh báo sau: thứ phải sửa đứng trên thứ nên xem lại.
+    for rule in sorted(grouped, key=lambda r: grouped[r][0]["severity"] != "error"):
+        items = grouped[rule]
+        first = items[0]
+        chi_tiet = ""
+        if first.get("actual"):
+            chi_tiet = f" (đang là {first['actual']}"
+            chi_tiet += f", cần {first['expected']})" if first.get("expected") else ")"
+        o_dau = f" — {len(items)} chỗ" if len(items) > 1 else (
+            f" — {first['block_id']}" if first.get("block_id") else "")
+        lines.append(f"   • {first['message']}{chi_tiet}{o_dau}")
+
+    if (ten := [RULE_VI[r] for r in rule_check.get("passed", []) if r in RULE_VI]):
+        lines.append(f"   Đạt: {', '.join(ten)}.")
+    if (skipped := rule_check.get("skipped")):
+        lines.append(f"   Chưa kiểm được: {_skipped_vi(skipped)}.")
+    if (reason := rule_check.get("reason")):
+        lines.append(f"   {reason}")
+    return lines
+
+
+def _skipped_vi(items: list[str], limit: int = 4) -> str:
+    """Tiêu chí chưa kiểm được, gọi bằng tên tiếng Việt và cắt bớt cho khỏi dài.
+
+    Mỗi mục có dạng "consistency.font" hoặc "consistency.font (3 đoạn ...)": phần
+    trong ngoặc là lý do, giữ nguyên vì đó mới là thứ người đọc cần.
+    """
+    named = []
+    for item in items[:limit]:
+        rule_id, _, reason = item.partition(" (")
+        named.append(RULE_VI.get(rule_id, rule_id) + (f" ({reason}" if reason else ""))
+    if len(items) > limit:
+        named.append(f"và {len(items) - limit} tiêu chí khác")
+    return "; ".join(named)
+
+
+def _assignment_section(result: dict[str, Any]) -> list[str]:
+    """Mục 3: mỗi nơi nhận một dòng, kèm việc và hạn của riêng nơi đó."""
+    tasks = result.get("tasks") or []
+    if not tasks:
+        return ["3. GỢI Ý PHÂN CÔNG: văn bản không nêu rõ nơi nhận hay đầu việc nào."]
+
+    lines = [f"3. GỢI Ý PHÂN CÔNG ({len(tasks)} nơi nhận):"]
+    for item in tasks:
+        ten = item.get("department_name") or item.get("department") or "(không rõ)"
+        # Nơi nhận ngoài danh mục không có mã để chuyển tự động - nói rõ ra.
+        ngoai = "" if item.get("in_catalog", True) else " [ngoài danh mục phòng ban]"
+        lines.append(f"   • {ten}{ngoai}: {item.get('task', '')}")
+        if (can := item.get("data_needed")):
+            lines.append(f"     Cần chuẩn bị: {', '.join(can)}.")
+        if (han := item.get("deadline")):
+            lines.append(f"     Hạn: {han}.")
+    return lines
+
+
+def _summarize_document(result: dict[str, Any]) -> str:
+    """Ba mục: soát cấu trúc -> tóm tắt nội dung -> gợi ý phân công.
+
+    Toàn bộ do CODE dựng từ kết quả workflow, không gọi thêm LLM: đây là thông báo
+    trạng thái, để model diễn đạt lại thì nó có cơ hội nói sai điều đã xảy ra.
+    """
+    if result.get("error"):
+        return f"Không đọc được văn bản: {result['error']}"
+
+    lines = _format_section(result)
+
+    lines.append("")
+    lines.append(f"2. NỘI DUNG: {result.get('summary') or 'chưa tóm tắt được.'}")
+    if (deadline := result.get("deadline")):
+        lines.append(f"   Hạn chung của văn bản: {deadline}.")
+
+    lines.append("")
+    lines += _assignment_section(result)
+    return "\n".join(lines)
+
+
+def _summarize_draft(result: dict[str, Any]) -> str:
+    if (missing := result.get("missing_input")):
+        if "ma_don_vi" in missing:
+            return "Bạn muốn soạn báo cáo cho đơn vị nào? Vui lòng nêu rõ mã đơn vị."
+        if "ma_template" in missing:
+            return "Chưa xác định được mẫu báo cáo phù hợp. Bạn muốn dùng mẫu nào?"
+        return f"Còn thiếu thông tin: {', '.join(missing)}."
+    if result.get("error"):
+        return f"Không soạn được văn bản: {result['error']}"
+
+    parts = [f"Đã soạn {result.get('template_name') or 'văn bản'}."]
+    if (note := _validation_note(result)):
+        parts.append(f"Kiểm tra: {note}.")
+    if not result.get("output_path"):
+        parts.append("Chưa xuất file, vui lòng xem lại phần số liệu.")
+    for item in result.get("data_notes", []) + result.get("assumptions", []):
+        parts.append(f"Lưu ý: {item}.")
+    return " ".join(parts)
+
+
+def _summarize_report(result: dict[str, Any]) -> str:
+    if result.get("error"):
+        return f"Không tổng hợp được báo cáo: {result['error']}"
+
+    params = result.get("params", {})
+    parts = [f"Đã tổng hợp báo cáo kỳ {params.get('ky', '')}."]
+
+    reporting = result.get("data", {}).get("reporting", {})
+    if reporting:
+        parts.append(f"{reporting.get('units_reported', 0)}/"
+                     f"{reporting.get('units_total', 0)} đơn vị đã gửi báo cáo.")
+        if (missing := reporting.get("missing")):
+            parts.append("Chưa gửi: " + ", ".join(m["ten_don_vi"] for m in missing) + ".")
+    if result.get("has_discrepancy"):
+        parts.append("Phát hiện chênh lệch giữa báo cáo đơn vị và số liệu kiểm kê.")
+    if (note := _validation_note(result)):
+        parts.append(f"Kiểm tra: {note}.")
+    for item in result.get("assumptions", []):
+        parts.append(f"Lưu ý: {item}.")
+    return " ".join(parts)
+
+
+# Tên công cụ nói bằng tiếng người. `tool_log` giữ tên hàm, mà tên hàm là chữ của
+# lập trình viên: "Tôi đã tra bằng query_erp" là câu đọc lên cho
+# người dùng nghe thấy chính cấu trúc bên trong hệ thống, không phải câu trả lời.
+TOOL_VI: dict[str, str] = {
+    "search_documents": "tìm trong kho tài liệu",
+    "get_document": "đọc lại văn bản trong kho",
+    "analyze_document": "soát tài liệu đính kèm",
+    "get_template": "tra mẫu báo cáo",
+    "generate_docx": "dựng file .docx",
+    "generate_presentation": "dựng bộ slide",
+    "query_erp": "truy vấn dữ liệu ERP",
+}
+
+# Công cụ chỉ đọc kho tài liệu. Vòng lặp chỉ chạy được bấy nhiêu mà không kết
+# luận nổi nghĩa là kho không có câu trả lời - đúng tình huống `NO_CONTEXT_ANSWER`.
+TOOL_TRA_TAI_LIEU: frozenset[str] = frozenset({"search_documents", "get_document"})
+
+
+def _from_tool_log(result: dict[str, Any]) -> str:
+    """Nói ra đã tra được những gì khi vòng lặp dừng trước lúc model kịp viết.
+
+    Không dựng số liệu ở đây - chỉ nêu việc đã làm. Con số nằm trong `tool_log`
+    và chưa qua van đối chiếu nào, đọc thẳng ra là bỏ qua đúng cái van đang giữ
+    cho agent không bịa.
+    """
+    ran = list(dict.fromkeys(
+        item["tool"] for item in result.get("tool_log", []) if item.get("ok")))
+    if not ran:
+        return "Tôi chưa tra được thông tin này."
+    # Chỉ lục kho tài liệu mà không ra: đây là câu hỏi tra cứu bị hụt, không phải
+    # sự cố của vòng lặp. Trả lời như nhánh `qa` vẫn trả lời, và hỏi lại cho gọn.
+    if all(tool in TOOL_TRA_TAI_LIEU for tool in ran):
+        return NO_CONTEXT_ANSWER
+    viec = [TOOL_VI.get(tool, tool) for tool in ran]
+    return "Tôi đã " + ", ".join(viec) + " nhưng chưa kết luận được."
+
+
+def _summarize_agent(result: dict[str, Any]) -> str:
+    """Câu trả lời của vòng lặp, kèm cảnh báo khi nó dừng bất thường."""
+    if (pending := result.get("pending_approval")):
+        return (f"Tôi cần tạo file bằng công cụ {pending['tool']} để trả lời yêu cầu này. "
+                f"Bạn duyệt thì tôi thực hiện.")
+
+    answer = result.get("answer") or ""
+    reason = result.get("stop_reason", "")
+    if reason == "chạm trần số bước":
+        lui = _from_tool_log(result)
+        # `NO_CONTEXT_ANSWER` đã tự là một câu hoàn chỉnh và đã mời người dùng nêu
+        # rõ hơn; nối thêm "đã chạm trần số bước tra cứu" vào là kể lể nội bộ.
+        if not answer and lui == NO_CONTEXT_ANSWER:
+            return lui
+        return (answer or lui) + " (Chưa tra xong: đã chạm trần số bước tra cứu.)"
+    if reason == "gọi lặp":
+        # Vòng lặp dừng trước khi model kịp viết câu trả lời, nhưng dữ liệu đã có
+        # trong `tool_log` - nói ra được đã tra những gì còn hơn im lặng.
+        return (answer or _from_tool_log(result)) + \
+               " (Tôi lặp lại cùng một truy vấn nên đã dừng; bạn nêu rõ hơn kỳ và đơn vị giúp tôi.)"
+    if reason == "quá nhiều lỗi công cụ":
+        return (answer or "Tôi chưa tra được thông tin này.") + \
+               " (Công cụ báo lỗi nhiều lần, vui lòng nêu rõ kỳ và đơn vị.)"
+    if result.get("validation", {}).get("status") == "failed":
+        return answer + " (Cảnh báo: có con số chưa đối chiếu được với dữ liệu gốc.)"
+    return answer or "Tôi chưa tra được thông tin này."
+
+
+def _summarize_presentation(result: dict[str, Any]) -> str:
+    if result.get("error"):
+        return f"Không tạo được bộ slide: {result['error']}"
+
+    parts = [f"Đã tạo bộ slide {result.get('slide_count', 0)} trang."]
+    # Con số đáng ngờ không còn bị âm thầm xoá khỏi slide như bản cũ - Presenton
+    # giữ nguyên chữ nó viết - nên phải nói ra, nếu không sẽ không ai biết.
+    issues = result.get("validation", {}).get("issues") or []
+    if (so := [i for i in issues if i.get("type") == "unverified_number"]):
+        parts.append(f"Có {len(so)} chỗ chứa con số chưa đối chiếu được với dữ liệu "
+                     f"gốc, cần đọc lại trước khi trình bày.")
+    # Chữ lạ đếm riêng, không gộp vào câu trên: gộp lại thì người đọc đi tìm một
+    # con số sai trong khi thứ hỏng là hai ký tự chữ Hán.
+    if (la := [i for i in issues if i.get("type") == "foreign_script"]):
+        trang = sorted({str(i.get("slide")) for i in la if i.get("slide")})
+        ky_tu = sorted({c for i in la for c in i.get("characters", [])})
+        parts.append(f"Có {len(la)} chỗ lẫn chữ nước ngoài ({''.join(ky_tu)}) "
+                     f"ở slide {', '.join(trang)}, phải sửa trước khi trình bày.")
+    for item in result.get("assumptions", []):
+        parts.append(f"Lưu ý: {item}.")
+    return " ".join(parts)
+
+
+SUFFIX_KIND = {".docx": "docx", ".pptx": "pptx", ".pdf": "pdf"}
+
+
+async def finalize_node(state: AgentState) -> dict[str, Any]:
+    """Gom file sinh ra và ghi lượt hội thoại vào bộ nhớ.
+
+    Gom từ MỌI bước, không chỉ bước cuối: kế hoạch "tổng hợp rồi làm slide" sinh
+    ra một .docx và một .pptx, người dùng chờ cả hai.
+    """
+    from app.services import storage
+
+    artifacts: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    steps = state.get("steps") or []
+    outputs = [(step.get("result") or {}).get("output_path") for step in steps] \
+        or [state.get("result", {}).get("output_path")]
+    for output_path in outputs:
+        if not output_path:
+            continue
+        path = Path(output_path)
+        if path.name in seen:
+            continue
+        seen.add(path.name)
+        artifacts.append({
+            "file_id": storage.make_file_id("output", path.name),
+            "file_name": path.name,
+            "kind": SUFFIX_KIND.get(path.suffix.lower(), path.suffix.lstrip(".")),
+        })
+
+    # Ghi đúng một lượt cho cả kế hoạch: nhánh hỏi đáp chạy thẳng đồ thị nên
+    # không còn tự ghi như khi nó đi qua `run_qa`.
+    await get_memory().append_turns(
+        state.get("conversation_id", ""),
+        [("user", state["request"]), ("assistant", state.get("answer", ""))],
+    )
+
+    return {"artifacts": artifacts}
+
+
+def build_agent_graph():
+    """Đồ thị đã phẳng đi: mọi nhánh nghiệp vụ nằm trong `execute`.
+
+    Trước đây mỗi nghiệp vụ là một node và `add_conditional_edges` chọn đúng một
+    cái. Hình dạng đó không diễn đạt được "chạy hai bước, bước sau cần bước
+    trước" - LangGraph chỉ rẽ nhánh, không lập lịch. Việc lập lịch giờ nằm trong
+    `execute_node`, còn đồ thị giữ đúng thứ nó diễn đạt tốt: kế hoạch -> chạy ->
+    kết thúc, với một lối rẽ sang hỏi lại.
+    """
+    graph = StateGraph(AgentState)
+    graph.add_node("plan", plan_node)
+    graph.add_node("execute", execute_node)
+    graph.add_node("clarify", clarify_node)
+    graph.add_node("finalize", finalize_node)
+
+    graph.set_entry_point("plan")
+    graph.add_conditional_edges("plan", route_after_plan,
+                                {"execute": "execute", "clarify": "clarify"})
+    graph.add_edge("execute", "finalize")
+    graph.add_edge("clarify", "finalize")
+    graph.add_edge("finalize", END)
+    return graph.compile()
+
+
+@lru_cache
+def get_agent_graph():
+    return build_agent_graph()
+
+
+async def run_agent(
+    request: str,
+    conversation_id: str | None = None,
+    file_id: str = "",
+    doc_ids: list[str] | None = None,
+    sources: list[str] | None = None,
+    ma_don_vi: str = "",
+    inputs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Điểm vào duy nhất của agent: một yêu cầu, một câu trả lời, kèm file nếu có."""
+    conversation_id = conversation_id or str(uuid.uuid4())
+
+    # Tài liệu đã tải lên thuộc về cả HỘI THOẠI, không riêng lượt gửi nó. Người
+    # dùng đính kèm ở lượt 1 rồi lượt 2 gõ "tổng hợp lại tài liệu đó" thì lượt 2
+    # không mang `file_id` nào - thiếu chỗ này, agent coi như chưa từng thấy file.
+    if file_id:
+        await session_files.ghi_nho(conversation_id, file_id)
+    file_id = await session_files.file_cho_yeu_cau(conversation_id, request, file_id)
+
+    state: AgentState = {
+        "request": request,
+        "conversation_id": conversation_id,
+        "history": await get_memory().get_history(conversation_id),
+        "file_id": file_id,
+        "doc_ids": list(doc_ids or []),
+        "sources": list(sources or []),
+        "ma_don_vi": ma_don_vi,
+        "inputs": inputs or {},
+        "trace": {},
+    }
+    result = await get_agent_graph().ainvoke(state)
+    steps = result.get("steps") or []
+    return {
+        "request": request,
+        "conversation_id": conversation_id,
+        # Tài liệu hội thoại đang nhớ - để giao diện hiện ra, và để người dùng
+        # biết "tài liệu đó" đang trỏ tới cái nào.
+        "session_files": await session_files.danh_sach(conversation_id),
+        # `intent` là nghiệp vụ của bước CHÍNH (bước cuối). Kế hoạch nhiều bước
+        # thì `plan` và `steps` mới nói đủ; hai khoá này giữ cho client cũ chạy.
+        "intent": (steps[-1].get("intent") if steps else result.get("intent", "")) or "",
+        "routing": result.get("routing", {}),
+        "plan": result.get("plan", {}),
+        "steps": [
+            {"id": step.get("id", ""), "intent": step.get("intent", ""),
+             "planned_intent": step.get("planned_intent", ""),
+             "request": step.get("request", ""), "answer": step.get("answer", ""),
+             "attempts": step.get("attempts", 1), "retried_as": step.get("retried_as", ""),
+             "empty": step.get("empty", False), "error": step.get("error", "")}
+            for step in steps
+        ],
+        "answer": result.get("answer", ""),
+        "citations": result.get("citations", []),
+        "refs": result.get("refs", []),
+        "artifacts": result.get("artifacts", []),
+        "missing_input": result.get("missing_input", []),
+        "result": result.get("result", {}),
+        "trace": result.get("trace", {}),
+        "error": result.get("error", ""),
+    }
+
+
+async def run_qa(state: QAState) -> dict[str, Any]:
+    """Chạy trọn workflow và ghi lại lượt hội thoại."""
+    result = await get_qa_graph().ainvoke(state)
+
+    await get_memory().append_turns(
+        state["conversation_id"],
+        [("user", state["question"]), ("assistant", result.get("answer", ""))],
+    )
+    # Nguồn gốc câu trả lời (VBQPPL theo phiên bản): để biết câu nào lỗi thời khi nguồn bị sửa.
+    from app.legal import hooks as legal_hooks
+
+    answer_id = await legal_hooks.record_answer(
+        {**state, "trace": result.get("trace", {})}, result.get("answer", ""),
+        result.get("used_citations") or result.get("citations") or [])
+    if answer_id:
+        result["answer_id"] = answer_id
+    return result
+
+
+async def prepare_context(state: QAState, *, defer_generation: bool = False) -> QAState:
+    """Chạy tới trước bước sinh chữ - dùng cho chế độ streaming.
+
+    Giữ đúng thứ tự node của đồ thị nhưng dừng lại để API tự stream câu trả lời.
+
+    `defer_generation=True`: nhánh không có ngữ cảnh cũng nhường việc sinh chữ cho
+    API. Không có cờ này thì câu xã giao bị gọi model hai lần - một lần ở đây để
+    có `answer`, một lần nữa lúc stream.
+    """
+    merged: QAState = dict(state)  # type: ignore[assignment]
+    merged.update(await quyet_dinh_tra_cuu_node(merged))
+    if merged.get("can_tra_cuu", True):
+        merged.update(await rewrite_query_node(merged))
+    merged.update(await retrieve_node(merged))
+    if merged.get("chunks"):
+        merged.update(await build_context_node(merged))
+    elif defer_generation and not merged.get("error"):
+        merged.update({"citations": [], "used_citations": [],
+                       "trace": {**merged.get("trace", {}), "no_context": True}})
+    else:
+        merged.update(await no_context_node(merged))
+    return merged

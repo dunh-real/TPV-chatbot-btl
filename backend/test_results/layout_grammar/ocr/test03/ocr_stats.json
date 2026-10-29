@@ -1,0 +1,123 @@
+{
+ "source": "raw_pdf/test03.pdf",
+ "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+ "dpi": 150,
+ "pages": 5,
+ "failed_pages": [],
+ "truncated_pages": [],
+ "retried_pages": [
+  4,
+  5
+ ],
+ "still_collapsed_pages": [],
+ "lines": 201,
+ "invalid_lines": 1,
+ "in_tokens": 11916,
+ "out_tokens": 7793,
+ "wall_s": 329.6,
+ "per_page": [
+  {
+   "page": 1,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 9.73,
+   "in_tokens": 2207,
+   "out_tokens": 1522,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 39,
+    "mean_shift": 4.95,
+    "max_shift": 39.85
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 2,
+   "ok": true,
+   "lines": 39,
+   "invalid_lines": 0,
+   "latency_s": 9.6,
+   "in_tokens": 2207,
+   "out_tokens": 1506,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 39,
+    "bands": 38,
+    "mean_shift": 7.91,
+    "max_shift": 20.76
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 3,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 10.47,
+   "in_tokens": 2207,
+   "out_tokens": 1696,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 42,
+    "mean_shift": 5.28,
+    "max_shift": 22.32
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 4,
+   "ok": true,
+   "lines": 41,
+   "invalid_lines": 1,
+   "latency_s": 8.14,
+   "in_tokens": 1475,
+   "out_tokens": 1694,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 41,
+    "bands": 41,
+    "mean_shift": 6.78,
+    "max_shift": 20.76
+   },
+   "retry_config": {
+    "dpi": 120,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  },
+  {
+   "page": 5,
+   "ok": true,
+   "lines": 37,
+   "invalid_lines": 0,
+   "latency_s": 6.31,
+   "in_tokens": 3820,
+   "out_tokens": 1375,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 37,
+    "bands": 39,
+    "mean_shift": 6.39,
+    "max_shift": 15.3
+   },
+   "retry_config": {
+    "dpi": 200,
+    "hint": true,
+    "schema": true
+   },
+   "collapsed": false
+  }
+ ]
+}

@@ -1,0 +1,399 @@
+# Dàn ý - rule_based (397 tiêu đề)
+
+- [L1, tr.2] Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 2019 của
+  - [L2, tr.2] 1. Sửa đổi, bổ sung điểm a khoản 2 Điều 2 như sau:
+  - [L2, tr.2] 2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:
+  - [L2, tr.2] 2. Xử phạt vi phạm hành chính đối với trường hợp vi phạm hành chính nhiều lần:
+  - [L2, tr.3] 4. Sửa đổi, bổ sung một số khoản của Điều 5 như sau:
+    - [L3, tr.3] a) Sửa đổi khoản 3 như sau:
+    - [L3, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+  - [L2, tr.5] 8. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 17 như sau:
+    - [L3, tr.5] a) Sửa đổi khoản 1, khoản 2 như sau:
+  - [L2, tr.5] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau:
+    - [L3, tr.5] c) Sửa đổi, bổ sung khoản 5 như sau:
+    - [L3, tr.5] d) Sửa đổi, bổ sung khoản 7 như sau:
+    - [L3, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+  - [L2, tr.6] 9. Sửa đổi, bổ sung Điều 18 như sau:
+  - [L2, tr.6] 3. Hình thức xử phạt bổ sung:
+  - [L2, tr.6] 4. Biện pháp khắc phục hậu quả:
+  - [L2, tr.6] 10. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 19 như sau:
+    - [L3, tr.6] a) Sửa đổi, bổ sung khoản 1 như sau:
+    - [L3, tr.6] c) Sửa đổi, bổ sung khoản 4 như sau:
+  - [L2, tr.6] 11. Sửa đổi, bổ sung điểm b khoản 5 Điều 23 như sau:
+  - [L2, tr.6] 12. Sửa đổi, bổ sung một số khoản của Điều 24 như sau:
+    - [L3, tr.6] a) Sửa đổi, bổ sung khoản 2 như sau:
+    - [L3, tr.6] b) Bổ sung khoản 6a vào sau khoản 6 như sau:
+    - [L3, tr.7] c) Sửa đổi, bổ sung khoản 7 như sau:
+  - [L2, tr.7] 13. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 26 như sau:
+    - [L3, tr.7] a) Sửa đổi, bổ sung khoản 1 như sau:
+  - [L2, tr.7] 14. Sửa đổi, bổ sung Điều 27 như sau:
+  - [L2, tr.8] 3. Hình thức xử phạt bổ sung:
+  - [L2, tr.8] 15. Sửa đổi, bổ sung Điều 29 như sau:
+  - [L2, tr.8] 16. Sửa đổi, bổ sung khoản 4 Điều 30 như sau:
+    - [L3, tr.8] a) Sửa đổi, bổ sung khoản 1 và khoản 2 như sau:
+  - [L2, tr.9] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi sau đây:
+    - [L3, tr.9] a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy phép sản xuất hóa chất Bảng 1, hóa
+    - [L3, tr.9] b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy phép sản xuất hóa chất Bảng
+    - [L3, tr.9] b) Sửa đổi, bổ sung khoản 5 và khoản 6 như sau:
+  - [L2, tr.9] 6. Biện pháp khắc phục hậu quả:
+  - [L2, tr.9] 18. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 32 như sau:
+    - [L3, tr.9] c) Sửa đổi, bổ sung khoản 4 như sau:
+  - [L2, tr.9] 19. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 51 như sau:
+    - [L3, tr.9] b) Sửa đổi, bổ sung khoản 6 như sau:
+  - [L2, tr.10] 20. Sửa đổi, bổ sung một số điểm, khoản của Điều 58 như sau:
+    - [L3, tr.10] a) Sửa đổi điểm c khoản 1 như sau:
+    - [L3, tr.10] b) Sửa đổi điểm c khoản 2 như sau:
+  - [L2, tr.10] 21. Sửa đổi, bổ sung một số điểm, khoản của Điều 59 như sau:
+    - [L3, tr.10] a) Sửa đổi điểm c khoản 1 như sau:
+    - [L3, tr.10] b) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:
+    - [L3, tr.10] c) Sửa đổi điểm d khoản 2 như sau:
+    - [L3, tr.10] d) Sửa đổi điểm d khoản 3 như sau:
+  - [L2, tr.11] 22. Sửa đổi, bổ sung một số điểm, khoản của Điều 60 như sau:
+    - [L3, tr.11] a) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:
+    - [L3, tr.11] b) Sửa đổi, bổ sung đoạn mở đầu khoản 3 như sau:
+    - [L3, tr.11] c) Sửa đổi, bổ sung điểm c khoản 3 như sau:
+    - [L3, tr.11] d) Sửa đổi, bổ sung đoạn mở đầu khoản 4 như sau:
+    - [L3, tr.11] đ) Sửa đổi, bổ sung điểm d khoản 4 như sau:
+    - [L3, tr.11] e) Sửa đổi, bổ sung điểm d khoản 5 như sau:
+    - [L3, tr.11] g) Sửa đổi, bổ sung đoạn mở đầu khoản 6 như sau:
+  - [L2, tr.11] 23. Sửa đổi, bổ sung Điều 61 như sau: about:blank 11/88
+  - [L2, tr.12] 1. Công chức Hải quan đang thi hành công vụ có quyền:
+  - [L2, tr.12] 5. Tổng cục trưởng Tổng cục Hải quan có quyền:
+  - [L2, tr.13] 24. Bổ sung Điều 61a vào sau Điều 61 như sau:
+  - [L2, tr.13] 1. Kiểm ngư viên đang thi hành công vụ có quyền:
+  - [L2, tr.13] 2. Trạm trưởng Trạm Kiểm ngư thuộc Chi cục Kiểm ngư vùng có quyền:
+  - [L2, tr.13] 3. Chi cục trưởng Chi cục Kiểm ngư vùng có quyền:
+  - [L2, tr.13] 4. Cục trưởng Cục Kiểm ngư có quyền:
+  - [L2, tr.13] 25. Sửa đổi, bổ sung một số điểm, khoản của Điều 62 như sau:
+    - [L3, tr.14] a) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:
+    - [L3, tr.14] b) Sửa đổi, bổ sung điểm c khoản 2 như sau:
+    - [L3, tr.14] c) Sửa đổi, bổ sung điểm c khoản 3 như sau:
+  - [L2, tr.14] 26. Sửa đổi, bổ sung một số khoản của Điều 63 như sau:
+    - [L3, tr.14] a) Bổ sung khoản 2a vào sau khoản 2 như sau:
+    - [L3, tr.14] b) Sửa đổi, bổ sung khoản 3 và bổ sung khoản 3a vào sau khoản 3 như sau:
+    - [L3, tr.15] c) Sửa đổi, bổ sung khoản 4 như sau:
+  - [L2, tr.15] 27. Sửa đổi, bổ sung một số điểm, khoản của Điều 64 như sau:
+    - [L3, tr.15] a) Sửa đổi, bổ sung điểm c khoản 4 như sau:
+    - [L3, tr.15] c) Sửa đổi, bổ sung điểm c khoản 5 như sau:
+    - [L3, tr.15] d) Sửa đổi, bổ sung khoản 6 như sau:
+  - [L2, tr.16] 28. Sửa đổi, bổ sung một số điểm, khoản của Điều 65 như sau:
+    - [L3, tr.16] a) Sửa đổi, bổ sung điểm a khoản 1 như sau:
+    - [L3, tr.16] b) Sửa đổi, bổ sung điểm b khoản 1 như sau:
+    - [L3, tr.16] c) Sửa đổi, bổ sung điểm e khoản 2 như sau:
+    - [L3, tr.16] d) Sửa đổi, bổ sung điểm p khoản 2 như sau:
+    - [L3, tr.17] đ) Sửa đổi, bổ sung điểm q khoản 2 như sau:
+    - [L3, tr.17] e) Sửa đổi, bổ sung khoản 3 như sau:
+    - [L3, tr.18] e) Cục trưởng Cục An ninh kinh tế, Cục trưởng Cục Cảnh sát quản lý hành chính về trật tự xã hội, Cục
+    - [L3, tr.18] g) Sửa đổi, bổ sung khoản 4 như sau:
+    - [L3, tr.18] h) Bổ sung khoản 4a vào sau khoản 4 như sau:
+    - [L3, tr.18] a) Trạm trưởng Trạm Kiểm ngư thuộc Chi cục Kiểm ngư vùng xử phạt đối với các hành vi vi phạm hành
+    - [L3, tr.19] i) Sửa đổi, bổ sung khoản 5 như sau:
+    - [L3, tr.19] k) Sửa đổi, bổ sung khoản 6 như sau:
+  - [L2, tr.20] 2. Sửa đổi, bổ sung Điều 1 như sau:
+  - [L2, tr.21] 3. Bổ sung Điều 1a vào sau Điều 1 như sau:
+    - [L3, tr.22] b) Tổ chức hoạt động kiểm toán năng lượng; cơ sở đào tạo kiểm toán năng lượng và cấp chứng chỉ kiểm
+    - [L3, tr.22] c) Khách hàng sử dụng điện, khách hàng sử dụng năng lượng là cơ quan nhà nước có hành vi vi phạm mà
+  - [L2, tr.22] 4. Sửa đổi, bổ sung Điều 2 như sau:
+  - [L2, tr.22] 3. Xử phạt đối với trường hợp vi phạm hành chính nhiều lần:
+  - [L2, tr.22] 5. Sửa đổi Điều 3 như sau:
+  - [L2, tr.22] 1. Hình thức xử phạt chính:
+  - [L2, tr.22] 2. Hình thức xử phạt bổ sung:
+  - [L2, tr.23] 3. Mức phạt tiền:
+- [L1, tr.23] Điều 5, Điều 7, Điều 8, từ khoản 2 đến khoản 6 Điều 9, Điều 10, khoản 4 và các khoản từ khoản 6 đến
+  - [L2, tr.23] 6. Sửa đổi, bổ sung Điều 4 như sau:
+  - [L2, tr.23] 5. Buộc thu hồi sản phẩm, hàng hóa không bảo đảm chất lượng đã lưu thông (bao gồm cả nhãn năng lượng
+  - [L2, tr.24] 8. Sửa đổi, bổ sung Điều 5 như sau:
+    - [L3, tr.24] a) Không thực hiện báo cáo hoặc báo cáo không đúng thời hạn chế độ báo cáo định kỳ hàng năm về tình
+    - [L3, tr.24] b) Không báo cáo với cơ quan cấp giấy phép chậm nhất 60 ngày trước khi ngừng hoạt động điện lực hoặc
+  - [L2, tr.25] 7. Biện pháp khắc phục hậu quả:
+    - [L3, tr.25] a) Buộc nộp lại Giấy phép hoạt động điện lực đã được cấp đối với hành vi vi phạm quy định tại điểm c
+  - [L2, tr.25] 9. Sửa đổi, bổ sung Điều 6 như sau:
+  - [L2, tr.25] 3. Phạt tiền từ 30.000.000 đồng đến 60.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.25] 4. Phạt tiền từ 80.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.26] 5. Biện pháp khắc phục hậu quả:
+  - [L2, tr.26] 10. Sửa đổi, bổ sung Điều 7 như sau:
+    - [L3, tr.26] b) Sử dụng các thiết bị chưa được thử nghiệm, kiểm định theo quy định hoặc không đạt tiêu chuẩn, quy
+  - [L2, tr.27] 11. Sửa đổi, bổ sung Điều 8 như sau:
+  - [L2, tr.28] 6. Biện pháp khắc phục hậu quả:
+  - [L2, tr.28] 12. Sửa đổi, bổ sung Điều 9 như sau:
+    - [L3, tr.30] d) Không duy trì hoạt động bình thường của hệ thống thông tin liên lạc, SCADA/EMS đã đầu tư theo quy
+  - [L2, tr.30] 7. Biện pháp khắc phục hậu quả:
+  - [L2, tr.30] 13. Sửa đổi, bổ sung Điều 10 như sau:
+  - [L2, tr.30] 2. Phạt tiền Đơn vị phát điện, Đơn vị bán buôn điện, Đơn vị bán lẻ điện từ 100.000.000 đồng đến
+  - [L2, tr.30] 3. Phạt tiền Đơn vị phát điện, Đơn vị bán buôn điện, Đơn vị bán lẻ điện từ 120.000.000 đồng đến
+  - [L2, tr.30] 14. Sửa đổi, bổ sung Điều 11 như sau:
+  - [L2, tr.31] 2. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+    - [L3, tr.31] b) Sử dụng các thiết bị đo đếm điện năng không được kiểm định theo quy định hoặc đã được kiểm định
+    - [L3, tr.31] a) Không ký hợp đồng mua bán điện ngoài mục đích sinh hoạt sau 07 ngày làm việc mà không có lý do
+    - [L3, tr.31] b) Thực hiện không đúng quyền hạn về ngừng, giảm mức cung cấp điện; không thông báo hoặc thực hiện
+  - [L2, tr.31] 10. Biện pháp khắc phục hậu quả:
+  - [L2, tr.32] 15. Sửa đổi, bổ sung Điều 12 như sau:
+  - [L2, tr.32] 2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.32] 5. Phạt tiền từ 10.000.000 đồng đến 14.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+    - [L3, tr.33] d) Không thực hiện cắt điện, giảm mức tiêu thụ điện khi có yêu cầu của bên bán điện do sự cố bất khả
+    - [L3, tr.33] đ) Không thực hiện đầu tư hệ thống thông tin liên lạc, SCADA/EMS/ DMS, đo đếm điện năng theo quy
+    - [L3, tr.33] e) Không duy trì hoạt động bình thường của hệ thống thông tin liên lạc, SCADA/EMS/DMS, đo đếm điện
+  - [L2, tr.33] 8. Phạt tiền đối với hành vi trộm cắp điện dưới mọi hình thức như sau:
+  - [L2, tr.33] 10. Hình thức xử phạt bổ sung:
+  - [L2, tr.33] 11. Biện pháp khắc phục hậu quả:
+  - [L2, tr.33] 16. Sửa đổi Điều 13 như sau: “Điều 13. Vi phạm các quy định về điều độ hệ thống điện
+    - [L3, tr.34] b) Không tuân thủ Quy trình thao tác hệ thống điện quốc gia, Quy trình vận hành thiết bị do Bộ Công
+  - [L2, tr.34] 6. Biện pháp khắc phục hậu quả:
+  - [L2, tr.34] 17. Sửa đổi, bổ sung Điều 14 như sau:
+  - [L2, tr.36] 9. Biện pháp khắc phục hậu quả:
+  - [L2, tr.36] 18. Sửa đổi, bổ sung Điều 15 như sau:
+  - [L2, tr.36] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.37] 3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.37] 4. Phạt tiền từ 30.000.000 đồng đến 50.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.38] 5. Phạt tiền từ 60.000.000 đồng đến 70.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+    - [L3, tr.38] i) Cho đường dây dẫn điện đi qua khu vực dân cư, nơi thường xuyên tập trung đông người hoặc mang tải
+  - [L2, tr.39] 6. Phạt tiền từ 70.000.000 đồng đến 80.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.39] 7. Phạt tiền từ 90.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi sau đây:
+  - [L2, tr.39] 8. Hình thức xử phạt bổ sung:
+  - [L2, tr.39] 9. Biện pháp khắc phục hậu quả:
+  - [L2, tr.39] 20. Sửa đổi, bổ sung Điều 16 như sau:
+  - [L2, tr.40] 4. Phạt tiền từ 70.000.000 đồng đến 90.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+    - [L3, tr.40] e) Không có nguồn điện dự phòng hoặc có nhưng không sử dụng được để vận hành các cửa van của đập
+  - [L2, tr.40] 5. Phạt tiền từ 90.000.000 đồng đến 100.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.40] 6. Hình thức xử phạt bổ sung:
+  - [L2, tr.40] 21. Sửa đổi, bổ sung Điều 17 như sau:
+  - [L2, tr.40] 1. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.42] 22. Sửa đổi, bổ sung Điều 18 như sau:
+  - [L2, tr.42] 2. Hình thức xử phạt bổ sung:
+  - [L2, tr.42] 24. Sửa đổi, bổ sung Điều 19 như sau:
+  - [L2, tr.42] 25. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 20 như sau:
+    - [L3, tr.42] b) Sửa đổi, bổ sung khoản 5 như sau:
+  - [L2, tr.42] 26. Sửa đổi một số khoản của Điều 21 như sau:
+    - [L3, tr.43] a) Sửa đổi khoản 2 như sau:
+    - [L3, tr.43] b) Sửa đổi khoản 4 như sau:
+  - [L2, tr.43] 27. Sửa đổi, bổ sung Điều 22 như sau:
+  - [L2, tr.43] 28. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 23 như sau:
+    - [L3, tr.43] b) Sửa đổi, bổ sung khoản 4 như sau:
+  - [L2, tr.43] 29. Sửa đổi khoản 4 Điều 24 như sau:
+  - [L2, tr.43] 30. Sửa đổi khoản 2 Điều 25 như sau:
+  - [L2, tr.43] 31. Sửa đổi, bổ sung Điều 26 như sau:
+  - [L2, tr.44] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không thực hiện chế độ báo cáo sử
+  - [L2, tr.44] 5. Biện pháp khắc phục hậu quả:
+  - [L2, tr.44] 32. Sửa đổi khoản 3 Điều 27 như sau:
+  - [L2, tr.44] 33. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 28 như sau:
+    - [L3, tr.44] b) Sửa đổi, bổ sung khoản 4 như sau:
+  - [L2, tr.44] 34. Sửa đổi, bổ sung Điều 29 như sau:
+  - [L2, tr.44] 1. Phạt cảnh cáo đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.45] 3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với hành vi không xây dựng kế hoạch sử dụng
+  - [L2, tr.45] 4. Hình thức xử phạt bổ sung:
+  - [L2, tr.45] 35. Sửa đổi, bổ sung Điều 30 như sau:
+  - [L2, tr.45] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không báo cáo hoặc báo cáo không
+  - [L2, tr.45] 5. Phạt tiền từ 30.000.000 đồng đến 40.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.46] 7. Hình thức xử phạt bổ sung:
+  - [L2, tr.46] 8. Biện pháp khắc phục hậu quả:
+  - [L2, tr.46] 36. Sửa đổi khoản 2 Điều 31 như sau:
+  - [L2, tr.46] 37. Sửa đổi, bổ sung Điều 32 như sau:
+  - [L2, tr.46] 3. Hình thức xử phạt bổ sung:
+  - [L2, tr.46] 4. Biện pháp khắc phục hậu quả:
+  - [L2, tr.47] 38. Sửa đổi, bổ sung Chương III như sau:
+- [L1, tr.47] Điều 33. Thẩm quyền lập biên bản vi phạm hành chính
+  - [L2, tr.47] 2. Người thuộc lực lượng quân đội nhân dân, công an nhân dân, công chức, viên chức thuộc các cơ quan
+- [L1, tr.47] Điều 34. Thẩm quyền xử phạt của Chủ tịch Ủy ban nhân dân các cấp
+- [L1, tr.48] Điều 35. Thẩm quyền xử phạt vi phạm hành chính của Thanh tra
+  - [L2, tr.48] 2. Chánh Thanh tra Sở Công Thương, Trưởng đoàn thanh tra chuyên ngành cấp sở, Trưởng đoàn thanh tra
+- [L1, tr.48] Điều 28; Điều 29; từ khoản 1 đến khoản 5 Điều 30; Điều 31; khoản 1 Điều 32 Nghị định này:
+- [L1, tr.48] Điều 26 Nghị định này trong phạm vi quản lý:
+  - [L2, tr.49] 6. Chánh Thanh tra Bộ Công Thương có thẩm quyền xử phạt vi phạm hành chính trên phạm vi cả nước:
+- [L1, tr.49] Điều 26 Nghị định này trong phạm vi quản lý:
+- [L1, tr.50] Điều 36. Thẩm quyền xử phạt của Công an nhân dân
+- [L1, tr.50] Điều 37. Thẩm quyền xử phạt của Quản lý thị trường
+  - [L2, tr.51] 4. Tổng cục trưởng Tổng cục Quản lý thị trường có thẩm quyền xử phạt đối với các hành vi vi phạm quy
+- [L1, tr.51] Điều 38. Thông báo kết quả xử lý vi phạm hành chính cho cơ quan, tổ chức có liên quan
+  - [L2, tr.51] 3. Người có thẩm quyền xử phạt có trách nhiệm thông báo bằng văn bản cho cơ quan đã công nhận phòng
+  - [L2, tr.51] 4. Người có thẩm quyền xử phạt có trách nhiệm thông báo bằng văn bản cho cơ quan, tổ chức đã chuyển
+  - [L2, tr.52] 2. Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ, Chủ tịch Ủy ban
+- [L1, tr.52] Điều 3. Sửa đổi, bổ sung một số điều của Nghị định số 98/2020/NĐ-CP ngày 26 tháng 8 năm 2020 của
+  - [L2, tr.52] 1. Sửa đổi, bổ sung một số điểm, khoản của Điều 4 như sau:
+    - [L3, tr.52] a) Bổ sung điểm l vào sau điểm k khoản 3 như sau:
+    - [L3, tr.52] b) Sửa đổi, bổ sung khoản 4 như sau:
+    - [L3, tr.52] c) Bổ sung khoản 5 vào sau khoản 4 như sau:
+  - [L2, tr.52] 2. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+  - [L2, tr.52] 2. Xử phạt đối với trường hợp vi phạm hành chính nhiều lần:
+  - [L2, tr.53] 3. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 6 như sau:
+    - [L3, tr.53] b) Sửa đổi, bổ sung khoản 7 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+  - [L2, tr.54] 5. Sửa đổi điểm b khoản 3 Điều 9 như sau:
+  - [L2, tr.54] 6. Sửa đổi và bãi bỏ một số điểm của khoản 3 Điều 10 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+  - [L2, tr.54] 7. Sửa đổi điểm b khoản 3 Điều 11 như sau:
+  - [L2, tr.54] 8. Sửa đổi và bãi bỏ một số điểm của khoản 3 Điều 12 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+  - [L2, tr.54] 9. Sửa đổi điểm b khoản 3 Điều 13 như sau:
+  - [L2, tr.54] 10. Sửa đổi và bãi bỏ một số điểm của khoản 3 Điều 14 như sau:
+    - [L3, tr.54] a) Sửa đổi điểm c như sau:
+  - [L2, tr.54] 11. Sửa đổi điểm b khoản 4 Điều 15 như sau:
+  - [L2, tr.55] 13. Sửa đổi điểm b khoản 3 Điều 19 như sau:
+  - [L2, tr.55] 14. Sửa đổi điểm b khoản 2 Điều 20 như sau:
+  - [L2, tr.55] 15. Sửa đổi khoản 3 Điều 21 như sau:
+  - [L2, tr.55] 16. Sửa đổi điểm b khoản 2 Điều 22 như sau:
+  - [L2, tr.55] 18. Sửa đổi khoản 3 Điều 26 như sau:
+  - [L2, tr.55] 19. Sửa đổi khoản 3 Điều 27 như sau:
+  - [L2, tr.55] 20. Sửa đổi khoản 3 Điều 28 như sau:
+  - [L2, tr.55] 21. Sửa đổi, bổ sung Điều 30 như sau: “Điều 30. Hành vi vi phạm khác về kinh doanh rượu, bia
+  - [L2, tr.55] 2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi sau đây:
+  - [L2, tr.56] 4. Hình thức xử phạt bổ sung:
+  - [L2, tr.56] 5. Biện pháp khắc phục hậu quả:
+  - [L2, tr.56] 22. Sửa đổi khoản 6 Điều 31 như sau:
+  - [L2, tr.56] 23. Sửa đổi điểm b khoản 4 Điều 32 như sau:
+  - [L2, tr.56] 24. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 33 như sau:
+    - [L3, tr.56] a) Bổ sung khoản 1a và khoản 1b trước khoản 1 như sau:
+    - [L3, tr.56] b) Sửa đổi điểm d khoản 1 như sau:
+    - [L3, tr.56] c) Bổ sung điểm i khoản 1 như sau:
+    - [L3, tr.57] d) Sửa đổi điểm c và điểm d khoản 2 như sau:
+    - [L3, tr.57] d) Không thông báo hoặc không báo cáo kết quả thực hiện khuyến mại theo quy định hoặc thông báo, báo
+  - [L2, tr.57] 25. Sửa đổi, bổ sung một số khoản của Điều 35 như sau:
+    - [L3, tr.57] a) Sửa đổi, bổ sung khoản 1 như sau:
+    - [L3, tr.57] b) Sửa đổi điểm c và bổ sung các điểm d, đ và e tại khoản 2 như sau:
+    - [L3, tr.57] d) Bổ sung điểm k khoản 4 như sau:
+    - [L3, tr.57] đ) Bổ sung điểm g khoản 5 như sau:
+  - [L2, tr.57] 26. Sửa đổi khoản 4 của Điều 38 như sau: about:blank 57/88
+  - [L2, tr.58] 27. Bổ sung điểm c vào sau điểm b khoản 7 Điều 40 như sau:
+  - [L2, tr.58] 28. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 41 như sau:
+    - [L3, tr.58] b) Sửa đổi, bổ sung khoản 7 như sau:
+  - [L2, tr.58] 29. Sửa đổi điểm b khoản 6 Điều 43 như sau:
+  - [L2, tr.58] 30. Sửa đổi, bổ sung khoản 6 Điều 44 như sau:
+    - [L3, tr.58] b) Buộc nộp lại Giấy chứng nhận xuất xứ hàng hóa hoặc văn bản chấp thuận tự chứng nhận xuất xứ hàng
+  - [L2, tr.58] 31. Sửa đổi khoản 4 Điều 47 như sau:
+  - [L2, tr.58] 33. Sửa đổi, bổ sung một số điểm, khoản của Điều 62 như sau:
+    - [L3, tr.58] a) Sửa đổi, bổ sung điểm a khoản 1 như sau: about:blank 58/88
+    - [L3, tr.59] b) Sửa đổi, bổ sung điểm đ khoản 1 như sau:
+    - [L3, tr.59] c) Bổ sung điểm g khoản 1 như sau:
+    - [L3, tr.59] d) Sửa đổi, bổ sung điểm a khoản 3 như sau:
+    - [L3, tr.59] đ) Sửa đổi, bổ sung khoản 5 như sau:
+  - [L2, tr.59] 34. Sửa đổi, bổ sung một số điểm, khoản của Điều 63 như sau:
+    - [L3, tr.59] b) Bổ sung điểm c khoản 2 như sau:
+    - [L3, tr.59] c) Sửa đổi điểm đ khoản 3 như sau:
+  - [L2, tr.59] 35. Sửa đổi, bổ sung một số điểm, khoản của Điều 64 như sau:
+    - [L3, tr.60] b) Bổ sung điểm đ khoản 1 như sau:
+    - [L3, tr.60] c) Bổ sung điểm đ khoản 2 như sau:
+    - [L3, tr.60] d) Bổ sung điểm g và điểm h vào sau điểm e khoản 3 như sau:
+    - [L3, tr.60] đ) Sửa đổi điểm b khoản 5 như sau:
+  - [L2, tr.60] 36. Sửa đổi một số điểm, khoản của Điều 65 như sau:
+    - [L3, tr.60] a) Sửa đổi điểm a và điểm b khoản 1 như sau:
+    - [L3, tr.60] b) Sửa đổi điểm a khoản 2 như sau:
+    - [L3, tr.60] c) Sửa đổi, bổ sung điểm c khoản 3 như sau:
+    - [L3, tr.60] d) Sửa đổi khoản 5 như sau:
+  - [L2, tr.60] 37. Sửa đổi, bổ sung một số điểm, khoản của Điều 66 như sau:
+    - [L3, tr.60] a) Sửa đổi điểm a khoản 3 như sau:
+    - [L3, tr.61] b) Bổ sung điểm c vào sau điểm b khoản 3 như sau:
+    - [L3, tr.61] c) Sửa đổi điểm a khoản 4 như sau:
+    - [L3, tr.61] d) Sửa đổi, bổ sung điểm d khoản 4 như sau:
+    - [L3, tr.61] đ) Sửa đổi điểm a khoản 6 như sau:
+  - [L2, tr.61] 38. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 67 như sau:
+    - [L3, tr.61] b) Sửa đổi, bổ sung khoản 6 như sau:
+  - [L2, tr.61] 39. Sửa đổi, bổ sung Điều 68 như sau:
+  - [L2, tr.61] 3. Phạt tiền từ 10.000.000 đồng đến 20.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+  - [L2, tr.62] 4. Phạt tiền từ 20.000.000 đồng đến 30.000.000 đồng đối với một trong các hành vi vi phạm sau đây:
+    - [L3, tr.62] c) Người đứng đầu văn phòng kiêm nhiệm người đứng đầu văn phòng đại diện của thương nhân, tổ chức
+  - [L2, tr.62] 6. Biện pháp khắc phục hậu quả:
+  - [L2, tr.62] 40. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 69 như sau:
+    - [L3, tr.63] b) Sửa đổi, bổ sung khoản 6 như sau:
+  - [L2, tr.63] 41. Sửa đổi, bổ sung một số điểm, khoản của Điều 73 như sau:
+    - [L3, tr.63] a) Sửa đổi, bổ sung điểm b khoản 3 như sau:
+    - [L3, tr.63] c) Bổ sung điểm t vào sau điểm s khoản 7 như sau:
+    - [L3, tr.63] đ) Sửa đổi điểm e khoản 9 như sau:
+  - [L2, tr.63] 42. Sửa đổi điểm b khoản 5 Điều 74 như sau:
+  - [L2, tr.63] 43. Sửa đổi, bổ sung khoản 2 Điều 80 như sau:
+  - [L2, tr.63] 44. Sửa đổi, bổ sung Điều 81 như sau:
+  - [L2, tr.63] 1. Chủ tịch Ủy ban nhân dân cấp xã có quyền:
+  - [L2, tr.64] 2. Chủ tịch Ủy ban nhân dân cấp huyện có quyền:
+  - [L2, tr.64] 3. Chủ tịch Ủy ban nhân dân cấp tỉnh có quyền:
+  - [L2, tr.64] 45. Sửa đổi, bổ sung Điều 82 như sau:
+  - [L2, tr.64] 1. Kiểm soát viên thị trường đang thi hành công vụ có quyền:
+  - [L2, tr.65] 4. Tổng cục trưởng Tổng cục Quản lý thị trường có quyền:
+  - [L2, tr.65] 46. Sửa đổi, bổ sung Điều 83 như sau:
+  - [L2, tr.65] 1. Chiến sĩ Công an nhân dân đang thi hành công vụ có quyền:
+  - [L2, tr.65] 3. Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+  - [L2, tr.66] 5. Giám đốc Công an cấp tỉnh có quyền:
+  - [L2, tr.66] 47. Sửa đổi, bổ sung Điều 84 như sau:
+  - [L2, tr.67] 1. Công chức Hải quan đang thi hành công vụ có quyền:
+  - [L2, tr.67] 4. Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+  - [L2, tr.67] 5. Tổng cục trưởng Tổng cục Hải quan có quyền:
+  - [L2, tr.67] 48. Sửa đổi, bổ sung Điều 85 như sau:
+  - [L2, tr.68] 1. Chiến sĩ Bộ đội biên phòng đang thi hành công vụ có quyền:
+  - [L2, tr.68] 2. Trạm trưởng, Đội trưởng của người được quy định tại khoản 1 Điều này có quyền:
+  - [L2, tr.68] 3. Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+  - [L2, tr.69] 49. Sửa đổi, bổ sung Điều 86 như sau:
+  - [L2, tr.69] 1. Cảnh sát viên Cảnh sát biển đang thi hành công vụ có quyền:
+  - [L2, tr.69] 2. Tổ trưởng Tổ nghiệp vụ Cảnh sát biển có quyền:
+  - [L2, tr.69] 3. Đội trưởng Đội nghiệp vụ Cảnh sát biển, Trạm trưởng Trạm Cảnh sát biển có quyền:
+  - [L2, tr.69] 4. Hải đội trưởng Hải đội Cảnh sát biển có quyền:
+    - [L3, tr.69] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+  - [L2, tr.69] 5. Hải đoàn trưởng Hải đoàn Cảnh sát biển; Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+    - [L3, tr.70] d) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+  - [L2, tr.70] 6. Tư lệnh Vùng Cảnh sát biển, Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+    - [L3, tr.70] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+  - [L2, tr.70] 7. Tư lệnh Cảnh sát biển Việt Nam có quyền:
+    - [L3, tr.70] đ) Áp dụng các biện pháp khắc phục hậu quả quy định tại các điểm a và b khoản 3 Điều 4 của Nghị định
+  - [L2, tr.70] 50. Sửa đổi, bổ sung Điều 87 như sau:
+  - [L2, tr.70] 2. Chánh Thanh tra sở; Chi cục trưởng Chi cục Thú y vùng, Chi cục trưởng Chi cục Kiểm dịch động vật
+  - [L2, tr.72] 51. Bổ sung Điều 87a vào sau Điều 87 như sau:
+  - [L2, tr.72] 52. Bổ sung khoản 6a vào sau khoản 6 Điều 88 như sau:
+- [L1, tr.72] Điều 4. Sửa đổi, bổ sung một số điều của Nghị định số 99/2020/NĐ-CP ngày 26 tháng 8 năm 2020 của
+  - [L2, tr.72] 1. Bổ sung điểm g vào sau điểm e khoản 3 Điều 4 như sau:
+  - [L2, tr.72] 2. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+  - [L2, tr.72] 2. Xử phạt đối với trường hợp vi phạm hành chính nhiều lần:
+  - [L2, tr.73] 3. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 20 như sau:
+    - [L3, tr.73] b) Sửa đổi, bổ sung khoản 7 như sau:
+    - [L3, tr.75] b) Sửa đổi, bổ sung khoản 5 như sau:
+  - [L2, tr.75] 11. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 43 như sau:
+    - [L3, tr.75] a) Sửa đổi điểm a khoản 3 như sau:
+    - [L3, tr.75] b) Sửa đổi, bổ sung khoản 4 như sau:
+  - [L2, tr.75] 13. Sửa đổi, bổ sung Điều 56 như sau:
+  - [L2, tr.75] 1. Chủ tịch Ủy ban nhân dân cấp xã có quyền:
+  - [L2, tr.75] 2. Chủ tịch Ủy ban nhân dân cấp huyện có quyền:
+    - [L3, tr.75] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.76] 3. Chủ tịch Ủy ban nhân dân cấp tỉnh có quyền:
+    - [L3, tr.76] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.76] 14. Sửa đổi, bổ sung Điều 57 như sau:
+  - [L2, tr.76] 3. Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+  - [L2, tr.76] 4. Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục An ninh chính trị nội bộ; Trưởng phòng
+  - [L2, tr.77] 5. Giám đốc Công an cấp tỉnh có quyền:
+    - [L3, tr.77] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+    - [L3, tr.77] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.77] 15. Sửa đổi, bổ sung Điều 58 như sau:
+  - [L2, tr.77] 3. Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+  - [L2, tr.78] 4. Đồn trưởng Đồn biên phòng, Hải đội trưởng Hải đội biên phòng, Chỉ huy trưởng Ban Chỉ huy Biên
+  - [L2, tr.78] 5. Đoàn trưởng Đoàn đặc nhiệm phòng chống ma tuý và tội phạm thuộc Cục Phòng chống ma tuý và tội
+    - [L3, tr.78] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.78] 16. Sửa đổi, bổ sung Điều 59 như sau: “Điều 59. Thẩm quyền xử phạt của Cảnh sát biển Việt Nam
+  - [L2, tr.79] 4. Hải đội trưởng Hải đội Cảnh sát biển có quyền:
+  - [L2, tr.79] 6. Tư lệnh Vùng Cảnh sát biển, Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+  - [L2, tr.79] 7. Tư lệnh Cảnh sát biển Việt Nam có quyền:
+    - [L3, tr.79] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.80] 17. Sửa đổi, bổ sung Điều 60 như sau:
+  - [L2, tr.80] 5. Tổng cục trưởng Tổng cục Hải quan có quyền:
+  - [L2, tr.80] 18. Sửa đổi, bổ sung Điều 61 như sau:
+    - [L3, tr.81] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.81] 4. Tổng cục trưởng Tổng cục Quản lý thị trường có quyền:
+    - [L3, tr.81] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.81] 19. Sửa đổi, bổ sung Điều 62 như sau:
+  - [L2, tr.81] 2. Chánh Thanh tra Sở Công Thương, Chánh Thanh tra Sở Khoa học và Công nghệ, Chánh Thanh tra Sở Tài
+    - [L3, tr.82] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+    - [L3, tr.82] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+  - [L2, tr.82] 4. Chánh Thanh tra Bộ Công Thương, Chánh Thanh tra Bộ Khoa học và Công nghệ, Chánh Thanh tra Bộ
+    - [L3, tr.82] b) Tước quyền sử dụng Giấy phép kinh doanh xăng dầu, Giấy phép kinh doanh khí có thời hạn hoặc đình
+    - [L3, tr.83] b) Chủ tịch Ủy ban nhân dân cấp huyện có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+  - [L2, tr.83] 2. Phân định thẩm quyền xử phạt của Công an nhân dân:
+    - [L3, tr.83] c) Trưởng Công an cấp xã, Trưởng đồn Công an, Trưởng trạm Công an cửa khẩu, khu chế xuất, Trưởng
+    - [L3, tr.83] d) Trưởng Công an cấp huyện; Trưởng phòng nghiệp vụ thuộc Cục An ninh chính trị nội bộ; Trưởng phòng
+- [L1, tr.84] Điều 35; khoản 1 Điều 39; khoản 1 Điều 42; điểm a, b, c, d khoản 1 Điều 43; khoản 1 Điều 44; khoản 1
+  - [L2, tr.84] 3. Phân định thẩm quyền xử phạt của Bộ đội biên phòng:
+    - [L3, tr.84] a) Chiến sĩ Bộ đội biên phòng đang thi hành công vụ có thẩm quyền xử phạt vi phạm hành chính đối với
+    - [L3, tr.84] c) Đội trưởng Đội đặc nhiệm phòng chống ma túy và tội phạm thuộc Đoàn đặc nhiệm phòng chống ma túy
+    - [L3, tr.85] đ) Đoàn trưởng Đoàn đặc nhiệm phòng chống ma túy và tội phạm thuộc Cục Phòng chống ma túy và tội
+    - [L3, tr.85] e) Chỉ huy trưởng Bộ đội biên phòng cấp tỉnh; Hải đoàn trưởng Hải đoàn biên phòng, Cục trưởng Cục
+  - [L2, tr.85] 4. Phân định thẩm quyền xử phạt của Cảnh sát biển Việt Nam:
+    - [L3, tr.85] a) Tổ trưởng Tổ nghiệp vụ Cảnh sát biển có thẩm quyền xử phạt vi phạm hành chính và áp dụng các biện
+    - [L3, tr.85] d) Hải đoàn trưởng Hải đoàn Cảnh sát biển, Đoàn trưởng Đoàn trinh sát, Đoàn trưởng Đoàn đặc nhiệm
+    - [L3, tr.86] đ) Tư lệnh Vùng Cảnh sát biển Cục trưởng Cục Nghiệp vụ và Pháp luật thuộc Bộ Tư lệnh Cảnh sát biển
+  - [L2, tr.86] 5. Phân định thẩm quyền xử phạt của Hải quan:
+    - [L3, tr.86] b) Cục trưởng Cục điều tra chống buôn lậu, Cục trưởng Cục kiểm tra sau thông quan thuộc Tổng cục Hải
+  - [L2, tr.87] 6. Phân định thẩm quyền xử phạt của Quản lý thị trường:
+- [L1, tr.87] Điều 6. Hiệu lực thi hành và trách nhiệm thi hành about:blank 87/88
+  - [L2, tr.88] 2. Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ, Chủ tịch Ủy ban

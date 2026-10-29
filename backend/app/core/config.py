@@ -1,0 +1,333 @@
+"""Cấu hình tập trung cho backend, nạp từ biến môi trường / file .env."""
+
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import Annotated, Literal
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
+    # ---------------------------------------------------------------- app ---
+    app_name: str = "TPV Chatbot Backend"
+    debug: bool = False
+    log_level: str = "INFO"
+
+    # ------------------------------------------------- LLM (vLLM / OpenAI) ---
+    # vLLM phục vụ OpenAI-compatible API: `vllm serve <model> --port 8000`
+    llm_base_url: str = "http://localhost:8000/v1"
+    llm_api_key: str = "EMPTY"
+    llm_model: str = "Qwen/Qwen3.8-27B"
+    llm_temperature: float = 0.2
+    llm_max_tokens: int = 8192
+    llm_timeout: float = 120.0
+    # Model nhỏ/nhanh cho các tác vụ phụ (viết lại truy vấn). Rỗng => dùng llm_model.
+    llm_utility_model: str = ""
+    # Dòng Qwen3.5/3.6 sinh một khối suy luận trước câu trả lời. Bật thì server vLLM
+    # PHẢI chạy kèm `--reasoning-parser qwen3`, nếu không grammar của response_format
+    # sẽ ép model xuất JSON ngay từ token đầu và giết luôn phần suy luận.
+    llm_enable_thinking: bool = True
+    # Hạn mức riêng cho khối suy luận, CỘNG THÊM vào max_tokens của nơi gọi. Suy luận
+    # tiêu token trước khi model bắt đầu trả lời, nên nếu trừ vào cùng một hạn mức thì
+    # các lời gọi đặt 300-400 token sẽ bị cắt giữa chừng và trả về rỗng.
+    llm_thinking_budget: int = 8192
+
+    # ------------------------------------------------------------ Qdrant ---
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: str | None = None
+    qdrant_collection: str = "tpv_documents"
+    # Hội thoại nằm riêng: chunk tài liệu cần 3 biểu diễn, lượt chat chỉ cần dense.
+    qdrant_conversation_collection: str = "tpv_conversations"
+    qdrant_timeout: float = 30.0
+    # Kích thước vector dense của AITeamVN/Vietnamese_Embedding (BGE-M3 backbone).
+    dense_vector_size: int = 1024
+
+    # --------------------------------------------------------- Embedding ---
+    embedding_model: str = "AITeamVN/Vietnamese_Embedding"
+    # File sparse_linear.pt của BGE-M3 dùng để sinh trọng số lexical (M3 sparse).
+    sparse_linear_repo: str = "BAAI/bge-m3"
+    sparse_linear_file: str = "sparse_linear.pt"
+    embedding_device: str = "cuda"
+    embedding_batch_size: int = 16
+    embedding_max_length: int = 1024
+    embedding_fp16: bool = True
+    # Nạp sẵn model lúc khởi động: request đầu tiên không phải chờ ~5s.
+    warmup_models: bool = True
+
+    # ---------------------------------------------------------- Reranker ---
+    reranker_model: str = "AITeamVN/Vietnamese_Reranker"
+    reranker_device: str = "cuda"
+    reranker_batch_size: int = 8
+    reranker_max_length: int = 2048
+
+    # --------------------------------------------------------------- BM25 ---
+    bm25_k1: float = 1.5
+    bm25_b: float = 0.75
+    bm25_avg_len: float = 256.0
+    # Sinh thêm bigram âm tiết: tiếng Việt đơn âm nên unigram thường thiếu ngữ cảnh.
+    bm25_use_bigrams: bool = True
+
+    # --------------------------------------------------------------- OCR ----
+    # VLM phục vụ riêng trên vLLM, ví dụ:
+    #   vllm serve Qwen/Qwen3-VL-8B-Instruct --port 8001
+    ocr_enabled: bool = False
+    ocr_base_url: str = "http://localhost:8001/v1"
+    ocr_api_key: str = "EMPTY"
+    ocr_model: str = "Qwen/Qwen3-VL-8B-Instruct"
+    ocr_max_concurrency: int = 8
+    ocr_render_scale: float = 4.1667
+    ocr_image_max_side: int = 1568
+    ocr_timeout: float = 180.0
+    ocr_max_tokens: int = 6000
+    # 0.0 chứ không phải 0.05 như OCR_HVKS: OCR chỉ có một đáp án đúng, lấy
+    # argmax là xong. Đo trên trang viết tay nhập nhằng, 0.05 làm ba lần chạy
+    # cùng một trang lệch nhau ~0.1% ("Chấn" thành "Chẳn"); 0.0 tái lập 100%.
+    # Nạp lại cùng một tài liệu ra cùng một text thì Qdrant không churn vô cớ,
+    # và lỗi OCR nào tái hiện được thì mới gỡ được.
+    ocr_temperature: float = 0.0
+    ocr_top_p: float = 0.8
+    # Phạt lặp token, chặn model kẹt vòng trên vùng ảnh mờ. 1.0 = tắt hẳn.
+    # OCR_HVKS tắt phạt lặp; bật lại chỉ khi thấy model kẹt vòng trên ảnh mờ.
+    ocr_repetition_penalty: float = 1.0
+    # Số lần gọi lại một trang khi VLM lỗi. Trang hỏng giữa một bản án là mất
+    # hẳn một đoạn lập luận, nên thà chờ thêm vài giây còn hơn trả về thiếu.
+    ocr_max_retries: int = 3
+    # Ngưỡng phân loại trang scan (cần >= 2/3 tín hiệu đồng thuận)
+    ocr_char_threshold_abs: int = 100
+    ocr_char_threshold_ratio: float = 0.3
+    ocr_min_fonts: int = 1
+    # Tỉ lệ diện tích trang bị một ảnh phủ kín để coi trang đó là ảnh chụp.
+    # Trang scan luôn là một ảnh phủ trọn khổ giấy; trang digital chỉ chèn ảnh
+    # minh hoạ nhỏ. 0.7 chừa chỗ cho lề trắng bị cắt khi quét.
+    ocr_scan_image_coverage: float = 0.7
+
+    # ----------------------------------------------------------- Chunking ---
+    # Đo bằng token của tokenizer embedding.
+    chunk_min_tokens: int = 200     # nhỏ hơn mức này -> gộp vào chunk kề
+    chunk_ideal_tokens: int = 700   # kích thước mong muốn khi đóng gói
+    chunk_max_tokens: int = 1200    # vượt mức này -> phải cắt tiếp
+    chunk_hard_cap: int = 1500      # trần tuyệt đối, cắt cưỡng bức
+    chunk_overlap: int = 100
+    # Văn bản quy phạm: ranh giới mục lấy từ `legal_grammar` (Phần/Chương/Mục/Điều
+    # của chính văn bản) thay cho regex heading. Regex cũ coi dòng Khoản là tiêu đề
+    # và làm rơi mục có thân rỗng - đo được mất 25-55% nội dung (rag_testing).
+    chunk_legal_structure: bool = True
+    # VBQPPL: "khoan" = mỗi Khoản (kèm Điểm) một chunk, tiêu đề Điều lặp ở mọi chunk, không gộp
+    # xuyên Điều; "dieu" = cả Điều như trước. Ngưỡng riêng cho VBQPPL (văn bản khác vẫn dùng
+    # chunk_* ở trên): rag_testing cấu hình C8, prod_hit 0,412 -> 0,713 trên 4 văn bản GĐ1.
+    legal_chunk_granularity: str = "khoan"
+    legal_chunk_min_tokens: int = 50
+    legal_chunk_ideal_tokens: int = 300
+    legal_chunk_max_tokens: int = 800
+    legal_chunk_hard_cap: int = 1000
+
+    # Markdown của .docx: "blocks" dựng từ cây khối `parse_docx` (nhanh hơn 2-3x, ít bộ nhớ hơn
+    # ~13x, chất lượng truy hồi bằng MarkItDown - rag_testing M2); "markitdown" như trước.
+    docx_converter: str = "blocks"
+
+    # --------------------------------------------- Đọc file .doc (Word 97) ---
+    # MarkItDown không đọc được .doc; chuyển sang .docx bằng LibreOffice chạy trong
+    # container (host không cần cài LibreOffice). Rỗng -> gọi `soffice` trên host.
+    doc_convert_image: str = "tpv-libreoffice:7.3"
+    doc_convert_timeout: float = 180.0
+
+    # ------------------------------------- Phiên bản VBQPPL + theo dõi sửa đổi ---
+    # Bật: lưu cây Điều/Khoản/Điểm theo phiên bản có hiệu lực, áp lệnh sửa đổi khi
+    # nạp văn bản sửa đổi, tra theo địa chỉ pháp lý, ghi nguồn gốc câu trả lời và
+    # đánh dấu câu trả lời lỗi thời. Tắt: hành vi y như trước.
+    legal_versioning_enabled: bool = False
+
+    # ---------------------------------------------------------- Retrieval ---
+    retrieval_branch_limit: int = 50   # top-k mỗi nhánh trước khi RRF
+    rrf_k: float = 60.0
+    rrf_top_k: int = 20                # số ứng viên đưa vào reranker
+    rerank_top_n: int = 4              # số chunk cuối cùng đưa vào context
+    rerank_score_threshold: float = 0.1
+    # Số cách diễn đạt câu hỏi tối đa đem đi chấm (gốc + biến thể). Mỗi cách là
+    # một lượt forward trên toàn bộ ứng viên, nên đây là trần chi phí; đặt 1 để
+    # quay về hành vi cũ (chỉ chấm câu hỏi gốc).
+    rerank_max_queries: int = 5
+    # Small-to-big cho VBQPPL: chunk tìm được (một Khoản) được thay bằng cả Điều chứa nó trước khi
+    # đưa vào ngữ cảnh. Điều dài hơn `legal_parent_expand_max_chars` (0 = không giới hạn) giữ chunk nhỏ.
+    legal_parent_expand: bool = True
+    legal_parent_expand_max_chars: int = 12000
+    # Trọng số RRF cho từng nhánh: dense / lexical (M3 sparse) / bm25
+    weight_dense: float = 1.0
+    weight_lexical: float = 0.8
+    weight_bm25: float = 0.7
+
+    # Reranker chấm cả chunk, nên một chunk dài nói về việc khác mà có đúng một
+    # dòng chứa thứ người dùng hỏi thì điểm rất thấp và bị ngưỡng loại - dù nhánh
+    # từ khoá đã khớp nguyên văn. Van cứu: chunk chứa ĐỦ các từ khoá của câu hỏi
+    # thì không bị ngưỡng vứt, chỉ dùng khi không còn chunk nào qua được.
+    lexical_rescue_enabled: bool = True
+    lexical_rescue_top_k: int = 2
+
+    # Thẻ thông tin văn bản: tách phần thể thức (số ký hiệu, ngày ban hành, trích
+    # yếu, kính gửi, nơi nhận, người ký) thành một chunk riêng khi ingest, để câu
+    # hỏi nhắm vào chi tiết đó không phải chấm điểm trên cả một văn bản dài.
+    doc_card_enabled: bool = True
+
+    # ------------------------------------------------------ Query rewrite ---
+    query_rewrite_enabled: bool = True
+    query_rewrite_max_variants: int = 3
+    query_rewrite_timeout: float = 20.0
+    # Số lượt hội thoại gần nhất dùng để giải nghĩa đại từ ("cái đó", "nó"...).
+    query_rewrite_history_turns: int = 4
+
+    # ------------------------------------------------------------ Context ---
+    context_max_chars: int = 16000
+    context_language: Literal["vi", "en"] = "vi"
+
+    # -------------------------------------------------------------- Redis ---
+    redis_url: str = "redis://localhost:6379/0"
+    cache_enabled: bool = True
+    cache_ttl_seconds: int = 3600
+    history_max_turns: int = 20
+
+    # ------------------------------------------------- CSDL app tự quản lý ---
+    # Sổ văn bản, mẫu báo cáo: những thứ hệ thống này TỰ SINH ra và phải ghi lại.
+    # Không nằm trên ERP vì ERP chỉ cho đọc.
+    database_url: str = "sqlite+aiosqlite:///./data/demo.db"
+    database_echo: bool = False
+
+    # ------------------------------------------------- CSDL ERP (CHỈ ĐỌC) ---
+    # Nguồn sự thật về phòng ban / thiết bị / nhân sự. Quyền được cấp là chỉ đọc,
+    # và `app.db.erp_session` chặn mọi câu lệnh ghi ngay tại engine - đừng gỡ chốt
+    # đó ra kể cả khi login tình cờ có quyền ghi.
+    #   mssql+aioodbc://user:pass@host:1433/db?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+    # Bỏ trống => tắt hẳn phần đọc ERP, các tool số liệu báo "chưa cấu hình".
+    erp_database_url: str = ""
+    erp_echo: bool = False
+    # Truy vấn số liệu ERP dùng pipeline discovery nội bộ.
+    erp_schema_file: str = "data/erp_schema.json"
+    erp_schema_refresh_seconds: float = Field(default=300, ge=10, le=86400)
+    erp_sql_policy_file: str = "config/erp_sql_policy.json"
+    erp_semantic_file: str = "config/erp_semantic.yaml"
+    erp_text2sql_base_url: str = "http://127.0.0.1:15000/v1"
+    erp_text2sql_api_key: str = "EMPTY"
+    erp_text2sql_model: str = "Qwen/Qwen3.6-35B-A3B-FP8"
+    erp_text2sql_timeout: float = Field(default=180.0, gt=0, le=600)
+    erp_text2sql_query_timeout: float = Field(default=30.0, gt=0, le=120)
+    erp_text2sql_max_tokens: int = Field(default=8192, ge=256, le=32768)
+    erp_text2sql_max_repairs: int = Field(default=2, ge=0, le=3)
+    erp_text2sql_max_tool_calls: int = Field(default=12, ge=0, le=24)
+    erp_text2sql_max_rows: int = Field(default=5000, ge=1, le=20000)
+    # ERP dựng trên ABP, dữ liệu chia theo tenant. Bỏ qua giá trị này thì báo cáo
+    # sẽ cộng gộp số liệu của mọi đơn vị thuê bao trên cùng một máy chủ.
+    #
+    # Đây chỉ là MẶC ĐỊNH, dùng khi request không nói mình thuộc tenant nào (script,
+    # tác vụ nền, test). Tenant thật của một request nằm ở `app.core.context`.
+    erp_tenant_id: int | None = None
+
+    # Cho phép client tự khai tenant/user qua header X-Tenant-Id / X-User-Id.
+    #
+    # Bật = bất kỳ ai gọi được API cũng đọc được số liệu của tenant bất kỳ. Chấp
+    # nhận được khi chạy trong mạng nội bộ và chưa có đăng nhập; PHẢI tắt ngay khi
+    # giao diện có auth, lúc đó chỉ token mới nói được danh tính.
+    trust_identity_headers: bool = True
+
+    # -------------------------------------------- Presenton (workflow 5) ---
+    # Bộ slide do Presenton dựng (Docker, xem docker/presenton.yml). Nó có LLM
+    # RIÊNG - một model API - trong khi phần còn lại của hệ thống chạy vLLM nội
+    # bộ. Lý do: dựng slide là việc trình bày, không phải việc đọc số; đổi model
+    # ở đây không ảnh hưởng tới các workflow khác.
+    #
+    # Ranh giới không đổi so với bản tự dựng: SỐ LIỆU VẪN DO SQL LẤY. Presenton
+    # chỉ nhận bản tóm tắt số liệu đã chốt và bày nó ra slide.
+    presenton_url: str = "http://127.0.0.1:5002"
+    presenton_username: str = ""
+    presenton_password: str = ""
+    # "modern": xanh dương #234cd9 trên nền trắng #f5f8fe, có layout bảng và
+    # biểu đồ + số liệu. Mặc định cũ "general" là tông TÍM (#9333ea) - đó là lý
+    # do bộ slide trông lạc tông với báo cáo.
+    #
+    # CHỈ được dùng 4 tên: general, modern, standard, swift. Image còn 13 thư mục
+    # template khác (neo-modern, report...) và endpoint đọc layout trả về chúng
+    # bình thường, NHƯNG endpoint sinh slide chặn cứng theo `DEFAULT_TEMPLATES`
+    # và trả 400 cho mọi tên khác không có tiền tố "custom-".
+    presenton_template: str = "modern"
+    # Ép lại font cho file .pptx sau khi Presenton xuất ra. Presenton không cho
+    # chọn font (xem app/documents/font_slide.py). Để trống = giữ font template.
+    presenton_font: str = "Times New Roman"
+    # 0 = code tự tính theo lượng số liệu thật sự có.
+    presenton_n_slides: int = 0
+    presenton_max_wait_seconds: float = 900.0
+    presenton_poll_interval: float = 5.0
+    # "direct": backend điền layout của template, Presenton chỉ render + xuất file
+    # (xem app/documents/slide_deck.py). "generate": đường cũ, để LLM của Presenton
+    # tự chọn layout và viết lại slide - giữ lại để rollback bằng một biến môi trường.
+    presenton_render_mode: str = "direct"
+    # Đường "direct": Qwen viết tổng quan, nhận xét biểu đồ và kết luận (có kiểm số,
+    # chữ hệ lạ, viết lại tối đa 3 lần). Tắt = mọi chữ do code tính.
+    presenton_summary: bool = True
+    presenton_export_timeout: float = 180.0
+    # Model API dùng riêng cho việc sinh slide. Khoá đọc từ `llm_slide_api_key`
+    # (tên do người dùng đặt trong .env); Presenton nhận qua biến môi trường của
+    # container chứ backend không tự gọi model này.
+    llm_slide_api_key: str = ""
+
+    # ------------------------------------------------------------ Storage ---
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin"
+    minio_secure: bool = False
+    minio_bucket: str = "tpv-documents"
+
+    upload_dir: str = "./data/uploads"
+    output_dir: str = "./data/output"
+    # Cây sơ đồ tư duy đã dựng, lưu thành JSON theo thuê bao. Không nằm trong
+    # Qdrant vì nó không phải nội dung để truy hồi, mà là kết quả đã chốt của một
+    # lần đọc cả tài liệu - dựng lại tốn vài lượt LLM nên phải giữ được qua các
+    # lần khởi động lại.
+    mindmap_dir: str = "./data/mindmaps"
+
+    # ------------------------------------------------------- Sơ đồ tư duy ---
+    # Pha MAP đọc từng mẻ chunk, pha REDUCE gộp lại thành một cây. Hạn mức token
+    # tách riêng vì hai pha sinh ra lượng chữ rất khác nhau: MAP chỉ liệt kê tiêu
+    # đề của một mẻ, REDUCE phải viết lại cả cây.
+    mindmap_map_max_tokens: int = 2000
+    mindmap_reduce_max_tokens: int = 4096
+    mindmap_node_max_tokens: int = 1200
+    # Trần cứng số node, chặn ở code chứ không tin lời dặn trong prompt: cắt theo
+    # BFS nên các mục cấp cao được giữ lại trước.
+    mindmap_max_nodes: int = 60
+    mindmap_timeout: float = 300.0
+
+    # NoDecode: không để pydantic-settings tự json.loads giá trị từ .env, vì
+    # CORS_ORIGINS viết dạng "a,b" chứ không phải JSON. Tách chuỗi ở validator dưới.
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["*"])
+
+    # Chốt cửa khi mở ra Internet (Cloudflare tunnel...). Rỗng = không chặn ai,
+    # đúng cho chạy trong mạng nội bộ. Đặt một chuỗi bất kỳ thì mọi request phải
+    # kèm token, kể cả /health - xem `scripts/serve_public.sh`.
+    public_access_token: str = ""
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, v: object) -> object:
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
+
+    @property
+    def utility_model(self) -> str:
+        return self.llm_utility_model or self.llm_model
+
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

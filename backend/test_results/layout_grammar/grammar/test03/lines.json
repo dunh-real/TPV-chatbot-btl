@@ -1,0 +1,907 @@
+[
+{
+"page": 1,
+"label": "BODY",
+"text": "QUỐC HỘI"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Độc lập - Tự do - Hạnh phúc"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Luật số: 64/2025/QH15"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Hà Nội, ngày 19 tháng 02 năm 2025"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Hiệu lực: Đã biết"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Tình trạng: Đã biết)"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "THƯ VIỆN PHÁP LUẬT"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "ThuVienPhapLuat.vn"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "BAN HÀNH VĂN BẢN QUY PHẠM PHÁP LUẬT"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam;"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Quốc hội ban hành Luật Ban hành văn bản quy phạm pháp luật."
+},
+{
+"page": 1,
+"label": "OWN_CHUONG",
+"text": "Chương I"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "NHỮNG QUY ĐỊNH CHUNG"
+},
+{
+"page": 1,
+"label": "OWN_DIEU",
+"text": "Điều 1. Phạm vi điều chỉnh"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Luật này quy định về xây dựng, ban hành văn bản quy phạm pháp luật; nội dung cơ bản về tổ chức thi hành"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "văn bản quy phạm pháp luật."
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Luật này không quy định về làm Hiến pháp, sửa đổi Hiến pháp."
+},
+{
+"page": 1,
+"label": "OWN_DIEU",
+"text": "Điều 2. Văn bản quy phạm pháp luật"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Văn bản quy phạm pháp luật là văn bản có chứa quy phạm pháp luật, được ban hành đúng thẩm quyền, hình"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "thức, trình tự, thủ tục theo quy định của Luật này."
+},
+{
+"page": 1,
+"label": "OWN_DIEU",
+"text": "Điều 3. Giải thích từ ngữ"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "Trong Luật này, các từ ngữ dưới đây được hiểu như sau:"
+},
+{
+"page": 1,
+"label": "OWN_KHOAN",
+"text": "1. Quy phạm pháp luật là quy tắc xử sự chung, có hiệu lực bắt buộc chung, được áp dụng đối với cơ quan,"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "tổ chức, cá nhân, trong phạm vi cả nước hoặc trong đơn vị hành chính nhất định, do cơ quan nhà nước,"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "người có thẩm quyền quy định tại Luật này ban hành và được Nhà nước bảo đảm thực hiện."
+},
+{
+"page": 1,
+"label": "OWN_KHOAN",
+"text": "2. Chính sách là tập hợp các giải pháp cụ thể của Nhà nước để giải quyết một hoặc một số vấn đề của thực"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "tiễn nhằm đạt được mục tiêu nhất định, phù hợp với chủ trương, đường lối của Đảng."
+},
+{
+"page": 1,
+"label": "OWN_KHOAN",
+"text": "3. Tham vấn chính sách là việc trao đổi trực tiếp giữa cơ quan lập đề xuất chính sách với cơ quan, tổ chức,"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "cá nhân được tham vấn theo quy định của Luật này nhằm lựa chọn giải pháp, hoàn thiện chính sách của dự"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "án luật, nghị quyết của Quốc hội, pháp lệnh của Ủy ban Thường vụ Quốc hội."
+},
+{
+"page": 1,
+"label": "OWN_KHOAN",
+"text": "4. Đánh giá tác động của chính sách là việc phân tích, dự báo khả năng ảnh hưởng của từng giải pháp nhằm"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "lựa chọn phương án tối ưu, phù hợp với mục tiêu của chính sách."
+},
+{
+"page": 1,
+"label": "OWN_KHOAN",
+"text": "5. Rà soát văn bản quy phạm pháp luật là việc xem xét, đối chiếu, đánh giá các quy định của văn bản được"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "rà soát nhằm phát hiện, xử lý hoặc kiến nghị xử lý các quy định mâu thuẫn, chồng chéo, hết hiệu lực hoặc"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "không còn phù hợp."
+},
+{
+"page": 1,
+"label": "OWN_KHOAN",
+"text": "6. Kiểm tra văn bản quy phạm pháp luật là việc xem xét, đánh giá, kết luận về tính hợp hiến, tính hợp pháp,"
+},
+{
+"page": 1,
+"label": "BODY",
+"text": "tính thống nhất với hệ thống pháp luật của văn bản được kiểm tra."
+},
+{
+"page": 2,
+"label": "OWN_DIEU",
+"text": "Điều 4. Hệ thống văn bản quy phạm pháp luật"
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "1. Hiến pháp."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "2. Bộ luật, luật (sau đây gọi chung là luật), nghị quyết của Quốc hội."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "3. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội; nghị quyết liên tịch giữa Ủy ban Thường vụ"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "Quốc hội với Đoàn Chủ tịch Ủy ban Trung ương Mặt trận Tổ quốc Việt Nam; nghị quyết liên tịch giữa Ủy"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "ban Thường vụ Quốc hội, Chính phủ với Đoàn Chủ tịch Ủy ban Trung ương Mặt trận Tổ quốc Việt Nam."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "4. Lệnh, quyết định của Chủ tịch nước."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "5. Nghị định, nghị quyết của Chính phủ; nghị quyết liên tịch giữa Chính phủ với Đoàn Chủ tịch Ủy ban"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "Trung ương Mặt trận Tổ quốc Việt Nam."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "6. Quyết định của Thủ tướng Chính phủ."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "7. Nghị quyết của Hội đồng Thẩm phán Tòa án nhân dân tối cao."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "8. Thông tư của Chánh án Tòa án nhân dân tối cao; thông tư của Viện trưởng Viện kiểm sát nhân dân tối"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "cao; thông tư của Bộ trưởng, Thủ trưởng cơ quan ngang Bộ; thông tư của Tổng Kiểm toán nhà nước."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "9. Thông tư liên tịch giữa Chánh án Tòa án nhân dân tối cao, Viện trưởng Viện kiểm sát nhân dân tối cao,"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "Tổng Kiểm toán nhà nước, Bộ trưởng, Thủ trưởng cơ quan ngang Bộ."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "10. Nghị quyết của Hội đồng nhân dân tỉnh, thành phố trực thuộc trung ương (sau đây gọi chung là cấp"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "tỉnh)."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "11. Quyết định của Ủy ban nhân dân cấp tỉnh."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "12. Văn bản quy phạm pháp luật của chính quyền địa phương ở đơn vị hành chính - kinh tế đặc biệt."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "13. Nghị quyết của Hội đồng nhân dân huyện, quận, thị xã, thành phố thuộc tỉnh, thành phố thuộc thành phố"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "trực thuộc trung ương (sau đây gọi chung là cấp huyện)."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "14. Quyết định của Ủy ban nhân dân cấp huyện."
+},
+{
+"page": 2,
+"label": "OWN_DIEU",
+"text": "Điều 5. Nguyên tắc xây dựng, ban hành văn bản quy phạm pháp luật"
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "1. Bảo đảm sự lãnh đạo toàn diện, trực tiếp của Đảng Cộng sản Việt Nam."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "2. Bảo đảm tính hợp hiến, tính hợp pháp, tính thống nhất của văn bản quy phạm pháp luật trong hệ thống"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "pháp luật và không trái với điều ước quốc tế mà nước Cộng hòa xã hội chủ nghĩa Việt Nam là thành viên;"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "tuân thủ đúng thẩm quyền, nội dung, hình thức và trình tự, thủ tục xây dựng, ban hành văn bản quy phạm"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "pháp luật."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "3. Bảo đảm chủ quyền quốc gia, quốc phòng, an ninh, lợi ích quốc gia, dân tộc; kiểm soát quyền lực, phòng,"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "chống tham nhũng, tiêu cực, lãng phí; phòng, chống lợi ích nhóm, cục bộ."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "4. Tôn trọng, bảo vệ và bảo đảm quyền con người, quyền công dân, bình đẳng giới; bảo đảm dân chủ, công"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "bằng, nhân đạo, công khai, minh bạch, khoa học, kịp thời, ổn định, khả thi, hiệu quả."
+},
+{
+"page": 2,
+"label": "OWN_KHOAN",
+"text": "5. Bảo đảm việc thực hiện chủ trương phân quyền, phân cấp; giải quyết vấn đề bất cập, phát sinh từ thực"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "tiễn; vấn đề mới, xu hướng mới; yêu cầu quản lý nhà nước và khuyến khích sáng tạo, khơi thông mọi nguồn"
+},
+{
+"page": 2,
+"label": "BODY",
+"text": "lực, thúc đẩy phát triển kinh tế - xã hội."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "6. Văn bản quy phạm pháp luật quy định thực hiện thí điểm phải xác định thời gian thực hiện thí điểm và"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "phải được sơ kết, tổng kết để xem xét, quyết định việc tiếp tục áp dụng hoặc ban hành văn bản quy phạm"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "pháp luật để áp dụng chính thức."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "7. Bảo đảm thực hiện quy định của pháp luật về bảo vệ bí mật nhà nước đối với nội dung văn bản quy phạm"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "pháp luật thuộc phạm vi bí mật nhà nước."
+},
+{
+"page": 3,
+"label": "OWN_DIEU",
+"text": "Điều 6. Phản biện xã hội, tham vấn, góp ý đối với chính sách, dự thảo văn bản quy phạm pháp luật"
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "1. Mặt trận Tổ quốc Việt Nam và các tổ chức chính trị - xã hội thực hiện phản biện xã hội đối với dự thảo"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "văn bản quy phạm pháp luật theo quy định của Luật này, Luật Mặt trận Tổ quốc Việt Nam và các luật khác"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "có liên quan."
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "Phản biện xã hội được thực hiện trong thời gian tổ chức soạn thảo văn bản quy phạm pháp luật."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "2. Cơ quan lập đề xuất chính sách có trách nhiệm tham vấn Hội đồng Dân tộc, Ủy ban của Quốc hội, Bộ, cơ"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "quan ngang Bộ theo quy định của Luật này."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "3. Mặt trận Tổ quốc Việt Nam, các tổ chức thành viên của Mặt trận và các cơ quan, tổ chức, cá nhân có"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "quyền và được tạo điều kiện tham gia góp ý kiến về chính sách, dự thảo văn bản quy phạm pháp luật."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "4. Cơ quan lập đề xuất chính sách, cơ quan chủ trì soạn thảo có trách nhiệm nghiên cứu tiếp thu, giải trình"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "đầy đủ và công khai việc tiếp thu, giải trình ý kiến phản biện xã hội, tham vấn chính sách, góp ý chính sách,"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "dự thảo văn bản quy phạm pháp luật."
+},
+{
+"page": 3,
+"label": "OWN_DIEU",
+"text": "Điều 7. Ngôn ngữ, thể thức, kỹ thuật trình bày và dịch văn bản quy phạm pháp luật ra tiếng dân tộc"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "thiểu số, tiếng nước ngoài"
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "1. Ngôn ngữ được sử dụng trong văn bản quy phạm pháp luật là tiếng Việt, bảo đảm chính xác, phổ thông,"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "thống nhất, diễn đạt rõ ràng, dễ hiểu."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "2. Văn bản quy phạm pháp luật có thể được bố cục theo phần, chương, mục, tiểu mục, điều, khoản, điểm;"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "phần, chương, mục, tiểu mục, điều phải có tên."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "3. Văn bản quy phạm pháp luật phải đánh số, ký hiệu bảo đảm thể hiện rõ số thứ tự liên tục, năm ban hành,"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "loại văn bản, cơ quan, người có thẩm quyền ban hành văn bản."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "4. Văn bản quy phạm pháp luật có thể được dịch ra tiếng dân tộc thiểu số, tiếng nước ngoài. Bản dịch có giá"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "trị tham khảo."
+},
+{
+"page": 3,
+"label": "OWN_DIEU",
+"text": "Điều 8. Sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật"
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "1. Văn bản quy phạm pháp luật chỉ được sửa đổi, bổ sung, thay thế bằng văn bản quy phạm pháp luật của"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "chính cơ quan, người có thẩm quyền đã ban hành văn bản đó hoặc bị đình chỉ việc thi hành bằng văn bản"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "của cơ quan, người có thẩm quyền, trừ trường hợp quy định tại điểm a và điểm b khoản 2 Điều 54 của Luật"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "này hoặc luật, nghị quyết của Quốc hội có quy định khác."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "2. Văn bản quy phạm pháp luật bị bãi bỏ bằng văn bản của chính cơ quan, người có thẩm quyền đã ban hành"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "văn bản đó hoặc bằng văn bản của cơ quan, người có thẩm quyền, trừ trường hợp quy định tại điểm a và"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "điểm b khoản 2 Điều 54 của Luật này."
+},
+{
+"page": 3,
+"label": "OWN_KHOAN",
+"text": "3. Văn bản sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản khác phải xác định rõ tên"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "văn bản, phần, chương, mục, tiểu mục, điều, khoản, điểm của văn bản bị sửa đổi, bổ sung, thay thế, bãi bỏ"
+},
+{
+"page": 3,
+"label": "BODY",
+"text": "hoặc đình chỉ việc thi hành."
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "Trường hợp bãi bỏ pháp lệnh thì Ủy ban Thường vụ Quốc hội có trách nhiệm báo cáo Quốc hội tại kỳ họp"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "gần nhất."
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "Văn bản bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật quy định tại khoản 1 và khoản 2"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "Điều này phải được đăng tải trên công báo điện tử, cơ sở dữ liệu quốc gia về pháp luật."
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "4. Ban hành văn bản quy phạm pháp luật thay thế văn bản quy phạm pháp luật hiện hành thuộc một trong"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "các trường hợp sau đây:"
+},
+{
+"page": 4,
+"label": "OWN_DIEM",
+"text": "a) Thay đổi cơ bản chính sách, phạm vi điều chỉnh, đối tượng áp dụng;"
+},
+{
+"page": 4,
+"label": "OWN_DIEM",
+"text": "b) Sửa đổi, bổ sung về nội dung quá một phần hai tổng số điều."
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "5. Cơ quan, người có thẩm quyền ban hành văn bản quy phạm pháp luật phải đồng thời sửa đổi, bổ sung, bãi"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "bỏ toàn bộ hoặc một phần của văn bản quy phạm pháp luật do mình đã ban hành khác với quy định của văn"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "bản quy phạm pháp luật mới được ban hành. Trường hợp có quy định khác nhưng vẫn tiếp tục được áp dụng"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "thì phải được quy định rõ trong văn bản quy phạm pháp luật mới được ban hành."
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "6. Văn bản quy phạm pháp luật có thể được ban hành để đồng thời sửa đổi, bổ sung, thay thế, bãi bỏ nội"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "dung của nhiều văn bản quy phạm pháp luật do cùng một cơ quan, người có thẩm quyền ban hành."
+},
+{
+"page": 4,
+"label": "OWN_DIEU",
+"text": "Điều 9. Gửi, lưu trữ văn bản quy phạm pháp luật"
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "1. Chậm nhất là 03 ngày kể từ ngày công bố luật, nghị quyết của Quốc hội, pháp lệnh, nghị quyết của Ủy"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "ban Thường vụ Quốc hội hoặc ký chứng thực, ký ban hành đối với văn bản quy phạm pháp luật khác, cơ"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "quan, người có thẩm quyền ban hành văn bản quy phạm pháp luật có trách nhiệm gửi văn bản để đăng tải"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "trên công báo điện tử, cơ sở dữ liệu quốc gia về pháp luật."
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "2. Hồ sơ chính sách, dự án và bản gốc của văn bản quy phạm pháp luật phải được lưu trữ theo quy định của"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "pháp luật về lưu trữ."
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "3. Văn bản quy phạm pháp luật của cơ quan, người có thẩm quyền ở trung ương ban hành phải được đăng"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "tải trên công báo điện tử nước Cộng hòa xã hội chủ nghĩa Việt Nam. Văn bản quy phạm pháp luật của Hội"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "đồng nhân dân, Ủy ban nhân dân, chính quyền địa phương ở đơn vị hành chính - kinh tế đặc biệt phải được"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "đăng tải trên công báo điện tử cấp tỉnh."
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "4. Văn bản quy phạm pháp luật đăng tải trên công báo điện tử có giá trị như văn bản gốc."
+},
+{
+"page": 4,
+"label": "OWN_CHUONG",
+"text": "Chương II"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "THẨM QUYỀN BAN HÀNH, NỘI DUNG VĂN BẢN QUY PHẠM PHÁP LUẬT"
+},
+{
+"page": 4,
+"label": "OWN_DIEU",
+"text": "Điều 10. Luật, nghị quyết của Quốc hội"
+},
+{
+"page": 4,
+"label": "OWN_KHOAN",
+"text": "1. Quốc hội ban hành luật để quy định:"
+},
+{
+"page": 4,
+"label": "OWN_DIEM",
+"text": "a) Tổ chức và hoạt động của Quốc hội, Chủ tịch nước, Chính phủ, Tòa án nhân dân, Viện kiểm sát nhân dân,"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "Hội đồng bầu cử quốc gia, Kiểm toán nhà nước, chính quyền địa phương, đơn vị hành chính - kinh tế đặc"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "biệt và cơ quan khác do Quốc hội thành lập;"
+},
+{
+"page": 4,
+"label": "OWN_DIEM",
+"text": "b) Quyền con người, quyền và nghĩa vụ cơ bản của công dân mà theo Hiến pháp phải do luật định; việc hạn"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "chế quyền con người, quyền công dân; tội phạm và hình phạt; tổ tụng tư pháp;"
+},
+{
+"page": 4,
+"label": "OWN_DIEM",
+"text": "c) Chính sách cơ bản về kinh tế, xã hội, văn hóa, giáo dục, khoa học, công nghệ, môi trường, tài chính, tiền"
+},
+{
+"page": 4,
+"label": "BODY",
+"text": "tệ quốc gia, ngân sách nhà nước; quy định các thứ thuế, về huân chương, huy chương và danh hiệu vinh dự"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "d) Chính sách cơ bản về quốc phòng, an ninh quốc gia; hàm, cấp trong lực lượng vũ trang nhân dân; quy"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "định về tình trạng khẩn cấp, các biện pháp đặc biệt khác bảo đảm quốc phòng và an ninh quốc gia;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "đ) Chính sách cơ bản về đối ngoại; hàm, cấp ngoại giao; hàm, cấp nhà nước khác;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "e) Chính sách dân tộc, chính sách tôn giáo của Nhà nước;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "g) Trưng cầu ý dân;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "h) Cơ chế bảo vệ Hiến pháp;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "i) Vấn đề khác thuộc thẩm quyền của Quốc hội theo quy định của Hiến pháp và luật."
+},
+{
+"page": 5,
+"label": "OWN_KHOAN",
+"text": "2. Quốc hội ban hành nghị quyết để quy định:"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "a) Thực hiện thí điểm một số chính sách mới thuộc thẩm quyền quyết định của Quốc hội khác với quy định"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "của luật hiện hành;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "b) Tạm ngưng, điều chỉnh hiệu lực hoặc kéo dài thời hạn áp dụng toàn bộ hoặc một phần luật, nghị quyết"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "của Quốc hội đáp ứng yêu cầu cấp bách về phát triển kinh tế - xã hội, bảo đảm quyền con người, quyền"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "công dân;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "c) Vấn đề khác do Quốc hội quyết định."
+},
+{
+"page": 5,
+"label": "OWN_DIEU",
+"text": "Điều 11. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội"
+},
+{
+"page": 5,
+"label": "OWN_KHOAN",
+"text": "1. Ủy ban Thường vụ Quốc hội ban hành pháp lệnh trong trường hợp được Quốc hội giao."
+},
+{
+"page": 5,
+"label": "OWN_KHOAN",
+"text": "2. Ủy ban Thường vụ Quốc hội ban hành nghị quyết để quy định:"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "a) Giải thích Hiến pháp, luật, nghị quyết của Quốc hội và pháp lệnh, nghị quyết của Ủy ban Thường vụ"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "Quốc hội;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "b) Tạm ngưng, điều chỉnh hiệu lực hoặc kéo dài thời hạn áp dụng toàn bộ hoặc một phần pháp lệnh, nghị"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "quyết của Ủy ban Thường vụ Quốc hội đáp ứng yêu cầu cấp bách về phát triển kinh tế - xã hội;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "c) Tổng động viên hoặc động viên cục bộ; ban bố, bãi bỏ tình trạng khẩn cấp trong cả nước hoặc ở từng địa"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "phương;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "d) Hướng dẫn hoạt động của Hội đồng nhân dân;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "đ) Nội dung được luật, nghị quyết của Quốc hội giao, trừ trường hợp quy định tại khoản 1 Điều này;"
+},
+{
+"page": 5,
+"label": "OWN_DIEM",
+"text": "e) Vấn đề khác thuộc thẩm quyền của Ủy ban Thường vụ Quốc hội."
+},
+{
+"page": 5,
+"label": "OWN_DIEU",
+"text": "Điều 12. Lệnh, quyết định của Chủ tịch nước"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "Chủ tịch nước ban hành lệnh, quyết định để quy định:"
+},
+{
+"page": 5,
+"label": "OWN_KHOAN",
+"text": "1. Tổng động viên hoặc động viên cục bộ; công bố, bãi bỏ tình trạng khẩn cấp trong cả nước hoặc ở từng địa"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "phương;"
+},
+{
+"page": 5,
+"label": "OWN_KHOAN",
+"text": "2. Vấn đề khác thuộc thẩm quyền của Chủ tịch nước."
+},
+{
+"page": 5,
+"label": "OWN_DIEU",
+"text": "Điều 13. Nghị quyết liên tịch giữa Ủy ban Thường vụ Quốc hội, Chính phủ, Đoàn Chủ tịch Ủy ban"
+},
+{
+"page": 5,
+"label": "BODY",
+"text": "Trung ương Mặt trận Tổ quốc Việt Nam"
+}
+]

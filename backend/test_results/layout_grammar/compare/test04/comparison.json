@@ -1,0 +1,15 @@
+{
+ "document": "test04",
+ "ground_truth": "unavailable",
+ "evaluation_type": "so sánh mô tả giữa các phương pháp",
+ "rule_based_title": "TỔNG CỤC THUẾ CỤC THUẾ TP HÀ NỘI CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+ "methods": {
+  "rule_based": {
+   "headings": 0,
+   "by_level": {},
+   "by_form": {},
+   "pages_with_headings": 0
+  }
+ },
+ "overlap": {}
+}

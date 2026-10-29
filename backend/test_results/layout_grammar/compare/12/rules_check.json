@@ -1,0 +1,97 @@
+{
+ "reference_own_articles": [
+  "Điều 1 (tr.2)",
+  "Điều 4b (tr.3)",
+  "Điều 2 (tr.20)",
+  "Điều 33 (tr.47)",
+  "Điều 34 (tr.47)",
+  "Điều 35 (tr.48)",
+  "Điều 36 (tr.50)",
+  "Điều 37 (tr.50)",
+  "Điều 38 (tr.51)",
+  "Điều 3 (tr.52)",
+  "Điều 4b (tr.52)",
+  "Điều 4 (tr.72)",
+  "Điều 4b (tr.73)",
+  "Điều 5 (tr.87)",
+  "Điều 6 (tr.87)"
+ ],
+ "reference_sequence_ok": false,
+ "methods": {
+  "rule_based": {
+   "headings": 397,
+   "units": {
+    "Điều": 10,
+    "Khoản": 234,
+    "Điểm": 148,
+    "không phải đơn vị (nhiễu)": 5
+   },
+   "quoted_units": {},
+   "own_articles_found": 4,
+   "own_articles_reference": 6,
+   "own_articles_missed": [
+    "Điều 2",
+    "Điều 5"
+   ],
+   "own_articles_at_top_level": 10,
+   "order_violations": 0,
+   "order_violation_examples": [],
+   "valid_amendment_nesting": 0,
+   "same_unit_different_levels": {},
+   "quoted_articles": 0,
+   "quoted_articles_not_deeper_than_own": 0,
+   "non_vietnamese_point_letters": [],
+   "noise_examples": [
+    "Điều 5, Điều 7, Điều 8, từ khoản 2 đến khoản 6 Điều 9, Điều 10, khoản ",
+    "Điều 28; Điều 29; từ khoản 1 đến khoản 5 Điều 30; Điều 31; khoản 1 Điề",
+    "Điều 26 Nghị định này trong phạm vi quản lý:",
+    "Điều 26 Nghị định này trong phạm vi quản lý:",
+    "Điều 35; khoản 1 Điều 39; khoản 1 Điều 42; điểm a, b, c, d khoản 1 Điề"
+   ]
+  },
+  "grammar": {
+   "headings": 1512,
+   "units": {
+    "Điều": 67,
+    "Khoản": 513,
+    "Điểm": 931,
+    "Chương": 1
+   },
+   "quoted_units": {
+    "Điểm": 69,
+    "Điều": 52,
+    "Khoản": 66,
+    "Chương": 1
+   },
+   "own_articles_found": 6,
+   "own_articles_reference": 6,
+   "own_articles_missed": [],
+   "own_articles_at_top_level": 7,
+   "order_violations": 0,
+   "order_violation_examples": [],
+   "valid_amendment_nesting": 191,
+   "same_unit_different_levels": {
+    "Điều": {
+     "1": 7,
+     "3": 2,
+     "4": 6
+    },
+    "Khoản": {
+     "2": 127,
+     "4": 248,
+     "5": 72
+    },
+    "Điểm": {
+     "5": 534,
+     "3": 141,
+     "4": 16,
+     "6": 171
+    }
+   },
+   "quoted_articles": 52,
+   "quoted_articles_not_deeper_than_own": 0,
+   "non_vietnamese_point_letters": [],
+   "noise_examples": []
+  }
+ }
+}

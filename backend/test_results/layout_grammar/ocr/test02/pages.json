@@ -1,0 +1,3112 @@
+{
+ "1": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 9:08 AM",
+    "bbox": [
+     36,
+     21.2,
+     135,
+     28.5
+    ],
+    "bbox_qwen": [
+     36,
+     19,
+     135,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     535,
+     21.2,
+     593,
+     28.5
+    ],
+    "bbox_qwen": [
+     535,
+     19,
+     593,
+     30
+    ]
+   },
+   {
+    "text": "CHÍNH PHỦ",
+    "bbox": [
+     184,
+     53.9,
+     291,
+     64.8
+    ],
+    "bbox_qwen": [
+     184,
+     52,
+     291,
+     68
+    ]
+   },
+   {
+    "text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+    "bbox": [
+     412,
+     53.9,
+     819,
+     64.8
+    ],
+    "bbox_qwen": [
+     412,
+     52,
+     819,
+     68
+    ]
+   },
+   {
+    "text": "Độc lập - Tự do - Hạnh phúc",
+    "bbox": [
+     499,
+     70.9,
+     732,
+     84.2
+    ],
+    "bbox_qwen": [
+     499,
+     71,
+     732,
+     87
+    ]
+   },
+   {
+    "text": "Số: 17/2022/NĐ-CP",
+    "bbox": [
+     156,
+     112.7,
+     317,
+     126.7
+    ],
+    "bbox_qwen": [
+     156,
+     110,
+     317,
+     126
+    ]
+   },
+   {
+    "text": "Hà Nội, ngày 31 tháng 01 năm 2022",
+    "bbox": [
+     562,
+     112.7,
+     842,
+     126.7
+    ],
+    "bbox_qwen": [
+     562,
+     110,
+     842,
+     126
+    ]
+   },
+   {
+    "text": "Hiệu lực: Đã biết",
+    "bbox": [
+     456,
+     112.7,
+     560,
+     126.7
+    ],
+    "bbox_qwen": [
+     456,
+     100,
+     560,
+     130
+    ]
+   },
+   {
+    "text": "Tình trạng: Đã biết",
+    "bbox": [
+     432,
+     112.7,
+     555,
+     126.7
+    ],
+    "bbox_qwen": [
+     432,
+     110,
+     555,
+     140
+    ]
+   },
+   {
+    "text": "THƯ VIỆN PHÁP LUẬT",
+    "bbox": [
+     515,
+     112.7,
+     630,
+     126.7
+    ],
+    "bbox_qwen": [
+     515,
+     105,
+     630,
+     140
+    ]
+   },
+   {
+    "text": "ThuVienPhapLuat.vn",
+    "bbox": [
+     428,
+     112.7,
+     510,
+     126.7
+    ],
+    "bbox_qwen": [
+     428,
+     130,
+     510,
+     155
+    ]
+   },
+   {
+    "text": "NGHỊ ĐỊNH",
+    "bbox": [
+     462,
+     169.7,
+     578,
+     180.0
+    ],
+    "bbox_qwen": [
+     462,
+     165,
+     578,
+     181
+    ]
+   },
+   {
+    "text": "SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA CÁC NGHỊ ĐỊNH QUY ĐỊNH VỀ XỬ PHẠT VI PHẠM",
+    "bbox": [
+     103,
+     198.8,
+     927,
+     249.1
+    ],
+    "bbox_qwen": [
+     103,
+     199,
+     927,
+     215
+    ]
+   },
+   {
+    "text": "HÀNH CHÍNH TRONG LĨNH VỰC HÓA CHẤT VÀ VẬT LIỆU NỔ CÔNG NGHIỆP; ĐIỆN LỰC, AN",
+    "bbox": [
+     103,
+     198.8,
+     927,
+     249.1
+    ],
+    "bbox_qwen": [
+     103,
+     215,
+     927,
+     231
+    ]
+   },
+   {
+    "text": "TOÀN ĐẬP THỦY ĐIỆN, SỬ DỤNG NĂNG LƯỢNG TIẾT KIỆM VÀ HIỆU QUẢ; HOẠT ĐỘNG",
+    "bbox": [
+     118,
+     250.3,
+     927,
+     266.1
+    ],
+    "bbox_qwen": [
+     118,
+     231,
+     927,
+     247
+    ]
+   },
+   {
+    "text": "THƯƠNG MẠI, SẢN XUẤT, BUÔN BÁN HÀNG GIẢ, HÀNG CẤM VÀ BẢO VỆ QUYỀN LỢI",
+    "bbox": [
+     132,
+     267.3,
+     927,
+     269.7
+    ],
+    "bbox_qwen": [
+     132,
+     247,
+     927,
+     263
+    ]
+   },
+   {
+    "text": "NGƯỜI TIÊU DÙNG; HOẠT ĐỘNG DẦU KHÍ, KINH DOANH XĂNG DẦU VÀ KHÍ",
+    "bbox": [
+     165,
+     270.3,
+     894,
+     280.6
+    ],
+    "bbox_qwen": [
+     165,
+     263,
+     894,
+     279
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015 và Luật sửa đổi, bổ sung một số điều của Luật",
+    "bbox": [
+     92,
+     302.4,
+     927,
+     315.8
+    ],
+    "bbox_qwen": [
+     92,
+     300,
+     927,
+     316
+    ]
+   },
+   {
+    "text": "Tổ chức Chính phủ và Luật Tổ chức chính quyền địa phương ngày 22 tháng 11 năm 2019;",
+    "bbox": [
+     92,
+     319.4,
+     792,
+     333.3
+    ],
+    "bbox_qwen": [
+     92,
+     316,
+     792,
+     332
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012 và Luật sửa đổi, bổ sung một số điều của",
+    "bbox": [
+     92,
+     351.5,
+     927,
+     365.5
+    ],
+    "bbox_qwen": [
+     92,
+     349,
+     927,
+     365
+    ]
+   },
+   {
+    "text": "Luật Xử lý vi phạm hành chính ngày 13 tháng 11 năm 2020;",
+    "bbox": [
+     92,
+     368.5,
+     562,
+     382.4
+    ],
+    "bbox_qwen": [
+     92,
+     365,
+     562,
+     381
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Đầu tư ngày 17 tháng 6 năm 2020;",
+    "bbox": [
+     92,
+     401.2,
+     469,
+     414.5
+    ],
+    "bbox_qwen": [
+     92,
+     398,
+     469,
+     414
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020;",
+    "bbox": [
+     92,
+     433.3,
+     528,
+     446.7
+    ],
+    "bbox_qwen": [
+     92,
+     431,
+     528,
+     447
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Thương mại ngày 14 tháng 6 năm 2005;",
+    "bbox": [
+     92,
+     465.5,
+     508,
+     478.8
+    ],
+    "bbox_qwen": [
+     92,
+     464,
+     508,
+     480
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Quản lý ngoại thương ngày 12 tháng 6 năm 2017;",
+    "bbox": [
+     92,
+     497.6,
+     590,
+     511.5
+    ],
+    "bbox_qwen": [
+     92,
+     497,
+     590,
+     513
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Giao dịch điện tử ngày 29 tháng 11 năm 2005;",
+    "bbox": [
+     92,
+     529.7,
+     562,
+     543.6
+    ],
+    "bbox_qwen": [
+     92,
+     530,
+     562,
+     546
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Chất lượng sản phẩm, hàng hoá ngày 21 tháng 11 năm 2007;",
+    "bbox": [
+     92,
+     561.8,
+     675,
+     575.8
+    ],
+    "bbox_qwen": [
+     92,
+     563,
+     675,
+     579
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Đo lường ngày 11 tháng 11 năm 2011;",
+    "bbox": [
+     92,
+     594.5,
+     495,
+     607.9
+    ],
+    "bbox_qwen": [
+     92,
+     596,
+     495,
+     612
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Phòng, chống tác hại của thuốc lá ngày 18 tháng 6 năm 2012;",
+    "bbox": [
+     92,
+     626.7,
+     684,
+     640.0
+    ],
+    "bbox_qwen": [
+     92,
+     629,
+     684,
+     645
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Phòng, chống tác hại của rượu, bia ngày 14 tháng 6 năm 2019;",
+    "bbox": [
+     92,
+     658.8,
+     698,
+     672.1
+    ],
+    "bbox_qwen": [
+     92,
+     662,
+     698,
+     678
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Dược ngày 06 tháng 4 năm 2016;",
+    "bbox": [
+     92,
+     690.9,
+     458,
+     704.8
+    ],
+    "bbox_qwen": [
+     92,
+     695,
+     458,
+     711
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Quản lý, sử dụng vũ khí, vật liệu nổ và công cụ hỗ trợ ngày 20 tháng 6 năm 2017 và Luật sửa",
+    "bbox": [
+     92,
+     723.0,
+     927,
+     737.0
+    ],
+    "bbox_qwen": [
+     92,
+     728,
+     927,
+     744
+    ]
+   },
+   {
+    "text": "đổi, bổ sung một số điều của Luật Quản lý, sử dụng vũ khí, vật liệu nổ và công cụ hỗ trợ ngày 25 tháng 11",
+    "bbox": [
+     92,
+     740.6,
+     927,
+     753.9
+    ],
+    "bbox_qwen": [
+     92,
+     744,
+     927,
+     760
+    ]
+   },
+   {
+    "text": "năm 2019;",
+    "bbox": [
+     92,
+     757.6,
+     177,
+     767.9
+    ],
+    "bbox_qwen": [
+     92,
+     760,
+     177,
+     776
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Hóa chất ngày 21 tháng 11 năm 2007;",
+    "bbox": [
+     92,
+     789.7,
+     497,
+     803.0
+    ],
+    "bbox_qwen": [
+     92,
+     793,
+     497,
+     809
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Phòng, chống ma túy ngày 30 tháng 3 năm 2020;",
+    "bbox": [
+     92,
+     821.8,
+     583,
+     835.2
+    ],
+    "bbox_qwen": [
+     92,
+     826,
+     583,
+     842
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Bảo vệ quyền lợi người tiêu dùng ngày 17 tháng 11 năm 2010;",
+    "bbox": [
+     92,
+     853.9,
+     684,
+     867.9
+    ],
+    "bbox_qwen": [
+     92,
+     859,
+     684,
+     875
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Điện lực ngày 03 tháng 12 năm 2004 và Luật sửa đổi, bổ sung một số điều của Luật Điện lực",
+    "bbox": [
+     92,
+     886.1,
+     927,
+     900.0
+    ],
+    "bbox_qwen": [
+     92,
+     892,
+     927,
+     908
+    ]
+   },
+   {
+    "text": "ngày 20 tháng 11 năm 2012;",
+    "bbox": [
+     92,
+     903.6,
+     321,
+     917.0
+    ],
+    "bbox_qwen": [
+     92,
+     908,
+     321,
+     924
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Sử dụng năng lượng tiết kiệm và hiệu quả ngày 17 tháng 6 năm 2010;",
+    "bbox": [
+     92,
+     935.8,
+     743,
+     949.1
+    ],
+    "bbox_qwen": [
+     92,
+     941,
+     743,
+     957
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     36,
+     972.7,
+     104,
+     980.0
+    ],
+    "bbox_qwen": [
+     36,
+     970,
+     104,
+     981
+    ]
+   },
+   {
+    "text": "1/88",
+    "bbox": [
+     933,
+     972.7,
+     961,
+     980.0
+    ],
+    "bbox_qwen": [
+     933,
+     970,
+     961,
+     981
+    ]
+   }
+  ],
+  "latency_s": 17.1,
+  "in_tokens": 2207,
+  "out_tokens": 2846,
+  "finish_reason": "stop"
+ },
+ "2": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 9:08 AM",
+    "bbox": [
+     33,
+     21.2,
+     130,
+     28.5
+    ],
+    "bbox_qwen": [
+     33,
+     18,
+     130,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     527,
+     21.2,
+     590,
+     28.5
+    ],
+    "bbox_qwen": [
+     527,
+     18,
+     590,
+     30
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Dầu khí ngày 06 tháng 7 năm 1993; Luật sửa đổi, bổ sung một số điều của Luật Dầu khí ngày",
+    "bbox": [
+     98,
+     38.8,
+     937,
+     54.5
+    ],
+    "bbox_qwen": [
+     98,
+     33,
+     937,
+     53
+    ]
+   },
+   {
+    "text": "09 tháng 6 năm 2000; Luật sửa đổi, bổ sung một số điều của Luật Dầu khí ngày 03 tháng 6 năm 2008;",
+    "bbox": [
+     98,
+     55.8,
+     900,
+     69.7
+    ],
+    "bbox_qwen": [
+     98,
+     53,
+     900,
+     73
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Giá ngày 20 tháng 6 năm 2012;",
+    "bbox": [
+     98,
+     88.5,
+     447,
+     101.8
+    ],
+    "bbox_qwen": [
+     98,
+     85,
+     447,
+     105
+    ]
+   },
+   {
+    "text": "Căn cứ Luật An toàn, vệ sinh lao động ngày 25 tháng 6 năm 2015;",
+    "bbox": [
+     98,
+     120.6,
+     611,
+     133.9
+    ],
+    "bbox_qwen": [
+     98,
+     117,
+     611,
+     137
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Phòng cháy và chữa cháy ngày 29 tháng 6 năm 2001 và Luật sửa đổi, bổ sung một số điều của",
+    "bbox": [
+     98,
+     152.7,
+     947,
+     166.1
+    ],
+    "bbox_qwen": [
+     98,
+     149,
+     947,
+     169
+    ]
+   },
+   {
+    "text": "Luật Phòng cháy và chữa cháy ngày 22 tháng 11 năm 2013;",
+    "bbox": [
+     98,
+     169.7,
+     568,
+     183.0
+    ],
+    "bbox_qwen": [
+     98,
+     169,
+     568,
+     189
+    ]
+   },
+   {
+    "text": "Căn cứ Luật Bảo vệ môi trường ngày 17 tháng 11 năm 2020;",
+    "bbox": [
+     98,
+     201.8,
+     578,
+     215.8
+    ],
+    "bbox_qwen": [
+     98,
+     201,
+     578,
+     221
+    ]
+   },
+   {
+    "text": "Căn cứ Luật sửa đổi, bổ sung một số điều của 11 Luật có liên quan đến quy hoạch ngày 15 tháng 6 năm",
+    "bbox": [
+     98,
+     233.9,
+     912,
+     247.9
+    ],
+    "bbox_qwen": [
+     98,
+     233,
+     912,
+     253
+    ]
+   },
+   {
+    "text": "2018;",
+    "bbox": [
+     98,
+     251.5,
+     142,
+     261.8
+    ],
+    "bbox_qwen": [
+     98,
+     253,
+     142,
+     273
+    ]
+   },
+   {
+    "text": "Theo đề nghị của Bộ trưởng Bộ Công Thương;",
+    "bbox": [
+     98,
+     283.6,
+     459,
+     297.0
+    ],
+    "bbox_qwen": [
+     98,
+     285,
+     459,
+     305
+    ]
+   },
+   {
+    "text": "Chính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các nghị định quy định về xử phạt vi phạm",
+    "bbox": [
+     98,
+     315.8,
+     937,
+     329.1
+    ],
+    "bbox_qwen": [
+     98,
+     317,
+     937,
+     337
+    ]
+   },
+   {
+    "text": "hành chính trong lĩnh vực hóa chất và vật liệu nổ công nghiệp; điện lực, an toàn đập thủy điện, sử dụng",
+    "bbox": [
+     98,
+     332.7,
+     912,
+     346.1
+    ],
+    "bbox_qwen": [
+     98,
+     337,
+     912,
+     357
+    ]
+   },
+   {
+    "text": "năng lượng tiết kiệm và hiệu quả; hoạt động thương mại, sản xuất, buôn bán hàng giả, hàng cấm và bảo vệ",
+    "bbox": [
+     98,
+     366.7,
+     947,
+     380.6
+    ],
+    "bbox_qwen": [
+     98,
+     357,
+     947,
+     377
+    ]
+   },
+   {
+    "text": "quyền lợi người tiêu dùng; hoạt động dầu khí, kinh doanh xăng dầu và khí.",
+    "bbox": [
+     98,
+     395.8,
+     600,
+     398.2
+    ],
+    "bbox_qwen": [
+     98,
+     377,
+     600,
+     397
+    ]
+   },
+   {
+    "text": "Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 2019 của",
+    "bbox": [
+     98,
+     416.4,
+     937,
+     429.7
+    ],
+    "bbox_qwen": [
+     98,
+     409,
+     937,
+     429
+    ]
+   },
+   {
+    "text": "Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực hóa chất và vật liệu nổ công nghiệp",
+    "bbox": [
+     98,
+     448.5,
+     800,
+     458.8
+    ],
+    "bbox_qwen": [
+     98,
+     429,
+     800,
+     449
+    ]
+   },
+   {
+    "text": "1. Sửa đổi, bổ sung điểm a khoản 2 Điều 2 như sau:",
+    "bbox": [
+     98,
+     480.6,
+     500,
+     493.9
+    ],
+    "bbox_qwen": [
+     98,
+     461,
+     500,
+     481
+    ]
+   },
+   {
+    "text": "“a) Tổ chức kinh tế được thành lập theo quy định của Luật Doanh nghiệp, gồm: Doanh nghiệp tư nhân,",
+    "bbox": [
+     98,
+     497.6,
+     907,
+     511.5
+    ],
+    "bbox_qwen": [
+     98,
+     493,
+     907,
+     513
+    ]
+   },
+   {
+    "text": "công ty cổ phần, công ty trách nhiệm hữu hạn, công ty hợp danh;”.",
+    "bbox": [
+     98,
+     529.7,
+     527,
+     540.6
+    ],
+    "bbox_qwen": [
+     98,
+     513,
+     527,
+     533
+    ]
+   },
+   {
+    "text": "2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:",
+    "bbox": [
+     98,
+     558.8,
+     540,
+     561.2
+    ],
+    "bbox_qwen": [
+     98,
+     545,
+     540,
+     565
+    ]
+   },
+   {
+    "text": "“m) Buộc nộp lại Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều",
+    "bbox": [
+     98,
+     579.4,
+     937,
+     592.7
+    ],
+    "bbox_qwen": [
+     98,
+     577,
+     937,
+     597
+    ]
+   },
+   {
+    "text": "kiện trong lĩnh vực công nghiệp; Giấy phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh",
+    "bbox": [
+     98,
+     596.4,
+     907,
+     609.7
+    ],
+    "bbox_qwen": [
+     98,
+     597,
+     907,
+     617
+    ]
+   },
+   {
+    "text": "trong lĩnh vực công nghiệp; Giấy phép xuất khẩu, nhập khẩu tiền chất công nghiệp; Giấy phép xuất khẩu,",
+    "bbox": [
+     98,
+     613.3,
+     937,
+     626.7
+    ],
+    "bbox_qwen": [
+     98,
+     617,
+     937,
+     637
+    ]
+   },
+   {
+    "text": "nhập khẩu hóa chất Bảng 1, hóa chất Bảng 2, hóa chất Bảng 3; giấy phép, giấy chứng nhận về quản lý, sử",
+    "bbox": [
+     98,
+     630.3,
+     937,
+     645.5
+    ],
+    "bbox_qwen": [
+     98,
+     637,
+     937,
+     657
+    ]
+   },
+   {
+    "text": "dụng vật liệu nổ công nghiệp, tiền chất thuốc nổ bị viết thêm, tẩy xóa, sửa chữa làm thay đổi nội dung cho",
+    "bbox": [
+     98,
+     647.3,
+     937,
+     661.2
+    ],
+    "bbox_qwen": [
+     98,
+     657,
+     937,
+     677
+    ]
+   },
+   {
+    "text": "cơ quan cấp Giấy chứng nhận, Giấy phép.”.",
+    "bbox": [
+     98,
+     679.4,
+     310,
+     690.3
+    ],
+    "bbox_qwen": [
+     98,
+     677,
+     310,
+     697
+    ]
+   },
+   {
+    "text": "3. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:",
+    "bbox": [
+     98,
+     711.5,
+     527,
+     725.5
+    ],
+    "bbox_qwen": [
+     98,
+     709,
+     527,
+     729
+    ]
+   },
+   {
+    "text": "“Điều 4a. Quy định về vi phạm hành chính đã kết thúc, vi phạm hành chính đang được thực hiện và",
+    "bbox": [
+     98,
+     729.1,
+     932,
+     742.4
+    ],
+    "bbox_qwen": [
+     98,
+     741,
+     932,
+     761
+    ]
+   },
+   {
+    "text": "xử phạt vi phạm hành chính đối với trường hợp vi phạm nhiều lần",
+    "bbox": [
+     98,
+     761.2,
+     568,
+     774.5
+    ],
+    "bbox_qwen": [
+     98,
+     761,
+     568,
+     781
+    ]
+   },
+   {
+    "text": "1. Hành vi vi phạm đã kết thúc, hành vi vi phạm đang được thực hiện được xác định căn cứ quy định tại",
+    "bbox": [
+     98,
+     795.2,
+     937,
+     809.1
+    ],
+    "bbox_qwen": [
+     98,
+     793,
+     937,
+     813
+    ]
+   },
+   {
+    "text": "Nghị định số 118/2021/NĐ-CP ngày 23 tháng 12 năm 2021 của Chính phủ quy định chi tiết một số điều và",
+    "bbox": [
+     98,
+     827.3,
+     937,
+     841.2
+    ],
+    "bbox_qwen": [
+     98,
+     813,
+     937,
+     833
+    ]
+   },
+   {
+    "text": "biện pháp thi hành Luật Xử lý vi phạm hành chính.",
+    "bbox": [
+     98,
+     859.4,
+     412,
+     873.3
+    ],
+    "bbox_qwen": [
+     98,
+     833,
+     412,
+     853
+    ]
+   },
+   {
+    "text": "2. Xử phạt vi phạm hành chính đối với trường hợp vi phạm hành chính nhiều lần:",
+    "bbox": [
+     98,
+     877.0,
+     742,
+     890.3
+    ],
+    "bbox_qwen": [
+     98,
+     865,
+     742,
+     885
+    ]
+   },
+   {
+    "text": "a) Cá nhân, tổ chức vi phạm hành chính nhiều lần đối với hành vi vi phạm không thuộc trường hợp quy định",
+    "bbox": [
+     98,
+     893.9,
+     947,
+     907.3
+    ],
+    "bbox_qwen": [
+     98,
+     897,
+     947,
+     917
+    ]
+   },
+   {
+    "text": "tại điểm b khoản này thì bị xử phạt về từng hành vi vi phạm hành chính và không áp dụng tình tiết tăng",
+    "bbox": [
+     98,
+     926.1,
+     907,
+     939.4
+    ],
+    "bbox_qwen": [
+     98,
+     917,
+     907,
+     937
+    ]
+   },
+   {
+    "text": "nặng do vi phạm nhiều lần khi ra quyết định xử phạt vi phạm hành chính;",
+    "bbox": [
+     98,
+     943.0,
+     672,
+     955.2
+    ],
+    "bbox_qwen": [
+     98,
+     937,
+     672,
+     957
+    ]
+   },
+   {
+    "text": "b) Cá nhân, tổ chức vi phạm hành chính nhiều lần đối với hành vi vi phạm tại khoản 2 và 3 Điều 6; khoản 2,",
+    "bbox": [
+     98,
+     972.7,
+     947,
+     980.0
+    ],
+    "bbox_qwen": [
+     98,
+     969,
+     947,
+     989
+    ]
+   },
+   {
+    "text": "điểm a khoản 3 Điều 13; khoản 5 Điều 16; khoản 5 Điều 17; khoản 2 Điều 18; Điều 21; khoản 2 Điều 22;",
+    "bbox": [
+     98,
+     972.7,
+     937,
+     980.0
+    ],
+    "bbox_qwen": [
+     98,
+     989,
+     937,
+     1000
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     33,
+     972.7,
+     96,
+     980.0
+    ],
+    "bbox_qwen": [
+     33,
+     970,
+     96,
+     982
+    ]
+   },
+   {
+    "text": "2/88",
+    "bbox": [
+     932,
+     972.7,
+     965,
+     980.0
+    ],
+    "bbox_qwen": [
+     932,
+     970,
+     965,
+     982
+    ]
+   }
+  ],
+  "latency_s": 12.41,
+  "in_tokens": 2207,
+  "out_tokens": 1839,
+  "finish_reason": "stop"
+ },
+ "3": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 9:08 AM",
+    "bbox": [
+     26,
+     21.2,
+     123,
+     28.5
+    ],
+    "bbox_qwen": [
+     26,
+     19,
+     123,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     532,
+     21.2,
+     593,
+     28.5
+    ],
+    "bbox_qwen": [
+     532,
+     19,
+     593,
+     30
+    ]
+   },
+   {
+    "text": "khoản 1 và 3 Điều 23; điểm a khoản 2 Điều 56 Nghị định này thì không xử phạt về từng hành vi vi phạm",
+    "bbox": [
+     100,
+     38.8,
+     928,
+     54.5
+    ],
+    "bbox_qwen": [
+     100,
+     35,
+     928,
+     56
+    ]
+   },
+   {
+    "text": "hành chính mà áp dụng tình tiết tăng nặng vi phạm nhiều lần khi ra quyết định xử phạt vi phạm hành chính.",
+    "bbox": [
+     100,
+     55.8,
+     942,
+     69.7
+    ],
+    "bbox_qwen": [
+     100,
+     56,
+     942,
+     76
+    ]
+   },
+   {
+    "text": "Điều 4b. Thi hành các hình thức xử phạt, biện pháp khắc phục hậu quả và xác định số lợi bất hợp",
+    "bbox": [
+     100,
+     87.9,
+     913,
+     101.8
+    ],
+    "bbox_qwen": [
+     100,
+     92,
+     913,
+     112
+    ]
+   },
+   {
+    "text": "pháp có được do thực hiện hành vi vi phạm hành chính",
+    "bbox": [
+     100,
+     105.5,
+     500,
+     118.8
+    ],
+    "bbox_qwen": [
+     100,
+     112,
+     500,
+     132
+    ]
+   },
+   {
+    "text": "1. Việc thi hành quyết định xử phạt vi phạm hành chính thực hiện theo quy định tại Mục 2 Chương III Phần",
+    "bbox": [
+     100,
+     154.5,
+     964,
+     167.9
+    ],
+    "bbox_qwen": [
+     100,
+     148,
+     964,
+     168
+    ]
+   },
+   {
+    "text": "thứ hai của Luật Xử lý vi phạm hành chính và Nghị định số 118/2021/NĐ-CP ngày 23 tháng 12 năm 2021",
+    "bbox": [
+     100,
+     171.5,
+     942,
+     184.8
+    ],
+    "bbox_qwen": [
+     100,
+     168,
+     942,
+     188
+    ]
+   },
+   {
+    "text": "của Chính phủ quy định chi tiết một số điều và biện pháp thi hành Luật Xử lý vi phạm hành chính.",
+    "bbox": [
+     100,
+     203.6,
+     710,
+     219.4
+    ],
+    "bbox_qwen": [
+     100,
+     188,
+     710,
+     208
+    ]
+   },
+   {
+    "text": "2. Biên bản, tài liệu, văn bản hoặc giấy tờ liên quan khác ghi nhận việc thi hành các hình thức xử phạt, biện",
+    "bbox": [
+     100,
+     220.6,
+     964,
+     234.5
+    ],
+    "bbox_qwen": [
+     100,
+     208,
+     964,
+     228
+    ]
+   },
+   {
+    "text": "pháp khắc phục hậu quả phải có trong hồ sơ xử phạt vi phạm hành chính theo quy định tại Điều 57 của Luật",
+    "bbox": [
+     100,
+     237.6,
+     942,
+     248.5
+    ],
+    "bbox_qwen": [
+     100,
+     228,
+     942,
+     248
+    ]
+   },
+   {
+    "text": "Xử lý vi phạm hành chính.",
+    "bbox": [
+     100,
+     270.3,
+     260,
+     283.6
+    ],
+    "bbox_qwen": [
+     100,
+     248,
+     260,
+     268
+    ]
+   },
+   {
+    "text": "3. Số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính theo quy định tại Nghị định này là",
+    "bbox": [
+     100,
+     287.3,
+     964,
+     300.6
+    ],
+    "bbox_qwen": [
+     100,
+     284,
+     964,
+     304
+    ]
+   },
+   {
+    "text": "vật, tiền, giấy tờ có giá hoặc tài sản khác có được từ vi phạm hành chính mà cá nhân, tổ chức đó đã thực",
+    "bbox": [
+     100,
+     304.2,
+     942,
+     314.5
+    ],
+    "bbox_qwen": [
+     100,
+     304,
+     942,
+     324
+    ]
+   },
+   {
+    "text": "hiện và được xác định như sau:",
+    "bbox": [
+     100,
+     333.3,
+     270,
+     335.8
+    ],
+    "bbox_qwen": [
+     100,
+     324,
+     270,
+     344
+    ]
+   },
+   {
+    "text": "a) Số lợi bất hợp pháp thu được bằng tiền là toàn bộ số tiền tổ chức, cá nhân thu được từ hành vi vi phạm",
+    "bbox": [
+     100,
+     370.3,
+     928,
+     384.2
+    ],
+    "bbox_qwen": [
+     100,
+     360,
+     928,
+     380
+    ]
+   },
+   {
+    "text": "hành chính và được tính bằng số tiền thu được từ việc chuyển nhượng, tiêu thụ hàng hóa, cung cấp dịch vụ",
+    "bbox": [
+     100,
+     387.9,
+     942,
+     401.2
+    ],
+    "bbox_qwen": [
+     100,
+     380,
+     942,
+     400
+    ]
+   },
+   {
+    "text": "vi phạm sau khi đã trừ chi phí trực tiếp cấu thành hàng hóa, dịch vụ căn cứ vào hồ sơ, chứng từ chứng minh",
+    "bbox": [
+     100,
+     404.8,
+     942,
+     418.2
+    ],
+    "bbox_qwen": [
+     100,
+     400,
+     942,
+     420
+    ]
+   },
+   {
+    "text": "tính hợp pháp, hợp lệ của các chi phí đó do cá nhân, tổ chức vi phạm cung cấp; trường hợp chuyển nhượng,",
+    "bbox": [
+     100,
+     421.8,
+     942,
+     435.8
+    ],
+    "bbox_qwen": [
+     100,
+     420,
+     942,
+     440
+    ]
+   },
+   {
+    "text": "tiêu thụ hàng cấm, hàng giả, hàng hóa nhập lậu hoặc cung cấp dịch vụ kinh doanh có điều kiện thì số lợi bất",
+    "bbox": [
+     100,
+     438.8,
+     942,
+     452.7
+    ],
+    "bbox_qwen": [
+     100,
+     440,
+     942,
+     460
+    ]
+   },
+   {
+    "text": "hợp pháp thu được bằng tiền là toàn bộ số tiền cá nhân, tổ chức thu được từ việc chuyển nhượng, tiêu thụ",
+    "bbox": [
+     100,
+     470.9,
+     942,
+     486.7
+    ],
+    "bbox_qwen": [
+     100,
+     460,
+     942,
+     480
+    ]
+   },
+   {
+    "text": "hàng hóa hoặc cung cấp dịch vụ đó;",
+    "bbox": [
+     100,
+     487.9,
+     270,
+     501.8
+    ],
+    "bbox_qwen": [
+     100,
+     480,
+     270,
+     500
+    ]
+   },
+   {
+    "text": "b) Số lợi bất hợp pháp thu được bằng giấy tờ có giá là toàn bộ giấy tờ có giá mà tổ chức, cá nhân vi phạm",
+    "bbox": [
+     100,
+     522.4,
+     928,
+     535.8
+    ],
+    "bbox_qwen": [
+     100,
+     516,
+     928,
+     536
+    ]
+   },
+   {
+    "text": "thu được từ hành vi vi phạm hành chính. Trường hợp giấy tờ có giá đã được chuyển nhượng thì số lợi bất",
+    "bbox": [
+     100,
+     539.4,
+     942,
+     552.7
+    ],
+    "bbox_qwen": [
+     100,
+     536,
+     942,
+     556
+    ]
+   },
+   {
+    "text": "hợp pháp được xác định bằng số tiền thực tế thu được tại thời điểm chuyển nhượng; trường hợp giấy tờ có",
+    "bbox": [
+     100,
+     571.5,
+     942,
+     585.5
+    ],
+    "bbox_qwen": [
+     100,
+     556,
+     942,
+     576
+    ]
+   },
+   {
+    "text": "giá đã bị tẩu tán, tiêu hủy thì số lợi bất hợp pháp được xác định theo giá trị sổ sách của tổ chức phát hành",
+    "bbox": [
+     100,
+     588.5,
+     942,
+     599.4
+    ],
+    "bbox_qwen": [
+     100,
+     576,
+     942,
+     596
+    ]
+   },
+   {
+    "text": "giấy tờ có giá tại thời điểm tẩu tán, tiêu hủy;",
+    "bbox": [
+     100,
+     600.0,
+     340,
+     602.4
+    ],
+    "bbox_qwen": [
+     100,
+     596,
+     340,
+     616
+    ]
+   },
+   {
+    "text": "c) Số lợi bất hợp pháp là vật, tài sản khác mà tổ chức, cá nhân vi phạm thu được từ hành vi vi phạm hành",
+    "bbox": [
+     100,
+     638.2,
+     928,
+     651.5
+    ],
+    "bbox_qwen": [
+     100,
+     632,
+     928,
+     652
+    ]
+   },
+   {
+    "text": "chính là các tài sản khác theo quy định của Bộ luật Dân sự.",
+    "bbox": [
+     100,
+     655.2,
+     440,
+     668.5
+    ],
+    "bbox_qwen": [
+     100,
+     652,
+     440,
+     672
+    ]
+   },
+   {
+    "text": "Trường hợp vật, tài sản khác không phải hàng cấm, hàng giả, hàng hóa nhập lậu đã được chuyển nhượng,",
+    "bbox": [
+     100,
+     689.1,
+     942,
+     702.4
+    ],
+    "bbox_qwen": [
+     100,
+     688,
+     942,
+     708
+    ]
+   },
+   {
+    "text": "tiêu thụ hoặc tiêu hủy thì số lợi bất hợp pháp được xác định bằng số tiền tương đương giá trị thị trường của",
+    "bbox": [
+     100,
+     706.1,
+     942,
+     720.0
+    ],
+    "bbox_qwen": [
+     100,
+     708,
+     942,
+     728
+    ]
+   },
+   {
+    "text": "tài sản cùng loại hoặc xác định theo giá trị sổ sách của tài sản (nếu không có giá trị thị trường) hoặc xác",
+    "bbox": [
+     100,
+     738.2,
+     942,
+     752.1
+    ],
+    "bbox_qwen": [
+     100,
+     728,
+     942,
+     748
+    ]
+   },
+   {
+    "text": "định bằng giá trị tiền của tài sản ghi trên tờ khai xuất khẩu, tờ khai nhập khẩu (nếu là hàng hóa xuất khẩu,",
+    "bbox": [
+     100,
+     755.8,
+     942,
+     769.1
+    ],
+    "bbox_qwen": [
+     100,
+     748,
+     942,
+     768
+    ]
+   },
+   {
+    "text": "nhập khẩu) của tổ chức, cá nhân vi phạm sau khi trừ chi phí trực tiếp cấu thành hàng hóa căn cứ vào hồ sơ,",
+    "bbox": [
+     100,
+     772.7,
+     942,
+     783.0
+    ],
+    "bbox_qwen": [
+     100,
+     768,
+     942,
+     788
+    ]
+   },
+   {
+    "text": "chứng từ chứng minh tính hợp pháp, hợp lệ của các chi phí đó.",
+    "bbox": [
+     100,
+     804.8,
+     520,
+     815.2
+    ],
+    "bbox_qwen": [
+     100,
+     788,
+     520,
+     808
+    ]
+   },
+   {
+    "text": "Trường hợp vật, tài sản khác là hàng cấm, hàng giả, hàng hóa nhập lậu đã được chuyển nhượng, tiêu thụ thì",
+    "bbox": [
+     100,
+     837.0,
+     942,
+     847.3
+    ],
+    "bbox_qwen": [
+     100,
+     824,
+     942,
+     844
+    ]
+   },
+   {
+    "text": "số lợi bất hợp pháp được xác định là tổng số tiền mà tổ chức, cá nhân nhận được khi thực hiện chuyển",
+    "bbox": [
+     100,
+     837.0,
+     900,
+     847.3
+    ],
+    "bbox_qwen": [
+     100,
+     844,
+     900,
+     864
+    ]
+   },
+   {
+    "text": "nhượng.”.",
+    "bbox": [
+     100,
+     869.1,
+     140,
+     884.2
+    ],
+    "bbox_qwen": [
+     100,
+     864,
+     140,
+     884
+    ]
+   },
+   {
+    "text": "4. Sửa đổi, bổ sung một số khoản của Điều 5 như sau:",
+    "bbox": [
+     100,
+     886.1,
+     510,
+     900.0
+    ],
+    "bbox_qwen": [
+     100,
+     900,
+     510,
+     920
+    ]
+   },
+   {
+    "text": "a) Sửa đổi khoản 3 như sau:",
+    "bbox": [
+     100,
+     918.8,
+     310,
+     929.1
+    ],
+    "bbox_qwen": [
+     100,
+     936,
+     310,
+     956
+    ]
+   },
+   {
+    "text": "“3. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi sử dụng bồn chứa ngoài trời không",
+    "bbox": [
+     100,
+     972.7,
+     928,
+     980.0
+    ],
+    "bbox_qwen": [
+     100,
+     972,
+     928,
+     992
+    ]
+   },
+   {
+    "text": "có đê bao hoặc không có các biện pháp kỹ thuật khác để ngăn chặn hóa chất thoát ra môi trường.”;",
+    "bbox": [
+     100,
+     972.7,
+     870,
+     980.0
+    ],
+    "bbox_qwen": [
+     100,
+     992,
+     870,
+     1000
+    ]
+   }
+  ],
+  "latency_s": 13.18,
+  "in_tokens": 2207,
+  "out_tokens": 1971,
+  "finish_reason": "stop"
+ },
+ "4": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 9:08 AM",
+    "bbox": [
+     26,
+     21.2,
+     110,
+     28.5
+    ],
+    "bbox_qwen": [
+     26,
+     20,
+     110,
+     30
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     534,
+     21.2,
+     593,
+     28.5
+    ],
+    "bbox_qwen": [
+     534,
+     20,
+     593,
+     30
+    ]
+   },
+   {
+    "text": "“4a. Áp dụng quy định về hành vi vi phạm, mức phạt, hình thức xử phạt bổ sung và biện pháp khắc phục",
+    "bbox": [
+     97,
+     38.8,
+     925,
+     53.3
+    ],
+    "bbox_qwen": [
+     97,
+     35,
+     925,
+     50
+    ]
+   },
+   {
+    "text": "hậu quả tại Nghị định xử phạt vi phạm hành chính trong lĩnh vực lao động để xử phạt vi phạm về kiểm định",
+    "bbox": [
+     97,
+     55.8,
+     925,
+     72.1
+    ],
+    "bbox_qwen": [
+     97,
+     50,
+     925,
+     65
+    ]
+   },
+   {
+    "text": "định kỳ đối với máy, thiết bị, vật tư có yêu cầu nghiêm ngặt về an toàn, vệ sinh lao động trong sản xuất,",
+    "bbox": [
+     97,
+     72.7,
+     800,
+     86.7
+    ],
+    "bbox_qwen": [
+     97,
+     65,
+     800,
+     80
+    ]
+   },
+   {
+    "text": "kinh doanh hóa chất.”",
+    "bbox": [
+     97,
+     90.3,
+     210,
+     100.6
+    ],
+    "bbox_qwen": [
+     97,
+     80,
+     210,
+     95
+    ]
+   },
+   {
+    "text": "5. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 14 như sau:",
+    "bbox": [
+     97,
+     122.4,
+     588,
+     133.3
+    ],
+    "bbox_qwen": [
+     97,
+     110,
+     588,
+     125
+    ]
+   },
+   {
+    "text": "a) Sửa đổi, bổ sung khoản 2 như sau:",
+    "bbox": [
+     97,
+     154.5,
+     330,
+     166.1
+    ],
+    "bbox_qwen": [
+     97,
+     140,
+     330,
+     155
+    ]
+   },
+   {
+    "text": "“2. Phạt tiền từ 20.000.000 đồng đến 25.000.000 đồng đối với hành vi không có nơi cất giữ hóa chất nguy",
+    "bbox": [
+     97,
+     183.6,
+     925,
+     186.1
+    ],
+    "bbox_qwen": [
+     97,
+     170,
+     925,
+     185
+    ]
+   },
+   {
+    "text": "hiểm để sử dụng.”;",
+    "bbox": [
+     97,
+     186.7,
+     180,
+     200.6
+    ],
+    "bbox_qwen": [
+     97,
+     185,
+     180,
+     200
+    ]
+   },
+   {
+    "text": "b) Bãi bỏ khoản 3.",
+    "bbox": [
+     97,
+     203.6,
+     220,
+     214.5
+    ],
+    "bbox_qwen": [
+     97,
+     215,
+     220,
+     230
+    ]
+   },
+   {
+    "text": "6. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 15 như sau:",
+    "bbox": [
+     97,
+     236.4,
+     588,
+     246.7
+    ],
+    "bbox_qwen": [
+     97,
+     245,
+     588,
+     260
+    ]
+   },
+   {
+    "text": "a) Sửa đổi khoản 2 và bổ sung khoản 2a vào sau khoản 2 như sau:",
+    "bbox": [
+     97,
+     268.5,
+     613,
+     279.4
+    ],
+    "bbox_qwen": [
+     97,
+     275,
+     613,
+     290
+    ]
+   },
+   {
+    "text": "“2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không lưu trữ các thông tin về hóa",
+    "bbox": [
+     97,
+     300.6,
+     925,
+     312.1
+    ],
+    "bbox_qwen": [
+     97,
+     305,
+     925,
+     320
+    ]
+   },
+   {
+    "text": "chất được sử dụng để sản xuất sản phẩm, hàng hóa khác.",
+    "bbox": [
+     97,
+     332.7,
+     470,
+     346.1
+    ],
+    "bbox_qwen": [
+     97,
+     320,
+     470,
+     335
+    ]
+   },
+   {
+    "text": "2a. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi không có người chuyên trách về an",
+    "bbox": [
+     97,
+     349.7,
+     925,
+     363.6
+    ],
+    "bbox_qwen": [
+     97,
+     350,
+     925,
+     365
+    ]
+   },
+   {
+    "text": "toàn hóa chất tại cơ sở sử dụng hóa chất để sản xuất sản phẩm, hàng hóa khác.”;",
+    "bbox": [
+     97,
+     378.8,
+     630,
+     381.2
+    ],
+    "bbox_qwen": [
+     97,
+     365,
+     630,
+     380
+    ]
+   },
+   {
+    "text": "b) Bãi bỏ khoản 4.",
+    "bbox": [
+     97,
+     398.8,
+     220,
+     412.7
+    ],
+    "bbox_qwen": [
+     97,
+     395,
+     220,
+     410
+    ]
+   },
+   {
+    "text": "7. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 16 như sau:",
+    "bbox": [
+     97,
+     431.5,
+     588,
+     441.8
+    ],
+    "bbox_qwen": [
+     97,
+     425,
+     588,
+     440
+    ]
+   },
+   {
+    "text": "a) Sửa đổi khoản 1, khoản 2 như sau:",
+    "bbox": [
+     97,
+     463.6,
+     380,
+     474.5
+    ],
+    "bbox_qwen": [
+     97,
+     455,
+     380,
+     470
+    ]
+   },
+   {
+    "text": "“1. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay",
+    "bbox": [
+     97,
+     495.8,
+     925,
+     506.1
+    ],
+    "bbox_qwen": [
+     97,
+     485,
+     925,
+     500
+    ]
+   },
+   {
+    "text": "đổi nội dung ghi trong Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có",
+    "bbox": [
+     97,
+     495.8,
+     925,
+     506.1
+    ],
+    "bbox_qwen": [
+     97,
+     500,
+     925,
+     515
+    ]
+   },
+   {
+    "text": "điều kiện trong lĩnh vực công nghiệp.",
+    "bbox": [
+     97,
+     527.9,
+     300,
+     544.2
+    ],
+    "bbox_qwen": [
+     97,
+     515,
+     300,
+     530
+    ]
+   },
+   {
+    "text": "2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi vi phạm sau:",
+    "bbox": [
+     97,
+     544.8,
+     680,
+     558.8
+    ],
+    "bbox_qwen": [
+     97,
+     545,
+     680,
+     560
+    ]
+   },
+   {
+    "text": "a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy chứng nhận đủ điều kiện sản xuất, kinh",
+    "bbox": [
+     97,
+     561.8,
+     925,
+     575.8
+    ],
+    "bbox_qwen": [
+     97,
+     575,
+     925,
+     590
+    ]
+   },
+   {
+    "text": "doanh hóa chất sản xuất, kinh doanh có điều kiện trong lĩnh vực công nghiệp;",
+    "bbox": [
+     97,
+     594.5,
+     703,
+     607.9
+    ],
+    "bbox_qwen": [
+     97,
+     590,
+     703,
+     605
+    ]
+   },
+   {
+    "text": "b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy chứng nhận đủ điều kiện sản",
+    "bbox": [
+     97,
+     626.7,
+     925,
+     640.0
+    ],
+    "bbox_qwen": [
+     97,
+     620,
+     925,
+     635
+    ]
+   },
+   {
+    "text": "xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều kiện trong lĩnh vực công nghiệp.”;",
+    "bbox": [
+     97,
+     643.6,
+     680,
+     657.0
+    ],
+    "bbox_qwen": [
+     97,
+     635,
+     680,
+     650
+    ]
+   },
+   {
+    "text": "b) Bãi bỏ khoản 3;",
+    "bbox": [
+     97,
+     675.8,
+     220,
+     691.5
+    ],
+    "bbox_qwen": [
+     97,
+     665,
+     220,
+     680
+    ]
+   },
+   {
+    "text": "c) Sửa đổi, bổ sung khoản 5 như sau:",
+    "bbox": [
+     97,
+     692.7,
+     355,
+     706.7
+    ],
+    "bbox_qwen": [
+     97,
+     695,
+     355,
+     710
+    ]
+   },
+   {
+    "text": "“5. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi sản xuất, kinh doanh không đúng địa",
+    "bbox": [
+     97,
+     725.5,
+     925,
+     735.8
+    ],
+    "bbox_qwen": [
+     97,
+     725,
+     925,
+     740
+    ]
+   },
+   {
+    "text": "điểm, quy mô, chủng loại hóa chất sản xuất, kinh doanh có điều kiện ghi trong Giấy chứng nhận đủ điều",
+    "bbox": [
+     97,
+     757.6,
+     925,
+     769.1
+    ],
+    "bbox_qwen": [
+     97,
+     740,
+     925,
+     755
+    ]
+   },
+   {
+    "text": "kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều kiện trong lĩnh vực công nghiệp.”;",
+    "bbox": [
+     97,
+     757.6,
+     680,
+     769.1
+    ],
+    "bbox_qwen": [
+     97,
+     755,
+     680,
+     770
+    ]
+   },
+   {
+    "text": "d) Sửa đổi, bổ sung khoản 7 như sau:",
+    "bbox": [
+     97,
+     789.7,
+     380,
+     803.0
+    ],
+    "bbox_qwen": [
+     97,
+     785,
+     380,
+     800
+    ]
+   },
+   {
+    "text": "“7. Hình thức xử phạt bổ sung:",
+    "bbox": [
+     97,
+     806.7,
+     310,
+     820.0
+    ],
+    "bbox_qwen": [
+     97,
+     815,
+     310,
+     830
+    ]
+   },
+   {
+    "text": "Tước quyền sử dụng Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có",
+    "bbox": [
+     97,
+     823.6,
+     925,
+     837.6
+    ],
+    "bbox_qwen": [
+     97,
+     845,
+     925,
+     860
+    ]
+   },
+   {
+    "text": "điều kiện trong lĩnh vực công nghiệp từ 01 tháng đến 03 tháng đối với hành vi vi phạm quy định tại điểm a",
+    "bbox": [
+     97,
+     855.8,
+     925,
+     869.7
+    ],
+    "bbox_qwen": [
+     97,
+     860,
+     925,
+     875
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     26,
+     972.7,
+     85,
+     980.0
+    ],
+    "bbox_qwen": [
+     26,
+     960,
+     85,
+     970
+    ]
+   },
+   {
+    "text": "4/88",
+    "bbox": [
+     925,
+     972.7,
+     950,
+     980.0
+    ],
+    "bbox_qwen": [
+     925,
+     960,
+     950,
+     970
+    ]
+   }
+  ],
+  "latency_s": 13.69,
+  "in_tokens": 2243,
+  "out_tokens": 3057,
+  "finish_reason": "stop",
+  "retry_config": {
+   "dpi": 150,
+   "hint": true,
+   "schema": false
+  }
+ },
+ "5": {
+  "ok": true,
+  "lines": [
+   {
+    "text": "10/7/26, 9:08 AM",
+    "bbox": [
+     26,
+     21.2,
+     120,
+     28.5
+    ],
+    "bbox_qwen": [
+     26,
+     18,
+     120,
+     28
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     536,
+     21.2,
+     596,
+     28.5
+    ],
+    "bbox_qwen": [
+     536,
+     18,
+     596,
+     28
+    ]
+   },
+   {
+    "text": "khoản 2 Điều này và từ 03 tháng đến 06 tháng đối với hành vi vi phạm quy định tại khoản 5 Điều này.”;",
+    "bbox": [
+     100,
+     38.8,
+     920,
+     52.7
+    ],
+    "bbox_qwen": [
+     100,
+     32,
+     920,
+     49
+    ]
+   },
+   {
+    "text": "đ) Sửa đổi, bổ sung khoản 8 như sau:",
+    "bbox": [
+     100,
+     70.9,
+     383,
+     83.0
+    ],
+    "bbox_qwen": [
+     100,
+     65,
+     383,
+     82
+    ]
+   },
+   {
+    "text": "“8. Biện pháp khắc phục hậu quả:",
+    "bbox": [
+     100,
+     103.6,
+     360,
+     117.0
+    ],
+    "bbox_qwen": [
+     100,
+     99,
+     360,
+     116
+    ]
+   },
+   {
+    "text": "a) Buộc nộp lại Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều",
+    "bbox": [
+     100,
+     135.8,
+     927,
+     149.1
+    ],
+    "bbox_qwen": [
+     100,
+     132,
+     927,
+     149
+    ]
+   },
+   {
+    "text": "kiện trong lĩnh vực công nghiệp bị viết thêm, tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ quan cấp Giấy",
+    "bbox": [
+     100,
+     152.7,
+     927,
+     166.1
+    ],
+    "bbox_qwen": [
+     100,
+     150,
+     927,
+     167
+    ]
+   },
+   {
+    "text": "chứng nhận đối với hành vi vi phạm quy định tại khoản 1 Điều này;",
+    "bbox": [
+     100,
+     169.7,
+     560,
+     183.0
+    ],
+    "bbox_qwen": [
+     100,
+     167,
+     560,
+     184
+    ]
+   },
+   {
+    "text": "b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2, khoản 5 và",
+    "bbox": [
+     100,
+     201.8,
+     937,
+     215.2
+    ],
+    "bbox_qwen": [
+     100,
+     201,
+     937,
+     218
+    ]
+   },
+   {
+    "text": "khoản 6 Điều này.”.",
+    "bbox": [
+     100,
+     218.8,
+     220,
+     229.7
+    ],
+    "bbox_qwen": [
+     100,
+     218,
+     220,
+     235
+    ]
+   },
+   {
+    "text": "8. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 17 như sau:",
+    "bbox": [
+     100,
+     251.5,
+     500,
+     264.8
+    ],
+    "bbox_qwen": [
+     100,
+     252,
+     500,
+     269
+    ]
+   },
+   {
+    "text": "a) Sửa đổi khoản 1, khoản 2 như sau:",
+    "bbox": [
+     100,
+     283.6,
+     387,
+     293.9
+    ],
+    "bbox_qwen": [
+     100,
+     285,
+     387,
+     302
+    ]
+   },
+   {
+    "text": "“1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay",
+    "bbox": [
+     100,
+     315.8,
+     927,
+     329.1
+    ],
+    "bbox_qwen": [
+     100,
+     319,
+     927,
+     336
+    ]
+   },
+   {
+    "text": "đổi nội dung ghi trong Giấy phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực",
+    "bbox": [
+     100,
+     332.7,
+     927,
+     346.1
+    ],
+    "bbox_qwen": [
+     100,
+     336,
+     927,
+     353
+    ]
+   },
+   {
+    "text": "công nghiệp.",
+    "bbox": [
+     100,
+     353.3,
+     172,
+     363.6
+    ],
+    "bbox_qwen": [
+     100,
+     353,
+     172,
+     370
+    ]
+   },
+   {
+    "text": "2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau:",
+    "bbox": [
+     100,
+     381.8,
+     842,
+     395.8
+    ],
+    "bbox_qwen": [
+     100,
+     387,
+     842,
+     404
+    ]
+   },
+   {
+    "text": "a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy phép sản xuất, kinh doanh hóa chất hạn",
+    "bbox": [
+     100,
+     413.9,
+     927,
+     427.9
+    ],
+    "bbox_qwen": [
+     100,
+     420,
+     927,
+     437
+    ]
+   },
+   {
+    "text": "chế sản xuất, kinh doanh trong lĩnh vực công nghiệp;",
+    "bbox": [
+     100,
+     431.5,
+     512,
+     444.8
+    ],
+    "bbox_qwen": [
+     100,
+     437,
+     512,
+     454
+    ]
+   },
+   {
+    "text": "b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy phép sản xuất, kinh doanh hóa",
+    "bbox": [
+     100,
+     463.6,
+     927,
+     477.0
+    ],
+    "bbox_qwen": [
+     100,
+     471,
+     927,
+     488
+    ]
+   },
+   {
+    "text": "chất hạn chế sản xuất, kinh doanh trong lĩnh vực công nghiệp.”;",
+    "bbox": [
+     100,
+     480.6,
+     560,
+     493.9
+    ],
+    "bbox_qwen": [
+     100,
+     488,
+     560,
+     505
+    ]
+   },
+   {
+    "text": "b) Bãi bỏ khoản 3;",
+    "bbox": [
+     100,
+     512.7,
+     232,
+     523.0
+    ],
+    "bbox_qwen": [
+     100,
+     522,
+     232,
+     539
+    ]
+   },
+   {
+    "text": "c) Sửa đổi, bổ sung khoản 5 như sau:",
+    "bbox": [
+     100,
+     544.8,
+     387,
+     556.4
+    ],
+    "bbox_qwen": [
+     100,
+     555,
+     387,
+     572
+    ]
+   },
+   {
+    "text": "“5. Phạt tiền từ 15.000.000 đồng đến 20.000.000 đồng đối với hành vi sản xuất, kinh doanh không đúng địa",
+    "bbox": [
+     100,
+     594.5,
+     927,
+     607.9
+    ],
+    "bbox_qwen": [
+     100,
+     589,
+     927,
+     606
+    ]
+   },
+   {
+    "text": "điểm, quy mô, chủng loại hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực công nghiệp ghi trong Giấy",
+    "bbox": [
+     100,
+     611.5,
+     927,
+     624.8
+    ],
+    "bbox_qwen": [
+     100,
+     606,
+     927,
+     623
+    ]
+   },
+   {
+    "text": "phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực công nghiệp.”;",
+    "bbox": [
+     100,
+     643.6,
+     700,
+     657.0
+    ],
+    "bbox_qwen": [
+     100,
+     623,
+     700,
+     640
+    ]
+   },
+   {
+    "text": "d) Sửa đổi, bổ sung khoản 7 như sau:",
+    "bbox": [
+     100,
+     675.8,
+     387,
+     689.7
+    ],
+    "bbox_qwen": [
+     100,
+     657,
+     387,
+     674
+    ]
+   },
+   {
+    "text": "“7. Hình thức xử phạt bổ sung:",
+    "bbox": [
+     100,
+     707.9,
+     330,
+     723.6
+    ],
+    "bbox_qwen": [
+     100,
+     690,
+     330,
+     707
+    ]
+   },
+   {
+    "text": "Tước quyền sử dụng Giấy phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực",
+    "bbox": [
+     100,
+     724.8,
+     927,
+     738.8
+    ],
+    "bbox_qwen": [
+     100,
+     723,
+     927,
+     740
+    ]
+   },
+   {
+    "text": "công nghiệp từ 03 tháng đến 06 tháng đối với hành vi vi phạm quy định tại điểm a khoản 2 Điều này và từ",
+    "bbox": [
+     100,
+     742.4,
+     927,
+     755.8
+    ],
+    "bbox_qwen": [
+     100,
+     740,
+     927,
+     757
+    ]
+   },
+   {
+    "text": "06 tháng đến 12 tháng đối với hành vi vi phạm quy định tại khoản 5 Điều này.”;",
+    "bbox": [
+     100,
+     774.5,
+     660,
+     784.8
+    ],
+    "bbox_qwen": [
+     100,
+     757,
+     660,
+     774
+    ]
+   },
+   {
+    "text": "đ) Sửa đổi, bổ sung khoản 8 như sau:",
+    "bbox": [
+     100,
+     785.5,
+     383,
+     787.9
+    ],
+    "bbox_qwen": [
+     100,
+     791,
+     383,
+     808
+    ]
+   },
+   {
+    "text": "“8. Biện pháp khắc phục hậu quả:",
+    "bbox": [
+     100,
+     838.8,
+     360,
+     854.5
+    ],
+    "bbox_qwen": [
+     100,
+     824,
+     360,
+     841
+    ]
+   },
+   {
+    "text": "a) Buộc nộp lại Giấy phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực công",
+    "bbox": [
+     100,
+     855.8,
+     927,
+     869.7
+    ],
+    "bbox_qwen": [
+     100,
+     857,
+     927,
+     874
+    ]
+   },
+   {
+    "text": "nghiệp bị viết thêm, tẩy xóa, sửa chữa làm thay đổi nội dung cho cơ quan cấp Giấy phép đối với hành vi vi",
+    "bbox": [
+     100,
+     872.7,
+     927,
+     886.7
+    ],
+    "bbox_qwen": [
+     100,
+     874,
+     927,
+     891
+    ]
+   },
+   {
+    "text": "phạm quy định tại khoản 1 Điều này;",
+    "bbox": [
+     100,
+     905.5,
+     330,
+     918.8
+    ],
+    "bbox_qwen": [
+     100,
+     891,
+     330,
+     908
+    ]
+   },
+   {
+    "text": "b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2, khoản 5 và",
+    "bbox": [
+     100,
+     922.4,
+     937,
+     932.7
+    ],
+    "bbox_qwen": [
+     100,
+     925,
+     937,
+     942
+    ]
+   },
+   {
+    "text": "khoản 6 Điều này.”.",
+    "bbox": [
+     100,
+     922.4,
+     220,
+     932.7
+    ],
+    "bbox_qwen": [
+     100,
+     942,
+     220,
+     959
+    ]
+   },
+   {
+    "text": "about:blank",
+    "bbox": [
+     38,
+     972.7,
+     98,
+     980.0
+    ],
+    "bbox_qwen": [
+     38,
+     972,
+     98,
+     982
+    ]
+   },
+   {
+    "text": "5/88",
+    "bbox": [
+     932,
+     972.7,
+     960,
+     980.0
+    ],
+    "bbox_qwen": [
+     932,
+     972,
+     960,
+     982
+    ]
+   }
+  ],
+  "latency_s": 10.95,
+  "in_tokens": 2207,
+  "out_tokens": 1612,
+  "finish_reason": "stop"
+ }
+}

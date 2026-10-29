@@ -1,0 +1,88 @@
+# Dàn ý - grammar (86 tiêu đề)
+
+- [L1, tr.1] Chương I NHỮNG QUY ĐỊNH CHUNG
+  - [L2, tr.1] Điều 1. Phạm vi điều chỉnh
+  - [L2, tr.1] Điều 2. Văn bản quy phạm pháp luật
+  - [L2, tr.1] Điều 3. Giải thích từ ngữ
+    - [L3, tr.1] 1. Quy phạm pháp luật là quy tắc xử sự chung, có hiệu lực bắt buộc chung, được áp dụng đối với cơ quan,
+    - [L3, tr.1] 2. Chính sách là tập hợp các giải pháp cụ thể của Nhà nước để giải quyết một hoặc một số vấn đề của thực
+    - [L3, tr.1] 3. Tham vấn chính sách là việc trao đổi trực tiếp giữa cơ quan lập đề xuất chính sách với cơ quan, tổ chức,
+    - [L3, tr.1] 4. Đánh giá tác động của chính sách là việc phân tích, dự báo khả năng ảnh hưởng của từng giải pháp nhằm
+    - [L3, tr.1] 5. Rà soát văn bản quy phạm pháp luật là việc xem xét, đối chiếu, đánh giá các quy định của văn bản được
+    - [L3, tr.1] 6. Kiểm tra văn bản quy phạm pháp luật là việc xem xét, đánh giá, kết luận về tính hợp hiến, tính hợp pháp,
+  - [L2, tr.2] Điều 4. Hệ thống văn bản quy phạm pháp luật
+    - [L3, tr.2] 1. Hiến pháp.
+    - [L3, tr.2] 2. Bộ luật, luật (sau đây gọi chung là luật), nghị quyết của Quốc hội.
+    - [L3, tr.2] 3. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội; nghị quyết liên tịch giữa Ủy ban Thường vụ
+    - [L3, tr.2] 4. Lệnh, quyết định của Chủ tịch nước.
+    - [L3, tr.2] 5. Nghị định, nghị quyết của Chính phủ; nghị quyết liên tịch giữa Chính phủ với Đoàn Chủ tịch Ủy ban
+    - [L3, tr.2] 6. Quyết định của Thủ tướng Chính phủ.
+    - [L3, tr.2] 7. Nghị quyết của Hội đồng Thẩm phán Tòa án nhân dân tối cao.
+    - [L3, tr.2] 8. Thông tư của Chánh án Tòa án nhân dân tối cao; thông tư của Viện trưởng Viện kiểm sát nhân dân tối
+    - [L3, tr.2] 9. Thông tư liên tịch giữa Chánh án Tòa án nhân dân tối cao, Viện trưởng Viện kiểm sát nhân dân tối cao,
+    - [L3, tr.2] 10. Nghị quyết của Hội đồng nhân dân tỉnh, thành phố trực thuộc trung ương (sau đây gọi chung là cấp
+    - [L3, tr.2] 11. Quyết định của Ủy ban nhân dân cấp tỉnh.
+    - [L3, tr.2] 12. Văn bản quy phạm pháp luật của chính quyền địa phương ở đơn vị hành chính - kinh tế đặc biệt.
+    - [L3, tr.2] 13. Nghị quyết của Hội đồng nhân dân huyện, quận, thị xã, thành phố thuộc tỉnh, thành phố thuộc thành phố
+    - [L3, tr.2] 14. Quyết định của Ủy ban nhân dân cấp huyện.
+  - [L2, tr.2] Điều 5. Nguyên tắc xây dựng, ban hành văn bản quy phạm pháp luật
+    - [L3, tr.2] 1. Bảo đảm sự lãnh đạo toàn diện, trực tiếp của Đảng Cộng sản Việt Nam.
+    - [L3, tr.2] 2. Bảo đảm tính hợp hiến, tính hợp pháp, tính thống nhất của văn bản quy phạm pháp luật trong hệ thống
+    - [L3, tr.2] 3. Bảo đảm chủ quyền quốc gia, quốc phòng, an ninh, lợi ích quốc gia, dân tộc; kiểm soát quyền lực, phòng,
+    - [L3, tr.2] 4. Tôn trọng, bảo vệ và bảo đảm quyền con người, quyền công dân, bình đẳng giới; bảo đảm dân chủ, công
+    - [L3, tr.2] 5. Bảo đảm việc thực hiện chủ trương phân quyền, phân cấp; giải quyết vấn đề bất cập, phát sinh từ thực
+    - [L3, tr.3] 6. Văn bản quy phạm pháp luật quy định thực hiện thí điểm phải xác định thời gian thực hiện thí điểm và
+    - [L3, tr.3] 7. Bảo đảm thực hiện quy định của pháp luật về bảo vệ bí mật nhà nước đối với nội dung văn bản quy phạm
+  - [L2, tr.3] Điều 6. Phản biện xã hội, tham vấn, góp ý đối với chính sách, dự thảo văn bản quy phạm pháp luật
+    - [L3, tr.3] 1. Mặt trận Tổ quốc Việt Nam và các tổ chức chính trị - xã hội thực hiện phản biện xã hội đối với dự thảo
+    - [L3, tr.3] 2. Cơ quan lập đề xuất chính sách có trách nhiệm tham vấn Hội đồng Dân tộc, Ủy ban của Quốc hội, Bộ, cơ
+    - [L3, tr.3] 3. Mặt trận Tổ quốc Việt Nam, các tổ chức thành viên của Mặt trận và các cơ quan, tổ chức, cá nhân có
+    - [L3, tr.3] 4. Cơ quan lập đề xuất chính sách, cơ quan chủ trì soạn thảo có trách nhiệm nghiên cứu tiếp thu, giải trình
+  - [L2, tr.3] Điều 7. Ngôn ngữ, thể thức, kỹ thuật trình bày và dịch văn bản quy phạm pháp luật ra tiếng dân tộc thiểu số, tiếng nước ngoài
+    - [L3, tr.3] 1. Ngôn ngữ được sử dụng trong văn bản quy phạm pháp luật là tiếng Việt, bảo đảm chính xác, phổ thông,
+    - [L3, tr.3] 2. Văn bản quy phạm pháp luật có thể được bố cục theo phần, chương, mục, tiểu mục, điều, khoản, điểm;
+    - [L3, tr.3] 3. Văn bản quy phạm pháp luật phải đánh số, ký hiệu bảo đảm thể hiện rõ số thứ tự liên tục, năm ban hành,
+    - [L3, tr.3] 4. Văn bản quy phạm pháp luật có thể được dịch ra tiếng dân tộc thiểu số, tiếng nước ngoài. Bản dịch có giá
+  - [L2, tr.3] Điều 8. Sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản quy phạm pháp luật
+    - [L3, tr.3] 1. Văn bản quy phạm pháp luật chỉ được sửa đổi, bổ sung, thay thế bằng văn bản quy phạm pháp luật của
+    - [L3, tr.3] 2. Văn bản quy phạm pháp luật bị bãi bỏ bằng văn bản của chính cơ quan, người có thẩm quyền đã ban hành
+    - [L3, tr.3] 3. Văn bản sửa đổi, bổ sung, thay thế, bãi bỏ hoặc đình chỉ việc thi hành văn bản khác phải xác định rõ tên
+    - [L3, tr.4] 4. Ban hành văn bản quy phạm pháp luật thay thế văn bản quy phạm pháp luật hiện hành thuộc một trong
+      - [L4, tr.4] a) Thay đổi cơ bản chính sách, phạm vi điều chỉnh, đối tượng áp dụng;
+      - [L4, tr.4] b) Sửa đổi, bổ sung về nội dung quá một phần hai tổng số điều.
+    - [L3, tr.4] 5. Cơ quan, người có thẩm quyền ban hành văn bản quy phạm pháp luật phải đồng thời sửa đổi, bổ sung, bãi
+    - [L3, tr.4] 6. Văn bản quy phạm pháp luật có thể được ban hành để đồng thời sửa đổi, bổ sung, thay thế, bãi bỏ nội
+  - [L2, tr.4] Điều 9. Gửi, lưu trữ văn bản quy phạm pháp luật
+    - [L3, tr.4] 1. Chậm nhất là 03 ngày kể từ ngày công bố luật, nghị quyết của Quốc hội, pháp lệnh, nghị quyết của Ủy
+    - [L3, tr.4] 2. Hồ sơ chính sách, dự án và bản gốc của văn bản quy phạm pháp luật phải được lưu trữ theo quy định của
+    - [L3, tr.4] 3. Văn bản quy phạm pháp luật của cơ quan, người có thẩm quyền ở trung ương ban hành phải được đăng
+    - [L3, tr.4] 4. Văn bản quy phạm pháp luật đăng tải trên công báo điện tử có giá trị như văn bản gốc.
+- [L1, tr.4] Chương II THẨM QUYỀN BAN HÀNH, NỘI DUNG VĂN BẢN QUY PHẠM PHÁP LUẬT
+  - [L2, tr.4] Điều 10. Luật, nghị quyết của Quốc hội
+    - [L3, tr.4] 1. Quốc hội ban hành luật để quy định:
+      - [L4, tr.4] a) Tổ chức và hoạt động của Quốc hội, Chủ tịch nước, Chính phủ, Tòa án nhân dân, Viện kiểm sát nhân dân,
+      - [L4, tr.4] b) Quyền con người, quyền và nghĩa vụ cơ bản của công dân mà theo Hiến pháp phải do luật định; việc hạn
+      - [L4, tr.4] c) Chính sách cơ bản về kinh tế, xã hội, văn hóa, giáo dục, khoa học, công nghệ, môi trường, tài chính, tiền
+      - [L4, tr.5] d) Chính sách cơ bản về quốc phòng, an ninh quốc gia; hàm, cấp trong lực lượng vũ trang nhân dân; quy
+      - [L4, tr.5] đ) Chính sách cơ bản về đối ngoại; hàm, cấp ngoại giao; hàm, cấp nhà nước khác;
+      - [L4, tr.5] e) Chính sách dân tộc, chính sách tôn giáo của Nhà nước;
+      - [L4, tr.5] g) Trưng cầu ý dân;
+      - [L4, tr.5] h) Cơ chế bảo vệ Hiến pháp;
+      - [L4, tr.5] i) Vấn đề khác thuộc thẩm quyền của Quốc hội theo quy định của Hiến pháp và luật.
+    - [L3, tr.5] 2. Quốc hội ban hành nghị quyết để quy định:
+      - [L4, tr.5] a) Thực hiện thí điểm một số chính sách mới thuộc thẩm quyền quyết định của Quốc hội khác với quy định
+      - [L4, tr.5] b) Tạm ngưng, điều chỉnh hiệu lực hoặc kéo dài thời hạn áp dụng toàn bộ hoặc một phần luật, nghị quyết
+      - [L4, tr.5] c) Vấn đề khác do Quốc hội quyết định.
+  - [L2, tr.5] Điều 11. Pháp lệnh, nghị quyết của Ủy ban Thường vụ Quốc hội
+    - [L3, tr.5] 1. Ủy ban Thường vụ Quốc hội ban hành pháp lệnh trong trường hợp được Quốc hội giao.
+    - [L3, tr.5] 2. Ủy ban Thường vụ Quốc hội ban hành nghị quyết để quy định:
+      - [L4, tr.5] a) Giải thích Hiến pháp, luật, nghị quyết của Quốc hội và pháp lệnh, nghị quyết của Ủy ban Thường vụ
+      - [L4, tr.5] b) Tạm ngưng, điều chỉnh hiệu lực hoặc kéo dài thời hạn áp dụng toàn bộ hoặc một phần pháp lệnh, nghị
+      - [L4, tr.5] c) Tổng động viên hoặc động viên cục bộ; ban bố, bãi bỏ tình trạng khẩn cấp trong cả nước hoặc ở từng địa
+      - [L4, tr.5] d) Hướng dẫn hoạt động của Hội đồng nhân dân;
+      - [L4, tr.5] đ) Nội dung được luật, nghị quyết của Quốc hội giao, trừ trường hợp quy định tại khoản 1 Điều này;
+      - [L4, tr.5] e) Vấn đề khác thuộc thẩm quyền của Ủy ban Thường vụ Quốc hội.
+  - [L2, tr.5] Điều 12. Lệnh, quyết định của Chủ tịch nước
+    - [L3, tr.5] 1. Tổng động viên hoặc động viên cục bộ; công bố, bãi bỏ tình trạng khẩn cấp trong cả nước hoặc ở từng địa
+    - [L3, tr.5] 2. Vấn đề khác thuộc thẩm quyền của Chủ tịch nước.
+  - [L2, tr.5] Điều 13. Nghị quyết liên tịch giữa Ủy ban Thường vụ Quốc hội, Chính phủ, Đoàn Chủ tịch Ủy ban

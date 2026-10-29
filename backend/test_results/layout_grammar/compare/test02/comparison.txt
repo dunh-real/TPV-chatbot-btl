@@ -1,0 +1,5 @@
+Tài liệu test02 | Ground truth: unavailable | Evaluation type: so sánh mô tả
+
+rule_based: 21 tiêu đề, 4 trang | cấp {1: 1, 2: 9, 3: 11}
+    dạng: {'lệnh sửa đổi …như sau:': 17, 'khoản 1. 2.': 2, 'Điều (văn bản này)': 1, 'điểm a) b)': 1}
+

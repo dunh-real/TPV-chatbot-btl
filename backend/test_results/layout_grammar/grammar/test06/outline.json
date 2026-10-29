@@ -1,0 +1,920 @@
+[
+ {
+  "level": 1,
+  "page": 1,
+  "text": "Chương I QUY ĐỊNH CHUNG",
+  "kind": "OWN_CHUONG"
+ },
+ {
+  "level": 3,
+  "page": 1,
+  "text": "Điều 1. Phạm vi điều chỉnh",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 3,
+  "page": 1,
+  "text": "Điều 2. Đối tượng áp dụng",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 1,
+  "text": "1. Công chức quy định tại khoản 2 Điều 1 Luật Cán bộ, công chức.",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 1,
+  "text": "2. Cơ quan quản lý công chức, bao gồm:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "a) Văn phòng Trung ương Đảng, Cơ quan Ủy ban Kiểm tra Trung ương, các Ban Đảng Trung ương, Mặt",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "b) Tỉnh ủy, thành ủy trực thuộc Trung ương;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "c) Cơ quan của Quốc hội, Văn phòng Quốc hội, Văn phòng Chủ tịch nước, Kiểm toán Nhà nước;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "d) Tòa án nhân dân tối cao, Viện kiểm sát nhân dân tối cao;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "đ) Bộ, cơ quan ngang Bộ;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "e) Tổ chức do Chính phủ, Thủ tướng Chính phủ thành lập mà không phải là đơn vị sự nghiệp công lập",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 1,
+  "text": "g) Ủy ban nhân dân tỉnh, thành phố trực thuộc Trung ương.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 1,
+  "text": "3. Cơ quan sử dụng công chức.",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 1,
+  "text": "4. Bộ trưởng Bộ Quốc phòng, Bộ trưởng Bộ Công an quyết định việc áp dụng quy định tại Nghị định này để",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 1,
+  "page": 1,
+  "text": "Chương II TUYỂN DỤNG CÔNG CHỨC",
+  "kind": "OWN_CHUONG"
+ },
+ {
+  "level": 2,
+  "page": 2,
+  "text": "Mục 1. CĂN CỨ, THẨM QUYỀN, HỘI ĐỒNG TUYỂN DỤNG",
+  "kind": "OWN_MUC"
+ },
+ {
+  "level": 3,
+  "page": 2,
+  "text": "Điều 3. Căn cứ tuyển dụng công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 2,
+  "text": "1. Việc tuyển dụng công chức phải căn cứ vào tỷ lệ công chức cần bố trí theo vị trí việc làm, chỉ tiêu biên",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 2,
+  "text": "2. Cơ quan có thẩm quyền tuyển dụng xây dựng kế hoạch tuyển dụng, quyết định tuyển dụng theo thẩm",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "a) Số lượng biên chế được giao và số lượng biên chế chưa sử dụng của cơ quan sử dụng công chức; yêu cầu",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "b) Tỷ lệ công chức cần bố trí theo từng vị trí việc làm trong cơ quan sử dụng công chức và số lượng biên",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "c) Số lượng biên chế, vị trí việc làm tuyển dụng riêng đối với người dân tộc thiểu số (nếu có), trong đó xác",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "d) Số lượng biên chế, vị trí việc làm thực hiện xét tuyển (nếu có) đối với từng nhóm đối tượng;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "đ) Tiêu chuẩn, điều kiện đăng ký dự tuyển ở từng vị trí việc làm.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "e) Phương thức tuyển dụng (thi tuyển, xét tuyển); trường hợp tổ chức thi tuyển thì xác định cụ thể hình thức",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 2,
+  "text": "g) Các nội dung khác (nếu có).",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 3,
+  "page": 2,
+  "text": "Điều 4. Điều kiện đăng ký dự tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 3,
+  "page": 2,
+  "text": "Điều 5. Các trường hợp thực hiện xét tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 2,
+  "text": "1. Người cam kết tình nguyện làm việc từ đủ 05 năm trở lên ở vùng có điều kiện kinh tế - xã hội đặc biệt",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 2,
+  "text": "2. Người học theo chế độ cử tuyển theo quy định của Luật Giáo dục, sau khi tốt nghiệp về công tác tại địa",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 2,
+  "text": "3. Sinh viên tốt nghiệp xuất sắc, nhà khoa học trẻ tài năng thuộc đối tượng thực hiện chính sách thu hút,",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 3,
+  "page": 3,
+  "text": "Điều 6. Ưu tiên trong tuyển dụng công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 3,
+  "text": "1. Đối tượng và điểm ưu tiên trong thi tuyển hoặc xét tuyển",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "a) Anh hùng Lực lượng vũ trang, Anh hùng Lao động, thương binh, người hưởng chính sách như thương",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "b) Người dân tộc thiểu số, sĩ quan quân đội, sĩ quan công an, quân nhân chuyên nghiệp phục viên, người",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "c) Người hoàn thành nghĩa vụ quân sự, nghĩa vụ tham gia công an nhân dân, đội viên thanh niên xung",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "d) Cán bộ công đoàn trưởng thành từ cơ sở, trong phong trào công nhân theo quy định của cấp có thẩm",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 3,
+  "text": "2. Trường hợp người dự thi tuyển hoặc dự xét tuyển thuộc nhiều diện ưu tiên quy định tại khoản 1 Điều này",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 3,
+  "page": 3,
+  "text": "Điều 7. Cơ quan có thẩm quyền tuyển dụng công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 3,
+  "text": "1. Cơ quan quản lý công chức.",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 3,
+  "text": "2. Cơ quan sử dụng công chức được giao biên chế, kinh phí hoạt động, có con dấu và tài khoản riêng, được",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 3,
+  "page": 3,
+  "text": "Điều 8. Hội đồng tuyển dụng công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 3,
+  "text": "1. Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định thành lập Hội đồng tuyển dụng đối với",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "a) Chủ tịch Hội đồng là người đứng đầu hoặc cấp phó của người đứng đầu cơ quan có thẩm quyền tuyển",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "b) Phó Chủ tịch Hội đồng là đại diện lãnh đạo bộ phận tham mưu về tổ chức cán bộ của cơ quan có thẩm",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "c) Ủy viên kiêm Thư ký Hội đồng là công chức thuộc bộ phận tham mưu về tổ chức cán bộ của cơ quan có",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "d) Các ủy viên khác là đại diện lãnh đạo của một số bộ phận chuyên môn, nghiệp vụ có liên quan đến việc",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 3,
+  "text": "2. Hội đồng tuyển dụng làm việc theo nguyên tắc tập thể, quyết định theo đa số; trường hợp biểu quyết",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 3,
+  "text": "a) Căn cứ vào hình thức tuyển dụng và yêu cầu công việc quyết định việc thành lập bộ phận giúp việc phù",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "b) Tổ chức thu phí dự tuyển và sử dụng phí dự tuyển theo quy định;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "c) Tổ chức việc kiểm tra Phiếu đăng ký dự tuyển, tổ chức thi, chấm thi, chấm phúc khảo theo quy chế;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "d) Báo cáo người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định công nhận kết quả thi tuyển, xét",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "đ) Giải quyết khiếu nại, tố cáo trong quá trình tổ chức thi tuyển, xét tuyển;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "e) Hội đồng tuyển dụng tự giải thể sau khi hoàn thành nhiệm vụ.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 4,
+  "text": "3. Không bố trí những người có quan hệ vợ, chồng, cha đẻ, mẹ đẻ; cha, mẹ (vợ hoặc chồng), cha nuôi, mẹ",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 2,
+  "page": 4,
+  "text": "Mục 2. THI TUYỂN CÔNG CHỨC",
+  "kind": "OWN_MUC"
+ },
+ {
+  "level": 3,
+  "page": 4,
+  "text": "Điều 9. Hình thức, nội dung, thời gian thi tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 4,
+  "text": "1. Thi tuyển công chức vào vị trí việc làm xếp ngạch nhân viên: Thi nghiệp vụ chuyên ngành",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "a) Hình thức thi: Vấn đáp hoặc thực hành.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "b) Nội dung thi:",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "c) Thời gian thi 30 phút.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 4,
+  "text": "2. Thi tuyển công chức vào vị trí việc làm xếp ngạch chuyên viên và tương đương, cán sự và tương đương",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "a) Vòng 1: Môn thi điều kiện kiểm tra kiến thức, năng lực chung",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 4,
+  "text": "b) Vòng 2: Thi nghiệp vụ chuyên ngành",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 5,
+  "text": "3. Thi tuyển vào vị trí việc làm xếp ngạch chuyên viên chính và tương đương: Thi nghiệp vụ chuyên ngành",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 5,
+  "text": "4. Thi tuyển vào vị trí việc làm xếp ngạch chuyên viên cao cấp và tương đương, chuyên gia cao cấp: Thi",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 5,
+  "text": "a) Thi Đề án;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 5,
+  "text": "b) Nội dung, hình thức thi Đề án do cơ quan có thẩm quyền tuyển dụng quyết định, bảo đảm phù hợp với",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 5,
+  "text": "c) Thang điểm thi Đề án: 100 điểm;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 5,
+  "text": "d) Thời gian chuẩn bị và thi Đề án đối với 01 thí sinh tối đa là 90 phút do người đứng đầu cơ quan có thẩm",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 5,
+  "text": "5. Trường hợp cơ quan có thẩm quyền tuyển dụng có yêu cầu đặc thù cao hơn về nội dung, thời gian thi",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 3,
+  "page": 5,
+  "text": "Điều 10. Xác định người trúng tuyển trong kỳ thi tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 5,
+  "text": "1. Người trúng tuyển trong kỳ thi tuyển công chức phải đáp ứng đủ các điều kiện sau:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 5,
+  "text": "a) Có kết quả điểm thi nghiệp vụ chuyên ngành đạt từ 50 điểm trở lên. Trường hợp thi kết hợp viết và phỏng",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "b) Có kết quả điểm thi nghiệp vụ chuyên ngành cộng với điểm ưu tiên quy định tại Điều 6 Nghị định này",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 6,
+  "text": "2. Trường hợp có từ 02 người trở lên có tổng số điểm tính theo quy định tại điểm b khoản 1 Điều này bằng",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "a) Người có kết quả điểm thi nghiệp vụ chuyên ngành cao hơn;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "b) Người có số điểm của bài thi viết ở vòng 2 cao hơn trong trường hợp lựa chọn hình thức kết hợp viết và",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 6,
+  "text": "3. Đối với vị trí việc làm được tuyển dụng chung cho nhiều cơ quan sử dụng công chức khác nhau thì việc",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 6,
+  "text": "4. Người không trúng tuyển trong kỳ thi tuyển công chức không được bảo lưu kết quả thi tuyển cho các kỳ",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 2,
+  "page": 6,
+  "text": "Mục 3. XÉT TUYỂN CÔNG CHỨC",
+  "kind": "OWN_MUC"
+ },
+ {
+  "level": 3,
+  "page": 6,
+  "text": "Điều 11. Hình thức, nội dung xét tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 6,
+  "text": "1. Vòng 1: Kiểm tra điều kiện dự tuyển tại Phiếu đăng ký dự tuyển theo yêu cầu của vị trí việc làm cần",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 6,
+  "text": "2. Vòng 2: Xét nghiệp vụ chuyên ngành",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "a) Hình thức: Vấn đáp",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "b) Nội dung: Kiểm tra về kiến thức, kỹ năng thực thi công vụ; đánh giá về năng lực: tư duy, giao tiếp, phán",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "c) Thời gian: 30 phút (thí sinh dự thi có không quá 15 phút chuẩn bị trước khi vấn đáp);",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "d) Thang điểm: 100 điểm.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 3,
+  "page": 6,
+  "text": "Điều 12. Xác định người trúng tuyển trong kỳ xét tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 6,
+  "text": "1. Người trúng tuyển trong kỳ xét tuyển công chức phải có đủ các điều kiện sau:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 6,
+  "text": "a) Có kết quả điểm vòng 2 đạt từ 50 điểm trở lên;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "b) Có kết quả điểm vòng 2 cộng với điểm ưu tiên quy định tại Điều 6 Nghị định này (nếu có) cao hơn lấy",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 7,
+  "text": "2. Trường hợp có từ 02 người trở lên có tổng số điểm tính theo quy định tại điểm b khoản 1 Điều này bằng",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 7,
+  "text": "3. Đối với vị trí việc làm được tuyển dụng chung cho nhiều cơ quan sử dụng công chức khác nhau thì việc",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 7,
+  "text": "4. Người không trúng tuyển trong kỳ xét tuyển công chức không được bảo lưu kết quả xét tuyển cho các kỳ",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 2,
+  "page": 7,
+  "text": "Mục 4. TIẾP NHẬN VÀO LÀM CÔNG CHỨC",
+  "kind": "OWN_MUC"
+ },
+ {
+  "level": 3,
+  "page": 7,
+  "text": "Điều 13. Đối tượng, tiêu chuẩn, điều kiện, hồ sơ tiếp nhận vào làm công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 7,
+  "text": "1. Đối tượng tiếp nhận:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "a) Chuyên gia, nhà khoa học, luật gia, luật sư giỏi, doanh nhân tiêu biểu, xuất sắc đang công tác tại cơ quan,",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "b) Viên chức công tác tại đơn vị sự nghiệp công lập;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "c) Người hưởng lương trong Quân đội nhân dân, Công an nhân dân, tổ chức cơ yếu mà không phải là công",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "d) Người đang giữ chức vụ, chức danh lãnh đạo, quản lý từ cấp phòng trở lên tại doanh nghiệp do Nhà nước",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "đ) Người đã từng là cán bộ, công chức sau đó được cấp có thẩm quyền điều động, luân chuyển giữ các vị trí",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "e) Người được tuyển dụng theo chỉ tiêu biên chế được cấp có thẩm quyền giao làm việc trong các hội do",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "g) Người hoạt động không chuyên trách ở cấp xã trước ngày Nghị định này có hiệu lực thi hành;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "h) Đội viên Đề án thí điểm tuyển chọn trí thức trẻ tình nguyện về các xã tham gia phát triển nông thôn, miền",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 7,
+  "text": "2. Thẩm quyền tiếp nhận",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "a) Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định tiếp nhận đối với các trường hợp quy",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 7,
+  "text": "b) Người đứng đầu cơ quan quản lý công chức quyết định tiếp nhận đối với các trường hợp quy định tại",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 8,
+  "text": "3. Tiêu chuẩn, điều kiện tiếp nhận:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "a) Trường hợp quy định tại điểm a khoản 1 Điều này phải có kết quả, sản phẩm phù hợp với vị trí việc làm",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "b) Trường hợp quy định tại các điểm b, c, d, e, g và h khoản 1 Điều này phải có đủ 05 năm công tác trở lên",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "c) Trường hợp quy định tại điểm đ khoản 1 Điều này phải có quyết định bằng văn bản của cấp có thẩm",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 8,
+  "text": "4. Hồ sơ của người được đề nghị tiếp nhận vào làm công chức:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "a) Sơ yếu lý lịch cá nhân theo quy định hiện hành được lập trong thời hạn 30 ngày trước ngày nộp hồ sơ tiếp",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "b) Bản sao các văn bằng, chứng chỉ và các giấy tờ khác theo yêu cầu của vị trí việc làm dự kiến tiếp nhận;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "c) Giấy chứng nhận sức khỏe do cơ quan y tế có thẩm quyền cấp trong thời hạn 06 tháng;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "d) Bản tự nhận xét, đánh giá của người được đề nghị tiếp nhận về phẩm chất chính trị, phẩm chất đạo đức,",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 3,
+  "page": 8,
+  "text": "Điều 14. Thủ tục tiếp nhận",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 8,
+  "text": "1. Hội đồng kiểm tra, sát hạch:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "a) Người đứng đầu cơ quan có thẩm quyền tuyển dụng thành lập Hội đồng kiểm tra, sát hạch. Thành phần",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 8,
+  "text": "b) Nhiệm vụ, quyền hạn của Hội đồng kiểm tra, sát hạch:",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "c) Hội đồng kiểm tra, sát hạch làm việc theo nguyên tắc tập thể, quyết định theo đa số; trường hợp biểu",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 9,
+  "text": "2. Không thành lập Hội đồng kiểm tra, sát hạch đối với các trường hợp sau:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "a) Tiếp nhận các trường hợp quy định tại điểm b, c và điểm đ khoản 1 Điều 13 vào công chức không giữ",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "b) Tiếp nhận các trường hợp quy định tại khoản 1 Điều 13 Nghị định này vào làm công chức giữ chức vụ",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 9,
+  "text": "3. Không bố trí những người có quan hệ vợ, chồng, cha đẻ, mẹ đẻ; cha, mẹ (vợ hoặc chồng), cha nuôi, mẹ",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 9,
+  "text": "4. Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định tiếp nhận công chức theo thẩm quyền.",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 9,
+  "text": "5. Khi tiếp nhận vào làm công chức để bổ nhiệm giữ chức vụ, chức danh lãnh đạo, quản lý thì thực hiện",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "a) Trường hợp cơ quan có thẩm quyền tuyển dụng đồng thời là cơ quan có thẩm quyền bổ nhiệm hoặc là cấp",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "b) Trường hợp cơ quan có thẩm quyền tuyển dụng là cấp trên của cơ quan có thẩm quyền bổ nhiệm thì cơ",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 2,
+  "page": 9,
+  "text": "Mục 5. TRÌNH TỰ, THỦ TỤC THI TUYỂN, XÉT TUYỂN CÔNG CHỨC",
+  "kind": "OWN_MUC"
+ },
+ {
+  "level": 3,
+  "page": 9,
+  "text": "Điều 15. Thông báo tuyển dụng và tiếp nhận Phiếu đăng ký dự tuyển",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 9,
+  "text": "1. Cơ quan có thẩm quyền tuyển dụng phải đăng Thông báo tuyển dụng công khai ít nhất 01 lần trên một",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 9,
+  "text": "2. Nội dung Thông báo tuyển dụng bao gồm:",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "a) Số lượng biên chế cần tuyển ở từng vị trí việc làm, trong đó thông báo cụ thể vị trí việc làm được tuyển",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "b) Số lượng vị trí việc làm thực hiện việc thi tuyển, xét tuyển;",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "c) Tiêu chuẩn, điều kiện của vị trí việc làm đăng ký dự tuyển.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 9,
+  "text": "d) Thời hạn, địa chỉ tiếp nhận, phương thức tiếp nhận Phiếu đăng ký dự tuyển theo Mẫu số 01 ban hành kèm",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "đ) Hình thức, nội dung thi tuyển, xét tuyển; thời gian và địa điểm thi tuyển, xét tuyển; hình thức thông báo",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "e) Các nội dung khác theo quyết định của cơ quan có thẩm quyền tuyển dụng.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 10,
+  "text": "3. Người đứng đầu cơ quan có thẩm quyền tuyển dụng được thay đổi nội dung Thông báo tuyển dụng 01",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 10,
+  "text": "4. Thời hạn nhận Phiếu đăng ký dự tuyển là 30 ngày kể từ ngày thông báo công khai theo quy định tại",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 3,
+  "page": 10,
+  "text": "Điều 16. Trình tự tổ chức thi tuyển, xét tuyển công chức",
+  "kind": "OWN_DIEU"
+ },
+ {
+  "level": 4,
+  "page": 10,
+  "text": "1. Sau khi thông báo tuyển dụng, người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định thành lập",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 4,
+  "page": 10,
+  "text": "2. Chậm nhất là 15 ngày hoặc chậm nhất là 30 ngày đối với trường hợp số lượng người đăng ký dự tuyển từ",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "a) Thông báo trên trang thông tin điện tử hoặc cổng thông tin điện tử danh sách thí sinh đủ điều kiện, tiêu",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "b) Gửi thông báo triệu tập tới người đăng ký dự tuyển.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 10,
+  "text": "3. Tổ chức thi môn điều kiện (vòng 1):",
+  "kind": "OWN_KHOAN"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "a) Thời gian tổ chức thi vòng 1: Chậm nhất là 30 ngày kể từ ngày hết thời hạn nhận Phiếu đăng ký dự tuyển.",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "b) Tổ chức thi kiến thức, năng lực chung",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 5,
+  "page": 10,
+  "text": "c) Hội đồng tuyển dụng thông báo công khai trên trang thông tin điện tử hoặc cổng thông tin điện tử của cơ",
+  "kind": "OWN_DIEM"
+ },
+ {
+  "level": 4,
+  "page": 10,
+  "text": "4. Tổ chức thi nghiệp vụ chuyên ngành (vòng 2):",
+  "kind": "OWN_KHOAN"
+ }
+]

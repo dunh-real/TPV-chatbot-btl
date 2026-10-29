@@ -1,0 +1,16 @@
+Điều của chính văn bản (đọc từ OCR theo quy tắc): 16 -> ['Điều 1 (tr.1)', 'Điều 2 (tr.1)', 'Điều 3 (tr.2)', 'Điều 4 (tr.2)', 'Điều 5 (tr.2)', 'Điều 6 (tr.3)', 'Điều 7 (tr.3)', 'Điều 8 (tr.3)', 'Điều 9 (tr.4)', 'Điều 10 (tr.5)', 'Điều 11 (tr.6)', 'Điều 12 (tr.6)', 'Điều 13 (tr.7)', 'Điều 14 (tr.8)', 'Điều 15 (tr.9)', 'Điều 16 (tr.10)']
+
+[rule_based] 58 tiêu đề | đơn vị: {'Chương': 2, 'Điều': 15, 'Khoản': 17, 'Điểm': 19, 'Mục': 5} | trong trích dẫn: {}
+   Điều của văn bản: 15/16 (ở cấp nông nhất: 0) | thiếu: ['Điều 1']
+   vi phạm thứ bậc: 4 ['Điểm (L4) chứa Mục (L5): Mục 2. THI TUYỂN CÔNG CHỨC', 'Điều (L2) chứa Mục (L5): Mục 3. XÉT TUYỂN CÔNG CHỨC', 'Điều (L2) chứa Mục (L5): Mục 4. TIẾP NHẬN VÀO LÀM CÔNG CHỨC'] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+
+[grammar] 153 tiêu đề | đơn vị: {'Chương': 2, 'Điều': 16, 'Khoản': 48, 'Điểm': 82, 'Mục': 5} | trong trích dẫn: {}
+   Điều của văn bản: 16/16 (ở cấp nông nhất: 0) | thiếu: []
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+

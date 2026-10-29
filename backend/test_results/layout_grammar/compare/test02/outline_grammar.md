@@ -1,0 +1,63 @@
+# Dàn ý - grammar (61 tiêu đề)
+
+- [L1, tr.2] Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 2019 của
+  - [L2, tr.2] 1. Sửa đổi, bổ sung điểm a khoản 2 Điều 2 như sau:
+    - [L3, tr.2] “a) Tổ chức kinh tế được thành lập theo quy định của Luật Doanh nghiệp, gồm: Doanh nghiệp tư nhân,
+  - [L2, tr.2] 2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:
+    - [L3, tr.2] “m) Buộc nộp lại Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều
+  - [L2, tr.2] 3. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+    - [L3, tr.2] “Điều 4a. Quy định về vi phạm hành chính đã kết thúc, vi phạm hành chính đang được thực hiện và
+      - [L4, tr.2] 1. Hành vi vi phạm đã kết thúc, hành vi vi phạm đang được thực hiện được xác định căn cứ quy định tại
+      - [L4, tr.2] 2. Xử phạt vi phạm hành chính đối với trường hợp vi phạm hành chính nhiều lần:
+        - [L5, tr.2] a) Cá nhân, tổ chức vi phạm hành chính nhiều lần đối với hành vi vi phạm không thuộc trường hợp quy định
+        - [L5, tr.2] b) Cá nhân, tổ chức vi phạm hành chính nhiều lần đối với hành vi vi phạm tại khoản 2 và 3 Điều 6; khoản 2,
+    - [L3, tr.3] Điều 4b. Thi hành các hình thức xử phạt, biện pháp khắc phục hậu quả và xác định số lợi bất hợp
+      - [L4, tr.3] 1. Việc thi hành quyết định xử phạt vi phạm hành chính thực hiện theo quy định tại Mục 2 Chương III Phần
+      - [L4, tr.3] 2. Biên bản, tài liệu, văn bản hoặc giấy tờ liên quan khác ghi nhận việc thi hành các hình thức xử phạt, biện
+      - [L4, tr.3] 3. Số lợi bất hợp pháp có được do thực hiện hành vi vi phạm hành chính theo quy định tại Nghị định này là
+        - [L5, tr.3] a) Số lợi bất hợp pháp thu được bằng tiền là toàn bộ số tiền tổ chức, cá nhân thu được từ hành vi vi phạm
+        - [L5, tr.3] b) Số lợi bất hợp pháp thu được bằng giấy tờ có giá là toàn bộ giấy tờ có giá mà tổ chức, cá nhân vi phạm
+        - [L5, tr.3] c) Số lợi bất hợp pháp là vật, tài sản khác mà tổ chức, cá nhân vi phạm thu được từ hành vi vi phạm hành
+  - [L2, tr.3] 4. Sửa đổi, bổ sung một số khoản của Điều 5 như sau:
+    - [L3, tr.3] a) Sửa đổi khoản 3 như sau:
+      - [L4, tr.3] “3. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi sử dụng bồn chứa ngoài trời không
+      - [L4, tr.4] “4a. Áp dụng quy định về hành vi vi phạm, mức phạt, hình thức xử phạt bổ sung và biện pháp khắc phục
+  - [L2, tr.4] 5. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 14 như sau:
+    - [L3, tr.4] a) Sửa đổi, bổ sung khoản 2 như sau:
+      - [L4, tr.4] “2. Phạt tiền từ 20.000.000 đồng đến 25.000.000 đồng đối với hành vi không có nơi cất giữ hóa chất nguy
+    - [L3, tr.4] b) Bãi bỏ khoản 3.
+  - [L2, tr.4] 6. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 15 như sau:
+    - [L3, tr.4] a) Sửa đổi khoản 2 và bổ sung khoản 2a vào sau khoản 2 như sau:
+      - [L4, tr.4] “2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với hành vi không lưu trữ các thông tin về hóa
+      - [L4, tr.4] 2a. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi không có người chuyên trách về an
+    - [L3, tr.4] b) Bãi bỏ khoản 4.
+  - [L2, tr.4] 7. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 16 như sau:
+    - [L3, tr.4] a) Sửa đổi khoản 1, khoản 2 như sau:
+      - [L4, tr.4] “1. Phạt tiền từ 1.000.000 đồng đến 3.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay
+      - [L4, tr.4] 2. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với một trong các hành vi vi phạm sau:
+        - [L5, tr.4] a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy chứng nhận đủ điều kiện sản xuất, kinh
+        - [L5, tr.4] b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy chứng nhận đủ điều kiện sản
+    - [L3, tr.4] b) Bãi bỏ khoản 3;
+    - [L3, tr.4] c) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.4] “5. Phạt tiền từ 10.000.000 đồng đến 15.000.000 đồng đối với hành vi sản xuất, kinh doanh không đúng địa
+    - [L3, tr.4] d) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.4] “7. Hình thức xử phạt bổ sung:
+    - [L3, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+      - [L4, tr.5] “8. Biện pháp khắc phục hậu quả:
+        - [L5, tr.5] a) Buộc nộp lại Giấy chứng nhận đủ điều kiện sản xuất, kinh doanh hóa chất sản xuất, kinh doanh có điều
+        - [L5, tr.5] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2, khoản 5 và
+  - [L2, tr.5] 8. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 17 như sau:
+    - [L3, tr.5] a) Sửa đổi khoản 1, khoản 2 như sau:
+      - [L4, tr.5] “1. Phạt tiền từ 3.000.000 đồng đến 5.000.000 đồng đối với hành vi viết thêm, tẩy xóa, sửa chữa làm thay
+      - [L4, tr.5] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau:
+        - [L5, tr.5] a) Cho thuê, cho mượn, cầm cố, thế chấp, bán, chuyển nhượng Giấy phép sản xuất, kinh doanh hóa chất hạn
+        - [L5, tr.5] b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy phép sản xuất, kinh doanh hóa
+    - [L3, tr.5] b) Bãi bỏ khoản 3;
+    - [L3, tr.5] c) Sửa đổi, bổ sung khoản 5 như sau:
+      - [L4, tr.5] “5. Phạt tiền từ 15.000.000 đồng đến 20.000.000 đồng đối với hành vi sản xuất, kinh doanh không đúng địa
+    - [L3, tr.5] d) Sửa đổi, bổ sung khoản 7 như sau:
+      - [L4, tr.5] “7. Hình thức xử phạt bổ sung:
+    - [L3, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+      - [L4, tr.5] “8. Biện pháp khắc phục hậu quả:
+        - [L5, tr.5] a) Buộc nộp lại Giấy phép sản xuất, kinh doanh hóa chất hạn chế sản xuất, kinh doanh trong lĩnh vực công
+        - [L5, tr.5] b) Buộc nộp lại số lợi bất hợp pháp có được do thực hiện hành vi vi phạm quy định tại khoản 2, khoản 5 và

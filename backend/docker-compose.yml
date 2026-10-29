@@ -1,0 +1,190 @@
+# Toàn bộ backend TPV trong config Docker. Máy chủ chỉ cần Docker (có plugin
+# compose)
+#
+# Chọn thành phần bằng profile (đặt COMPOSE_PROFILES trong .env, hoặc --profile):
+#   gpu     backend chạy embedding/reranker trên GPU + vLLM trong cùng hệ
+#   cpu     backend-cpu chạy không GPU, LLM ở nơi khác (LLM_BASE_URL trong .env)
+#   slides  Presenton cho workflow 5 (image nặng vài GB)
+# qdrant + redis luôn chạy.
+#
+#   cd backend
+#   ./scripts/setup_backend.sh                               # khuyên dùng: tự nhận GPU, seed, chờ /health
+#   docker compose --profile gpu --profile slides up -d --build
+#   docker compose --profile cpu up -d --build
+#
+# Vì sao hai service backend thay vì một: khai báo xin GPU không bật/tắt theo
+# điều kiện được, máy không có nvidia-container-toolkit sẽ từ chối CẢ hệ. Hai
+# service chung một khuôn (x-backend), chỉ khác phần GPU và địa chỉ LLM.
+#
+# Biến ${...} lấy từ backend/.env (compose tự đọc .env cạnh file này). Backend
+# đọc .env của nó qua bind mount, rồi `environment:` dưới đây ĐÈ các địa chỉ
+# localhost thành tên service trong mạng Docker.
+
+name: tpv-btl
+
+x-backend: &backend
+  build:
+    context: ..
+    dockerfile: backend/Dockerfile
+    args:
+      APP_UID: ${APP_UID:-1000}
+      INSTALL_MSODBC: ${INSTALL_MSODBC:-1}
+  image: tpv-btl-backend:latest
+  restart: unless-stopped
+  ports:
+    # 0.0.0.0 để máy khác (LAN/Tailscale) và Cloudflare tunnel gọi được.
+    # Chỉ cho máy này: đặt BACKEND_BIND=127.0.0.1 trong .env.
+    - "${BACKEND_BIND:-0.0.0.0}:${BACKEND_PORT:-8081}:8081"
+  volumes:
+    - ./.env:/srv/backend/.env:ro
+    - ./data:/srv/backend/data
+    - ./config:/srv/backend/config:ro
+    - hf-cache-backend:/home/app/.cache/huggingface
+  extra_hosts:
+    # LLM chạy ngoài Docker trên chính máy này: LLM_BASE_URL=http://host.docker.internal:<cổng>/v1
+    - "host.docker.internal:host-gateway"
+
+x-backend-env: &backend-env
+  QDRANT_URL: http://qdrant:6333
+  REDIS_URL: redis://redis:6379/0
+  PRESENTON_URL: http://presenton:80
+
+services:
+  backend:
+    <<: *backend
+    profiles: ["gpu"]
+    depends_on: [qdrant, redis, vllm]
+    environment:
+      <<: *backend-env
+      LLM_BASE_URL: http://vllm:8000/v1
+      OCR_BASE_URL: http://vllm:8000/v1
+      # Mặc định .env: vLLM giữ card 0, embedding + reranker ở cuda:1.
+      # Máy MỘT card: EMBEDDING_DEVICE=cuda, RERANKER_DEVICE=cuda, VLLM_GPU_UTIL=0.85.
+      EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-cuda}
+      RERANKER_DEVICE: ${RERANKER_DEVICE:-cuda}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  backend-cpu:
+    <<: *backend
+    profiles: ["cpu"]
+    depends_on: [qdrant, redis]
+    environment:
+      <<: *backend-env
+      EMBEDDING_DEVICE: cpu
+      RERANKER_DEVICE: cpu
+      EMBEDDING_FP16: "false"
+
+  vllm:
+    profiles: ["gpu"]
+    image: vllm/vllm-openai:${VLLM_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ipc: host
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      VLLM_WORKER_MULTIPROC_METHOD: spawn
+    # Tham số giống scripts/serve_vllm.sh (lý do từng con số xem ở đó).
+    command:
+      - --model
+      - ${VLLM_MODEL:-Qwen/Qwen3.6-35B-A3B}
+      - --served-model-name
+      - ${LLM_MODEL:-qwen3.6-35b}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --tensor-parallel-size
+      - "1"
+      - --gpu-memory-utilization
+      - ${VLLM_GPU_UTIL:-0.90}
+      - --max-model-len
+      - ${VLLM_MAX_LEN:-262144}
+      - --max-num-seqs
+      - ${VLLM_MAX_SEQS:-16}
+      - --max-num-batched-tokens
+      - ${VLLM_MAX_BATCHED:-16384}
+      - --limit-mm-per-prompt
+      - '{"image": 2}'
+      - --speculative-config
+      - '{"method": "qwen3_5_mtp", "num_speculative_tokens": 2}'
+    volumes:
+      # Volume riêng của vLLM (~37 GB trọng số). Không chung với backend: vLLM
+      # chạy root, backend chạy user app - chung thì một bên sẽ không ghi được.
+      - hf-cache-vllm:/root/.cache/huggingface
+      - vllm-compile-cache:/root/.cache/vllm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${VLLM_GPU:-0}"]
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # Lần đầu phải tải ~37 GB trọng số.
+      start_period: 1800s
+
+  qdrant:
+    image: qdrant/qdrant:${QDRANT_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      # Chỉ loopback: Qdrant mặc định không có xác thực. Mở để chạy ingest/debug từ máy chủ.
+      - "127.0.0.1:6333:6333"
+    volumes:
+      # Cùng thư mục bản chạy tay cũ dùng => dữ liệu đã nạp được giữ nguyên.
+      - ./qdrant_storage:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+
+  presenton:
+    # Không bật profile `slides` thì backend tự rơi về pptx_builder, vẫn ra file .pptx.
+    profiles: ["slides"]
+    build:
+      context: ./docker/presenton
+    image: tpv-btl-presenton:va
+    restart: unless-stopped
+    environment:
+      LLM: ${PRESENTON_LLM:-custom}
+      # Profile gpu: http://vllm:8000/v1 (cùng mạng Docker, không cần vllm_relay.py).
+      CUSTOM_LLM_URL: ${PRESENTON_CUSTOM_LLM_URL:-http://vllm:8000/v1}
+      CUSTOM_LLM_API_KEY: ${llm_slide_api_key:-EMPTY}
+      CUSTOM_MODEL: ${PRESENTON_CUSTOM_MODEL:-qwen3.6-35b}
+      # Ba cờ dưới giải thích chi tiết trong docker/presenton.yml.
+      DISABLE_THINKING: ${PRESENTON_DISABLE_THINKING:-true}
+      DISABLE_IMAGE_GENERATION: "true"
+      CAN_CHANGE_KEYS: "false"
+      # An toàn vì Presenton KHÔNG mở cổng ra máy chủ, chỉ backend trong mạng
+      # Docker gọi được. Thêm `ports:` thì phải bật lại đăng nhập.
+      DISABLE_AUTH: ${PRESENTON_DISABLE_AUTH:-true}
+    volumes:
+      - presenton-data:/app_data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:80/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  hf-cache-backend:
+  hf-cache-vllm:
+  vllm-compile-cache:
+  redis-data:
+  presenton-data:
+    # Trùng tên volume của docker/presenton.yml: bộ slide đã tạo không mất.
+    name: tpv-btl-presenton-data

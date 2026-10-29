@@ -1,0 +1,16 @@
+Điều của chính văn bản (đọc từ OCR theo quy tắc): 0 -> []
+
+[rule_based] 0 tiêu đề | đơn vị: {} | trong trích dẫn: {}
+   Điều của văn bản: 0/0 (ở cấp nông nhất: 0) | thiếu: []
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+
+[grammar] 0 tiêu đề | đơn vị: {} | trong trích dẫn: {}
+   Điều của văn bản: 0/0 (ở cấp nông nhất: 0) | thiếu: []
+   vi phạm thứ bậc: 0 [] | lồng sửa đổi hợp lệ: 0
+   cùng đơn vị khác cấp: {}
+   Điều trích dẫn: 0 (không sâu hơn Điều của văn bản: 0)
+   Điểm sai bảng chữ cái: [] | nhiễu: []
+

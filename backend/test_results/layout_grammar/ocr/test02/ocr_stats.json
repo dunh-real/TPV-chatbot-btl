@@ -1,0 +1,118 @@
+{
+ "source": "raw_pdf/test02.pdf",
+ "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+ "dpi": 150,
+ "pages": 5,
+ "failed_pages": [],
+ "truncated_pages": [],
+ "retried_pages": [
+  4
+ ],
+ "still_collapsed_pages": [],
+ "lines": 204,
+ "invalid_lines": 3,
+ "in_tokens": 11071,
+ "out_tokens": 11325,
+ "wall_s": 32.3,
+ "per_page": [
+  {
+   "page": 1,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 17.1,
+   "in_tokens": 2207,
+   "out_tokens": 2846,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 34,
+    "mean_shift": 4.35,
+    "max_shift": 22.8
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 2,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 0,
+   "latency_s": 12.41,
+   "in_tokens": 2207,
+   "out_tokens": 1839,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 43,
+    "mean_shift": 5.75,
+    "max_shift": 23.36
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 3,
+   "ok": true,
+   "lines": 42,
+   "invalid_lines": 3,
+   "latency_s": 13.18,
+   "in_tokens": 2207,
+   "out_tokens": 1971,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 42,
+    "bands": 45,
+    "mean_shift": 6.18,
+    "max_shift": 22.06
+   },
+   "retry_config": null,
+   "collapsed": false
+  },
+  {
+   "page": 4,
+   "ok": true,
+   "lines": 39,
+   "invalid_lines": 0,
+   "latency_s": 13.69,
+   "in_tokens": 2243,
+   "out_tokens": 3057,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 39,
+    "bands": 40,
+    "mean_shift": 7.33,
+    "max_shift": 21.89
+   },
+   "retry_config": {
+    "dpi": 150,
+    "hint": true,
+    "schema": false
+   },
+   "collapsed": false
+  },
+  {
+   "page": 5,
+   "ok": true,
+   "lines": 39,
+   "invalid_lines": 0,
+   "latency_s": 10.95,
+   "in_tokens": 2207,
+   "out_tokens": 1612,
+   "finish_reason": "stop",
+   "error": null,
+   "snap": {
+    "snapped": 39,
+    "bands": 39,
+    "mean_shift": 6.64,
+    "max_shift": 22.92
+   },
+   "retry_config": null,
+   "collapsed": false
+  }
+ ]
+}

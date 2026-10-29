@@ -1,0 +1,60 @@
+# Dàn ý - rule_based (58 tiêu đề)
+
+- [L1, tr.1] Chương I
+  - [L2, tr.1] Điều 2. Đối tượng áp dụng
+    - [L3, tr.1] 2. Cơ quan quản lý công chức, bao gồm:
+      - [L4, tr.1] a) Văn phòng Trung ương Đảng, Cơ quan Ủy ban Kiểm tra Trung ương, các Ban Đảng Trung ương, Mặt
+      - [L4, tr.1] e) Tổ chức do Chính phủ, Thủ tướng Chính phủ thành lập mà không phải là đơn vị sự nghiệp công lập
+- [L1, tr.1] Chương II
+        - [L5, tr.2] Mục 1. CĂN CỨ, THẨM QUYỀN, HỘI ĐỒNG TUYỂN DỤNG
+  - [L2, tr.2] Điều 3. Căn cứ tuyển dụng công chức
+    - [L3, tr.2] 2. Cơ quan có thẩm quyền tuyển dụng xây dựng kế hoạch tuyển dụng, quyết định tuyển dụng theo thẩm
+  - [L2, tr.2] Điều 4. Điều kiện đăng ký dự tuyển công chức
+  - [L2, tr.2] Điều 5. Các trường hợp thực hiện xét tuyển công chức
+  - [L2, tr.3] Điều 6. Ưu tiên trong tuyển dụng công chức
+    - [L3, tr.3] 1. Đối tượng và điểm ưu tiên trong thi tuyển hoặc xét tuyển
+      - [L4, tr.3] a) Anh hùng Lực lượng vũ trang, Anh hùng Lao động, thương binh, người hưởng chính sách như thương
+      - [L4, tr.3] c) Người hoàn thành nghĩa vụ quân sự, nghĩa vụ tham gia công an nhân dân, đội viên thanh niên xung
+  - [L2, tr.3] Điều 7. Cơ quan có thẩm quyền tuyển dụng công chức
+  - [L2, tr.3] Điều 8. Hội đồng tuyển dụng công chức
+    - [L3, tr.3] 1. Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định thành lập Hội đồng tuyển dụng đối với
+      - [L4, tr.3] a) Chủ tịch Hội đồng là người đứng đầu hoặc cấp phó của người đứng đầu cơ quan có thẩm quyền tuyển
+      - [L4, tr.3] b) Phó Chủ tịch Hội đồng là đại diện lãnh đạo bộ phận tham mưu về tổ chức cán bộ của cơ quan có thẩm
+      - [L4, tr.3] c) Ủy viên kiêm Thư ký Hội đồng là công chức thuộc bộ phận tham mưu về tổ chức cán bộ của cơ quan có
+        - [L5, tr.4] Mục 2. THI TUYỂN CÔNG CHỨC
+  - [L2, tr.4] Điều 9. Hình thức, nội dung, thời gian thi tuyển công chức
+    - [L3, tr.4] 1. Thi tuyển công chức vào vị trí việc làm xếp ngạch nhân viên: Thi nghiệp vụ chuyên ngành
+      - [L4, tr.4] b) Nội dung thi:
+      - [L4, tr.4] b) Vòng 2: Thi nghiệp vụ chuyên ngành
+      - [L4, tr.5] b) Nội dung, hình thức thi Đề án do cơ quan có thẩm quyền tuyển dụng quyết định, bảo đảm phù hợp với
+  - [L2, tr.5] Điều 10. Xác định người trúng tuyển trong kỳ thi tuyển công chức
+        - [L5, tr.6] Mục 3. XÉT TUYỂN CÔNG CHỨC
+  - [L2, tr.6] Điều 11. Hình thức, nội dung xét tuyển công chức
+    - [L3, tr.6] 2. Vòng 2: Xét nghiệp vụ chuyên ngành
+      - [L4, tr.6] a) Hình thức: Vấn đáp
+  - [L2, tr.6] Điều 12. Xác định người trúng tuyển trong kỳ xét tuyển công chức
+        - [L5, tr.7] Mục 4. TIẾP NHẬN VÀO LÀM CÔNG CHỨC
+  - [L2, tr.7] Điều 13. Đối tượng, tiêu chuẩn, điều kiện, hồ sơ tiếp nhận vào làm công chức
+    - [L3, tr.7] 1. Đối tượng tiếp nhận:
+      - [L4, tr.7] c) Người hưởng lương trong Quân đội nhân dân, Công an nhân dân, tổ chức cơ yếu mà không phải là công
+    - [L3, tr.7] 2. Thẩm quyền tiếp nhận
+      - [L4, tr.7] a) Người đứng đầu cơ quan có thẩm quyền tuyển dụng quyết định tiếp nhận đối với các trường hợp quy
+    - [L3, tr.8] 3. Tiêu chuẩn, điều kiện tiếp nhận:
+      - [L4, tr.8] c) Trường hợp quy định tại điểm đ khoản 1 Điều này phải có quyết định bằng văn bản của cấp có thẩm
+    - [L3, tr.8] 4. Hồ sơ của người được đề nghị tiếp nhận vào làm công chức:
+  - [L2, tr.8] Điều 14. Thủ tục tiếp nhận
+    - [L3, tr.8] 1. Hội đồng kiểm tra, sát hạch:
+      - [L4, tr.8] a) Người đứng đầu cơ quan có thẩm quyền tuyển dụng thành lập Hội đồng kiểm tra, sát hạch. Thành phần
+      - [L4, tr.8] b) Nhiệm vụ, quyền hạn của Hội đồng kiểm tra, sát hạch:
+    - [L3, tr.9] 2. Không thành lập Hội đồng kiểm tra, sát hạch đối với các trường hợp sau:
+      - [L4, tr.9] a) Tiếp nhận các trường hợp quy định tại điểm b, c và điểm đ khoản 1 Điều 13 vào công chức không giữ
+      - [L4, tr.9] b) Tiếp nhận các trường hợp quy định tại khoản 1 Điều 13 Nghị định này vào làm công chức giữ chức vụ
+        - [L5, tr.9] Mục 5. TRÌNH TỰ, THỦ TỤC THI TUYỂN, XÉT TUYỂN CÔNG CHỨC
+  - [L2, tr.9] Điều 15. Thông báo tuyển dụng và tiếp nhận Phiếu đăng ký dự tuyển
+    - [L3, tr.9] 2. Nội dung Thông báo tuyển dụng bao gồm:
+    - [L3, tr.10] 3. Người đứng đầu cơ quan có thẩm quyền tuyển dụng được thay đổi nội dung Thông báo tuyển dụng 01
+    - [L3, tr.10] 4. Thời hạn nhận Phiếu đăng ký dự tuyển là 30 ngày kể từ ngày thông báo công khai theo quy định tại
+  - [L2, tr.10] Điều 16. Trình tự tổ chức thi tuyển, xét tuyển công chức
+    - [L3, tr.10] 3. Tổ chức thi môn điều kiện (vòng 1):
+      - [L4, tr.10] b) Tổ chức thi kiến thức, năng lực chung
+    - [L3, tr.10] 4. Tổ chức thi nghiệp vụ chuyên ngành (vòng 2):

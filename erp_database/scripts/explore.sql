@@ -1,0 +1,17 @@
+SET NOCOUNT ON;
+PRINT '-- App_ApprovalRequests.EntityFullName';
+SELECT EntityFullName, COUNT(*) n, SUM(CASE WHEN Status=2 THEN 1 ELSE 0 END) st2 FROM dbo.App_ApprovalRequests GROUP BY EntityFullName ORDER BY n DESC;
+PRINT '-- AbpApprovalHistory EntityName / StatusName';
+SELECT TOP 15 EntityName, Status, StatusName, COUNT(*) n FROM dbo.AbpApprovalHistory GROUP BY EntityName, Status, StatusName ORDER BY n DESC;
+PRINT '-- Dms_Employee.UserId -> AbpUsers';
+SELECT COUNT(*) employees, SUM(CASE WHEN e.UserId IS NULL THEN 1 ELSE 0 END) no_user, SUM(CASE WHEN e.UserId IS NOT NULL AND u.Id IS NULL THEN 1 ELSE 0 END) dangling_user, SUM(CASE WHEN u.Id IS NOT NULL AND ISNULL(u.TenantId,-1) <> ISNULL(e.TenantId,-1) THEN 1 ELSE 0 END) tenant_mismatch FROM dbo.Dms_Employee e LEFT JOIN dbo.AbpUsers u ON u.Id = e.UserId;
+PRINT '-- Hrm_EmployeeProfile -> Dms_Employee 1-1?';
+SELECT COUNT(*) profiles, COUNT(DISTINCT EmployeeId) distinct_emp, SUM(CASE WHEN IsDeleted=0 THEN 1 ELSE 0 END) active FROM dbo.Hrm_EmployeeProfile;
+PRINT '-- AbpPermissions top';
+SELECT TOP 12 LEFT(Name,60) Name, COUNT(*) n FROM dbo.AbpPermissions GROUP BY Name ORDER BY n DESC;
+PRINT '-- Datetime: UTC hay gio VN? so sanh ExecutionTime gio trong ngay';
+SELECT DATEPART(hour, ExecutionTime) h, COUNT(*) n FROM dbo.AbpAuditLogs WHERE ServiceName LIKE '%Attendancel%' AND MethodName LIKE '%Check%' GROUP BY DATEPART(hour, ExecutionTime) ORDER BY h;
+PRINT '-- Hrm_Attendancel gio check-in';
+SELECT DATEPART(hour, CheckInTime) h, COUNT(*) n FROM dbo.Hrm_Attendancel WHERE IsDeleted=0 GROUP BY DATEPART(hour, CheckInTime) ORDER BY h;
+PRINT '-- Fin tien te: tong tien chung tu chi/thu (khong xoa)';
+SELECT 'ExpenseVouchers' t, COUNT(*) n, CAST(SUM(Amount) AS decimal(20,0)) total FROM dbo.Fin_ExpenseVouchers WHERE IsDeleted=0 UNION ALL SELECT 'RevenueVouchers', COUNT(*), CAST(SUM(Amount) AS decimal(20,0)) FROM dbo.Fin_RevenueVouchers WHERE IsDeleted=0;

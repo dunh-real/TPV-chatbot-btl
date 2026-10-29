@@ -1,0 +1,23 @@
+# Dàn ý - rule_based (21 tiêu đề)
+
+- [L1, tr.2] Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 2019 của
+  - [L2, tr.2] 1. Sửa đổi, bổ sung điểm a khoản 2 Điều 2 như sau:
+  - [L2, tr.2] 2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:
+  - [L2, tr.2] 3. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:
+  - [L2, tr.2] 2. Xử phạt vi phạm hành chính đối với trường hợp vi phạm hành chính nhiều lần:
+    - [L3, tr.3] a) Sửa đổi khoản 3 như sau:
+  - [L2, tr.4] 5. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 14 như sau:
+    - [L3, tr.4] a) Sửa đổi, bổ sung khoản 2 như sau:
+  - [L2, tr.4] 6. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 15 như sau:
+    - [L3, tr.4] a) Sửa đổi khoản 2 và bổ sung khoản 2a vào sau khoản 2 như sau:
+  - [L2, tr.4] 7. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 16 như sau:
+    - [L3, tr.4] a) Sửa đổi khoản 1, khoản 2 như sau:
+    - [L3, tr.4] b) Thuê, mượn, nhận cầm cố, nhận thế chấp, mua, nhận chuyển nhượng Giấy chứng nhận đủ điều kiện sản
+    - [L3, tr.4] b) Bãi bỏ khoản 3; c) Sửa đổi, bổ sung khoản 5 như sau:
+    - [L3, tr.4] d) Sửa đổi, bổ sung khoản 7 như sau:
+    - [L3, tr.5] đ) Sửa đổi, bổ sung khoản 8 như sau:
+  - [L2, tr.5] 8. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 17 như sau:
+    - [L3, tr.5] a) Sửa đổi khoản 1, khoản 2 như sau:
+  - [L2, tr.5] 2. Phạt tiền từ 5.000.000 đồng đến 10.000.000 đồng đối với một trong các hành vi vi phạm sau:
+    - [L3, tr.5] c) Sửa đổi, bổ sung khoản 5 như sau:
+    - [L3, tr.5] d) Sửa đổi, bổ sung khoản 7 như sau:

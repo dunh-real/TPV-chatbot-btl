@@ -1,0 +1,364 @@
+{
+ "lines": 3128,
+ "dropped_junk_lines": 318,
+ "labels": {
+  "BODY": 237,
+  "OWN_DIEU": 7,
+  "OWN_KHOAN": 127,
+  "QUOTED": 2616,
+  "OWN_DIEM": 141
+ },
+ "headings": 1512,
+ "by_kind": {
+  "OWN_DIEU": 7,
+  "OWN_KHOAN": 127,
+  "QUOTED_Điểm": 790,
+  "QUOTED_Điều": 60,
+  "QUOTED_Khoản": 386,
+  "OWN_DIEM": 141,
+  "QUOTED_Chương": 1
+ },
+ "by_level": {
+  "1": 7,
+  "2": 127,
+  "3": 218,
+  "4": 381,
+  "5": 608,
+  "6": 171
+ },
+ "ambiguous_lines": 316,
+ "ambiguous": [
+  {
+   "index": 57,
+   "page": 2,
+   "text": "2. Bổ sung điểm m vào sau điểm 1 khoản 3 Điều 3 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 64,
+   "page": 2,
+   "text": "3. Bổ sung Điều 4a và Điều 4b vào sau Điều 4 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 112,
+   "page": 3,
+   "text": "4. Sửa đổi, bổ sung một số khoản của Điều 5 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 113,
+   "page": 3,
+   "text": "a) Sửa đổi khoản 3 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 116,
+   "page": 3,
+   "text": "b) Bổ sung khoản 4a vào sau khoản 4 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 135,
+   "page": 5,
+   "text": "b) Bãi bỏ khoản 3;",
+   "best": "QUOTED",
+   "second": "OWN_DIEM",
+   "gap": 0.0
+  },
+  {
+   "index": 136,
+   "page": 5,
+   "text": "c) Sửa đổi, bổ sung khoản 5 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 140,
+   "page": 5,
+   "text": "d) Sửa đổi, bổ sung khoản 7 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 145,
+   "page": 5,
+   "text": "đ) Sửa đổi, bổ sung khoản 8 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 176,
+   "page": 6,
+   "text": "11. Sửa đổi, bổ sung điểm b khoản 5 Điều 23 như sau:",
+   "best": "QUOTED",
+   "second": "OWN_KHOAN",
+   "gap": 0.0
+  },
+  {
+   "index": 180,
+   "page": 6,
+   "text": "12. Sửa đổi, bổ sung một số khoản của Điều 24 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 181,
+   "page": 6,
+   "text": "a) Sửa đổi, bổ sung khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 184,
+   "page": 6,
+   "text": "b) Bổ sung khoản 6a vào sau khoản 6 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 187,
+   "page": 7,
+   "text": "c) Sửa đổi, bổ sung khoản 7 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 191,
+   "page": 7,
+   "text": "13. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 26 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 192,
+   "page": 7,
+   "text": "a) Sửa đổi, bổ sung khoản 1 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 199,
+   "page": 7,
+   "text": "b) Bãi bỏ khoản 5.",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 228,
+   "page": 8,
+   "text": "b) Phạt tiền từ 15.000.000 đồng đến 17.000.000 đồng đối với hành vi có sự thay đổi trong quá trình đ",
+   "best": "QUOTED",
+   "second": "OWN_DIEM",
+   "gap": 0.5
+  },
+  {
+   "index": 229,
+   "page": 8,
+   "text": "và hoạt động liên quan đến những nội dung đề ra trong Kế hoạch đã được phê duyệt mà tổ chức, cá nhân",
+   "best": "QUOTED",
+   "second": "BODY",
+   "gap": 0.5
+  },
+  {
+   "index": 230,
+   "page": 8,
+   "text": "không gửi báo cáo về Bộ Công Thương xem xét, quyết định;",
+   "best": "QUOTED",
+   "second": "BODY",
+   "gap": 0.5
+  },
+  {
+   "index": 241,
+   "page": 8,
+   "text": "15. Sửa đổi, bổ sung Điều 29 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 250,
+   "page": 8,
+   "text": "16. Sửa đổi, bổ sung khoản 4 Điều 30 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 254,
+   "page": 8,
+   "text": "17. Sửa đổi, bổ sung một số khoản của Điều 31 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 255,
+   "page": 8,
+   "text": "a) Sửa đổi, bổ sung khoản 1 và khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 264,
+   "page": 9,
+   "text": "b) Sửa đổi, bổ sung khoản 5 và khoản 6 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 277,
+   "page": 9,
+   "text": "18. Sửa đổi, bổ sung, bãi bỏ một số khoản của Điều 32 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 278,
+   "page": 9,
+   "text": "a) Sửa đổi, bổ sung khoản 1 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 282,
+   "page": 9,
+   "text": "b) Bãi bỏ khoản 3;",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 290,
+   "page": 9,
+   "text": "19. Sửa đổi, bổ sung, bãi bỏ một số điểm, khoản của Điều 51 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 291,
+   "page": 9,
+   "text": "a) Bãi bỏ điểm d khoản 5;",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 298,
+   "page": 10,
+   "text": "20. Sửa đổi, bổ sung một số điểm, khoản của Điều 58 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 299,
+   "page": 10,
+   "text": "a) Sửa đổi điểm c khoản 1 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 301,
+   "page": 10,
+   "text": "b) Sửa đổi điểm c khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 303,
+   "page": 10,
+   "text": "21. Sửa đổi, bổ sung một số điểm, khoản của Điều 59 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 304,
+   "page": 10,
+   "text": "a) Sửa đổi điểm c khoản 1 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 306,
+   "page": 10,
+   "text": "b) Sửa đổi, bổ sung đoạn mở đầu khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 319,
+   "page": 10,
+   "text": "c) Sửa đổi điểm d khoản 2 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 323,
+   "page": 10,
+   "text": "d) Sửa đổi điểm d khoản 3 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 327,
+   "page": 10,
+   "text": "đ) Sửa đổi, bổ sung đoạn mở đầu khoản 4 như sau:",
+   "best": "OWN_DIEM",
+   "second": "QUOTED",
+   "gap": 0.5
+  },
+  {
+   "index": 336,
+   "page": 11,
+   "text": "22. Sửa đổi, bổ sung một số điểm, khoản của Điều 60 như sau:",
+   "best": "OWN_KHOAN",
+   "second": "QUOTED",
+   "gap": 0.5
+  }
+ ],
+ "seconds": 2.56,
+ "beam": 64,
+ "own_articles": [
+  "Điều 1. Sửa đổi, bổ sung một số điều của Nghị định số 71/2019/NĐ-CP ngày 30 tháng 8 năm 20",
+  "Điều 2. Sửa đổi, bổ sung một số điều của Nghị định số 134/2013/NĐ-CP ngày 17 tháng 10 năm ",
+  "Điều 3. Sửa đổi, bổ sung một số điều của Nghị định số 98/2020/NĐ-CP ngày 26 tháng 8 năm 20",
+  "Điều 4. Sửa đổi, bổ sung một số điều của Nghị định số 99/2020/NĐ-CP ngày 26 tháng 8 năm 20",
+  "Điều 4b. Thi hành các hình thức xử phạt, biện pháp khắc phục hậu quả và xác định số lợi bấ",
+  "Điều 5. Điều khoản chuyển tiếp",
+  "Điều 6. Hiệu lực thi hành và trách nhiệm thi hành"
+ ],
+ "own_groups": []
+}

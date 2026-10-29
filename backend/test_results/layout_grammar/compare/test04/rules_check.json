@@ -1,0 +1,40 @@
+{
+ "reference_own_articles": [],
+ "reference_sequence_ok": true,
+ "methods": {
+  "rule_based": {
+   "headings": 0,
+   "units": {},
+   "quoted_units": {},
+   "own_articles_found": 0,
+   "own_articles_reference": 0,
+   "own_articles_missed": [],
+   "own_articles_at_top_level": 0,
+   "order_violations": 0,
+   "order_violation_examples": [],
+   "valid_amendment_nesting": 0,
+   "same_unit_different_levels": {},
+   "quoted_articles": 0,
+   "quoted_articles_not_deeper_than_own": 0,
+   "non_vietnamese_point_letters": [],
+   "noise_examples": []
+  },
+  "grammar": {
+   "headings": 0,
+   "units": {},
+   "quoted_units": {},
+   "own_articles_found": 0,
+   "own_articles_reference": 0,
+   "own_articles_missed": [],
+   "own_articles_at_top_level": 0,
+   "order_violations": 0,
+   "order_violation_examples": [],
+   "valid_amendment_nesting": 0,
+   "same_unit_different_levels": {},
+   "quoted_articles": 0,
+   "quoted_articles_not_deeper_than_own": 0,
+   "non_vietnamese_point_letters": [],
+   "noise_examples": []
+  }
+ }
+}
