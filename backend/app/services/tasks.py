@@ -12,7 +12,7 @@ from app.agents.quyen import QUYEN_TAC_VU, QUYEN_TAC_VU_XOA, QUYEN_TAC_VU_XEM_TA
 PERMISSIONS = {"Review": "Ai.DocumentReview", "Summarize": "Ai.Summarize",
     "TaskExtract": "Ai.TaskExtract", "Draft": "Ai.ReportDrafting",
     "Aggregate": "Ai.ReportSummary.Create", "Slide": "Ai.Slide.Create", "File": "Ai.AiChatbot"}
-OPERATIONS = {"Review": "run_document_workflow", "Summarize": "run_analysis_workflow",
+OPERATIONS = {"Review": "run_document_workflow", "Summarize": "run_summary_workflow",
     "TaskExtract": "run_analysis_workflow", "Draft": "run_draft_workflow",
     "Aggregate": "run_aggregate_workflow", "Slide": "run_presentation_workflow"}
 PRODUCTS = {"AI_DocumentReviews": "Review", "AI_DocumentDrafts": "Draft",

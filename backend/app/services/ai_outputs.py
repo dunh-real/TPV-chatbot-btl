@@ -131,7 +131,8 @@ def tracked_workflow(kind):
                     started = time.perf_counter()
                     result = await function(*args, **kwargs)
                     if effective_kind in {"Summarize", "TaskExtract"}:
-                        result = {k: result.get(k) for k in (("summary", "summary_refs", "all_refs", "error")
+                        result = {k: result.get(k) for k in (("summary", "summary_refs", "all_refs", "error",
+                            "sections", "length", "structure", "word_count", "coverage", "warnings")
                             if effective_kind == "Summarize" else ("tasks", "summary", "all_refs", "error"))}
                     from app.documents.the_thuc import doc_ngay_ban_hanh
                     result["ngay_van_ban"] = doc_ngay_ban_hanh(input_meta).isoformat()

@@ -46,9 +46,10 @@ async def submit(repo, kind, parameters, notify=False, retry_of=None):
     source_url, source_name = None, None
     if kind in {"Review", "Summarize", "TaskExtract"}:
         from app.schemas.tasks import ReviewParameters
-        data = ReviewParameters.model_validate(params)
+        from app.schemas.summaries import SummaryRequest
+        data = (SummaryRequest if kind=="Summarize" else ReviewParameters).model_validate(params)
         source_url, source_name = await source_file(data.file_id)
-        params = dict(file_name=source_name, noi_gui=data.noi_gui, rule_set=data.rule_set)
+        params = dict(file_name=source_name, **data.model_dump(exclude={"file_id"}))
     else:
         from app.schemas.reports import DraftRequest, AggregateRequest
         from app.schemas.presentations import PresentationRequest

@@ -198,7 +198,7 @@ async def test_foreign_version_is_not_downloadable(environment):
 async def test_queue_claim_summary_and_source_restore(environment,monkeypatch):
     c,scope,*_=environment
     @ai_outputs.tracked_workflow('Review')
-    async def review(file_path,file_name='',noi_gui='',rule_set=''):
+    async def review(file_path,file_name='',noi_gui='',rule_set='',**options):
         from pathlib import Path
         assert Path(file_path).read_bytes()==b'source'
         return {'summary':'Tóm tắt','tasks':[{'task':'Làm việc'}],'all_refs':[]}

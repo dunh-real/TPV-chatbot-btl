@@ -23,6 +23,7 @@ from app.core.config import get_settings
 from app.rag.ingestion import SUPPORTED_SUFFIXES, get_ingestion_pipeline, make_doc_id_file, make_legacy_doc_id_file
 from app.rag.vectorstore import get_vector_store
 from app.agents.graph import run_document_workflow
+from app.schemas.summaries import SummaryRequest, SummaryResponse
 from app.db.erp_repository import ErpDonViRepository
 from app.db.erp_session import erp_session_scope
 from app.documents.giao_viec import MetaGiaoViec, build_giao_viec
@@ -328,6 +329,22 @@ async def rule_sets() -> list[RuleSetInfo]:
     phải khởi động lại để giao diện thấy nó.
     """
     return [RuleSetInfo(**item) for item in available_rule_sets()]
+
+
+@router.post("/summarize", response_model=SummaryResponse, summary="Tóm tắt độc lập (UC31)",
+             dependencies=[Depends(quyen.can_quyen("Ai.Summarize", "tóm tắt văn bản"))])
+async def summarize_document(request: SummaryRequest):
+    from app.agents.graph import run_summary_workflow
+    try:
+        ref = storage.resolve(request.file_id, kinds=("upload",))
+        if ref.suffix not in {".docx", ".pdf", ".txt", ".md"}:
+            raise HTTPException(415, "Chỉ hỗ trợ DOCX, PDF, TXT, MD")
+        if ref.path.stat().st_size > 20 * 1024**2:
+            raise HTTPException(413, "File vượt giới hạn 20 MB")
+    except (ValueError, FileNotFoundError) as exc:
+        raise HTTPException(422, "Không đọc được file nguồn đã upload") from exc
+    return await run_summary_workflow(file_path=str(ref.path),file_name=ref.name,
+        **request.model_dump(exclude={"file_id"}))
 
 
 @router.post("/review", response_model=ReviewResponse, summary="Soát tài liệu (workflow 2)",

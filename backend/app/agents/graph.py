@@ -220,6 +220,19 @@ async def run_document_workflow(
 
 
 @tracked_workflow("Summarize")
+async def run_summary_workflow(file_path: str, file_name: str = "", length: str = "medium",
+                               structure: str = "bullets", focus: str = ""):
+    """UC31 độc lập; dùng lại parser, nguồn và cơ chế lưu tác vụ hiện có."""
+    from app.agents.nodes.summarization import summarize
+    from app.services.llm import LLMError
+    try:
+        return await summarize(file_path, file_name, length, structure, focus)
+    except (ValueError, OSError, LLMError) as exc:
+        return dict(error=str(exc),summary="",sections=[],summary_refs=[],all_refs=[],
+                    length=length,structure=structure,coverage={"complete":False},warnings=[])
+
+
+@tracked_workflow("Summarize")
 async def run_analysis_workflow(file_path: str, file_name: str = "", noi_gui: str = "", rule_set: str = ""):
     """Tóm tắt/trích nhiệm vụ chỉ parse và phân tích nội dung, không chạy toàn bộ soát lỗi."""
     state = {"file_path": file_path, "file_name": file_name, "departments": [], "trace": {}}
