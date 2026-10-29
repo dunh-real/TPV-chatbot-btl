@@ -56,7 +56,7 @@ async def submit(repo, kind, parameters, notify=False, retry_of=None):
         if schema is None:
             raise HTTPException(422, "Loại tác vụ không hỗ trợ tạo mới")
         params = schema.model_validate(params).model_dump()
-        if kind == "Draft" and params.get("nguon") == "tai_lieu":
+        if kind in {"Draft", "Slide"} and params.get("nguon") == "tai_lieu":
             source_url, source_name = await source_file(params["file_id"])
             params["file_id"] = ""
     if source_url:
@@ -85,7 +85,7 @@ async def retry(repo, task_id):
         return active[0]["Id"]
     args = tasks.payload(row)
     needs_source = row["TaskType"] in {"Review", "Summarize", "TaskExtract"} or (
-        row["TaskType"] == "Draft" and args.get("nguon") == "tai_lieu")
+        row["TaskType"] in {"Draft", "Slide"} and args.get("nguon") == "tai_lieu")
     if needs_source and not args.get("source_url"):
         if not args.get("file_id"):
             raise HTTPException(409, "Tác vụ cũ không còn file nguồn để chạy lại")

@@ -95,7 +95,8 @@ class SQLPolicy:
             if "dbo.Hrm_EmployeeProfile" in rules:
                 rules["dbo.Hrm_EmployeeProfile"].meaning = (
                     "Hồ sơ nhân sự được cấp đọc mở rộng trong tenant. Số cuối tháng suy từ "
-                    "HireDate/CreationTime và ResignationDate; không phải snapshot lịch sử đầy đủ.")
+                    "HireDate và ResignationDate theo quy tắc kỳ đã xác nhận; CreationTime chỉ là ngày tạo hồ sơ, "
+                    "không thay cho HireDate thiếu. Không phải snapshot lịch sử đầy đủ.")
         else:
             # Role membership and effective grants come from ERP, never role IDs/names
             # in JSON. View grants tenant reads of the safe column contract; ViewMine

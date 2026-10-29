@@ -495,14 +495,32 @@ async def run_presentation_workflow(
     request: str,
     inputs: dict[str, Any] | None = None,
     history: list[dict[str, str]] | None = None,
+    nguon: str = "csdl",
+    file_id: str = "",
 ) -> dict[str, Any]:
     state: PresentationState = {"request": request, "history": history or [],
                                 "inputs": inputs or {}}
-    result = await get_presentation_graph().ainvoke(state)
+    if nguon == "tai_lieu":
+        from datetime import date
+        from app.agents.nodes.presentation_document import prepare
+        from app.agents.nodes.presentation import render_node, verify_node
+        try:
+            outline, sources = await prepare(file_id, request)
+            state.update(data={"document": sources}, params={"ky": date.today().strftime("%Y-%m")},
+                         document_outline=outline, sources=sources)
+            state.update(await render_node(state))
+            state.update(await verify_node(state))
+            result = state
+        except (ValueError, OSError) as exc:
+            result = {"error": str(exc)}
+    else:
+        result = await get_presentation_graph().ainvoke(state)
 
     # `brief` là thứ đã gửi cho Presenton. Trả về luôn để khi bộ slide có câu
     # lạ, người kiểm tra biết ngay là số liệu đưa vào sai hay bên kia viết thêm.
     return {
+        "sources": result.get("sources", []),
+        "document_outline": result.get("document_outline"),
         "request": request,
         "params": result.get("params", {}),
         "brief": result.get("brief", ""),
@@ -691,8 +709,10 @@ async def report_branch(state: AgentState, request: str) -> dict[str, Any]:
 
 
 async def presentation_branch(state: AgentState, request: str) -> dict[str, Any]:
-    result = await run_presentation_workflow(request, inputs=state.get("inputs", {}),
-                                             history=state.get("history"))
+    kwargs = dict(inputs=state.get("inputs", {}), history=state.get("history"))
+    if state.get("file_id"):
+        kwargs.update(nguon="tai_lieu", file_id=state["file_id"])
+    result = await run_presentation_workflow(request, **kwargs)
     return {"answer": _summarize_presentation(result), "result": result,
             "error": result.get("error", "")}
 

@@ -257,7 +257,19 @@
       <div class="panel">
         <div class="panel-inner">
           <h2 class="panel-title">Tạo bộ slide</h2>
-          <p class="panel-sub">Hệ thống soạn sẵn nội dung từng slide từ số liệu; Presenton chọn layout và render .pptx. Bảng chi tiết do code ghép vào cuối file.</p>
+          <p class="panel-sub">Tạo slide từ số liệu ERP hoặc tài liệu tải lên. Hệ thống lập nội dung và dựng theo template Presenton, tối đa 15 slide.</p>
+          <label class="field">
+            <span>Nguồn nội dung</span>
+            <select id="slideSource"><option value="csdl">CSDL ERP</option><option value="tai_lieu">Tài liệu tải lên</option></select>
+          </label>
+          <div class="field" id="slideFileField" hidden>
+            <span>Tài liệu nguồn</span>
+            <div class="dropzone" id="slideDrop">
+              <input type="file" id="slideFile" accept=".docx,.pdf" hidden />
+              <b>Chọn hoặc kéo thả tài liệu</b>
+              <small>Một DOCX hoặc PDF có chữ, tối đa 20 MB; nội dung tối đa 60.000 ký tự.</small>
+            </div>
+          </div>
           <label class="field">
             <span>Yêu cầu</span>
             <textarea id="slideRequest" rows="3">Tạo slide báo cáo nhân sự tháng 8</textarea>
@@ -452,6 +464,6 @@
 <script src="js/markdown.js?v=20260920l"></script>
 <script src="js/api.js?v=20261028"></script>
 <script src="js/tasks.js?v=20261028"></script>
-<script src="js/app.js?v=20261028"></script>
+<script src="js/app.js?v=20261029-download"></script>
 </body>
 </html>

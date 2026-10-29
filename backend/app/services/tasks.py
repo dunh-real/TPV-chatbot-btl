@@ -91,7 +91,7 @@ def summary(row, repo=None):
     replayable = row["AgentCode"] in set(OPERATIONS.values()) | {"generate_docx", "generate_presentation"}
     args = payload(row)
     needs_source = row["TaskType"] in {"Review", "Summarize", "TaskExtract"} or (
-        row["TaskType"] == "Draft" and args.get("nguon") == "tai_lieu")
+        row["TaskType"] in {"Draft", "Slide"} and args.get("nguon") == "tai_lieu")
     replayable = replayable and (not needs_source or bool(args.get("source_url") or args.get("file_id")))
     return dict(id=row["Id"], kind=row["TaskType"], agent=row["AgentCode"], status=row["Status"],
         progress=row["ProgressPercentage"], created_at=row["CreationTime"], started_at=row["StartTime"],

@@ -231,10 +231,15 @@
       var name = a.file_name || a.name || '';
       var kind = (a.kind || name.split('.').pop() || '').toLowerCase();
       var href = a.download_url ? API.getBase() + a.download_url : (resolver ? resolver(name) : '#');
-      wrap.appendChild(el('a', { class: 'artifact', href: href, target: '_blank', rel: 'noopener', download: name },
+      var link = el('a', { class: 'artifact', href: href, target: '_blank', rel: 'noopener', download: name },
         '<span class="artifact-ic ' + (['docx', 'pptx', 'pdf'].indexOf(kind) >= 0 ? kind : 'other') + '">' + esc(kind.toUpperCase() || 'FILE') + '</span>' +
         '<span class="artifact-body"><span class="artifact-name">' + esc(name) + '</span>' +
-        '<span class="artifact-sub">Bấm để tải về</span></span>'));
+        '<span class="artifact-sub">Bấm để tải về</span></span>');
+      if (a.download_url) link.addEventListener('click', function (event) {
+        event.preventDefault();
+        API.taskDownload(a.download_url).catch(function (error) { toast(errText(error), 'err'); });
+      });
+      wrap.appendChild(link);
     });
     return wrap;
   }
@@ -1916,7 +1921,7 @@
        trong này thì là bên kia viết thêm, không phải số liệu sai. */
     if (data.brief) {
       box.appendChild(el('div', { class: 'card' })).appendChild(
-        block('Số liệu đã gửi cho Presenton', null, '<pre class="json">' + esc(data.brief) + '</pre>', false));
+        block('Nội dung đã gửi cho Presenton', null, '<pre class="json">' + esc(data.brief) + '</pre>', false));
     }
     if ((data.assumptions || []).length) {
       box.appendChild(el('div', { class: 'card' },
@@ -1925,19 +1930,41 @@
     }
   }
 
+  var slideFile = null;
+  $('#slideSource').addEventListener('change', function () {
+    var fromFile = this.value === 'tai_lieu';
+    $('#slideFileField').hidden = !fromFile;
+    var input = $('#slideRequest');
+    if (['Tạo slide báo cáo nhân sự tháng 8', 'Tạo slide tóm lược nội dung tài liệu này'].indexOf(input.value.trim()) >= 0) {
+      input.value = fromFile ? 'Tạo slide tóm lược nội dung tài liệu này' : 'Tạo slide báo cáo nhân sự tháng 8';
+    }
+  });
+  wireDropzone('#slideDrop', '#slideFile', function (file) {
+    if (!/\.(docx|pdf)$/i.test(file.name)) { toast('Chỉ nhận DOCX hoặc PDF có lớp chữ', 'err'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast('File vượt giới hạn 20 MB', 'err'); return; }
+    slideFile = { file: file, file_id: '' };
+    markDropzone('#slideDrop', file);
+  });
+
   $('#slideRun').addEventListener('click', function () {
     var request = $('#slideRequest').value.trim();
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
+    var source = $('#slideSource').value, selected = slideFile;
+    if (source === 'tai_lieu' && !selected) { toast('Chọn tài liệu nguồn trước đã', 'err'); return; }
+    var inputs = Object.assign({}, prefs.inputs, collectInputs('slideInputs'));
     runWorkflow({
       button: this,
       box: $('#slideResult'),
-      label: 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render…',
+      label: source === 'tai_lieu' ? 'Đang tải tài liệu, soạn nội dung và dựng slide…' : 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render…',
       hint: { text: 'thường 45-90 giây — Presenton render xong mới trả về', slowAfter: 90 },
-      call: function (signal) {
-        return API.presentation({
-          request: request,
-          inputs: Object.assign({}, prefs.inputs, collectInputs('slideInputs')),
-        }, signal);
+      call: async function (signal) {
+        var body = { request: request, inputs: inputs, nguon: source };
+        if (source === 'tai_lieu') {
+          if (!selected.file_id) selected.file_id = (await API.agentUpload(selected.file, 'upload')).file_id;
+          if (signal.aborted) throw new DOMException('Đã hủy', 'AbortError');
+          body.file_id = selected.file_id;
+        }
+        return API.presentation(body, signal);
       },
       render: renderPresentation,
     });

@@ -36,6 +36,7 @@ async def environment(monkeypatch, tmp_path):
             DocumentVersionNo=Integer, PageNumber=Integer, Snippet=Text),
         'KnowledgeDocuments': dict(AiServerDocId=String, DocumentNumber=String, DocCode=String, IndexStatus=String, Title=String, VersionNo=Integer),
         'ReportTemplate': dict(Code=String, Name=String),
+        'Slides': dict(Title=String, Status=String, OutlineJson=Text, FileUrl=Text, VersionNo=Integer),
         'TemplateVersions': dict(TemplateId=Integer, VersionNo=Integer, FileUrl=Text, FileName=String),
         'ExecutionLogs': dict(UserId=Integer, TaskId=Integer, EventType=String, AgentCode=String, Status=String,
             HasCitations=Boolean, NoEvidence=Boolean, ErrorMessage=Text, DurationMs=Integer, OutputFileUrl=Text, UserQuery=Text),

@@ -31,7 +31,10 @@ async def create(request: PresentationRequest) -> PresentationResponse:
     ở đó để biết một con số lạ trên slide là do số liệu sai hay do bên kia viết
     thêm. `engine` cho biết file đến từ Presenton hay từ đường lùi tự dựng.
     """
-    result = await run_presentation_workflow(request.request, inputs=request.inputs)
+    kwargs = dict(inputs=request.inputs)
+    if request.nguon == "tai_lieu":
+        kwargs.update(nguon=request.nguon, file_id=request.file_id)
+    result = await run_presentation_workflow(request.request, **kwargs)
     if result.get("output_path"):
         result["download_url"] = (
             f"/api/presentations/download/{quote(Path(result['output_path']).name)}"

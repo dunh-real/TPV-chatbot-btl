@@ -217,7 +217,9 @@ class PresentonClient:
                 raise PresentonError(f"Presenton dựng slide thất bại: {_ly_do(payload)}")
 
     async def _download(self, remote_path: str) -> bytes:
-        """Tải file .pptx. Đường dẫn Presenton trả về cũng chính là đường dẫn HTTP."""
+        """Đổi đường dẫn export trên đĩa sang route file tĩnh của Presenton."""
+        if remote_path.startswith("/") and not remote_path.startswith("/app_data/") and "/exports/" in remote_path:
+            remote_path = "/app_data/exports/" + remote_path.split("/exports/", 1)[1]
         try:
             response = await self._request("GET", "/" + remote_path.lstrip("/"))
             response.raise_for_status()

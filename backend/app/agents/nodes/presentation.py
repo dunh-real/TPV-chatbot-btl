@@ -454,8 +454,20 @@ def _slide_table(data_key: str, data: dict[str, Any]) -> SlideTable | None:
 
 async def _render_local(state: dict[str, Any], output_path: Path, ly_do: Exception) -> dict[str, Any]:
     logger.warning("Presenton không dựng được slide (%s) - dùng bản tự dựng", ly_do)
-    spec = await anyio.to_thread.run_sync(
-        lambda: _fallback_deck(state["data"], state["params"]))
+    if state.get("document_outline"):
+        outline = state["document_outline"]
+        spec = DeckSpec(title=outline["title"], slides=[SlideSpec(kind="title", title=outline["title"])])
+        from app.documents.pptx_builder import SlideTable
+        for page in outline["slides"]:
+            ids = page["source_ids"] + [i for item in page["items"] for i in item["source_ids"]]
+            spec.slides.append(SlideSpec(kind="table" if page["rows"] else "bullet", title=page["title"],
+                bullets=[i["text"] for i in page["items"]],
+                table=SlideTable(page["columns"], page["rows"]) if page["rows"] else None,
+                notes="Nguồn: " + ", ".join(dict.fromkeys(ids))))
+    else:
+        spec = await anyio.to_thread.run_sync(lambda: _fallback_deck(state["data"], state["params"]))
+    if count_slides(spec.slides) > getattr(get_settings(), "slide_max_slides", 15):
+        return {"error": "Nội dung vượt giới hạn slide; hãy thu hẹp phạm vi", "output_path": ""}
     path = await anyio.to_thread.run_sync(lambda: build_pptx(spec, output_path))
     return {
         "output_path": str(path),
@@ -477,6 +489,8 @@ async def render_node(state: dict[str, Any]) -> dict[str, Any]:
 
     output_path = _output_path(state["params"])
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    if state.get("document_outline"):
+        return await _render_direct(state, output_path)
     # Qwen đặt nhãn cột trước khi dựng: không tên trường CSDL nào lên slide, kể cả dữ liệu từ đường khác.
     from app.documents.nhan_cot import gan_nhan_moi_truy_van
 
@@ -657,6 +671,13 @@ async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, 
     assumptions = list(state.get("assumptions", []))
     started = time.monotonic()
 
+    if state.get("document_outline"):
+        ten_template = settings.presenton_template
+        outline = state["document_outline"]
+        plan = sd.chuyen_template(sd.build_document_plan(outline, state["sources"]), ten_template)
+        return await _render_plan(state, output_path, plan, outline["title"], ten_template,
+            "", "", timings, assumptions, {"document": True}, {}, started)
+
     datasets = sd.build_datasets(data, params)
     unit = await _ten_don_vi(state.get("inputs") or {})
     period = _period_label(params)
@@ -684,6 +705,17 @@ async def _render_direct(state: dict[str, Any], output_path: Path) -> dict[str, 
                               ten_template) if summary else base_plan
     title = f"Báo cáo số liệu {period} - {unit}"
 
+    return await _render_plan(state, output_path, plan, title, ten_template, unit, report_date,
+                              timings, assumptions, summary, summary_log, started)
+
+
+async def _render_plan(state, output_path, plan, title, ten_template, unit, report_date,
+                       timings, assumptions, summary, summary_log, started):
+    """Hai nguồn dùng chung renderer; không cắt bỏ slide khi vượt giới hạn."""
+    from app.documents import slide_deck as sd
+    if len(plan) > getattr(get_settings(), "slide_max_slides", 15):
+        return {"error": f"Nội dung cần {len(plan)} slide, vượt giới hạn; hãy thu hẹp phạm vi",
+                "output_path": ""}
     presenton = get_presenton()
     deck_check: dict[str, Any] = {}
     try:
@@ -834,6 +866,11 @@ async def verify_node(state: dict[str, Any]) -> dict[str, Any]:
         logger.warning("Không đọc lại được file slide để đối chiếu: %s", exc)
         return {"validation": {"status": "skipped", "issues": [],
                                "ghi_chu": "Chưa đối chiếu được số trong file"}}
+
+    if slide_count > getattr(get_settings(), "slide_max_slides", 15):
+        return {"output_path": "", "slide_count": slide_count,
+                "error": "File xuất vượt giới hạn số slide; hãy thu hẹp nội dung",
+                "validation": {"status": "failed", "issues": []}}
 
     # Số do CODE viết ra cũng là số thật: số trang của bảng đã cắt ("2/6").
     known |= set(state.get("so_cua_code") or [])

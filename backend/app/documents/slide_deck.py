@@ -699,6 +699,31 @@ def _table_pages(title: str, columns: list[str], rows: list[list[str]], intro: s
     return out
 
 
+def build_document_plan(outline, sources):
+    """Nội dung tài liệu dùng layout sẵn có; nguồn đầy đủ giữ trong ghi chú."""
+    by_id = {s["id"]: s for s in sources}
+    plan = [SlidePlan(layout=LAYOUT_TITLE, role="title", note="Tóm lược tài liệu được tải lên.", texts={
+        "primary_heading": outline["title"], "supporting_paragraph": "Tóm lược từ tài liệu nguồn",
+        "badge_initials": "TL", "card_primary_text": "Tài liệu", "card_secondary_text": "Nội dung có dẫn nguồn"})]
+    for page in outline["slides"]:
+        ids = list(dict.fromkeys(page["source_ids"] + [i for x in page["items"] for i in x["source_ids"]]))
+        note = "\n".join(f"{i}" + (f" — trang {by_id[i]['page']}" if by_id[i].get("page") else "")
+                         + ": " + by_id[i]["text"] for i in ids)
+        if page["rows"]:
+            plan.append(SlidePlan(layout=LAYOUT_TABLE_BASE, role="table", note=note,
+                texts={"main_heading": page["title"], "intro_paragraph": "Trích từ tài liệu nguồn"},
+                table=(page["columns"], page["rows"])))
+        else:
+            items = [{"card_title": f"Ý {i}", "card_caption": x["text"]}
+                     for i, x in enumerate(page["items"], 1)]
+            if len(items) == 1:
+                items.append({"card_title": "Nguồn", "card_caption": "Chi tiết xem ghi chú slide."})
+            plan.append(SlidePlan(layout=LAYOUT_GRID, role="content", note=note,
+                texts={"large_heading": page["title"], "supporting_paragraph": "Tóm lược nội dung tài liệu"},
+                lists={"grid_1": items}, icons=["file-text"] * len(items)))
+    return plan
+
+
 def build_plan(data: dict[str, Any], params: dict[str, Any], unit: str,
                datasets: list[Dataset], summary: dict[str, Any] | None,
                report_date: str, template: str = "modern") -> list[SlidePlan]:

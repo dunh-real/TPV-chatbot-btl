@@ -275,6 +275,9 @@ class Settings(BaseSettings):
     # (xem app/documents/slide_deck.py). "generate": đường cũ, để LLM của Presenton
     # tự chọn layout và viết lại slide - giữ lại để rollback bằng một biến môi trường.
     presenton_render_mode: str = "direct"
+    slide_max_slides: int = Field(default=15, ge=2, le=50)
+    slide_document_max_mb: int = Field(default=20, ge=1, le=100)
+    slide_document_max_chars: int = Field(default=60000, ge=1000, le=500000)
     # Đường "direct": Qwen viết tổng quan, nhận xét biểu đồ và kết luận (có kiểm số,
     # chữ hệ lạ, viết lại tối đa 3 lần). Tắt = mọi chữ do code tính.
     presenton_summary: bool = True

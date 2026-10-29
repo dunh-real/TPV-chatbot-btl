@@ -1,8 +1,12 @@
 # Đội ERP cập nhật cùng migration/đổi nghiệp vụ. Không lưu mẫu dữ liệu cá nhân.
-# Đã đối chiếu tên cột/FK trên DB ngày 15/10/2026; enum và quy trình chưa được xác nhận.
+# Đối chiếu trực tiếp schema/FK/CHECK ngày 29/10/2026:
+# dbnews.tpvtech.vn:7679 / bqp-private-ai-assistant-dev (204 bảng).
+# DB không có extended properties mô tả bảng/cột; CHECK hiện có không định nghĩa enum nghiệp vụ dưới đây.
+# Chỉ bổ sung ý nghĩa theo cấu trúc đã kiểm chứng; enum, công thức và quy trình vẫn cần đội ERP xác nhận.
+# Mô tả 15 bảng nghiệp vụ; bảng/cột thực sự được đọc do erp_sql_policy.json quyết định.
 # meaning chỉ mô tả bảng; mô tả cột đặt trong columns để lọc theo quyền.
 # caveats có nhắc nguồn/cột khác phải khai requires để kiểm tra và lọc quyền.
-version: "1"
+version: "2-db-dev-20261029"
 tables:
   dbo.Asm_Assets:
     meaning: Danh mục tài sản công ty; một dòng là một hồ sơ tài sản, không phải một lần cấp phát.
@@ -12,6 +16,12 @@ tables:
       Name: Tên tài sản, không dùng làm khóa nhận diện duy nhất.
       Quantity: Số lượng ghi nhận trên hồ sơ. Liệt kê lấy giá trị này; tổng hợp cộng theo đúng nhóm. Giữ 0; ý nghĩa NULL chưa được xác nhận, không tự coi là 1.
       WorkDepartmentId: Phòng ban gắn trên hồ sơ; chưa xác nhận luôn là phòng thực tế đang sử dụng.
+      AssetCategoryId: FK đến Asm_AssetCategories.Id; phân loại tài sản, không phải khóa của lần cấp phát.
+      PurchaseDate: Ngày mua ghi trên hồ sơ; không mặc định là ngày cấp phát hoặc ngày bắt đầu sử dụng.
+      PurchasePrice: Giá mua ghi trên hồ sơ; chưa xác nhận là đơn giá hay tổng giá của Quantity, không tự nhân số lượng.
+      CurrentValue: Giá trị hiện tại ghi trên hồ sơ; không tự coi là giá trị tại một kỳ lịch sử hoặc tự tính khấu hao.
+      IsActive: Cờ hoạt động của hồ sơ; chưa xác nhận quan hệ với Status và điều kiện tài sản đang sử dụng.
+      CurrentLocation: Vị trí ghi trên hồ sơ; không thay cho phòng ban hoặc lịch sử di chuyển.
       Status: Mã trạng thái chưa có định nghĩa enum; không tự gán ý nghĩa cho các số.
       IsDeleted: Xóa mềm; chưa xóa không đồng nghĩa đang sử dụng hoặc còn hiệu lực.
     caveats:
@@ -27,6 +37,7 @@ tables:
     meaning: Phiếu cấp phát tài sản cho nhân viên; một dòng là một phiếu, có thể có nhiều dòng chi tiết.
     columns:
       EmployeeId: FK đến nhân viên Dms_Employee, không phải tài khoản AbpUsers hoặc Id hồ sơ Hrm_EmployeeProfile.
+      Id: Khóa phiếu; khi JOIN chi tiết, COUNT(*) đếm dòng chi tiết chứ không còn là số phiếu.
       AssignmentDate: Ngày cấp phát; không thay bằng ngày tạo bản ghi khi hỏi thời điểm cấp phát.
       ReturnDate: Trường ngày hoàn trả ở cấp phiếu; chưa xác nhận cách xử lý hoàn trả một phần hoặc quan hệ với ngày hoàn trả chi tiết.
       Status: Chưa xác nhận mã trạng thái và trạng thái nào còn hiệu lực.
@@ -54,14 +65,26 @@ tables:
       Id: Khóa phòng ban; dùng phân biệt các phòng có cùng tên.
       ParentId: Phòng ban cha; không mặc định phạm vi một phòng bao gồm toàn bộ phòng con.
       DisplayName: Tên hiển thị, không phải khóa duy nhất.
+      Code: Mã phòng ban; bảng còn có DepartmentCode, chưa có quy ước để coi hai trường thay thế nhau.
+      DepartmentCode: Trường mã riêng bên cạnh Code; dùng đúng trường người dùng hoặc nghiệp vụ yêu cầu.
+      Describe: Mô tả phòng ban, không phải tên hiển thị hoặc tiêu chí tự động xác định quyền.
     caveats:
       - text: Danh mục hiện tại không chứng minh phòng ban còn tồn tại hoặc mang cùng tên trong một kỳ lịch sử.
 
   dbo.Dms_WorkPosition:
     meaning: Danh mục chức vụ; không tự coi tên chức vụ là quyền đọc dữ liệu hoặc vai trò ERP.
+    columns:
+      Id: Khóa chức vụ được WorkPositionId của nhân viên và hồ sơ nhân sự tham chiếu.
+      Name: Tên chức vụ; khi JOIN dùng Id thay vì tên có thể trùng.
+      IsManager: Cờ của danh mục chức vụ; không tự đồng nhất với quyền quản trị hoặc quyền xem toàn công ty.
+      IsActive: Cờ hoạt động danh mục; không tự dùng để loại hồ sơ nhân sự lịch sử.
 
   dbo.Asm_AssetCategories:
     meaning: Danh mục loại tài sản; số loại tài sản khác số hồ sơ và số lượng tài sản.
+    columns:
+      Id: Khóa loại được Asm_Assets.AssetCategoryId tham chiếu.
+      Name: Tên loại tài sản; không tự đồng nhất với tên từng tài sản.
+      IsActive: Cờ hoạt động loại; không chứng minh mọi tài sản thuộc loại đang sử dụng.
 
   dbo.Dms_Employee:
     meaning: Danh mục nhân viên, khác tài khoản đăng nhập và hồ sơ nhân sự. Không cộng số dòng của nhiều nguồn nhân sự với nhau.
@@ -69,6 +92,12 @@ tables:
       Id: Khóa nhân viên được các bảng nghiệp vụ tham chiếu.
       UserId: Liên kết tài khoản đăng nhập nếu có; không mặc định mọi nhân viên đều có tài khoản.
       WorkDepartmentId: Phòng ban gắn trên danh mục nhân viên hiện tại; không tự thay thế lịch sử công tác.
+      WorkPositionId: FK đến Dms_WorkPosition.Id; chức vụ hiện tại của danh mục nhân viên.
+      RoleId: Có trường RoleId nhưng schema không khai báo FK cho trường này; không tự dùng thay AbpUserRoles để quyết định quyền.
+      WorkLocationId: FK đến Dms_TenantInfo_Detail.Id; địa điểm làm việc là nguồn khác với danh mục phòng ban.
+    caveats:
+      - text: UserId có trên danh mục nhân viên nhưng schema hiện không khai báo FK đến AbpUsers; cần kiểm chứng dữ liệu trước khi mặc định quan hệ một-một.
+        requires: [dbo.Dms_Employee.UserId]
     references: [dbo.Hrm_EmployeeProfile, dbo.Dms_WorkDepartment]
 
   dbo.Hrm_EmployeeProfile:
@@ -80,6 +109,10 @@ tables:
       ResignationDate: Ngày nghỉ việc; cần xác nhận quy ước có tính người nghỉ đúng ngày chốt hay không.
       CreationTime: Ngày tạo hồ sơ, không mặc định là ngày vào làm khi thiếu ngày tuyển.
       WorkDepartmentId: Phòng ban trên hồ sơ hiện tại, không phải lịch sử chuyển phòng.
+      WorkPositionId: FK đến Dms_WorkPosition.Id; không tự gộp theo chức vụ trên Dms_Employee nếu hai nguồn chưa được đối chiếu.
+      EmploymentStatusId: FK đến Hrm_EmployeeStatus.Id; trạng thái nằm trong danh mục riêng, không đoán ý nghĩa bằng giá trị Id.
+      DirectManagerId: FK đến Dms_Employee.Id, không phải Hrm_EmployeeProfile.Id hay AbpUsers.Id.
+      EmployeeCode: Mã trên hồ sơ nhân sự; JOIN tới nhân viên bằng EmployeeId, không mặc định mã là khóa duy nhất.
     caveats:
       - text: Số nhân sự cuối tháng là chỉ tiêu theo thời điểm, khác số tuyển trong tháng và số hồ sơ chưa xóa hiện tại. Không khẳng định có snapshot lịch sử đầy đủ.
         requires: [dbo.Hrm_EmployeeProfile.HireDate, dbo.Hrm_EmployeeProfile.ResignationDate]
@@ -94,6 +127,10 @@ tables:
       VoucherDate: Ngày chứng từ, khác ngày tạo hồ sơ hoặc ngày đến hạn đề nghị.
       WalletBalance: Số dư ghi trên phiếu, không phải số tiền chi để cộng dồn.
       Status: Enum chưa được xác nhận; không tự chọn trạng thái là đã thanh toán.
+      PaymentRequestId: FK đến Fin_PaymentRequests.Id; nhiều chứng từ có thể cùng tham chiếu một đề nghị, cần tránh cộng lặp.
+      WalletId: FK đến Fin_Wallets.Id; tách tổng theo ví khi chưa xác nhận cùng đơn vị tiền tệ.
+      ExpenseTypeId: FK đến Fin_ExpenseTypes.Id; loại chi khác trạng thái phiếu.
+      ProjectId: FK đến Fin_Projects.Id; không tự suy ra phòng ban từ dự án.
     references: [dbo.Fin_PaymentRequests, dbo.Fin_Wallets]
 
   dbo.Fin_RevenueVouchers:
@@ -103,13 +140,20 @@ tables:
       VoucherDate: Ngày chứng từ; không mặc định thay bằng ngày tạo.
       WalletBalance: Số dư ghi trên phiếu, không phải số tiền thu để cộng dồn.
       Status: Chưa xác nhận trạng thái phiếu được tính vào tổng thu.
-    references: [dbo.Fin_Wallets]
+      PaymentRequestId: Schema có FK đến Fin_PaymentRequests.Id cả ở phiếu thu; chưa xác nhận ý nghĩa hoàn ứng hoặc quy trình thu liên quan, không tự suy diễn.
+      WalletId: FK đến Fin_Wallets.Id; số dư ví không thay cho tổng Amount của các phiếu thu.
+      RevenueTypeId: FK đến Fin_RevenueTypes.Id; loại thu không tự xác định là doanh thu kế toán.
+      ProjectId: FK đến Fin_Projects.Id.
+    references: [dbo.Fin_Wallets, dbo.Fin_PaymentRequests]
 
   dbo.Fin_PaymentRequests:
     meaning: Đề nghị thanh toán; chưa thể coi mọi đề nghị là khoản đã duyệt hoặc thực chi.
     columns:
       PaymentDueDate: Hạn thanh toán, không phải ngày đã trả tiền.
       Status: Chưa xác nhận enum và điều kiện duyệt/thanh toán.
+      Department: Trường Department không có FK được khai báo; chưa xác nhận là tên, mã hay Id phòng ban, không tự JOIN với Dms_WorkDepartment.Id.
+      Type: Mã loại đề nghị chưa có enum được xác nhận.
+      ApprovalContent: Nội dung phê duyệt; không tự dùng sự có mặt của nội dung để kết luận đề nghị đã được duyệt.
     caveats:
       - text: Một đề nghị có thể có nhiều dòng chi tiết hoặc chứng từ; không JOIN rồi cộng lặp số tiền ở các cấp khác nhau.
     references: [dbo.Fin_PaymentRequestDetails, dbo.Fin_ExpenseVouchers]
@@ -121,6 +165,11 @@ tables:
       EndDate: Thời điểm kết thúc nghỉ; cách tính biên cần xác nhận.
       DurationMinutes: Thời lượng đơn vị phút; không coi trực tiếp là giờ hoặc ngày công.
       Status: Chưa xác nhận trạng thái duyệt để tính nghỉ thực tế.
+      EmployeeId: FK đến Dms_Employee.Id; không JOIN trực tiếp với Id hồ sơ nhân sự.
+      ApprovedId: FK đến Dms_Employee.Id của người duyệt; khác EmployeeId của người nghỉ.
+      ApprovedDate: Ngày duyệt ghi trên đơn; không thay StartDate khi thống kê thời gian nghỉ.
+      LeaveType: Mã loại nghỉ chưa có enum được xác nhận; không suy ý nghĩa chỉ từ giá trị số.
+      IsPaidLeave: Cờ nghỉ có lương trên đơn; không tự suy ra đơn đã được duyệt.
     caveats:
       - text: Đơn giao qua nhiều tháng không được mặc định tính toàn bộ thời lượng vào một tháng. Quy đổi phút ra ngày cần lịch làm việc được xác nhận.
         requires: [dbo.Hrm_LeaveRequest.StartDate, dbo.Hrm_LeaveRequest.EndDate, dbo.Hrm_LeaveRequest.DurationMinutes]
@@ -129,9 +178,15 @@ tables:
     meaning: Tổng hợp chấm công theo nhân viên và kỳ; kiểm tra tính duy nhất trước khi cộng hoặc JOIN với chi tiết.
     columns:
       PeriodId: Kỳ chấm công; không lấy tháng từ ngày tạo bản ghi để thay kỳ.
+      EmployeeId: FK đến Dms_Employee.Id; một nhân viên có thể có nhiều dòng theo kỳ, cần kiểm tra khóa nhóm.
       TotalWorkingDays: Số ngày làm việc theo trường tổng hợp; cách tính cần đối chiếu ERP.
       TotalWorkHours: Tổng giờ công; không cộng trực tiếp với chỉ tiêu ngày công.
       OvertimeHours: Giờ tăng ca; quy tắc bao gồm/tách giờ cuối tuần và ngày lễ cần xác nhận.
+      HolidayOvertimeHours: Giờ tăng ca ngày lễ; chưa xác nhận đã nằm trong OvertimeHours hay là phần tách riêng, không tự cộng cả hai.
+      WeekendOvertimeHours: Giờ tăng ca cuối tuần; tránh cộng trùng với OvertimeHours khi chưa có công thức xác nhận.
+      ActualWorkingDays: Trường ngày công thực tế; khác TotalWorkingDays, công thức và phạm vi chưa được xác nhận.
+      RemoteDays: Số ngày làm từ xa theo trường tổng hợp; chưa xác nhận có nằm trong ActualWorkingDays hay không.
+    references: [dbo.Dms_Employee, dbo.Hrm_TimesheetPeriod]
 
   dbo.Att_Payroll:
     meaning: Bảng lương theo kỳ; một bảng có thể có nhiều phiếu lương nhân viên.
@@ -140,12 +195,17 @@ tables:
       PayrollYear: Năm của kỳ lương.
       TotalSalary: Tổng tiền ở cấp bảng lương; không cộng lặp sau khi JOIN xuống phiếu lương.
       Status: Chưa xác nhận bảng lương chốt, nháp hoặc đã thanh toán.
+      FromDate: Ngày bắt đầu khoảng tính lương ghi trên bảng; không tự giả định luôn là ngày đầu PayrollMonth.
+      ToDate: Ngày kết thúc khoảng tính lương; cần xác nhận quy tắc tính biên.
+      CalculatedTime: Thời điểm tính bảng lương; khác kỳ lương và thời điểm trả tiền.
     references: [dbo.Att_Payslip]
 
   dbo.Att_Payslip:
     meaning: Phiếu lương nhân viên thuộc một bảng lương; không mặc định phiếu đã được thanh toán.
     columns:
       PayrollId: FK đến bảng lương; dùng kỳ của bảng lương khi hỏi theo tháng.
+      EmployeeId: FK đến Dms_Employee.Id; không mặc định JOIN một-một với mọi hồ sơ Hrm_EmployeeProfile.
+      SalaryId: FK đến Att_Salary.Id; khác PayrollId và không mặc định là số tiền lương.
       GrossSalary: Trường lương gộp; cần xác nhận thành phần và công thức ERP.
       TotalIncome: Tổng thu nhập; không mặc định bằng lương cơ bản hoặc lương gộp.
       TotalDeduction: Tổng khấu trừ.
