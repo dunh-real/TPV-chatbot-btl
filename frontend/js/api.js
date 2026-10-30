@@ -207,6 +207,18 @@
       fd.append('rule_set', opts.ruleSet || '');
       return postForm('/api/documents/review', fd, signal);
     },
+    routingAvailableDocs: function () { return request('/api/document-routings/documents'); },
+    routingGet: function (id) { return request('/api/document-routings/' + encodeURIComponent(id)); },
+    routingSuggest: function (body, signal) {
+      body = Object.assign({ force_refresh: true }, body || {});
+      return postJSON('/api/document-routings/suggest', body, signal);
+    },
+    routingApprove: function (id, body, signal) {
+      return postJSON('/api/document-routings/' + encodeURIComponent(id) + '/approve', body, signal);
+    },
+    routingReject: function (id, body, signal) {
+      return postJSON('/api/document-routings/' + encodeURIComponent(id) + '/reject', body, signal);
+    },
     giaoViec: function (body, signal) { return postJSON('/api/documents/giao-viec', body, signal); },
     giaoViecDownload: function (fileName) { return url('/api/documents/download/' + encodeURIComponent(fileName)); },
     stats: function () { return request('/api/documents/stats'); },

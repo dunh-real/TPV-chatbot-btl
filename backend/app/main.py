@@ -14,8 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import (agent, chat, documents, legal, mindmap, ocr, presenton_proxy,
-                     presentations, reports)
+from app.api import (agent, chat, document_routings, documents, legal, mindmap, ocr,
+                     presenton_proxy, presentations, reports)
 from app.api.identity import IdentityMiddleware
 from app.core.config import get_settings
 from app.agents.quyen import ThieuQuyen
@@ -74,14 +74,14 @@ async def lifespan(app: FastAPI):
         logger.error("KHÔNG khởi tạo được collection hội thoại %s - lịch sử chat sẽ "
                      "không được lưu bền: %s", conversations.collection, exc)
 
-    if settings.legal_versioning_enabled:
-        # Bảng phiên bản VBQPPL + nguồn gốc câu trả lời (app.legal). create_all chỉ tạo
+    if settings.legal_versioning_enabled or settings.document_routing_enabled:
+        # Bảng dữ liệu app (routing và, khi bật, phiên bản VBQPPL). create_all chỉ tạo
         # bảng còn thiếu, không đụng bảng/dữ liệu đang có.
         try:
             from app.db.session import create_all
 
             await create_all()
-            logger.info("Bảng phiên bản VBQPPL sẵn sàng")
+            logger.info("Bảng dữ liệu ứng dụng sẵn sàng")
         except Exception as exc:  # noqa: BLE001
             logger.error("Không tạo được bảng phiên bản VBQPPL: %s", exc)
 
@@ -201,6 +201,7 @@ else:
 app.include_router(agent.router)
 app.include_router(chat.router)
 app.include_router(documents.router)
+app.include_router(document_routings.router)
 app.include_router(legal.router)
 app.include_router(reports.router)
 app.include_router(presentations.router)

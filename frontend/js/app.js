@@ -119,6 +119,7 @@
   var VIEWS = {
     chat: ['Agent tổng', 'Một câu yêu cầu — hệ thống tự chọn workflow, kể cả hỏi đáp tài liệu'],
     review: ['Soát tài liệu', 'Workflow 2 · rule engine cấu trúc + soát chữ nghĩa + phân rã nhiệm vụ'],
+    routing: ['Phân luồng văn bản', 'Workflow 6 · AI đề xuất, cán bộ kiểm tra và phê duyệt'],
     draft: ['Soạn báo cáo', 'Workflow 3 · đọc một tài liệu tải lên, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
     slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
@@ -143,6 +144,7 @@
     if (name === 'corpus') loadStats();
     if (name === 'review' && !ruleSetsLoaded) loadRuleSets();
     if (name === 'ocr') ocrLoadStatus();
+    if (name === 'routing') loadRoutingAvailableDocs();
   }
   $$('.nav-item').forEach(function (b) {
     b.addEventListener('click', function () { showView(b.dataset.view); });
@@ -1512,6 +1514,274 @@
   });
 
   /* ══════════════════════════════════════════════════════════════════════
+     VIEW: PHÂN LUỒNG VĂN BẢN (workflow 6)
+     ══════════════════════════════════════════════════════════════════ */
+  var routingFile = null;
+  var routingDocsCache = [];
+
+  wireDropzone('#routingDrop', '#routingFile', function (f) {
+    routingFile = f;
+    markDropzone('#routingDrop', f);
+    // Khi chọn file mới thì bỏ chọn văn bản trong CSDL
+    var sel = $('#routingExistingDoc');
+    if (sel) sel.value = '';
+    $('#routingDocumentId').value = f.name.replace(/\.[^.]+$/, '');
+  });
+
+  async function loadRoutingAvailableDocs(selectedId) {
+    var sel = $('#routingExistingDoc');
+    if (!sel) return;
+    try {
+      var docs = await API.routingAvailableDocs();
+      routingDocsCache = docs || [];
+      var curVal = selectedId || sel.value;
+      sel.innerHTML = '<option value="">-- Chọn văn bản có sẵn trong CSDL --</option>' +
+        routingDocsCache.map(function (d) {
+          var stMap = {
+            'AI_SUGGESTED': 'Chờ duyệt',
+            'APPROVED': 'Đã duyệt',
+            'REJECTED': 'Đã từ chối',
+            'NEEDS_REVIEW': 'Cần soát',
+            'CHUA_PHAN_LUONG': 'Chưa phân luồng'
+          };
+          var st = stMap[d.status] || d.status || '';
+          var isSel = (curVal && curVal === d.document_id) ? ' selected' : '';
+          var label = '[' + (d.document_id || 'VB') + '] · ' + st + ' · ' + (d.title || d.file_id || '');
+          return '<option value="' + esc(d.document_id) + '"' + isSel + '>' + esc(label) + '</option>';
+        }).join('');
+      if (curVal) sel.value = curVal;
+    } catch (e) {
+      console.warn('Không tải được danh sách văn bản từ CSDL:', e);
+    }
+  }
+
+  $('#routingExistingDoc') && $('#routingExistingDoc').addEventListener('change', async function () {
+    var docId = this.value;
+    if (!docId) return;
+
+    // Reset file upload
+    routingFile = null;
+    var drop = $('#routingDrop');
+    if (drop) {
+      drop.classList.remove('has-file');
+      $('b', drop).textContent = 'Kéo thả hoặc bấm để chọn văn bản đến';
+    }
+    $('#routingDocumentId').value = docId;
+
+    var found = routingDocsCache.find(function (d) { return d.document_id === docId; });
+    var box = $('#routingResult');
+    box.innerHTML = '';
+    var loader = loaderNode('Đang nạp phân luồng văn bản “' + docId + '”…');
+    box.appendChild(loader);
+
+    try {
+      var res = null;
+      if (found && found.routing_id) {
+        res = await API.routingGet(found.routing_id);
+      } else {
+        res = await API.routingSuggest({
+          document_id: docId,
+          FileUrl: (found ? found.file_id : '') || docId,
+        });
+      }
+      loader.stop();
+      renderRouting(res);
+      toast('Đã nạp văn bản: ' + docId, 'ok');
+    } catch (e) {
+      loader.stop();
+      box.innerHTML = '<div class="card" style="border-color:var(--err)"><div class="card-head"><h3>Không nạp được văn bản</h3><span class="pill err">lỗi</span></div><div class="muted sm">' + esc(errText(e)) + '</div></div>';
+      toast(errText(e), 'err');
+    }
+  });
+
+  function renderRouting(data) {
+    var box = $('#routingResult');
+    box.innerHTML = '';
+    var evidence = data.AiEvidenceJson || [];
+    var warnings = data.Warnings || [];
+
+    // Danh mục phòng ban mặc định và danh mục trả về từ backend
+    var defaultDepts = [
+      {id: 10, code: 'P.KT', display_name: 'Phòng Kế toán'},
+      {id: 20, code: 'P.HCNS', display_name: 'Phòng Hành chính Nhân sự'},
+      {id: 30, code: 'P.KD', display_name: 'Phòng Kinh doanh'},
+      {id: 40, code: 'P.KHTH', display_name: 'Phòng Kế hoạch Tổng hợp'},
+      {id: 50, code: 'P.CNTT', display_name: 'Phòng Kỹ thuật & CNTT'},
+      {id: 60, code: 'P.PC', display_name: 'Phòng Pháp chế & Kiểm soát'}
+    ];
+    var depts = (data.DepartmentCatalog && data.DepartmentCatalog.length) ? data.DepartmentCatalog : defaultDepts;
+    var deptMap = {};
+    depts.forEach(function (d) {
+      deptMap[d.id] = (d.display_name ? (d.display_name + ' (' + d.code + ')') : d.code);
+    });
+    var primaryUnitDisplay = data.AiPrimaryUnitId ? (deptMap[data.AiPrimaryUnitId] || ('ID: ' + data.AiPrimaryUnitId)) : 'Chưa xác định';
+
+    var coordIds = [];
+    try { coordIds = typeof data.AiCoordinatingUnitsJson === 'string' ? JSON.parse(data.AiCoordinatingUnitsJson || '[]') : (data.AiCoordinatingUnitsJson || []); } catch (e) { coordIds = []; }
+    var coordUnitsDisplay = coordIds.length ? coordIds.map(function(id) { return deptMap[id] || ('ID: ' + id); }).join(', ') : 'Không có';
+
+    // Từ điển loại văn bản tiếng Việt
+    var DOC_TYPE_NAMES = {
+      'CONG_VAN_DEN': 'Công văn đến',
+      'QUYET_DINH': 'Quyết định',
+      'TO_TRINH': 'Tờ trình',
+      'THONG_BAO': 'Thông báo',
+      'DON_THU': 'Đơn thư / Đề nghị',
+      'BAO_CAO': 'Báo cáo',
+      'KE_HOACH': 'Kế hoạch',
+      'CONG_VAN': 'Công văn',
+      'DE_XUAT': 'Đề xuất',
+    };
+
+    // Từ điển lĩnh vực tiếng Việt
+    var cats = data.CategoryCatalog || [];
+    var catMap = {
+      'TAI_CHINH': 'Tài chính - Kế toán',
+      'NHAN_SU': 'Tổ chức - Cán bộ',
+      'KE_HOACH_DAU_TU': 'Kế hoạch - Đầu tư',
+      'KY_THUAT_CONG_NGHE': 'Kỹ thuật - Công nghệ',
+      'HANH_CHINH_QUAN_TRI': 'Hành chính - Quản trị',
+      'PHAP_CHE_THANH_TRA': 'Pháp chế - Thanh tra',
+      'BAO_CAO_TONG_HOP': 'Báo cáo - Tổng hợp',
+    };
+    cats.forEach(function (c) { if (c.field_code) catMap[c.field_code] = c.field_name || c.field_code; });
+
+    // Từ điển mức độ khẩn
+    var URGENCY_NAMES = {
+      'Thuong': 'Thường',
+      'Khan': 'Khẩn',
+      'Hoa toc': 'Hỏa tốc'
+    };
+
+    var docTypeDisplay = data.DocumentTypeCode ? ((DOC_TYPE_NAMES[data.DocumentTypeCode] || data.DocumentTypeCode) + ' (' + data.DocumentTypeCode + ')') : 'Chưa xác định';
+    var fieldDisplay = data.FieldCode ? ((catMap[data.FieldCode] || data.FieldCode) + ' (' + data.FieldCode + ')') : 'Chưa xác định';
+    var urgencyDisplay = data.UrgencyLevel ? (URGENCY_NAMES[data.UrgencyLevel] || data.UrgencyLevel) : 'Thường';
+
+    var card = el('div', { class: 'card' });
+    card.innerHTML = '<div class="card-head"><h3>Đề xuất phân luồng văn bản</h3><span class="pill ' +
+      (data.Status === 'AI_SUGGESTED' ? 'ok' : (data.Status === 'APPROVED' ? 'accent' : 'warn')) + '">' +
+      esc(data.Status === 'AI_SUGGESTED' ? 'Chờ phê duyệt' : (data.Status === 'APPROVED' ? 'Đã duyệt' : (data.Status === 'REJECTED' ? 'Đã từ chối' : data.Status))) + '</span></div>' +
+      '<div class="kv-grid" style="margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:10px 18px;font-size:13.5px">' +
+        '<b style="color:var(--muted)">Loại văn bản:</b><span><span class="pill accent">' + esc(docTypeDisplay) + '</span></span>' +
+        '<b style="color:var(--muted)">Lĩnh vực:</b><span><span class="pill">' + esc(fieldDisplay) + '</span></span>' +
+        '<b style="color:var(--muted)">Mức độ khẩn:</b><span><span class="pill ' + (data.UrgencyLevel === 'Hoa toc' ? 'err' : (data.UrgencyLevel === 'Khan' ? 'warn' : '')) + '">' + esc(urgencyDisplay) + '</span></span>' +
+        '<b style="color:var(--muted)">Đơn vị chủ trì:</b><span><b>' + esc(primaryUnitDisplay) + '</b> <span style="color:var(--muted)">(ID: ' + esc(String(data.AiPrimaryUnitId == null ? 'Chưa gán' : data.AiPrimaryUnitId)) + ')</span></span>' +
+        '<b style="color:var(--muted)">Đơn vị phối hợp:</b><span>' + (coordIds.length ? ('<b>' + esc(coordUnitsDisplay) + '</b> <span style="color:var(--muted)">(IDs: ' + esc(JSON.stringify(coordIds)) + ')</span>') : '<span class="muted">Không có</span>') + '</span>' +
+        '<b style="color:var(--muted)">Lý do & căn cứ:</b><div style="line-height:1.55">' + esc(data.AiReason || 'Chưa có lý do') + '</div>' +
+        (data.AiConfidence != null ? ('<b style="color:var(--muted)">Độ tin cậy AI:</b><span><b>' + Math.round(data.AiConfidence * 100) + '%</b></span>') : '') +
+      '</div>';
+    if (warnings.length) card.appendChild(el('div', { class: 'card-sub', style: 'margin-top:8px;color:var(--warn)' }, warnings.join(' · ')));
+    if (evidence.length) card.appendChild(block('Bằng chứng trong văn bản', evidence.length,
+      evidence.map(function (item) { return '<div class="source-snip">[' + esc(item.block_id || '') + '] ' + esc(item.quote || '') + '</div>'; }).join(''), true));
+    box.appendChild(card);
+
+    if (data.Status === 'AI_SUGGESTED' || data.Status === 'NEEDS_REVIEW') {
+      var edit = el('div', { class: 'card' });
+
+      var primaryOptions = '<option value="">-- Chọn đơn vị chủ trì --</option>' +
+        depts.map(function (d) {
+          var name = d.display_name || d.name || d.code;
+          var label = name + ' (' + (d.code || '') + ' · ID: ' + d.id + ')';
+          var sel = (data.AiPrimaryUnitId === d.id) ? ' selected' : '';
+          return '<option value="' + d.id + '"' + sel + '>' + esc(label) + '</option>';
+        }).join('');
+
+      var coordCheckboxes = depts.map(function (d) {
+        var isChecked = coordIds.indexOf(d.id) !== -1 ? ' checked' : '';
+        var name = d.display_name || d.name || d.code;
+        return '<label style="display:inline-flex;align-items:center;gap:7px;margin:5px 14px 5px 0;font-size:13.5px;cursor:pointer">' +
+          '<input type="checkbox" class="routing-coord-cb" value="' + d.id + '"' + isChecked + '> ' +
+          '<span><b>' + esc(name) + '</b> <span style="color:var(--muted)">(' + esc(d.code) + ' · ID: ' + d.id + ')</span></span></label>';
+      }).join('');
+
+      edit.innerHTML = '<div class="card-head"><h3>Kiểm tra và phê duyệt</h3></div>' +
+        '<label class="field"><span>Đơn vị chủ trì</span>' +
+          '<select id="routingPrimaryId">' + primaryOptions + '</select>' +
+        '</label>' +
+        '<div class="field" style="margin-top:12px">' +
+          '<span style="font-weight:600;font-size:13.5px;display:block;margin-bottom:6px">Đơn vị phối hợp</span>' +
+          '<div style="display:flex;flex-wrap:wrap;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px">' +
+            coordCheckboxes +
+          '</div>' +
+        '</div>' +
+        '<label class="field" style="margin-top:12px"><span>Mức độ khẩn</span><select id="routingUrgency"><option value="Thuong">Thường</option><option value="Khan">Khẩn</option><option value="Hoa toc">Hỏa tốc</option></select></label>' +
+        '<label class="field"><span>Ghi chú duyệt</span><textarea id="routingReviewNote" rows="2" placeholder="Ghi chú thêm của người phê duyệt (nếu có)..."></textarea></label>' +
+        '<div class="tag-row"><button class="primary-btn" id="routingApproveBtn">Phê duyệt</button><button class="ghost-btn" id="routingRejectBtn">Từ chối</button></div>';
+      box.appendChild(edit);
+      $('#routingUrgency').value = data.UrgencyLevel || 'Thuong';
+      $('#routingApproveBtn').addEventListener('click', async function () {
+        try {
+          var pIdVal = $('#routingPrimaryId').value;
+          var primaryId = pIdVal ? Number(pIdVal) : null;
+          if (!primaryId) { toast('Vui lòng chọn đơn vị chủ trì', 'err'); return; }
+
+          var coordCbList = $$('.routing-coord-cb:checked');
+          var selectedCoordIds = coordCbList.map(function (cb) { return Number(cb.value); }).filter(function (id) { return id !== primaryId; });
+
+          var approved = await API.routingApprove(data.RoutingId, {
+            AiPrimaryUnitId: primaryId,
+            AiCoordinatingUnitsJson: JSON.stringify(selectedCoordIds),
+            UrgencyLevel: $('#routingUrgency').value,
+            ReviewNote: $('#routingReviewNote').value,
+          });
+          renderRouting(approved);
+          await loadRoutingAvailableDocs(data.document_id);
+          toast('Đã phê duyệt phân luồng', 'ok');
+        } catch (e) { toast(errText(e), 'err'); }
+      });
+      $('#routingRejectBtn').addEventListener('click', async function () {
+        try {
+          var rejected = await API.routingReject(data.RoutingId, { ReviewNote: $('#routingReviewNote').value });
+          renderRouting(rejected);
+          await loadRoutingAvailableDocs(data.document_id);
+          toast('Đã từ chối đề xuất', 'ok');
+        } catch (e) { toast(errText(e), 'err'); }
+      });
+    }
+  }
+
+  $('#routingSuggest').addEventListener('click', async function () {
+    var button = this;
+    var existingDocId = $('#routingExistingDoc') ? $('#routingExistingDoc').value : '';
+    if (!routingFile && !existingDocId) {
+      toast('Vui lòng chọn văn bản từ CSDL hoặc tải file mới lên', 'err');
+      return;
+    }
+    button.disabled = true;
+    var box = $('#routingResult');
+    box.innerHTML = '';
+    var loader = loaderNode('Đang phân tích văn bản và đề xuất phân luồng…');
+    box.appendChild(loader);
+    try {
+      var fileUrl = '';
+      var docId = $('#routingDocumentId').value.trim();
+      if (routingFile) {
+        var uploaded = await API.agentUpload(routingFile, 'upload');
+        fileUrl = uploaded.file_id;
+        docId = docId || routingFile.name.replace(/\.[^.]+$/, '');
+      } else if (existingDocId) {
+        var found = routingDocsCache.find(function (d) { return d.document_id === existingDocId; });
+        fileUrl = (found ? found.file_id : '') || existingDocId;
+        docId = existingDocId;
+      }
+      var result = await API.routingSuggest({
+        FileUrl: fileUrl,
+        document_id: docId,
+        Departments: [], Categories: [],
+      });
+      loader.stop();
+      renderRouting(result);
+      loadRoutingAvailableDocs();
+      toast('Đã tạo đề xuất phân luồng', 'ok');
+    } catch (e) {
+      loader.stop();
+      box.innerHTML = '<div class="card" style="border-color:var(--err)"><div class="card-head"><h3>Không phân luồng được</h3><span class="pill err">lỗi</span></div><div class="muted sm">' + esc(errText(e)) + '</div></div>';
+      toast(errText(e), 'err');
+    }
+    finally { button.disabled = false; }
+  });
+
+  /* ══════════════════════════════════════════════════════════════════════
      VIEW: SOẠN BÁO CÁO (workflow 3)
      ══════════════════════════════════════════════════════════════════ */
   function renderSections(container, sections, midPrefix) {
@@ -2404,6 +2674,7 @@
 
   /* Đổi thuê bao là đổi toàn bộ số liệu đang xem, nên xoá cache tool và hỏi lại
      sức khoẻ backend giống hệt lúc đổi API base. */
+  if (!API.getTenant()) API.setTenant('64');
   $('#tenantId').value = API.getTenant();
   $('#tenantId').addEventListener('change', function () {
     var v = API.setTenant(this.value);

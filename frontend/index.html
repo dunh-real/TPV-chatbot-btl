@@ -43,6 +43,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/></svg>
         <span>Soát tài liệu</span><em class="nav-hint">WF2</em>
       </button>
+      <button class="nav-item" data-view="routing">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v5H4zM4 14h7v5H4zM15 14h5v5h-5z"/><path d="M12 10v2M7.5 12h9"/></svg>
+        <span>Phân luồng văn bản</span><em class="nav-hint">WF6</em>
+      </button>
       <button class="nav-item" data-view="draft">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         <span>Soạn báo cáo</span><em class="nav-hint">WF3</em>
@@ -197,6 +201,40 @@
         </div>
       </div>
       <div class="result" id="reviewResult"><div class="result-empty">Kết quả soát sẽ hiện ở đây.</div></div>
+    </section>
+
+    <!-- ========== VIEW: ROUTING (workflow 6) ========== -->
+    <section class="view view-split" id="view-routing">
+      <div class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">Phân luồng văn bản đến</h2>
+          <p class="panel-sub">AI chỉ tạo đề xuất. Mã phòng ban và lĩnh vực được backend kiểm tra trước khi cán bộ phê duyệt.</p>
+
+          <label class="field" style="margin-bottom:12px">
+            <span>Chọn văn bản có sẵn trong CSDL</span>
+            <select id="routingExistingDoc">
+              <option value="">-- Chọn văn bản có sẵn trong CSDL --</option>
+            </select>
+            <em>Chọn tài liệu đã lưu trong hệ thống để xem và phê duyệt phân luồng ngay.</em>
+          </label>
+
+          <div style="display:flex;align-items:center;margin:12px 0 10px;color:var(--muted);font-size:12px">
+            <hr style="flex:1;border:none;border-top:1px solid var(--border)" />
+            <span style="padding:0 10px;font-weight:600">HOẶC TẢI FILE MỚI</span>
+            <hr style="flex:1;border:none;border-top:1px solid var(--border)" />
+          </div>
+
+          <div class="dropzone" id="routingDrop">
+            <input type="file" id="routingFile" accept=".docx,.pdf,.txt,.md,.png,.jpg,.jpeg,.tiff" hidden />
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <b>Kéo thả hoặc bấm để chọn văn bản đến</b>
+            <small>.pdf · .docx · .txt · .md · ảnh scan</small>
+          </div>
+          <label class="field"><span>Mã văn bản <em>(không bắt buộc)</em></span><input id="routingDocumentId" type="text" placeholder="VD: VB-123" /></label>
+          <button class="primary-btn" id="routingSuggest">Tạo đề xuất</button>
+        </div>
+      </div>
+      <div class="result" id="routingResult"><div class="result-empty">Đề xuất, bằng chứng và trạng thái phê duyệt sẽ hiện ở đây.</div></div>
     </section>
 
     <!-- ========== VIEW: DRAFT (workflow 3) ========== -->

@@ -71,6 +71,51 @@ class VanBan(Base):
     )
 
 
+class AICategory(Base):
+    """Danh mục lĩnh vực được phép dùng trong output routing."""
+
+    __tablename__ = "AI_Categories"
+
+    field_code: Mapped[str] = mapped_column(Unicode(100), primary_key=True)
+    field_name: Mapped[str] = mapped_column(Unicode(255), nullable=False, default="")
+    description: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="")
+    tenant_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+
+class DocumentRouting(Base):
+    """Một phiên bản đề xuất phân luồng văn bản đến."""
+
+    __tablename__ = "ai_document_routings"
+
+    routing_id: Mapped[str] = mapped_column(Unicode(64), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    document_id: Mapped[str] = mapped_column(Unicode(100), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(Unicode(1000), nullable=False, default="")
+    document_type_code: Mapped[str | None] = mapped_column(Unicode(100), nullable=True)
+    field_code: Mapped[str | None] = mapped_column(Unicode(100), nullable=True)
+    urgency_level: Mapped[str | None] = mapped_column(Unicode(50), nullable=True)
+    ai_primary_unit_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    ai_coordinating_units_json: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="[]")
+    ai_primary_unit_code: Mapped[str | None] = mapped_column(Unicode(95), nullable=True)
+    ai_coordinating_unit_codes_json: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="[]")
+    ai_reason: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="")
+    ai_evidence_json: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="[]")
+    ai_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    warnings_json: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="[]")
+    department_catalog_json: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="[]")
+    category_catalog_json: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="[]")
+    source_format: Mapped[str] = mapped_column(Unicode(20), nullable=False, default="")
+    prompt_version: Mapped[str] = mapped_column(Unicode(40), nullable=False, default="v1")
+    model: Mapped[str] = mapped_column(Unicode(200), nullable=False, default="")
+    status: Mapped[str] = mapped_column(Unicode(30), nullable=False, index=True)
+    reviewed_by: Mapped[str | None] = mapped_column(Unicode(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    review_note: Mapped[str] = mapped_column(UnicodeText, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+
+
 # --------------------------------------------------------------------------- #
 # Văn bản quy phạm theo phiên bản (app.legal)
 #
