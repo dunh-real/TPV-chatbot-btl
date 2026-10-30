@@ -30,10 +30,14 @@ def tool_schemas(catalog):
                            "additionalProperties": False}}} for name, description, properties, required in specs]
 
 
+class SQLFormatError(ValueError):
+    """Phản hồi cần được model gộp lại thành một khối SQL."""
+
+
 def extract_sql(content):
     blocks = re.findall(r"```(?:sql|tsql)?\s*\n(.*?)```", content or "", re.I | re.S)
     if len(blocks) > 1:
-        raise ValueError("Model trả nhiều khối SQL")
+        raise SQLFormatError("Model trả nhiều khối SQL")
     return (blocks[0] if blocks else content or "").strip()
 
 
@@ -102,19 +106,23 @@ class DiscoveryPipeline:
                     {"role": "user", "content": question}]
         sql, result = "", {"ok": False}
         try:
-            sql = self.generate(messages)
             for attempt in range(self.max_repairs + 1):
-                self.remaining()
-                validation = self.executor.validate(sql)
-                self.remaining()
-                result = self.executor.execute(sql) if validation["ok"] else validation
+                sql = ""
+                try:
+                    sql = self.generate(messages)
+                    self.remaining()
+                    validation = self.executor.validate(sql)
+                    self.remaining()
+                    result = self.executor.execute(sql) if validation["ok"] else validation
+                except SQLFormatError as exc:
+                    validation = {"ok": False}
+                    result = {"ok": False, "error": str(exc), "error_type": "generation_error"}
                 self.attempts.append({"attempt": attempt, "valid": validation["ok"], "ok": result["ok"]})
                 if result["ok"] or attempt == self.max_repairs:
                     break
                 messages.append({"role": "user", "content": json.dumps({
-                    "task": "Repair failed SQL without changing the original question. Return complete SQL.",
+                    "task": "Repair failed SQL without changing the original question. Combine all requested metrics into ONE read-only SELECT (CTEs allowed) in ONE sql code block.",
                     "question": question, "sql": sql, "error": result.get("error")}, ensure_ascii=False)})
-                sql = self.generate(messages)
         except Exception as exc:
             result = {"ok": False, "error": str(exc)[:500],
                       "error_type": "timeout" if isinstance(exc, TimeoutError) else "generation_error"}

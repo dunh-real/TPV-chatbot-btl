@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import math
+import os
 import time
 import uuid
 from functools import lru_cache
+from pathlib import Path
 
 import anyio
 import sqlglot
@@ -24,6 +27,26 @@ from app.services.erp_sql_policy import SQLPolicy
 from app.tools.base import ToolError
 
 logger = logging.getLogger(__name__)
+
+
+def save_sql_log(folder, query_id, question, tenant_id, user_id, outcome):
+    """Lưu chẩn đoán từng truy vấn; không lưu các dòng dữ liệu trả về."""
+    if not folder:
+        return
+    record = dict(query_id=query_id, time=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                  question=question, tenant_id=tenant_id, user_id=user_id,
+                  **{key: outcome.get(key) for key in
+                     ("sql", "exec_ok", "error_type", "error", "llm_calls", "tool_calls", "attempts")})
+    try:
+        path = Path(folder)
+        path.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with open(path / f"{query_id}.json", "x", encoding="utf-8",
+                  opener=lambda name, flags: os.open(name, flags, 0o600)) as stream:
+            json.dump(record, stream, ensure_ascii=False, indent=2)
+    except OSError:
+        logger.exception("Không lưu được log SQL query=%s", query_id)
+
+
 SYSTEM = """Generate ONE read-only T-SQL SELECT for the user's ERP question.
 Use the FULL authorized schema below; never invent tables, fields or business definitions.
 Every physical source is automatically filtered by the account's tenant and row permissions.
@@ -99,17 +122,22 @@ class GuardedExecutor:
         try:
             # Kiểm tra lại mọi lần thực thi, kể cả lookup và SQL vừa sửa lỗi.
             executable, params, sources, metadata = self.prepare(sql)
+            logger.info("ERP SQL tenant=%s sql=%s", self.policy.tenant_id, executable)
             with self.connection.execute(text(executable), params) as cursor:
                 names = list(cursor.keys())
                 if not all(names) or len(set(names)) != len(names):
                     raise ValueError("Các cột kết quả phải có tên khác nhau; hãy đặt alias")
                 rows = cursor.fetchmany(self.max_rows + 1)
+            logger.info("ERP SQL completed rows=%s truncated=%s elapsed_ms=%.1f",
+                        min(len(rows), self.max_rows), len(rows) > self.max_rows,
+                        (time.perf_counter() - started) * 1000)
             types = {c["name"]: c["system_type_name"] for c in metadata}
             return {"ok": True, "columns": names, "column_types": [types.get(n, "unknown") for n in names],
                 "rows": [list(row) for row in rows[:self.max_rows]], "row_count": min(len(rows), self.max_rows),
                 "truncated": len(rows) > self.max_rows, "source_tables": sources,
                 "db_ms": (time.perf_counter() - started) * 1000}
         except Exception as exc:
+            logger.warning("ERP SQL failed tenant=%s error=%s", self.policy.tenant_id, str(exc)[:400])
             return {"ok": False, "error": str(exc)[:400], "error_type": "execution_error", "db_ms": (time.perf_counter() - started) * 1000}
 
 
@@ -141,10 +169,12 @@ def run_discovery(question, *, principal, client=None, connection=None, store=No
     else:
         outcome = generate(client)
     query_id = uuid.uuid4().hex
+    save_sql_log(cfg.erp_sql_log_dir, query_id, question, policy.tenant_id, principal.user_id, outcome)
     logger.info("ERP discovery query=%s tenant=%s ok=%s calls=%s tools=%s", query_id,
                 policy.tenant_id, outcome["exec_ok"], outcome["llm_calls"], outcome["tool_calls"])
     if not outcome["exec_ok"]:
-        logger.warning("ERP discovery query=%s error_type=%s", query_id, outcome.get("error_type"))
+        logger.warning("ERP discovery query=%s error_type=%s error=%s", query_id,
+                       outcome.get("error_type"), outcome.get("error"))
         raise ToolError("Chưa tạo được truy vấn ERP hợp lệ trong phạm vi quyền. Hãy làm rõ yêu cầu hoặc báo quản trị kiểm tra log. Mã truy vấn: " + query_id)
     result = outcome["result"]
     warnings = ["SQL đã kiểm tra quyền và khả năng chạy; tính đúng nghiệp vụ vẫn cần đối chiếu định nghĩa chỉ tiêu."]

@@ -6,6 +6,8 @@ Trọng tâm là những thứ khiến một vòng lặp không chạy vô hạn
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from app.agents.nodes import toolloop
@@ -503,3 +505,35 @@ async def test_large_erp_result_keeps_valid_json_and_explicit_preview(monkeypatc
 
 def test_context_preview_without_rows_is_not_database_empty():
     assert not toolloop.looks_empty({"query_id": "q", "rows": [], "truncated": True})
+
+
+async def test_erp_data_is_summarized_when_model_repeats(monkeypatch):
+    payload = {"query_id": "q", "question": "Nhân sự", "columns": [{"name": "total"}],
+               "rows": [[13]], "row_count": 1, "truncated": False}
+    async def execute(call, scope):
+        return json.dumps(payload), payload
+    monkeypatch.setattr(toolloop, "_execute", execute)
+    llm = ScriptedLLM([turn_call("query_erp", question="Nhân sự") for _ in range(3)]
+                      + [turn_text("Có 13 nhân sự [1].")])
+    original = llm.chat_with_tools
+    async def finish(messages, tools, **kwargs):
+        assert kwargs["tool_choice"] == "none"
+        return await original(messages, tools, **kwargs)
+    monkeypatch.setattr(llm, "chat_with_tools", finish)
+    monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
+    result = await toolloop.run_tool_loop("Nhân sự")
+    assert result["stop_reason"] == "hoàn thành"
+    assert "13" in result["answer"] and result["validation"]["status"] == "passed"
+    assert len(result["tool_log"]) == 1 and llm.calls == 4
+
+
+async def test_erp_final_answer_still_checks_numbers(monkeypatch):
+    payload = {"query_id": "q", "question": "Nhân sự", "columns": [{"name": "total"}],
+               "rows": [[13]], "row_count": 1, "truncated": False}
+    async def execute(call, scope):return json.dumps(payload), payload
+    monkeypatch.setattr(toolloop, "_execute", execute)
+    llm = ScriptedLLM([turn_call("query_erp", question="Nhân sự"), turn_text("Có 9999 nhân sự.")])
+    monkeypatch.setattr(toolloop, "get_llm", lambda: llm)
+    result = await toolloop.run_tool_loop("Nhân sự", max_steps=1)
+    assert result["validation"]["status"] == "passed"
+    assert "9999" not in result["answer"] and "13" in result["answer"]

@@ -216,8 +216,11 @@ class Settings(BaseSettings):
     # Bỏ trống => tắt hẳn phần đọc ERP, các tool số liệu báo "chưa cấu hình".
     erp_database_url: str = ""
     erp_echo: bool = False
+    # Tương thích quy tắc Admin toàn quyền hiện tại; cần đối chiếu override ERP trước khi đổi.
+    erp_static_admin_full_access: bool = True
     # Truy vấn số liệu ERP dùng pipeline discovery nội bộ.
     erp_schema_file: str = "data/erp_schema.json"
+    erp_sql_log_dir: str = "data/sql_logs"
     erp_schema_refresh_seconds: float = Field(default=300, ge=10, le=86400)
     erp_sql_policy_file: str = "config/erp_sql_policy.json"
     erp_semantic_file: str = "config/erp_semantic.yaml"

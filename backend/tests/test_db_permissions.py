@@ -58,6 +58,42 @@ async def test_role_grants_are_union_and_revocation_takes_effect(auth_db):
     assert not (await repo.find_user(user_id=421)).has("Asm.Asset.View")
 
 
+async def test_direct_deny_overrides_role_and_admin(auth_db):
+    await auth_db.execute(text("INSERT INTO AbpPermissions VALUES (NULL,421,94,'Hrm.EmployeeProfile.View',0)"))
+    await auth_db.execute(text("INSERT INTO AbpPermissions VALUES (NULL,153,64,'Ai.Slide.Create',0)"))
+    repo = ErpAuthRepository(auth_db)
+    assert not (await repo.find_user(user_id=421)).has("Hrm.EmployeeProfile.View")
+    admin = await repo.find_user(user_id=153)
+    assert admin.is_static_admin and not admin.has("Ai.Slide.Create")
+    assert admin.has("Ai.AiChatbot")
+
+
+async def test_direct_grant_works_without_role_and_is_tenant_scoped(auth_db):
+    await auth_db.execute(text("DELETE FROM AbpUserRoles WHERE UserId=421"))
+    await auth_db.execute(text("INSERT INTO AbpPermissions VALUES (NULL,421,94,'Ai.Summarize',1),(NULL,421,64,'WrongTenant',1)"))
+    user = await ErpAuthRepository(auth_db).find_user(user_id=421)
+    assert user.role_ids == () and user.has("Ai.Summarize")
+    assert not user.has("WrongTenant")
+
+
+async def test_role_deny_does_not_cancel_another_role_grant(auth_db):
+    await auth_db.execute(text("INSERT INTO AbpUserRoles VALUES (421,252,94)"))
+    await auth_db.execute(text("INSERT INTO AbpPermissions VALUES (252,NULL,94,'Hrm.EmployeeProfile.View',0)"))
+    assert (await ErpAuthRepository(auth_db).find_user(user_id=421)).has("Hrm.EmployeeProfile.View")
+
+
+async def test_static_admin_shortcut_can_be_disabled(auth_db, monkeypatch):
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "erp_static_admin_full_access", False)
+    admin = await ErpAuthRepository(auth_db).find_user(user_id=153)
+    assert not admin.is_static_admin and not admin.has("Ai.Summarize")
+
+
+async def test_conflicting_role_rows_do_not_expand_permission(auth_db):
+    await auth_db.execute(text("INSERT INTO AbpPermissions VALUES (251,NULL,94,'Ai.Slide.Create',0)"))
+    assert not (await ErpAuthRepository(auth_db).find_user(user_id=421)).has("Ai.Slide.Create")
+
+
 async def test_ambiguous_name_and_disabled_user_do_not_resolve(auth_db):
     await auth_db.execute(text("INSERT INTO AbpUsers VALUES (422,64,'demo','Other','','other@test','DEMO','OTHER@TEST',0,1)"))
     repo = ErpAuthRepository(auth_db)
