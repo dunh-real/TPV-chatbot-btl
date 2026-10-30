@@ -121,6 +121,7 @@
     review: ['Soát tài liệu', 'Workflow 2 · rule engine cấu trúc + soát chữ nghĩa + phân rã nhiệm vụ'],
     draft: ['Soạn báo cáo', 'Workflow 3 · đọc một tài liệu tải lên, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
+    routing: ['Phân luồng văn bản', 'UC33 · gợi ý đơn vị xử lý từ danh mục ERP'],
     slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
     mindmap: ['Sơ đồ tư duy', 'Đọc cả tài liệu bằng MAP-REDUCE rồi dựng cây chủ đề; nội dung từng mục sinh khi bấm vào'],
     ocr: ['OCR tài liệu', 'Mô hình thị giác đọc chữ trong ảnh trang, trả về Markdown giữ nguyên cấu trúc'],
@@ -129,6 +130,29 @@
     tasks: ['Tác vụ AI', 'Theo dõi xử lý, sản phẩm đầu ra và thông báo'],
     tools: ['Công cụ & hệ thống', 'Danh mục tool của agent và trạng thái hạ tầng'],
   };
+
+  $('#routingSuggest').addEventListener('click', async function () {
+    var button = this, box = $('#routingResult'), file = $('#routingFile').files[0];
+    var text = $('#routingText').value.trim();
+    if ((!file && !text) || (file && text)) { box.textContent = 'Chọn một nguồn: file hoặc nội dung.'; return; }
+    button.disabled = true; box.textContent = 'Đang phân tích…';
+    try {
+      var result = file ? await API.routingFile(file) : await API.routingSuggest({ExtractedText: text});
+      box.replaceChildren();
+      var heading = document.createElement('h3');
+      var unit = result.DepartmentCatalog.find(function (d) { return d.id === result.AiPrimaryUnitId; });
+      heading.textContent = 'Chủ trì: ' + (unit ? unit.display_name : 'Cần xem xét'); box.appendChild(heading);
+      var note = document.createElement('p'); note.textContent = result.AiReason; box.appendChild(note);
+      var coords = document.createElement('p');
+      coords.textContent = 'Phối hợp: ' + result.DepartmentCatalog.filter(function (d) {
+        return result.AiCoordinatingUnitCodes.indexOf(d.code) >= 0;
+      }).map(function (d) { return d.display_name; }).join(', '); box.appendChild(coords);
+      var details = document.createElement('pre');
+      details.style.whiteSpace = 'pre-wrap';
+      details.textContent = JSON.stringify(result, null, 2); box.appendChild(details);
+    } catch (error) { box.textContent = error.message; }
+    finally { button.disabled = false; }
+  });
 
   var currentView = 'chat';
   function showView(name) {

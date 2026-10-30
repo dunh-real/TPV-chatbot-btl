@@ -264,6 +264,11 @@
       return postForm('/api/ocr/extract', fd, signal);
     },
 
+    routingSuggest: function (body) { return postJSON('/api/document-routings/suggest', body); },
+    routingFile: function (file) {
+      var fd = new FormData(); fd.append('file', file);
+      return postForm('/api/document-routings/suggest-file', fd);
+    },
     // workflow 5
     presentation: function (body, signal) { return postJSON('/api/presentations/create', body, signal); },
     slideDownload: function (fileName) { return url('/api/presentations/download/' + encodeURIComponent(fileName)); },

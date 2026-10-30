@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import (agent, chat, documents, legal, mindmap, ocr, presenton_proxy,
-                     presentations, reports)
+                     presentations, reports, document_routings)
 from app.api.identity import IdentityMiddleware
 from app.core.config import get_settings
 from app.agents.quyen import ThieuQuyen
@@ -213,6 +213,7 @@ else:
 app.include_router(agent.router)
 app.include_router(chat.router)
 app.include_router(documents.router)
+app.include_router(document_routings.router)
 app.include_router(legal.router)
 app.include_router(reports.router)
 app.include_router(presentations.router)

@@ -5,7 +5,7 @@ TABLES = (
     "AI_KnowledgeDocuments", "AI_DataPartitions", "AI_ReportTemplate",
     "AI_TemplateVersions", "AI_ChatConversations", "AI_ChatMessages",
     "AI_Tasks", "AI_DocumentReviews", "AI_DocumentDrafts", "AI_ReportSummaries",
-    "AI_Slides", "AI_OutputVersions", "AI_SourceReferences", "AI_MindMaps", "AI_ExecutionLogs",
+    "AI_Slides", "AI_DocumentRoutings", "AI_OutputVersions", "AI_SourceReferences", "AI_MindMaps", "AI_ExecutionLogs",
 )
 
 

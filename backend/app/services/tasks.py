@@ -9,13 +9,13 @@ from app.core.config import get_settings
 from app.db.ai_repository import dumps, now
 from app.agents.quyen import QUYEN_TAC_VU, QUYEN_TAC_VU_XOA, QUYEN_TAC_VU_XEM_TAT_CA
 
-PERMISSIONS = {"Review": "Ai.DocumentReview", "Summarize": "Ai.Summarize",
+PERMISSIONS = {"Routing": "Ai.Routing", "Review": "Ai.DocumentReview", "Summarize": "Ai.Summarize",
     "TaskExtract": "Ai.TaskExtract", "Draft": "Ai.ReportDrafting",
     "Aggregate": "Ai.ReportSummary.Create", "Slide": "Ai.Slide.Create", "File": "Ai.AiChatbot"}
 OPERATIONS = {"Review": "run_document_workflow", "Summarize": "run_summary_workflow",
     "TaskExtract": "run_analysis_workflow", "Draft": "run_draft_workflow",
     "Aggregate": "run_aggregate_workflow", "Slide": "run_presentation_workflow"}
-PRODUCTS = {"AI_DocumentReviews": "Review", "AI_DocumentDrafts": "Draft",
+PRODUCTS = {"AI_DocumentRoutings": "Routing", "AI_DocumentReviews": "Review", "AI_DocumentDrafts": "Draft",
     "AI_ReportSummaries": "Aggregate", "AI_Slides": "Slide", "AI_Tasks": "Task"}
 TERMINAL = {"Completed", "Failed", "Cancelled"}
 
