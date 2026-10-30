@@ -11,6 +11,8 @@ from app.db.ai_models import reflect
 _engine = None
 _tables = None
 _lock = asyncio.Lock()
+erp_task_id = ContextVar("erp_task_id", default=None)
+erp_document = ContextVar("erp_document", default=None)
 current_task_id = ContextVar("ai_task_id", default=None)
 execution_task = ContextVar("queued_execution_task", default=None)
 notify_on_finish = ContextVar("notify_on_finish", default=False)

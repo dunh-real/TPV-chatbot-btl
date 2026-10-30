@@ -297,6 +297,12 @@ class Settings(BaseSettings):
     minio_secure: bool = False
     minio_bucket: str = "tpv-documents"
     minio_ingest_buckets: list[str] = Field(default_factory=list)
+    # MinIO BE chỉ đọc nguồn; không đổi kho upload/output phía AI.
+    be_minio_endpoint: str = ""
+    be_minio_access_key: str = ""
+    be_minio_secret_key: str = ""
+    be_minio_secure: bool = True
+    be_minio_buckets: list[str] = Field(default_factory=list)
 
     upload_dir: str = "./data/uploads"
     output_dir: str = "./data/output"

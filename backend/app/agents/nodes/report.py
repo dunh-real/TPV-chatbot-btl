@@ -793,8 +793,6 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     except ValueError as exc:
         return {"output_path": "", "error": str(exc)}
     so_nhap = so_nguoi_dung(inputs)
-    if not so_nhap:
-        return {"error": "Cần inputs.so_ky_hieu được cấp từ sổ chính thức khi dùng DB AI"}
 
     if (trung := await kiem_so_van_ban(so_nhap)):
         return {"output_path": "", "error": trung}
@@ -832,4 +830,6 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     )
     return {"output_path": str(path), "so_ky_hieu": so_ky_hieu,
             "template_id": getattr(template, "ai_id", None),
-            "template_version": getattr(template, "ai_version", None)}
+            "template_version": getattr(template, "ai_version", None),
+            "template": template.ma_template if template else "",
+            "template_name": template.ten_bao_cao if template else ""}

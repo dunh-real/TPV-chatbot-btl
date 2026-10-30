@@ -1,6 +1,7 @@
 """Đọc/ghi bảng AI thực tế; luôn giới hạn tenant, chủ sở hữu và xóa mềm."""
 import json
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, case, func, insert, or_, select, update
 
@@ -8,6 +9,11 @@ from app.core.context import current_principal
 
 
 def now():
+    return datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
+
+
+def lease_now():
+    """Đồng hồ UTC riêng cho lease; giữ tương thích lease đang tồn tại."""
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
@@ -42,10 +48,30 @@ class AIRepository:
 
     def scope(self, table, owned=False):
         terms = [table.c.TenantId == self.principal.tenant_id, table.c.IsDeleted == False]
-        if owned and not self.principal.is_admin:
+        if owned and table.name == "AI_KnowledgeDocuments":
+            terms.append(self.document_scope(table))
+        elif owned and not self.principal.is_admin:
             owner = table.c.UserId if "UserId" in table.c else table.c.CreatorUserId
             terms.append(owner == self.user_id)
         return and_(*terms)
+
+    def document_scope(self, table):
+        from app.services.partition_access import document_scope
+        return document_scope(self, table)
+
+    async def erp_document(self, row_id, version):
+        row = await self.document(f"sql:{row_id}", include_unready=True)
+        if not row:
+            raise PermissionError("Tài liệu không thuộc phạm vi được phép")
+        if row.get("AiServerDocId"):
+            table = self.table("KnowledgeDocuments")
+            count = (await self.conn.execute(select(func.count()).select_from(table).where(
+                table.c.AiServerDocId == row["AiServerDocId"], table.c.IsDeleted == False))).scalar_one()
+            if count != 1:
+                raise ValueError("AiServerDocId đang trùng bản ghi; BE cần đối soát trước khi nạp")
+        if row["VersionNo"] != version:
+            raise ValueError("version_no không khớp bản ghi ERP")
+        return row
 
     async def add(self, name, **values):
         table = self.table(name)
@@ -187,7 +213,7 @@ class AIRepository:
         rows = list((await self.conn.execute(select(table).where(table.c.ConversationId == conversation_id)
             .order_by(table.c.Id.desc()).limit(limit))).mappings())
         return [{"role": "user" if r["IsFromUser"] else "assistant", "content": r["Message"],
-                 "ts": r["CreationTime"].replace(tzinfo=timezone.utc).timestamp()} for r in reversed(rows)]
+                 "ts": r["CreationTime"].replace(tzinfo=ZoneInfo("Asia/Ho_Chi_Minh")).timestamp()} for r in reversed(rows)]
 
     async def append_turns(self, key, turns):
         turns = [(role, text) for role, text in turns if role in {"user", "assistant"} and text]

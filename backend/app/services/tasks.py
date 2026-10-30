@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import and_, func, insert, select, update
 
 from app.core.config import get_settings
-from app.db.ai_repository import dumps, now
+from app.db.ai_repository import dumps, now, lease_now
 from app.agents.quyen import QUYEN_TAC_VU, QUYEN_TAC_VU_XOA, QUYEN_TAC_VU_XEM_TAT_CA
 
 PERMISSIONS = {"Routing": "Ai.Routing", "Review": "Ai.DocumentReview", "Summarize": "Ai.Summarize",
@@ -37,7 +37,7 @@ def metadata(row):
 
 
 def deadline():
-    return (now() + timedelta(seconds=get_settings().task_lease_seconds)).isoformat(timespec="seconds")
+    return (lease_now() + timedelta(seconds=get_settings().task_lease_seconds)).isoformat(timespec="seconds")
 
 
 def clean(value):
@@ -76,7 +76,7 @@ async def get_task(repo, task_id, locked=False, internal=False):
     if not internal:
         require_access(repo)
     scope = and_(repo.scope(table), table.c.UserId == repo.user_id) if internal else task_scope(repo, table)
-    query = select(table).where(scope, table.c.Id == task_id, table.c.TaskType.in_(list(PERMISSIONS)))
+    query = select(table).where(scope, table.c.Id == task_id)
     if locked:
         query = query.with_hint(table, "WITH (UPDLOCK, ROWLOCK)", dialect_name="mssql")
     row = (await repo.conn.execute(query)).mappings().first()
@@ -105,7 +105,7 @@ def summary(row, repo=None):
 async def list_tasks(repo, page, page_size, status=None, kind=None, since=None, until=None):
     require_access(repo)
     table = repo.table("Tasks")
-    terms = [task_scope(repo, table), table.c.TaskType.in_(list(PERMISSIONS))]
+    terms = [task_scope(repo, table)]
     if status:
         terms.append(table.c.Status == status)
     if kind:
@@ -120,14 +120,28 @@ async def list_tasks(repo, page, page_size, status=None, kind=None, since=None, 
     return dict(items=[summary(dict(r), repo) for r in rows], total=count, page=page, page_size=page_size)
 
 
+async def output_owner(repo, row):
+    table = repo.table("OutputVersions")
+    versions = await repo.rows("OutputVersions", table.c.OwnerType == "Task", table.c.OwnerId == row["Id"])
+    if versions:
+        return "Task", row["Id"]
+    return PRODUCTS.get(row["RelatedEntityType"]), row["RelatedEntityId"]
+
+
+async def latest_output(repo, row):
+    owner, owner_id = await output_owner(repo, row)
+    table = repo.table("OutputVersions")
+    rows = await repo.rows("OutputVersions", table.c.OwnerType == owner, table.c.OwnerId == owner_id)
+    return load(max(rows, key=lambda v:v["VersionNo"])["ContentJson"], {}) if rows else load(row["ResultJson"], {})
+
+
 async def detail(repo, task_id):
     row = await get_task(repo, task_id)
     out = summary(row, repo)
     out["can_retry"] = out["can_retry"] and allowed(repo, row["TaskType"])
     out.update(input=clean(payload(row)), result=clean(load(row["ResultJson"])),
                error=row["ErrorMessage"], versions=[], sources=[], template=None)
-    owner_type = PRODUCTS.get(row["RelatedEntityType"])
-    owner_id = row["RelatedEntityId"]
+    owner_type, owner_id = await output_owner(repo, row)
     if not owner_type or not owner_id or out["output_deleted"]:
         return out
     versions = repo.table("OutputVersions")
@@ -144,9 +158,9 @@ async def detail(repo, task_id):
             source.update(available=bool(doc), title=doc["Title"] if doc else None,
                           detail_url=f"/api/documents/sql:{ref['DocumentId']}/detail" if doc else None)
         else:
-            source.update(available=bool(payload(row).get("source_url")), download_url=f"/api/tasks/{task_id}/source")
+            source.update(available=bool(ref["ExternalSourceRef"] or payload(row).get("source_url")), download_url=f"/api/tasks/{task_id}/source")
         out["sources"].append(source)
-    result = load(row["ResultJson"], {})
+    result = await latest_output(repo, row)
     result = result if isinstance(result, dict) else {}
     template_id = result.get("template_id") or row["TemplateId"]
     if template_id:
@@ -203,7 +217,7 @@ async def notifications(repo, limit=30):
         table.c.TaskType.in_(list(PERMISSIONS)), table.c.NotifyOnFinish == True,
         table.c.Status.in_(list(TERMINAL))).order_by(table.c.EndTime.desc(), table.c.Id.desc()).limit(limit))).mappings()
     return [dict(task_id=r["Id"], status=r["Status"], kind=r["TaskType"], ended_at=r["EndTime"],
-        is_read=bool(metadata(r).get("notification_read_at")), link=f"/ui/#tasks/{r['Id']}") for r in rows]
+        is_read=bool(metadata(r).get("notification_read_at")), link=f"/ui/#tasks/{r['Id']}") for r in rows if metadata(r).get("managed")]
 
 
 async def mark_read(repo, task_id):

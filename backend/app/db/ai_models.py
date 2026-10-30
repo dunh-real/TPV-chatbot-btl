@@ -2,6 +2,7 @@
 from sqlalchemy import MetaData, Table
 
 TABLES = (
+    "AI_Categories", "AI_PartitionPermissions", "AI_UserGroupMembers", "AI_UserGroups", "Dms_Employee",
     "AI_KnowledgeDocuments", "AI_DataPartitions", "AI_ReportTemplate",
     "AI_TemplateVersions", "AI_ChatConversations", "AI_ChatMessages",
     "AI_Tasks", "AI_DocumentReviews", "AI_DocumentDrafts", "AI_ReportSummaries",

@@ -456,6 +456,8 @@ async def run_aggregate_workflow(
     return {
         "request": request,
         "params": result.get("params", {}),
+        "template": result.get("template", ""),
+        "template_name": result.get("template_name", ""),
         "template_id": result.get("template_id"),
         "template_version": result.get("template_version"),
         "data": result.get("data", {}),

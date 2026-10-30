@@ -259,10 +259,8 @@ def _resolve_meta(template: dict[str, Any], state: dict[str, Any]) -> dict[str, 
     meta["trich_yeu"] = inputs.get(
         "trich_yeu", state["request"][:200] if "queries" in data else f"V/v {template['ten_bao_cao'].lower()} {period}"
     )
-    # Số ký hiệu do `export_node` cấp từ sổ văn bản. Còn "01" ở đây là đường lùi
-    # cho lúc chưa qua bước xuất file (xem trước, test) - không phải số thật.
-    meta.setdefault("so_ky_hieu", inputs.get("so_ky_hieu") or state.get("so_ky_hieu")
-                    or f"01/BC-{state.get('ma_don_vi', '')}")
+    # Bản nháp chưa có số; ERP cấp số chính thức khi ban hành.
+    meta["so_ky_hieu"] = inputs.get("so_ky_hieu") or state.get("so_ky_hieu") or ""
     if not meta.get("can_cu") and state.get("regulations"):
         meta["can_cu"] = f"Căn cứ {state['regulations'][0]['doc_title']};"
     return meta
@@ -278,9 +276,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     cfg = get_settings()
     template = state["template"]
 
-    # Đánh số trong sổ thay vì gán cứng "01": báo cáo thứ hai của cùng một đơn vị
-    # trong năm mà cũng mang số 01 thì sổ văn bản có hai văn bản trùng số, và bản
-    # sau ghi đè bản trước lúc vào sổ.
+    # Giữ số do ERP cấp nếu có; bản nháp được phép chưa có số.
     inputs = state.get("inputs", {})
     ma_don_vi = state.get("ma_don_vi", "")
     try:
@@ -288,8 +284,6 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     except ValueError as exc:
         return {"error": str(exc)}
     so_nhap = so_nguoi_dung(inputs)
-    if not so_nhap:
-        return {"missing_input": ["so_ky_hieu: số văn bản được cấp từ sổ chính thức"]}
     if (trung := await kiem_so_van_ban(so_nhap)):
         return {"error": trung}
     so_ky_hieu = so_nhap

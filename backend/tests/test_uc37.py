@@ -95,7 +95,7 @@ async def environment(monkeypatch, tmp_path):
 async def seed(repo,status='Completed',kind='Review',**values):
     defaults=dict(UserId=repo.user_id,TaskType=kind,AgentCode='run_document_workflow',Status=status,
         ProgressPercentage=100 if status=='Completed' else 0,StartTime=now(),EndTime=now() if status in tasks.TERMINAL else None,
-        InputJson='{}',ResultJson='{"summary":"Kết quả"}',NotifyOnFinish=True)
+        InputJson=dumps({'_uc37':{'managed':True}}),ResultJson='{"summary":"Kết quả"}',NotifyOnFinish=True)
     return await repo.add('Tasks',**{**defaults,**values})
 
 
@@ -271,3 +271,24 @@ async def test_heartbeat_updates_only_lease(environment,monkeypatch):
     async with scope() as repo:
         info=tasks.metadata(await tasks.get_task(repo,task))
         assert info['lease_until']>'2000-01-01T00:00:00' and info['keep']=='value'
+
+
+async def test_erp_children_read_without_changing_product_link(environment):
+    c,scope,p,_,_,objects=environment
+    objects['erp-template.docx']=b'erp-template-v3'
+    objects['erp-source.docx']=b'erp-source'
+    async with scope() as repo:
+        template=await repo.add('ReportTemplate',Code='ERP_BC',Name='Mẫu ERP')
+        await repo.add('TemplateVersions',TemplateId=template,VersionNo=3,
+            FileUrl='minio://test/erp-template.docx',FileName='template.docx')
+        task=await seed(repo,RelatedEntityType='AI_ReportSummaries',RelatedEntityId=777,
+            InputJson='{}',ResultJson='{}',TemplateId=None)
+        version=await repo.add('OutputVersions',OwnerType='Task',OwnerId=task,VersionNo=1,
+            ContentJson=dumps({'summary':'AI response','template_id':template,'template_version':3}))
+        await repo.add('SourceReferences',OwnerType='Task',OwnerId=task,
+            ExternalSourceRef='minio://test/erp-source.docx')
+    detail=(await c.get(f'/api/tasks/{task}')).json()
+    assert len(detail['versions'])==1 and detail['template']['version']==3
+    assert (await c.get(f'/api/tasks/{task}/result?version_id={version}')).json()['summary']=='AI response'
+    assert (await c.get(f'/api/tasks/{task}/source')).content==b'erp-source'
+    assert (await c.get(f'/api/tasks/{task}/template')).content==b'erp-template-v3'

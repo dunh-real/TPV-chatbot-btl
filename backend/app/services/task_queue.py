@@ -14,7 +14,7 @@ from sqlalchemy import case, func, insert, select, update
 from app.core.config import get_settings
 from app.core.context import Principal, use_principal
 from app.db import ai_session
-from app.db.ai_repository import dumps, now
+from app.db.ai_repository import dumps, now, lease_now
 from app.services import tasks
 from app.services.object_storage import ObjectStorage, parse_reference
 
@@ -139,7 +139,7 @@ async def recover(task_id=None):
     async with ai_session.get_engine().begin() as conn:
         query = select(table).where(table.c.IsDeleted == False, table.c.Status == "Processing",
             json_field(table.c.InputJson, "$._uc37.managed") == "true",
-            json_field(table.c.InputJson, "$._uc37.lease_until") < now().isoformat(timespec="seconds"))
+            json_field(table.c.InputJson, "$._uc37.lease_until") < lease_now().isoformat(timespec="seconds"))
         query = query.where(table.c.Id == task_id) if task_id is not None else query.where(
             json_field(table.c.InputJson, "$._uc37.origin").in_(["inline", "queued"]))
         rows = (await conn.execute(query.with_hint(table, "WITH (UPDLOCK, READPAST, READCOMMITTEDLOCK)", dialect_name="mssql"))).mappings().all()

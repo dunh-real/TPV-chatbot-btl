@@ -236,6 +236,12 @@ class QdrantVectorStore:
         from app.db.ai_session import enabled
         if enabled() and doc_id not in await self.document_metadata([doc_id]):
             return []
+        if enabled():
+            from app.services.ai_documents import resolve_ids
+            resolved = await resolve_ids([doc_id])
+            if not resolved:
+                return []
+            doc_id = resolved[0]
         payloads: list[dict[str, Any]] = []
         offset = None
         while True:
@@ -279,7 +285,7 @@ class QdrantVectorStore:
                 table = repo.table("KnowledgeDocuments")
                 allowed = set(await repo.document_ids())
                 rows = await repo.rows("KnowledgeDocuments", table.c.IndexStatus == "Indexed", owned=True)
-            return [{"doc_id": row["AiServerDocId"] if row["AiServerDocId"] in allowed else f"sql:{row['Id']}",
+            return [{"doc_id": f"sql:{row['Id']}",
                      **metadata(row)} for row in rows]
         docs: dict[str, dict[str, Any]] = {}
         offset = None

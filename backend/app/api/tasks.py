@@ -108,10 +108,11 @@ async def result(task_id: int, version_id: int | None = None):
             raise HTTPException(409, "Tác vụ chưa có kết quả hoàn thành")
         reference, content = row["OutputFileUrl"], row["ResultJson"]
         if version_id is not None:
+            owner, owner_id = await tasks.output_owner(repo, row)
             table = repo.table("OutputVersions")
             versions = await repo.rows("OutputVersions", table.c.Id == version_id,
-                table.c.OwnerType == tasks.PRODUCTS.get(row["RelatedEntityType"], ""),
-                table.c.OwnerId == row["RelatedEntityId"])
+                table.c.OwnerType == owner,
+                table.c.OwnerId == owner_id)
             if not versions:
                 raise HTTPException(404, "Không tìm thấy phiên bản của tác vụ")
             reference, content = versions[0]["FileUrl"], versions[0]["ContentJson"]
@@ -127,6 +128,11 @@ async def source(task_id: int):
         row = await tasks.get_task(repo, task_id)
         reference = tasks.payload(row).get("source_url")
         if not reference:
+            owner, owner_id = await tasks.output_owner(repo, row)
+            refs = repo.table("SourceReferences")
+            sources = await repo.rows("SourceReferences", refs.c.OwnerType == owner, refs.c.OwnerId == owner_id)
+            reference = next((s["ExternalSourceRef"] for s in sources if s["ExternalSourceRef"]), None)
+        if not reference:
             raise HTTPException(404, "Tác vụ không có file nguồn được lưu bền")
         name = tasks.payload(row).get("source_name") or tasks.payload(row).get("file_name") or "source.bin"
     return await stream(reference, name)
@@ -138,7 +144,7 @@ async def template(task_id: int):
         row = await tasks.get_task(repo, task_id)
         if tasks.metadata(row).get("output_deleted"):
             raise HTTPException(404, "Đầu ra đã được xóa")
-        data = tasks.load(row["ResultJson"], {})
+        data = await tasks.latest_output(repo, row)
         if not isinstance(data, dict) or not data.get("template_id") or not data.get("template_version"):
             raise HTTPException(404, "Không có phiên bản mẫu được ghi nhận")
         table = repo.table("TemplateVersions")

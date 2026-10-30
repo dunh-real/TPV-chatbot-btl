@@ -93,8 +93,10 @@ async def test_authorized_minio(monkeypatch):
         document=AsyncMock(return_value={"FileUrl":"minio://bucket/public.txt"})))
     class Store:
         client = SimpleNamespace(stat_object=lambda *a: SimpleNamespace(size=50))
+        def source_client(self, bucket): return self.client
         def validate_bucket(self, bucket): assert bucket == "bucket"
-        def download(self, bucket, key, path, name): path.write_text(TEXT)
+        def open(self, bucket, key):
+            return SimpleNamespace(stream=lambda n:iter([TEXT.encode()]),close=lambda:None,release_conn=lambda:None)
     monkeypatch.setattr(api, "ObjectStorage", Store)
     monkeypatch.setattr(api, "read_file", AsyncMock(return_value=TEXT))
     assert await api.source(RoutingRequest(document_id="sql:1"), None) == (TEXT, "minio://bucket/public.txt")

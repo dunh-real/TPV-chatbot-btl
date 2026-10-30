@@ -30,6 +30,7 @@ class PresentationResponse(BaseModel):
     sources: list[dict[str, Any]] = Field(default_factory=list)
     document_outline: dict[str, Any] | None = None
     ai_task_id: int | None = None
+    output_file_url: str = ""
     request: str
     data: dict[str, Any] = Field(default_factory=dict, description="QueryResult trong data.queries")
     params: dict[str, Any] = Field(default_factory=dict)

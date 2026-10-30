@@ -95,7 +95,7 @@ class RetrievedChunk:
 
     @property
     def doc_id(self) -> str:
-        return str(self.payload.get("doc_id", ""))
+        return str(self.payload.get("public_doc_id") or self.payload.get("doc_id", ""))
 
     @property
     def doc_title(self) -> str:
@@ -245,6 +245,12 @@ class HybridRetriever:
 
         t2 = time.perf_counter()
         fused = reciprocal_rank_fusion(branches, k=cfg.rrf_k, limit=top_k)
+        from app.services.ai_documents import public_ids
+        ids = await public_ids([str(h.payload.get("doc_id", "")) for h in fused])
+        for hit in fused:
+            key = str(hit.payload.get("doc_id", ""))
+            if key in ids:
+                hit.payload["public_doc_id"] = ids[key]
         timings["rrf"] = (time.perf_counter() - t2) * 1000
         return fused, branch_hits, timings
 

@@ -37,7 +37,7 @@ def _as_dict(template: TemplateInfo) -> dict[str, Any]:
         # khi soạn, vì không có nguồn nào khác suy ra được.
         "required_inputs": sorted(
             key for key, spec in meta.items()
-            if isinstance(spec, dict) and spec.get("source") == "input"
+            if key != "so_ky_hieu" and isinstance(spec, dict) and spec.get("source") == "input"
         ),
         "fields": fields,
     }

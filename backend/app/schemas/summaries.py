@@ -25,6 +25,7 @@ class SummaryContent(BaseModel):
 
 class SummaryResponse(BaseModel):
     ai_task_id: int | None = None
+    output_file_url: str = ""
     summary: str = ""
     sections: list[SummarySection] = Field(default_factory=list)
     summary_refs: list[ReferenceModel] = Field(default_factory=list)

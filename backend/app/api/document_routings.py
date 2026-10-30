@@ -59,9 +59,18 @@ async def source(request, task_id):
         with TemporaryDirectory(prefix="uc33-") as temp:
             path = Path(temp) / ("source" + Path(key).suffix.lower())
             def download():
-                if store.client.stat_object(bucket, key).size > 20 * 1024**2:
-                    raise HTTPException(413, "File vượt 20 MB")
-                store.download(bucket, key, path, path.name)
+                stream = store.open(bucket, key)
+                try:
+                    size = 0
+                    with path.open("wb") as target:
+                        for chunk in stream.stream(1024 * 1024):
+                            size += len(chunk)
+                            if size > 20 * 1024**2:
+                                raise HTTPException(413, "File vượt 20 MB")
+                            target.write(chunk)
+                finally:
+                    stream.close()
+                    stream.release_conn()
             await anyio.to_thread.run_sync(download)
             return await read_file(path), url
     except (ValueError, PermissionError) as exc:

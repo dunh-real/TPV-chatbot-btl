@@ -220,6 +220,11 @@ async def _ingest_source(path, filename, metadata, doc_type, force):
     started = time.perf_counter()
     store = get_vector_store()
     await store.ensure_collection()
+    from app.db.ai_session import erp_document
+    if erp_document.get():
+        # ERP sở hữu metadata; luôn thay index của đúng bản ghi/phiên bản.
+        result = await get_ingestion_pipeline().ingest_file(path, source=filename, metadata=metadata, doc_type=doc_type)
+        return IngestResponse(**asdict(result))
     doc_id = make_doc_id_file(filename, path)
     existing = await store.document_summary(doc_id)
     from app.db.ai_session import enabled, repository
@@ -259,8 +264,18 @@ def _check_filename(filename):
 async def upload_document(
     file: UploadFile = File(...), doc_type: str = Form(default=""),
     force_reingest: bool = Form(default=False),
+    erp_doc_id: int | None = Form(default=None, gt=0),
+    version_no: int | None = Form(default=None, gt=0),
 ) -> IngestResponse:
+    from app.db.ai_session import erp_document, repository
+    token = None
     try:
+        if (erp_doc_id is None) != (version_no is None):
+            raise HTTPException(422, "Cần gửi đồng thời erp_doc_id và version_no")
+        if erp_doc_id:
+            async with repository() as repo:
+                await repo.erp_document(erp_doc_id, version_no)
+            token = erp_document.set((erp_doc_id, version_no))
         filename = _check_filename(file.filename or "")
         with tempfile.TemporaryDirectory(prefix="tpv-ingest-") as folder:
             path = Path(folder) / filename
@@ -268,16 +283,31 @@ async def upload_document(
                 with path.open("wb") as target:
                     shutil.copyfileobj(file.file, target)
             await anyio.to_thread.run_sync(copy)
-            metadata = await anyio.to_thread.run_sync(lambda: ObjectStorage().upload(path, filename))
-            return await _ingest_source(path, filename, metadata, doc_type, force_reingest)
+            if erp_doc_id:
+                async with repository() as repo:
+                    row = await repo.erp_document(erp_doc_id, version_no)
+                checksum = await anyio.to_thread.run_sync(lambda: ObjectStorage.checksum(path))
+                if row["FileHashSha256"] and row["FileHashSha256"] != checksum:
+                    raise HTTPException(409, "SHA-256 file không khớp phiên bản ERP")
+                metadata = {}
+            else:
+                metadata = await anyio.to_thread.run_sync(lambda: ObjectStorage().upload(path, filename))
+            result = await _ingest_source(path, filename, metadata, doc_type, force_reingest)
+            from app.services.ai_documents import public_ids
+            ids = await public_ids([result.doc_id])
+            return result.model_copy(update={"doc_id": f"sql:{erp_doc_id}" if erp_doc_id else ids.get(result.doc_id, result.doc_id)})
     except HTTPException:
         raise
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception:
         logger.exception("Lưu hoặc nạp tài liệu thất bại")
         raise HTTPException(status_code=502, detail="Không lưu/nạp được tài liệu. Kiểm tra MinIO và Qdrant.")
     finally:
+        if token is not None:
+            erp_document.reset(token)
         await file.close()
 
 
@@ -501,9 +531,12 @@ async def remove_document(doc_id: str) -> list[str]:
             row = await repo.document(doc_id, include_unready=True)
             if row is None:
                 raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu")
-            from app.db.ai_repository import now
-            await repo.patch("KnowledgeDocuments", row["Id"], IsDeleted=True,
-                DeletionTime=now(), DeleterUserId=repo.user_id)
+            index_id = row["AiServerDocId"]
+            await repo.lock(f"erp-document:{row['Id']}", shared=True)
+            if index_id:
+                await get_vector_store().delete_document(index_id)
+            await repo.patch("KnowledgeDocuments", row["Id"], IndexStatus="NotIndexed", ChunkCount=0)
+        return []
     await get_vector_store().delete_document(doc_id)
     if not get_settings().legal_versioning_enabled:
         return []

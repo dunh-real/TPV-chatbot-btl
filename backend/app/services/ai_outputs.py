@@ -75,6 +75,12 @@ def tracked_workflow(kind):
         async def run(*args, **kwargs):
             from app.db import ai_session
             from app.services import tasks, task_queue
+            external = ai_session.erp_task_id.get()
+            if external:
+                if current_task_id.get() == external:
+                    return await function(*args, **kwargs)
+                from app.services.erp_tasks import run as run_erp
+                return await run_erp(function, kind, external, args, kwargs)
             job = ai_session.execution_task.get()
             effective_kind = job["TaskType"] if job else kind
             inputs = dict(tasks.payload(job) if job else inspect.signature(function).bind(*args, **kwargs).arguments)
