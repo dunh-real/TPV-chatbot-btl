@@ -26,6 +26,7 @@ from app.documents.docx_builder import (
 from app.db.erp_repository import ErpDonViRepository
 from app.db.erp_session import erp_session_scope
 from app.services import storage
+from app.services.ai_outputs import tracked_workflow
 from app.tools.base import ToolError
 from app.documents.the_thuc import doc_ngay_ban_hanh
 from app.tools.templates import get_template
@@ -112,6 +113,7 @@ def _section(raw: Any, index: int, images: dict[str, bytes]) -> RenderedSection:
     )
 
 
+@tracked_workflow("File")
 async def generate_docx(
     template_id: str,
     content: dict[str, Any],
@@ -157,7 +159,7 @@ async def generate_docx(
     meta.setdefault("dia_danh", "Hà Nội")
 
     stem = filename or f"{template_id or 'VANBAN'}_{date.today():%Y%m%d}"
-    output_path = storage.new_output(stem, ".docx")
+    output_path = storage.new_output(storage.versioned_stem(stem), ".docx")
     path = await anyio.to_thread.run_sync(
         lambda: build_docx(DocumentPayload(meta=meta, sections=sections),
                            output_path, template_file or None)
@@ -167,7 +169,9 @@ async def generate_docx(
         "output_path": str(path),
         "file_id": storage.make_file_id("output", path.name),
         "file_name": path.name,
-        "template_id": template_id,
+        "template": template_id,
+        "template_id": template.get("template_id") if template_id else None,
+        "template_version": template.get("template_version") if template_id else None,
         "template_name": template_name,
         "used_template_file": bool(template_file),
         "section_count": len(sections),

@@ -58,6 +58,18 @@ def policy(database, principal=None):
     return SQLPolicy(store.refresh(conn), get_settings().erp_sql_policy_file, principal or identity())
 
 
+def test_tsql_age_expression_accepts_implicit_date_casts(database):
+    sql = """SELECT DATEDIFF(YEAR, HireDate, '2026-10-30') - CASE
+        WHEN DATEADD(YEAR, DATEDIFF(YEAR, HireDate, '2026-10-30'), HireDate)
+             > '2026-10-30' THEN 1 ELSE 0 END AS Age
+        FROM dbo.Hrm_EmployeeProfile"""
+    secured, _, params, sources = policy(database).secure(sql, 100)
+    assert "DATEADD" in secured and "DATEDIFF" in secured
+    assert params == {"__erp_tenant": 64} and sources == ["dbo.Hrm_EmployeeProfile"]
+    with pytest.raises(ToolError, match="Hàm SQL chưa được cấp phép"):
+        policy(database).secure("SELECT SUSER_SNAME() FROM dbo.Hrm_EmployeeProfile", 100)
+
+
 class Dump(NS):
     def model_dump(self):
         def plain(value):
@@ -170,6 +182,32 @@ def test_discovery_tools_repair_and_output(database):
     result.columns[0].label = "Tổng hồ sơ"
     assert query_sections([result.as_dict()])[0]["table"]["rows"] == [["2"]]
     assert "Tổng hồ sơ" in "\n".join(query_slides([result.as_dict()]))
+
+
+def test_multiple_sql_blocks_are_repaired_before_execution(database, monkeypatch):
+    conn, store = database
+    multiple = "```sql\nSELECT Missing FROM dbo.Hrm_EmployeeProfile\n```\n```sql\nSELECT 2\n```"
+    model = Model(response(multiple), response("SELECT COUNT(*) AS total FROM dbo.Hrm_EmployeeProfile"))
+    executed = []
+    execute = GuardedExecutor.execute
+    monkeypatch.setattr(GuardedExecutor, "execute",
+                        lambda self, sql: (executed.append(sql), execute(self, sql))[1])
+    result = run_discovery("Đếm nhân sự", principal=identity(), client=model, connection=conn, store=store)
+    assert result.rows == [[2]] and len(executed) == 1
+    assert len(model.requests) == 2
+    assert multiple == model.requests[1]["messages"][-2]["content"]
+    assert "ONE sql code block" in model.requests[1]["messages"][-1]["content"]
+
+
+def test_multiple_sql_blocks_stop_at_repair_limit(database, monkeypatch):
+    conn, store = database
+    monkeypatch.setattr(get_settings(), "erp_text2sql_max_repairs", 1)
+    monkeypatch.setattr(GuardedExecutor, "execute", lambda *args: pytest.fail("Ambiguous SQL executed"))
+    multiple = response("```sql\nSELECT 1\n```\n```sql\nSELECT 2\n```")
+    model = Model(multiple, multiple)
+    with pytest.raises(ToolError):
+        run_discovery("Đếm nhân sự", principal=identity(), client=model, connection=conn, store=store)
+    assert len(model.requests) == 2
 
 
 def test_truncated_results_are_preview_only(database, monkeypatch):

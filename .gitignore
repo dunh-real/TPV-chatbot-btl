@@ -11,3 +11,4 @@ backend/test_results/
 backend/tests/layout_experiment/
 backend/tests/fixtures/layout_pdf/
 .playwright-mcp/
+/artifacts/

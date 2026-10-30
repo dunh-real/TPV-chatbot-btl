@@ -3,14 +3,11 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from datetime import date
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.erp_repository import ErpDonViRepository
-from app.db.models import VanBan
 from app.tools.base import ToolError
 
 KY_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
@@ -63,14 +60,6 @@ async def _resolve_units(session: AsyncSession, ma_don_vi: list[str] | str | Non
     return resolved
 
 
-def _don_vi_cua(van_ban: VanBan, units: list[str], names: dict[str, str]) -> list[str]:
-    """Văn bản này là của đơn vị nào, trong phạm vi đang hỏi."""
-    if van_ban.ma_don_vi:
-        return [van_ban.ma_don_vi] if van_ban.ma_don_vi in units else []
-    noi_gui = van_ban.noi_gui or ""
-    return [code for code in units if names.get(code) and names[code] in noi_gui]
-
-
 async def get_reporting_status(
     session: AsyncSession, ky: str, ma_don_vi: list[str] | str | None = None
 ) -> dict[str, Any]:
@@ -83,42 +72,22 @@ async def get_reporting_status(
     units = await _resolve_units(session, ma_don_vi)
     names = await _valid_units(session)
 
-    year, month = int(ky[:4]), int(ky[5:])
-    start = date(year, month, 1)
-    end = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+    from app.db.ai_session import repository
+    import json
 
-    # Sổ văn bản do chính hệ thống này ghi nên nằm ở CSDL app, không phải ERP.
-    from app.db.session import session_scope
-
-    async with session_scope() as app_session:
-        result = await app_session.execute(
-            select(VanBan).where(VanBan.loai_van_ban == "bao_cao_di")
-        )
-        van_ban_list = list(result.scalars())
-
-    submitted: dict[str, dict[str, Any]] = {}
-    for van_ban in van_ban_list:
-        # Bản ghi mới có sẵn mã đơn vị và kỳ -> khớp thẳng, không phải đoán.
-        #
-        # Bản ghi cũ thì dò theo tên đơn vị trong `noi_gui` và lấy `ngay_van_ban`
-        # làm mốc kỳ. Cách cũ giữ lại để sổ văn bản có sẵn không rỗng đi sau khi
-        # đổi lược đồ, nhưng nó sai một cách có hệ thống: báo cáo kỳ tháng 8 ký
-        # ngày 19/9 bị tính là ngoài kỳ, nên mục "tình hình gửi báo cáo" luôn ra
-        # 0 đơn vị đã gửi.
-        for code in _don_vi_cua(van_ban, units, names):
-            if van_ban.ky:
-                in_period = van_ban.ky == ky
-            else:
-                in_period = van_ban.ngay_van_ban is None or start <= van_ban.ngay_van_ban < end
-            if code not in submitted or in_period:
-                submitted[code] = {
-                    "ma_van_ban": van_ban.ma_van_ban,
-                    "ngay_van_ban": van_ban.ngay_van_ban.isoformat()
-                    if van_ban.ngay_van_ban else None,
-                    "file_path": van_ban.file_path,
-                    "ky": van_ban.ky,
-                    "trong_ky": in_period,
-                }
+    async with repository() as repo:
+        table = repo.table("Tasks")
+        rows = await repo.rows("Tasks", table.c.RelatedEntityType == "AI_DocumentDrafts",
+                               table.c.Status == "Completed", owned=True)
+    submitted = {}
+    for row in sorted(rows, key=lambda row: row["Id"]):
+        result = json.loads(row["ResultJson"] or "{}")
+        code = result.get("ma_don_vi")
+        if code not in units or result.get("params", {}).get("ky") != ky:
+            continue
+        submitted[code] = {"ma_van_ban": result.get("so_ky_hieu") or str(row["RelatedEntityId"]),
+            "ngay_van_ban": result.get("ngay_van_ban"), "file_path": row["OutputFileUrl"] or "",
+            "ky": ky, "trong_ky": True}
 
     reported = sorted(code for code, info in submitted.items() if info["trong_ky"])
     missing = sorted(set(units) - set(reported))

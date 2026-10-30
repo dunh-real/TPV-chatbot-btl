@@ -20,6 +20,28 @@ def settings():
 # để truy vấn trong test đi qua đúng nhánh lọc tenant mà chạy thật sẽ đi.
 ERP_TENANT = 64
 
+
+@pytest.fixture
+def authorized_account(monkeypatch):
+    """Explicit verified account for functional tests; security tests do not use it."""
+    from dataclasses import replace
+    from app.api import identity
+    from app.core.context import Principal, use_principal
+    from app.db.erp_auth import AccountAccess
+
+    access = AccountAccess(900000, ERP_TENANT, "test", "Test", "", permissions=frozenset({
+        "Ai.AiChatbot", "Ai.DocumentReview", "Ai.ReportDrafting", "Ai.ReportSummary.Create",
+        "Ai.Slide.Create", "Ai.Ocr", "Ai.MindMap", "Hrm.EmployeeProfile.View", "Asm.Asset.View",
+    }))
+
+    async def attach(principal):
+        return replace(principal, user_id=str(access.user_id),
+                       access=replace(access, tenant_id=principal.tenant_id))
+
+    monkeypatch.setattr(identity, "_kem_quyen", attach)
+    with use_principal(Principal(tenant_id=ERP_TENANT, user_id=str(access.user_id), access=access)):
+        yield access
+
 # (id, mã, tên) - "đơn vị" trong báo cáo chính là phòng ban bên ERP.
 ERP_DEPARTMENTS = [(1, "00001", "Đơn vị 1"), (2, "00002", "Đơn vị 2")]
 
@@ -145,5 +167,67 @@ def _qwen_dat_nhan_khong_goi_mang(request, monkeypatch):
     async def _khong_co_qwen(*args, **kwargs):
         raise RuntimeError("Qwen không chạy trong test")
 
-    import app.documents.nhan_cot as nhan_cot
+    try:
+        import app.documents.nhan_cot as nhan_cot
+    except ModuleNotFoundError as exc:
+        if exc.name == "app.documents.nhan_cot":  # Bản yuu cũ chưa có tính năng này.
+            return
+        raise
     monkeypatch.setattr(nhan_cot, "_hoi_qwen", _khong_co_qwen)
+
+@pytest.fixture
+def fake_object_storage(monkeypatch):
+    """MinIO giả cho test API; không gọi mạng hoặc ghi vào kho thật."""
+    from app.api import documents
+    from app.services.object_storage import ObjectStorage
+    class FakeStorage:
+        def __init__(self):
+            self.objects = {}
+            self.paths = []
+        def upload(self, path, filename):
+            digest = ObjectStorage.checksum(path)
+            key = f"uploads/{digest}{path.suffix}"
+            self.objects[("test", key)] = path.read_bytes()
+            self.paths.append(path)
+            return ObjectStorage.metadata(path, filename, "test", key, digest)
+        def download(self, bucket, key, path, filename):
+            if bucket != "test":
+                raise PermissionError("Bucket không được phép nạp")
+            path.write_bytes(self.objects[(bucket, key)])
+            self.paths.append(path)
+            return ObjectStorage.metadata(path, filename, bucket, key, ObjectStorage.checksum(path))
+    fake = FakeStorage()
+    monkeypatch.setattr(documents, "ObjectStorage", lambda: fake)
+    return fake
+
+
+@pytest.fixture
+def business_store(monkeypatch, tmp_path):
+    """Giả lập biên ghi MSSQL/MinIO cho test dựng file, không dùng SQLite nghiệp vụ."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock, MagicMock
+    from app.db import ai_session
+    from app.services import ai_outputs, ai_templates, task_queue, tasks
+    import json
+    from app.services.object_storage import ObjectStorage
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "output_dir", str(tmp_path))
+    repo = AsyncMock()
+    repo.user_id = 900000
+    repo.document.return_value = None
+    repo.templates.return_value = []
+    repo.number_exists.return_value = False
+    repo.add.side_effect = range(1, 1000)
+    repo.table = MagicMock()
+    @asynccontextmanager
+    async def scope():
+        yield repo
+    monkeypatch.setattr(ai_session, "repository", scope)
+    monkeypatch.setattr(ai_outputs, "repository", scope)
+    monkeypatch.setattr(ai_templates, "repository", scope)
+    monkeypatch.setattr(ObjectStorage, "upload", lambda self, path, name:
+        {"storage_bucket": "test", "storage_object_key": "outputs/"+name})
+    async def fence(repo, task_id, token):
+        return {"InputJson": json.dumps({"_uc37": {"managed": True, "lease_token": token, "lease_until": tasks.deadline()}})}
+    monkeypatch.setattr(task_queue, "fence", fence)
+    return repo

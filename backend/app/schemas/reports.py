@@ -17,7 +17,7 @@ class DraftRequest(BaseModel):
     )
     inputs: dict[str, str] = Field(
         default_factory=dict,
-        description="Các trường người dùng nhập: nguoi_ky, chuc_vu_ky, so_ky_hieu (số văn bản, trống = cấp số tiếp theo), ngay_ban_hanh (dd/mm/yyyy, trống = hôm nay)...",
+        description="Các trường người dùng nhập: nguoi_ky, chuc_vu_ky, so_ky_hieu (số văn bản, trống = bản nháp chưa có số, ERP cấp khi ban hành), ngay_ban_hanh (dd/mm/yyyy, trống = hôm nay)...",
         examples=[{"nguoi_ky": "Trần Văn B", "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ"}],
     )
     nguon: Literal["csdl", "tai_lieu"] = Field(
@@ -72,6 +72,8 @@ class RegulationRef(BaseModel):
 
 
 class DraftResponse(BaseModel):
+    ai_task_id: int | None = None
+    output_file_url: str = ""
     nguon: str = Field(default="csdl", description="Nguồn số liệu đã dùng")
     source_document: dict[str, Any] = Field(
         default_factory=dict,
@@ -147,6 +149,10 @@ class AggregateSection(BaseModel):
 
 
 class AggregateResponse(BaseModel):
+    template: str = ""
+    template_name: str = ""
+    ai_task_id: int | None = None
+    output_file_url: str = ""
     request: str
     params: dict[str, Any] = Field(default_factory=dict)
     data: dict[str, Any] = Field(

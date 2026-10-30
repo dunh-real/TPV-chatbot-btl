@@ -25,10 +25,8 @@ from app.services import storage
 from app.services.erp_discovery import query_erp
 from app.documents.query_result import query_sections
 from app.services import errors
-from app.agents.nodes.report import next_so_ky_hieu
 from app.documents.the_thuc import doc_ngay_ban_hanh, kiem_so_van_ban, ngay_ban_hanh_an_toan, so_nguoi_dung
-from app.db.repository import TemplateRepository, VanBanRepository
-from app.db.session import session_scope
+from app.db.repository import TemplateRepository
 from app.services.llm import LLMError, get_llm
 
 logger = logging.getLogger(__name__)
@@ -98,48 +96,46 @@ async def select_template_node(state: dict[str, Any]) -> dict[str, Any]:
     if state.get("missing_input"):
         return {}
 
-    async with session_scope() as session:
-        repo = TemplateRepository(session)
-        catalog = await repo.catalog()
-        if not catalog:
-            return {"template": {"ma_template": "BC_ERP", "ten_bao_cao": state["params"]["loai_bao_cao"],
-                                 "file_path": "", "fields": {"sections": [], "meta": {}}}}
+    repo = TemplateRepository()
+    catalog = await repo.catalog()
+    if not catalog:
+        return {"missing_input": ["Mẫu SQL và phiên bản đang công bố"]}
 
-        rendered = "\n".join(
-            f"- {t['ma_template']} | {t['ten_bao_cao']} ({t['loai_bao_cao']}): {t['mo_ta']}"
-            for t in catalog
+    rendered = "\n".join(
+        f"- {t['ma_template']} | {t['ten_bao_cao']} ({t['loai_bao_cao']}): {t['mo_ta']}"
+        for t in catalog
+    )
+    try:
+        choice = await get_llm().chat_json(
+            [
+                {"role": "system", "content": DRAFT_TEMPLATE_SYSTEM.format(templates=rendered)},
+                {"role": "user", "content": state["params"]["loai_bao_cao"]},
+            ],
+            model=get_settings().utility_model, temperature=0.0, max_tokens=300,
+            thinking=False,
         )
-        try:
-            choice = await get_llm().chat_json(
-                [
-                    {"role": "system", "content": DRAFT_TEMPLATE_SYSTEM.format(templates=rendered)},
-                    {"role": "user", "content": state["params"]["loai_bao_cao"]},
-                ],
-                model=get_settings().utility_model, temperature=0.0, max_tokens=300,
-                thinking=False,
-            )
-        except (LLMError, Exception) as exc:  # noqa: BLE001
-            logger.warning("Chọn mẫu thất bại: %s", exc)
-            choice = {}
+    except (LLMError, Exception) as exc:  # noqa: BLE001
+        logger.warning("Chọn mẫu thất bại: %s", exc)
+        choice = {}
 
-        valid = {t["ma_template"] for t in catalog}
-        ma_template = choice.get("ma_template") if choice.get("ma_template") in valid else None
-        if ma_template is None:
-            # Không có mẫu phù hợp thì dùng bố cục Word chung cho bảng ERP.
-            return {"template": {"ma_template": "BC_ERP", "ten_bao_cao": state["params"]["loai_bao_cao"],
-                                 "file_path": "", "fields": {"sections": [], "meta": {}}}}
+    valid = {t["ma_template"] for t in catalog}
+    ma_template = choice.get("ma_template") if choice.get("ma_template") in valid else None
+    if ma_template is None:
+        return {"missing_input": ["Chọn mã mẫu SQL phù hợp trong danh mục"]}
 
-        template = await repo.get(ma_template)
-        return {
-            "template": {
-                "ma_template": template.ma_template,
-                "ten_bao_cao": template.ten_bao_cao,
-                "file_path": template.file_path,
-                "fields": template.fields,
-            },
-            "template_choice": {"confidence": float(choice.get("confidence") or 0.0),
-                                "reason": str(choice.get("reason") or "")},
-        }
+    template = await repo.get(ma_template)
+    return {
+        "template": {
+            "ma_template": template.ma_template,
+            "template_id": getattr(template, "ai_id", None),
+            "template_version": getattr(template, "ai_version", None),
+            "ten_bao_cao": template.ten_bao_cao,
+            "file_path": template.file_path,
+            "fields": template.fields,
+        },
+        "template_choice": {"confidence": float(choice.get("confidence") or 0.0),
+                            "reason": str(choice.get("reason") or "")},
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -263,10 +259,8 @@ def _resolve_meta(template: dict[str, Any], state: dict[str, Any]) -> dict[str, 
     meta["trich_yeu"] = inputs.get(
         "trich_yeu", state["request"][:200] if "queries" in data else f"V/v {template['ten_bao_cao'].lower()} {period}"
     )
-    # Số ký hiệu do `export_node` cấp từ sổ văn bản. Còn "01" ở đây là đường lùi
-    # cho lúc chưa qua bước xuất file (xem trước, test) - không phải số thật.
-    meta.setdefault("so_ky_hieu", inputs.get("so_ky_hieu") or state.get("so_ky_hieu")
-                    or f"01/BC-{state.get('ma_don_vi', '')}")
+    # Bản nháp chưa có số; ERP cấp số chính thức khi ban hành.
+    meta["so_ky_hieu"] = inputs.get("so_ky_hieu") or state.get("so_ky_hieu") or ""
     if not meta.get("can_cu") and state.get("regulations"):
         meta["can_cu"] = f"Căn cứ {state['regulations'][0]['doc_title']};"
     return meta
@@ -282,9 +276,7 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     cfg = get_settings()
     template = state["template"]
 
-    # Đánh số trong sổ thay vì gán cứng "01": báo cáo thứ hai của cùng một đơn vị
-    # trong năm mà cũng mang số 01 thì sổ văn bản có hai văn bản trùng số, và bản
-    # sau ghi đè bản trước lúc vào sổ.
+    # Giữ số do ERP cấp nếu có; bản nháp được phép chưa có số.
     inputs = state.get("inputs", {})
     ma_don_vi = state.get("ma_don_vi", "")
     try:
@@ -292,20 +284,9 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     except ValueError as exc:
         return {"error": str(exc)}
     so_nhap = so_nguoi_dung(inputs)
-    try:
-        async with session_scope() as session:
-            if (trung := await kiem_so_van_ban(session, so_nhap)):
-                return {"error": trung}
-            # Không có đơn vị (nhánh soạn từ tài liệu) thì ký hiệu là "BC" trần.
-            # Ghép thẳng thành "BC-" cho ra số cụt đuôi kiểu "01/BC-" ngay dòng
-            # đầu văn bản trình ký.
-            ky_hieu = f"BC-{ma_don_vi}" if ma_don_vi else "BC"
-            so_ky_hieu = so_nhap or await next_so_ky_hieu(
-                session, state["params"].get("nam") or date.today().year, ky_hieu)
-    except Exception as exc:  # noqa: BLE001 - sổ hỏng không được chặn việc xuất file
-        logger.warning("Không cấp được số ký hiệu từ sổ văn bản: %s", exc)
-        so_ky_hieu = so_nhap or (
-            f"01/BC-{ma_don_vi}" if ma_don_vi else "01/BC")
+    if (trung := await kiem_so_van_ban(so_nhap)):
+        return {"error": trung}
+    so_ky_hieu = so_nhap
     state = {**state, "so_ky_hieu": so_ky_hieu}
 
     payload = DocumentPayload(
@@ -337,34 +318,3 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # 8. Ghi sổ văn bản
 # --------------------------------------------------------------------------- #
-async def register_node(state: dict[str, Any]) -> dict[str, Any]:
-    """Ghi báo cáo vừa sinh vào sổ văn bản để tra cứu lại sau."""
-    output_path = state.get("output_path")
-    if not output_path:
-        return {}
-
-    from app.db.models import VanBan
-
-    meta = _resolve_meta(state["template"], state)
-    ma_van_ban = meta.get("so_ky_hieu") or Path(output_path).stem
-    try:
-        async with session_scope() as session:
-            await VanBanRepository(session).upsert(VanBan(
-                ma_van_ban=ma_van_ban,
-                ten_van_ban=f"{state['template']['ten_bao_cao']} - {state['data'].get('ten_don_vi', '')}",
-                loai_van_ban="bao_cao_di",
-                # Mã đơn vị và kỳ ghi thẳng vào sổ: mục "đơn vị nào đã gửi báo
-                # cáo kỳ này" khớp bằng hai trường này chứ không dò tên nữa.
-                ma_don_vi=state.get("ma_don_vi") or None,
-                ky=state["params"].get("ky"),
-                noi_gui=str(state["data"].get("ten_don_vi", "")),
-                noi_nhan=meta.get("noi_nhan", ""),
-                mo_ta=state["params"].get("loai_bao_cao", ""),
-                ngay_van_ban=ngay_ban_hanh_an_toan(state.get("inputs")),
-                file_path=output_path,
-                dang_file="docx",
-            ))
-    except Exception as exc:  # noqa: BLE001 - ghi sổ hỏng không làm mất file đã xuất
-        logger.warning("Không ghi được sổ văn bản: %s", exc)
-        return {}
-    return {"registered_as": ma_van_ban}

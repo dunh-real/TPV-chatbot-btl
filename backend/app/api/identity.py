@@ -46,10 +46,21 @@ class IdentityMiddleware:
             return
 
         with use_principal(principal):
+            from app.db.ai_session import notify_on_finish, erp_task_id
+            raw_task = headers.get("x-erp-task-id", "")
+            if raw_task and (not raw_task.isdigit() or int(raw_task) <= 0):
+                await JSONResponse(status_code=400, content={"detail": "X-Erp-Task-Id phải là số nguyên dương"})(scope, receive, send)
+                return
+            erp_token = erp_task_id.set(int(raw_task) if raw_task else None)
+            notification_token = notify_on_finish.set(headers.get("x-notify-on-finish", "").lower() == "true")
             _ghi_log_nguon(headers, scope)
             logger.debug("%s %s - %s", scope.get("method"), scope.get("path"),
                          principal.describe())
-            await self.app(scope, receive, send)
+            try:
+                await self.app(scope, receive, send)
+            finally:
+                notify_on_finish.reset(notification_token)
+                erp_task_id.reset(erp_token)
 
 
 # Đường dẫn bị thăm dò liên tục; ghi log chúng thì phần đáng đọc bị đẩy trôi.

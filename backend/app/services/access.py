@@ -39,8 +39,7 @@ async def resolve_access(identifier: str) -> AccountAccess | None:
     """Quyền của `identifier` (UserId dạng số, username, hoặc email).
 
     Trả `None` khi: không tra được tài khoản, hoặc ERP chưa cấu hình. Bên gọi
-    phân biệt hai trường hợp đó bằng log chứ không bằng giá trị trả về - với tầng
-    trên thì cả hai đều là "không có căn cứ để chặn".
+    phân biệt hai trường hợp đó bằng log. Cả hai đều không được cấp quyền.
     """
     khoa = identifier.strip().lower()
     if not khoa:

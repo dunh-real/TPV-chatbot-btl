@@ -1,11 +1,4 @@
-"""Kết nối CSDL nghiệp vụ - dùng chung cho SQL Server và SQLite.
-
-`DATABASE_URL` quyết định đích:
-    mssql+pyodbc://user:pass@host:1433/tpv?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
-    sqlite+aiosqlite:///./data/demo.db        (dev/demo, không cần server)
-
-Toàn bộ truy vấn viết bằng SQLAlchemy nên đổi đích chỉ là đổi chuỗi kết nối.
-"""
+"""Kết nối SQLite dành riêng cho dữ liệu pháp lý, tách khỏi nghiệp vụ MSSQL."""
 
 from __future__ import annotations
 
@@ -28,6 +21,13 @@ def get_engine(settings: Settings | None = None) -> AsyncEngine:
     global _engine
     if _engine is None:
         cfg = settings or get_settings()
+        if not cfg.database_url.startswith("sqlite+aiosqlite:"):
+            raise ValueError("DATABASE_URL chỉ dành cho SQLite pháp lý")
+        from pathlib import Path
+        from sqlalchemy.engine import make_url
+        filename = make_url(cfg.database_url).database
+        if filename and filename != ":memory:":
+            Path(filename).expanduser().parent.mkdir(parents=True, exist_ok=True)
         _engine = create_async_engine(
             cfg.database_url,
             echo=cfg.database_echo,
@@ -35,7 +35,7 @@ def get_engine(settings: Settings | None = None) -> AsyncEngine:
             # SQLite không dùng pool kích thước cố định.
             **({} if cfg.database_url.startswith("sqlite") else {"pool_size": 5, "max_overflow": 10}),
         )
-        logger.info("CSDL nghiệp vụ: %s", cfg.database_url.split("://", 1)[0])
+        logger.info("CSDL pháp lý: %s", cfg.database_url.split("://", 1)[0])
     return _engine
 
 
@@ -67,7 +67,7 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 async def create_all() -> None:
-    """Tạo bảng nếu chưa có - dùng cho demo/test, không thay cho migration."""
+    """Khởi tạo tám bảng pháp lý SQLite nếu chưa có."""
     async with get_engine().begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
         await connection.run_sync(_them_cot_con_thieu)

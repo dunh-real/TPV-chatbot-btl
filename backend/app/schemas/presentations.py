@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.reports import ValidationModel
 
 
 class PresentationRequest(BaseModel):
+    nguon: Literal["csdl", "tai_lieu"] = "csdl"
+    file_id: str = Field(default="", max_length=1000)
+
+    @model_validator(mode="after")
+    def check_source(self):
+        if self.nguon == "tai_lieu" and not self.file_id.strip():
+            raise ValueError("Tạo slide từ tài liệu cần file_id của file đã upload")
+        return self
+
     request: str = Field(min_length=1, max_length=2000,
                          examples=["Tạo slide báo cáo nhân sự tháng 8"])
     inputs: dict[str, str] = Field(
@@ -18,6 +27,10 @@ class PresentationRequest(BaseModel):
 
 
 class PresentationResponse(BaseModel):
+    sources: list[dict[str, Any]] = Field(default_factory=list)
+    document_outline: dict[str, Any] | None = None
+    ai_task_id: int | None = None
+    output_file_url: str = ""
     request: str
     data: dict[str, Any] = Field(default_factory=dict, description="QueryResult trong data.queries")
     params: dict[str, Any] = Field(default_factory=dict)

@@ -149,6 +149,27 @@ class QdrantVectorStore:
             total += len(points)
         return total
 
+    async def link_source(self, doc_id: str, metadata: dict) -> None:
+        """Chỉ bổ sung trường thiếu; từ chối nếu có nguồn khác, không đổi vector."""
+        query = models.Filter(must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))])
+        points, offset = [], None
+        while True:
+            page, offset = await self.client.scroll(
+                self.collection, scroll_filter=query, limit=256, offset=offset,
+                with_vectors=False, with_payload=list(metadata))
+            points.extend(page)
+            if offset is None:
+                break
+        for point in points:
+            payload = point.payload or {}
+            for key in ("storage_bucket", "storage_object_key", "checksum_sha256"):
+                if payload.get(key) and payload[key] != metadata[key]:
+                    raise ValueError("Tài liệu đã liên kết tới nguồn khác; giữ nguyên nguồn hiện tại")
+        for key, value in metadata.items():
+            ids = [p.id for p in points if (p.payload or {}).get(key) in (None, "")]
+            for start in range(0, len(ids), 256):
+                await self.client.set_payload(self.collection, {key: value}, points=ids[start:start + 256], wait=True)
+
     async def delete_document(self, doc_id: str) -> None:
         await self._client.delete(
             collection_name=self.collection,
@@ -182,12 +203,45 @@ class QdrantVectorStore:
         return {"doc_id": doc_id, "doc_title": str(payload.get("doc_title") or doc_id),
                 "source": str(payload.get("source") or ""), "chunk_count": count.count}
 
+    async def document_metadata(self, doc_ids: Sequence[str]) -> dict[str, dict]:
+        """Metadata và số chunk hiện hành; không tải text/vector hoặc quét toàn kho."""
+        from app.db.ai_session import enabled
+        if enabled():
+            from app.services.ai_documents import document_metadata
+            return await document_metadata(doc_ids)
+        import asyncio
+        gate = asyncio.Semaphore(8)
+        fields = ["doc_title", "source", "doc_type", "ingested_at", "storage_bucket",
+                  "storage_object_key", "original_filename", "file_size_bytes", "checksum_sha256"]
+        async def read(doc_id):
+            async with gate:
+                query = models.Filter(
+                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))],
+                    must_not=[models.FieldCondition(key="latest", match=models.MatchValue(value=False))])
+                points, _ = await self.client.scroll(self.collection, scroll_filter=query,
+                    limit=1, with_payload=fields, with_vectors=False)
+                if not points:
+                    return doc_id, None
+                count = await self.client.count(self.collection, count_filter=query, exact=True)
+                return doc_id, {**(points[0].payload or {}), "chunk_count": count.count}
+        return {key: value for key, value in await asyncio.gather(*(read(d) for d in dict.fromkeys(doc_ids)))
+                if value is not None}
+
     async def scroll_document(self, doc_id: str, page_size: int = 256) -> list[dict[str, Any]]:
         """Toàn bộ chunk của một tài liệu, xếp theo đúng thứ tự trong file gốc.
 
         Khác `search`: không xếp hạng và không được bỏ sót đoạn nào - dùng khi
         người dùng muốn đọc lại nguyên văn bản chứ không phải tìm đoạn liên quan.
         """
+        from app.db.ai_session import enabled
+        if enabled() and doc_id not in await self.document_metadata([doc_id]):
+            return []
+        if enabled():
+            from app.services.ai_documents import resolve_ids
+            resolved = await resolve_ids([doc_id])
+            if not resolved:
+                return []
+            doc_id = resolved[0]
         payloads: list[dict[str, Any]] = []
         offset = None
         while True:
@@ -211,6 +265,8 @@ class QdrantVectorStore:
 
     async def scroll_filtered(self, query_filter: models.Filter, limit: int = 256) -> list[dict[str, Any]]:
         """Payload (kèm text) của các chunk khớp bộ lọc, theo thứ tự trong file gốc."""
+        from app.services.ai_documents import restrict
+        query_filter = await restrict(query_filter)
         points, _ = await self._client.scroll(collection_name=self.collection, scroll_filter=query_filter,
                                               limit=limit, with_payload=True, with_vectors=False)
         return sorted((dict(p.payload or {}) for p in points), key=lambda p: p.get("chunk_index", 0))
@@ -222,6 +278,15 @@ class QdrantVectorStore:
         collection rồi gộp, và chỉ lấy đúng vài trường payload cần cho danh sách
         chứ không kéo cả `text` về: trường đó là toàn bộ nội dung kho.
         """
+        from app.db.ai_session import enabled, repository
+        if enabled():
+            from app.services.ai_documents import metadata
+            async with repository() as repo:
+                table = repo.table("KnowledgeDocuments")
+                allowed = set(await repo.document_ids())
+                rows = await repo.rows("KnowledgeDocuments", table.c.IndexStatus == "Indexed", owned=True)
+            return [{"doc_id": f"sql:{row['Id']}",
+                     **metadata(row)} for row in rows]
         docs: dict[str, dict[str, Any]] = {}
         offset = None
         while True:

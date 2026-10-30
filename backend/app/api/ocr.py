@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ocr", tags=["ocr"])
 
-OCR_QUYEN = Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "OCR tài liệu"))
+OCR_QUYEN = Depends(quyen.can_quyen("Ai.Ocr", "OCR tài liệu"))
 
 
 def _sse(event: str, payload: dict) -> str:

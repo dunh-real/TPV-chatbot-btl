@@ -12,12 +12,17 @@ from __future__ import annotations
 
 from app.core.context import Principal, current_principal
 
+# Quyền UC37 đã có trên ERP; không đặt thêm quyền riêng trong backend.
+QUYEN_TAC_VU = "Ai.AiTask"
+QUYEN_TAC_VU_XOA = "Ai.AiTask.Delete"
+QUYEN_TAC_VU_XEM_TAT_CA = "Ai.AiTask.ViewAll"
+
 # Quyền tối thiểu để chạy một nghiệp vụ.
 QUYEN_THEO_NGHIEP_VU: dict[str, str] = {
     "qa": "Ai.AiChatbot",
     "agent": "Ai.AiChatbot",
-    "document": "Ai.AiChatbot",
-    "draft": "Ai.ReportSummary.Create",
+    "document": "Ai.DocumentReview",
+    "draft": "Ai.ReportDrafting",
     "report": "Ai.ReportSummary.Create",
     "presentation": "Ai.Slide.Create",
 }
@@ -124,10 +129,9 @@ def can_admin(viec: str = ""):
     """Dependency: chỉ Admin (vai trò tĩnh của ABP) mới qua được."""
     def _kiem_tra() -> None:
         p = current_principal()
-        # Chưa tra được quyền thì không chặn - xem `Principal.can`.
-        if p.access is None or p.access.is_static_admin:
+        if p.user_id and p.access is not None and p.access.is_static_admin:
             return
-        vai = ", ".join(p.access.role_names) or "chưa rõ"
+        vai = ", ".join(p.access.role_names) if p.access and p.access.role_names else "chưa rõ"
         raise ThieuQuyen(
             f"Chỉ quản trị viên mới {viec or 'làm được việc này'}. "
             f"Vai trò hiện tại: {vai}."

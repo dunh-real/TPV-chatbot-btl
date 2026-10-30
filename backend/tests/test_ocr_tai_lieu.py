@@ -19,7 +19,7 @@ from app.api import ocr as ocr_api
 from app.documents import ocr_tai_lieu as odt
 from app.main import app
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.usefixtures("authorized_account")]
 
 
 # --------------------------------------------------------------------------- #
@@ -280,7 +280,7 @@ async def test_ten_file_kieu_email_van_giu_duoc_duoi(tmp_path, ocr_gia, kho_uplo
     ("/api/documents/review", "Báo cáo kiểm kê.docx"),
     ("/api/ocr/extract", "Công văn số 1516.pdf"),
 ])
-async def test_cua_nap_tai_lieu_cung_giai_duoc_ten_kieu_email(duong, ten, kho_upload):
+async def test_cua_nap_tai_lieu_cung_giai_duoc_ten_kieu_email(duong, ten, kho_upload, fake_object_storage):
     """Kiểm đuôi file phải đọc trên tên ĐÃ làm sạch, ở mọi cửa nhận file.
 
     Ba cửa `/api/ocr/extract`, `/api/documents/upload` và `/api/documents/review`

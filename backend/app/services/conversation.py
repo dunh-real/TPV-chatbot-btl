@@ -248,6 +248,10 @@ class ConversationMemory:
 
     async def get_history(self, conversation_id: str,
                           limit: int | None = None) -> list[dict[str, str]]:
+        from app.db.ai_session import enabled, repository
+        if enabled():
+            async with repository() as repo:
+                return await repo.history(conversation_id, limit or get_settings().history_max_turns)
         if not conversation_id:
             return []
         cached = await self.cache.get_history(conversation_id, limit=limit)
@@ -264,6 +268,11 @@ class ConversationMemory:
 
     async def append_turns(self, conversation_id: str,
                            turns: list[tuple[str, str]]) -> None:
+        from app.db.ai_session import enabled, repository
+        if enabled():
+            async with repository() as repo:
+                await repo.append_turns(conversation_id, turns)
+            return
         if not conversation_id:
             return
         for role, content in turns:
@@ -271,6 +280,11 @@ class ConversationMemory:
         await self.store.append_turns(conversation_id, turns)
 
     async def clear_history(self, conversation_id: str) -> None:
+        from app.db.ai_session import enabled, repository
+        if enabled():
+            async with repository() as repo:
+                await repo.clear_history(conversation_id)
+            return
         await self.cache.clear_history(conversation_id)
         await self.store.clear_history(conversation_id)
 

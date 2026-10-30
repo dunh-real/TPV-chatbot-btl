@@ -17,7 +17,7 @@
 | `tpv-presenton-nginx.service` | Reverse proxy Presenton | `5002` |
 | `mssql-server.service` | Microsoft SQL Server / ERP | `127.0.0.1:1433` |
 
-Backend dùng **SQLite** (`DATABASE_URL`, driver `sqlite+aiosqlite`) cho database chính và **MSSQL** (`ERP_DATABASE_URL`, driver `mssql+aioodbc`) cho dữ liệu ERP. MSSQL là dịch vụ native có sẵn, không chạy bằng Docker. `watch_schema()` thử lại theo chu kỳ nếu ERP tạm mất kết nối.
+Backend dùng **MSSQL nghiệp vụ** (`AI_DATABASE_URL`) cho các bảng AI; **SQLite pháp lý** (`DATABASE_URL`, driver `sqlite+aiosqlite`) chỉ quản lý điều khoản/phiên bản/bằng chứng. `ERP_DATABASE_URL` vẫn là kết nối MSSQL chỉ đọc cho tài khoản, quyền và dữ liệu nguồn. MSSQL là dịch vụ native có sẵn, không chạy bằng Docker. `watch_schema()` thử lại theo chu kỳ nếu ERP tạm mất kết nối.
 
 ## 2. Điều kiện tiên quyết
 
@@ -36,7 +36,7 @@ Backend dùng **SQLite** (`DATABASE_URL`, driver `sqlite+aiosqlite`) cho databas
 
 ## 3. Cấu hình ứng dụng
 
-Trong `backend/.env`, thiết lập endpoint, database URL, credential và cấu hình của môi trường thực tế. Những biến quan trọng gồm `DATABASE_URL`, `ERP_DATABASE_URL`, các biến kết nối Qdrant, Redis, MinIO, LLM và Presenton theo `backend/app/core/config.py`.
+Trong `backend/.env`, thiết lập endpoint, database URL, credential và cấu hình của môi trường thực tế. Những biến quan trọng gồm `AI_DATABASE_URL`, `DATABASE_URL`, `ERP_DATABASE_URL`, các biến kết nối Qdrant, Redis, MinIO, LLM và Presenton theo `backend/app/core/config.py`.
 
 Để chuyển `.doc` bằng LibreOffice native, sử dụng:
 

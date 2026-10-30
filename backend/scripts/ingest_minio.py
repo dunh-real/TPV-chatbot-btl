@@ -1,15 +1,12 @@
 #!/usr/bin/env python
-"""Đọc MinIO, gửi từng file qua API upload; không gọi pipeline ingest trực tiếp."""
+"""Liệt kê MinIO và gửi bucket/object_key để BE nạp; không truyền lại bytes file."""
 from __future__ import annotations
 
 import argparse
 import json
 import logging
-import mimetypes
 import os
-import shutil
 import sys
-import tempfile
 import time
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit
@@ -38,38 +35,20 @@ def ingest_bucket(minio, api, *, bucket, prefix="", upload_url, doc_type="", for
         index += 1
         file_started = time.perf_counter()
         logger.info("[%d] File %s | dung lượng: %s bytes", index, name, getattr(obj, "size", "không rõ"))
-        response = None
         try:
-            logger.info("[%d] Đang đọc file từ MinIO", index)
-            response = minio.get_object(bucket, name)
-            # HTTP multipart cần file seek được. Giữ tối đa 8 MiB trong RAM,
-            # file lớn dùng file tạm và tự xóa sau mỗi request.
-            with tempfile.SpooledTemporaryFile(max_size=8 * 1024 * 1024) as content:
-                shutil.copyfileobj(response, content)
-                logger.info("[%d] Đã đọc %d bytes trong %.1fs", index, content.tell(),
-                            time.perf_counter() - file_started)
-                content.seek(0)
-                filename = PurePosixPath(name).name
-                logger.info("[%d] Đang gửi file và chờ API ingest trả kết quả", index)
-                api_started = time.perf_counter()
-                result = api.post(
-                    upload_url,
-                    files={"file": (filename, content,
-                                    mimetypes.guess_type(filename)[0] or "application/octet-stream")},
-                    data={"doc_type": doc_type, "force_reingest": str(force).lower()},
-                )
-                result.raise_for_status()
-                body = result.json()
-                if not isinstance(body, dict) or not isinstance(body.get("already_exists"), bool) or not body.get("doc_id"):
-                    raise ValueError("Response upload không đúng hợp đồng")
-                key = "already_exists" if body["already_exists"] else "ingested"
-                totals[key] += 1
-                logger.info("[%d] %s | doc_id=%s | chunk=%s | API %.1fs | tổng %.1fs",
-                            index, "Đã tồn tại, bỏ qua ingest" if body["already_exists"] else "Đã nạp",
-                            body["doc_id"], body.get("chunk_count"),
-                            time.perf_counter() - api_started, time.perf_counter() - file_started)
-                print(json.dumps({"object": name, "status": key, "doc_id": body["doc_id"],
-                                  "chunk_count": body.get("chunk_count")}, ensure_ascii=False), flush=True)
+            api_started = time.perf_counter()
+            result = api.post(upload_url, json={"bucket": bucket, "object_key": name,
+                "doc_type": doc_type, "force_reingest": force})
+            result.raise_for_status()
+            body = result.json()
+            if not isinstance(body, dict) or not isinstance(body.get("already_exists"), bool) or not body.get("doc_id"):
+                raise ValueError("Response ingest không đúng hợp đồng")
+            key = "already_exists" if body["already_exists"] else "ingested"
+            totals[key] += 1
+            logger.info("[%d] %s | doc_id=%s | chunk=%s | API %.1fs", index, key,
+                        body["doc_id"], body.get("chunk_count"), time.perf_counter() - api_started)
+            print(json.dumps({"object": name, "status": key, "doc_id": body["doc_id"],
+                              "chunk_count": body.get("chunk_count")}, ensure_ascii=False), flush=True)
         except Exception as exc:
             totals["errors"] += 1
             # Không in headers, URL có thông tin xác thực hoặc secret.
@@ -80,10 +59,6 @@ def ingest_bucket(minio, api, *, bucket, prefix="", upload_url, doc_type="", for
                          time.perf_counter() - file_started)
             print(json.dumps({"object": name, "status": "error", "error": error},
                              ensure_ascii=False), file=sys.stderr, flush=True)
-        finally:
-            if response is not None:
-                response.close()
-                response.release_conn()
     logger.info("Hoàn tất sau %.1fs | đã nạp=%d | đã tồn tại=%d | lỗi=%d | bỏ qua=%d",
                 time.perf_counter() - started, totals["ingested"], totals["already_exists"],
                 totals["errors"], totals["skipped"])
@@ -97,7 +72,7 @@ def main(argv=None):
     parser.add_argument("--endpoint", default=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"))
     parser.add_argument("--bucket", default="vanbantrunguong")
     parser.add_argument("--prefix", default="")
-    parser.add_argument("--upload-url", default=os.getenv("INGEST_UPLOAD_URL", "http://localhost:8080/api/documents/upload"))
+    parser.add_argument("--upload-url", default=os.getenv("INGEST_UPLOAD_URL", "http://localhost:8080/api/documents/ingest-minio"))
     parser.add_argument("--type", default="", dest="doc_type")
     parser.add_argument("--force-reingest", action="store_true")
     parser.add_argument("--timeout", type=float, default=1800, help="Timeout API mỗi thao tác, giây")

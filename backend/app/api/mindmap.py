@@ -35,7 +35,7 @@ from app.schemas.mindmap import (
     SectionRequest,
     SectionResponse,
 )
-from app.services import mindmap_store
+from app.services import ai_mindmaps as mindmap_store
 from app.services.llm import LLMError
 from app.services.mindmap_store import MindmapStoreError
 
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/mindmap", tags=["mindmap"])
 
-DOC_READ = Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xem sơ đồ tư duy"))
+DOC_READ = Depends(quyen.can_quyen("Ai.MindMap", "xem sơ đồ tư duy"))
 
 # Dưới mức này thì cây không đáng gọi là sơ đồ - thường là model trả về rác hoặc
 # tài liệu quá ngắn. Báo lỗi còn hơn lưu lại một cây trống rồi để người dùng
@@ -51,9 +51,9 @@ DOC_READ = Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xem sơ đồ tư duy")
 MIN_NODES = 3
 
 
-def _record_or_404(doc_id: str) -> dict:
+async def _record_or_404(doc_id: str) -> dict:
     try:
-        record = mindmap_store.load(doc_id)
+        record = await mindmap_store.load(doc_id)
     except MindmapStoreError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if record is None:
@@ -85,7 +85,7 @@ async def sources() -> list[MindmapSource]:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=f"Không đọc được kho tài liệu: {exc}") from exc
 
-    built = {item["doc_id"] for item in mindmap_store.list_all()}
+    built = {item["doc_id"] for item in (await mindmap_store.list_all())}
     return [
         MindmapSource(**doc, has_mindmap=doc["doc_id"] in built)
         for doc in documents
@@ -95,7 +95,7 @@ async def sources() -> list[MindmapSource]:
 @router.get("/documents", response_model=list[MindmapSummary], dependencies=[DOC_READ],
             summary="Các sơ đồ tư duy đã dựng")
 async def list_documents() -> list[MindmapSummary]:
-    return [MindmapSummary(**item) for item in mindmap_store.list_all()]
+    return [MindmapSummary(**item) for item in (await mindmap_store.list_all())]
 
 
 @router.post("/generate", response_model=MindmapResponse, dependencies=[DOC_READ],
@@ -107,7 +107,7 @@ async def generate(request: GenerateRequest) -> MindmapResponse:
                             detail="Thiếu doc_id của tài liệu cần dựng sơ đồ")
 
     try:
-        existing = mindmap_store.load(doc_id)
+        existing = await mindmap_store.load(doc_id)
     except MindmapStoreError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -150,20 +150,20 @@ async def generate(request: GenerateRequest) -> MindmapResponse:
                    f"hoặc model trả về không dùng được - thử dựng lại.",
         )
 
-    mindmap_store.save(doc_id, tree, meta={"doc_title": doc_title, "word_count": word_count})
-    return _response(_record_or_404(doc_id), cached=False)
+    await mindmap_store.save(doc_id, tree, meta={"doc_title": doc_title, "word_count": word_count})
+    return _response(await _record_or_404(doc_id), cached=False)
 
 
 @router.get("/{doc_id}", response_model=MindmapResponse, dependencies=[DOC_READ],
             summary="Đọc lại sơ đồ tư duy đã dựng")
 async def get_mindmap(doc_id: str) -> MindmapResponse:
-    return _response(_record_or_404(doc_id), cached=True)
+    return _response(await _record_or_404(doc_id), cached=True)
 
 
 @router.post("/{doc_id}/section", response_model=SectionResponse, dependencies=[DOC_READ],
              summary="Nội dung chi tiết của một mục")
 async def section(doc_id: str, request: SectionRequest) -> SectionResponse:
-    record = _record_or_404(doc_id)
+    record = await _record_or_404(doc_id)
     tree = record["tree"]
 
     node = find_node(tree, request.node_id)
@@ -207,7 +207,7 @@ async def section(doc_id: str, request: SectionRequest) -> SectionResponse:
     node["summary"] = content["summary"]
     node["key_points"] = content["key_points"]
     node["sources"] = sources
-    mindmap_store.save(doc_id, tree, meta={k: v for k, v in record.items()
+    await mindmap_store.save(doc_id, tree, meta={k: v for k, v in record.items()
                                            if k not in {"tree", "saved_at"}})
 
     return SectionResponse(
@@ -218,11 +218,11 @@ async def section(doc_id: str, request: SectionRequest) -> SectionResponse:
 
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT,
-               dependencies=[Depends(quyen.can_quyen(quyen.QUYEN_KHO_DOC, "xoá sơ đồ tư duy"))],
+               dependencies=[Depends(quyen.can_quyen("Ai.MindMap", "xoá sơ đồ tư duy"))],
                summary="Xoá sơ đồ tư duy đã dựng")
 async def delete_mindmap(doc_id: str) -> None:
     try:
-        deleted = mindmap_store.delete(doc_id)
+        deleted = await mindmap_store.delete(doc_id)
     except MindmapStoreError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if not deleted:

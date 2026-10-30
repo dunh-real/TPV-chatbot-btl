@@ -165,7 +165,7 @@ async def _post(path: str, **kwargs) -> httpx.Response:
         return await client.post(path, **kwargs)
 
 
-async def test_endpoint_tra_ve_duong_tai_ve():
+async def test_endpoint_tra_ve_duong_tai_ve(authorized_account, business_store):
     res = await _post("/api/documents/giao-viec",
                       json={"loai": "quyet_dinh", "co_quan": "Công ty TPV", "tasks": TASKS})
 
@@ -176,7 +176,7 @@ async def test_endpoint_tra_ve_duong_tai_ve():
     assert body["file_name"].startswith("QD_GIAOVIEC")
 
 
-async def test_endpoint_tu_choi_khi_khong_co_nhiem_vu():
+async def test_endpoint_tu_choi_khi_khong_co_nhiem_vu(authorized_account):
     res = await _post("/api/documents/giao-viec", json={"loai": "cong_van", "tasks": []})
 
     assert res.status_code == 422

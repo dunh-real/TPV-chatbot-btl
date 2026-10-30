@@ -38,52 +38,28 @@ class _Settings:
 
 
 @pytest.fixture
-def tmp_storage(tmp_path, monkeypatch):
+def tmp_storage(tmp_path, monkeypatch, business_store):
     monkeypatch.setattr(storage, "get_settings", lambda: _Settings(tmp_path))
     return tmp_path
 
 
 @pytest.fixture
-async def session():
-    """CSDL app: chỉ còn mẫu báo cáo (số liệu nghiệp vụ đã chuyển sang ERP)."""
-    from app.db.models import Base, TemplateBaoCao
-
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    async with factory() as session:
-        session.add_all([
-            TemplateBaoCao(
-                ma_template="BC_TAINGUYEN",
-                ten_bao_cao="Báo cáo tài nguyên đơn vị",
-                loai_bao_cao="bao_cao_tai_nguyen",
-                mo_ta="Nhân sự và trang thiết bị của một đơn vị",
-                file_path="",
-                truong_du_lieu=json.dumps({
-                    "meta": {"nguoi_ky": {"source": "input"},
-                             "chuc_vu_ky": {"source": "input"},
-                             "ngay_bao_cao": {"source": "today"}},
-                    "sections": [{"id": "nhan_su", "title": "I. NHÂN SỰ", "type": "data"}],
-                }, ensure_ascii=False),
-            ),
-            TemplateBaoCao(
-                ma_template="BC_TONGHOP",
-                ten_bao_cao="Báo cáo tổng hợp",
-                loai_bao_cao="bao_cao_tong_hop",
-                mo_ta="Tổng hợp nhiều đơn vị",
-                file_path="",
-                truong_du_lieu="{}",
-            ),
-        ])
-        await session.commit()
-        yield session
-    await engine.dispose()
+async def session(monkeypatch):
+    """Mẫu giả lập tại biên MSSQL; không tạo bảng mẫu trong SQLite."""
+    from app.db.business_types import TemplateInfo
+    from app.services import ai_templates
+    templates = [TemplateInfo("BC_TAINGUYEN", "Báo cáo tài nguyên đơn vị", "bao_cao_tai_nguyen", mo_ta="Nhân sự và trang thiết bị của một đơn vị",
+        fields={"meta": {"nguoi_ky": {"source": "input"}, "chuc_vu_ky": {"source": "input"}},
+                "sections": [{"id": "nhan_su", "title": "I. NHÂN SỰ", "type": "data"}]}, ai_id=1, ai_version=1),
+        TemplateInfo("BC_TONGHOP", "Báo cáo tổng hợp", "bao_cao_tong_hop", ai_id=2, ai_version=1)]
+    async def list_templates(kind=None):
+        return [t for t in templates if kind is None or t.loai_bao_cao == kind]
+    monkeypatch.setattr(ai_templates, "list_templates", list_templates)
+    return templates
 
 
 @pytest.fixture
-def db(session, erp_session, monkeypatch):
+def db(session, erp_session, monkeypatch, business_store):
     """Trỏ hai nguồn của tool về CSDL tạm: mẫu báo cáo ở app, số liệu ở ERP."""
 
     @asynccontextmanager
@@ -333,7 +309,7 @@ def test_tu_khoa_phan_biet_slide_soan_va_tong_hop():
 # Agent tổng
 # --------------------------------------------------------------------------- #
 @pytest.fixture
-def agent_env(monkeypatch):
+def agent_env(monkeypatch, authorized_account):
     """Cache trong tiến trình + Qdrant nhúng: đủ để kiểm tra cả hai tầng bộ nhớ."""
     from qdrant_client import AsyncQdrantClient
 

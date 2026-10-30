@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.db.session import session_scope
+from app.db.erp_session import erp_session_scope
 from app.tools import data as data_tools
 from app.tools.base import ToolError, ToolSpec
 from app.tools.document import analyze_document, generate_docx
@@ -130,6 +130,6 @@ async def call_tool(name: str, **kwargs: Any) -> Any:
         raise ToolError(f"{name}: tham số không hợp lệ {sorted(unknown)}")
 
     if spec.needs_session:
-        async with session_scope() as session:
+        async with erp_session_scope() as session:
             return _plain(await spec.func(session, **kwargs))
     return _plain(await spec.func(**kwargs))

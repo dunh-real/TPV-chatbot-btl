@@ -1,4 +1,4 @@
-"""Phân quyền nhóm ERP, lọc bảng/cột và ép phạm vi tenant/cá nhân/phòng ban trên SQL."""
+"""Cấp quyền từ permission ERP; hợp đồng schema chỉ giới hạn bảng/cột SQL được đọc."""
 from __future__ import annotations
 
 import json
@@ -37,6 +37,9 @@ class Rule(BaseModel):
     column_permissions: dict[str, list[str]] = {}
     tenant_column: str = "TenantId"
     meaning: str = ""
+    self_column: str | None = None
+    department_column: str | None = None
+    scope_permissions: dict[Literal["tenant", "self", "department"], list[str]] = {}
 
 
 class UserScope(BaseModel):
@@ -53,9 +56,6 @@ class GroupTable(UserScope):
 
 class AccountGroup(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    priority: int = 0
-    static_admin: bool = False
-    tenant_roles: dict[str, list[int]] = {}
     tables: dict[str, GroupTable]
 
 
@@ -63,12 +63,10 @@ class PolicyDocument(BaseModel):
     model_config = ConfigDict(extra="forbid")
     version: str
     tables: dict[str, Rule]
-    groups: dict[str, AccountGroup] = {}
-    default_group: str | None = None
     # Nếu khai tài khoản thì chỉ được đọc các bảng/cột/dòng trong mục của tài khoản đó.
     users: dict[str, dict[str, UserScope]] = {}
-    # Ngoại lệ đọc mở rộng chỉ dành cho Admin đã xác minh, khóa tenant:UserId.
-    account_read_grants: dict[str, dict[str, list[str]]] = {}
+    # Cột nghiệp vụ bổ sung cho Admin; không tự mở bảng/cột mới từ schema.
+    admin_columns: dict[str, list[str]] = {}
 
 
 class SQLPolicy:
@@ -85,39 +83,24 @@ class SQLPolicy:
         self.group = None
         group = None
         account_key = f"{self.tenant_id}:{access.user_id}"
-        expanded = document.account_read_grants.get(account_key)
         rules = document.tables
-        if expanded is not None:
-            if not access.is_static_admin:
-                raise ToolError("Quyền đọc mở rộng yêu cầu tài khoản vẫn là Admin ERP đã xác minh")
-            self.group = "account_read_grant"
-            # Whitelist riêng, không thay đổi quyền của các Admin khác.
-            rules = {name: Rule(permissions_any=["*"], columns=columns,
-                meaning=document.tables[name].meaning if name in document.tables else "Bảng ERP được cấp đọc riêng cho tài khoản; không tự suy đoán mã enum hoặc quan hệ nghiệp vụ.")
-                for name, columns in expanded.items()}
-            for name, rule in rules.items():
-                rule.meaning = "Quyền đọc mở rộng trong tenant. " + rule.meaning
-            if "dbo.Hrm_EmployeeProfile" in rules:
-                rules["dbo.Hrm_EmployeeProfile"].meaning = (
-                    "Hồ sơ nhân sự được cấp đọc mở rộng trong tenant. Số cuối tháng suy từ "
-                    "HireDate/CreationTime và ResignationDate; không phải snapshot lịch sử đầy đủ.")
-        elif document.groups:
-            matches = [(name, item) for name, item in document.groups.items()
-                       if (item.static_admin and access.is_static_admin)
-                       or set(access.role_ids).intersection(item.tenant_roles.get(str(self.tenant_id), []))]
-            if matches:
-                matches.sort(key=lambda pair: pair[1].priority, reverse=True)
-                if len(matches) > 1 and matches[0][1].priority == matches[1][1].priority:
-                    raise ToolError("Tài khoản khớp nhiều nhóm cùng mức ưu tiên; cần kiểm tra policy")
-                self.group, group = matches[0]
-            elif document.default_group in document.groups:
-                self.group = document.default_group
-                group = document.groups[self.group]
-            else:
-                raise ToolError("Tài khoản chưa được ánh xạ vào nhóm truy vấn ERP")
+        self.group = "db_permissions"
+        entries = {}
+        for name, rule in rules.items():
+            if not any(access.has(grant) for grant in rule.permissions_any):
+                continue
+            scope = next((kind for kind in ("tenant", "self", "department")
+                          if any(access.has(p) for p in rule.scope_permissions.get(kind, []))), None)
+            if rule.scope_permissions and scope is None:
+                continue
+            scope = scope or "tenant"
+            entry = GroupTable(scope=scope, scope_column=(rule.self_column if scope == "self"
+                               else rule.department_column if scope == "department" else None))
+            entries[name] = entry
+        group = AccountGroup(tables=entries)
         # Chỉ đọc liên kết định danh khi nhóm cần phạm vi cá nhân/phòng ban.
         employee = None
-        if group and any(t.scope != "tenant" for t in group.tables.values()):
+        if any(t.scope != "tenant" for t in group.tables.values()):
             if connection is None:
                 raise ToolError("Cần kết nối ERP để xác định phạm vi nhân viên của tài khoản")
             schema = "dbo." if connection.dialect.name == "mssql" else ""
@@ -147,6 +130,8 @@ class SQLPolicy:
                 continue
             table = deepcopy(snapshot["tables"][key])
             allowed = {c.lower() for c in rule.columns}
+            if access.is_static_admin:
+                allowed.update(c.lower() for c in document.admin_columns.get(name, []))
             if grouped and grouped.columns is not None:
                 allowed &= {c.lower() for c in grouped.columns}
             if scoped and scoped.columns is not None:
@@ -159,17 +144,17 @@ class SQLPolicy:
             if tenant not in snapshot["tables"][key]["columns"] or not table["columns"]:
                 raise ToolError("Schema thay đổi làm mất cột bắt buộc của chính sách ERP; cần quản trị kiểm tra")
             filters = list((scoped.row_filters if scoped else {}).items())
-            if grouped:
-                filters.extend(grouped.row_filters.items())
-                if grouped.scope != "tenant":
-                    if not grouped.scope_column:
-                        raise ToolError("Nhóm thiếu cột giới hạn phạm vi")
-                    value = employee[0 if grouped.scope == "self" else 1]
-                    filters.append((grouped.scope_column, [] if value is None else [value]))
+            scope_name = grouped.scope
+            filters.extend(grouped.row_filters.items())
+            if grouped.scope != "tenant":
+                if not grouped.scope_column:
+                    raise ToolError("Nhóm thiếu cột giới hạn phạm vi")
+                value = employee[0 if grouped.scope == "self" else 1]
+                filters.append((grouped.scope_column, [] if value is None else [value]))
             if any(c.lower() not in snapshot["tables"][key]["columns"] for c, _ in filters):
                 raise ToolError("Chính sách giới hạn dòng dùng cột không tồn tại")
             self.rules[key] = {"tenant_column": rule.tenant_column, "row_filters": filters,
-                "scope": grouped.scope if grouped else "tenant",
+                "scope": scope_name,
                 "lookup_columns": [c.lower() for c in rule.lookup_columns if c.lower() in table["columns"]]}
             table["meaning"] = rule.meaning
             if grouped:
@@ -177,7 +162,7 @@ class SQLPolicy:
                     "tenant": "trong tenant tài khoản",
                     "self": "chỉ hồ sơ của bản thân tài khoản, không phải toàn công ty",
                     "department": "chỉ phòng ban hiện tại của tài khoản, không phải toàn công ty",
-                }[grouped.scope] + "; bộ lọc được engine bắt buộc áp dụng."
+                }[scope_name] + "; bộ lọc được engine bắt buộc áp dụng."
             self.tables[key] = table
         if not self.tables:
             raise ToolError("Tài khoản chưa được cấp bảng/cột ERP phù hợp trong chính sách truy vấn")
@@ -212,8 +197,11 @@ class SQLPolicy:
                     raise ValueError(f"Cấu trúc SQL bị cấm: {name}")
             for fn in tree.find_all(exp.Func):
                 name = fn.name.upper() if isinstance(fn, exp.Anonymous) else fn.sql_name().upper()
-                if isinstance(fn.parent, exp.Dot) or name not in SAFE_FUNCTIONS:
-                    raise ValueError("Hàm SQL chưa được cấp phép")
+                # SQLGlot chèn CAST ngày khi đọc DATEDIFF/DATEADD T-SQL.
+                if isinstance(fn.parent, exp.Dot) or (
+                    name not in SAFE_FUNCTIONS and not isinstance(fn, exp.TimeStrToTime)
+                ):
+                    raise ValueError(f"Hàm SQL chưa được cấp phép: {name}")
             for table in tree.find_all(exp.Table):
                 if not isinstance(table.this, exp.Identifier) or table.catalog:
                     raise ValueError("Không cho phép nguồn ngoài DB hoặc table function")

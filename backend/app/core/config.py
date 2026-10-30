@@ -194,11 +194,19 @@ class Settings(BaseSettings):
     cache_ttl_seconds: int = 3600
     history_max_turns: int = 20
 
-    # ------------------------------------------------- CSDL app tự quản lý ---
-    # Sổ văn bản, mẫu báo cáo: những thứ hệ thống này TỰ SINH ra và phải ghi lại.
-    # Không nằm trên ERP vì ERP chỉ cho đọc.
-    database_url: str = "sqlite+aiosqlite:///./data/demo.db"
+    # ------------------------------------------------- SQLite pháp lý ---
+    # Chỉ quản lý điều khoản, phiên bản và bằng chứng câu trả lời.
+    database_url: str = "sqlite+aiosqlite:///./legal_data/legal.db"
     database_echo: bool = False
+
+    # MSSQL nghiệp vụ bắt buộc cho mẫu, văn bản và đăng ký đầu ra.
+    ai_database_url: str = ""
+    ai_default_partition_id: int | None = None
+    # Worker UC37 dùng hàng đợi MSSQL có sẵn, không tạo bảng riêng.
+    task_worker_enabled: bool = True
+    task_worker_poll_seconds: float = Field(default=2, ge=0.2, le=60)
+    task_lease_seconds: int = Field(default=120, ge=30, le=3600)
+    task_execution_timeout_seconds: int = Field(default=1800, ge=10, le=86400)
 
     # ------------------------------------------------- CSDL ERP (CHỈ ĐỌC) ---
     # Nguồn sự thật về phòng ban / thiết bị / nhân sự. Quyền được cấp là chỉ đọc,
@@ -208,8 +216,11 @@ class Settings(BaseSettings):
     # Bỏ trống => tắt hẳn phần đọc ERP, các tool số liệu báo "chưa cấu hình".
     erp_database_url: str = ""
     erp_echo: bool = False
+    # Tương thích quy tắc Admin toàn quyền hiện tại; cần đối chiếu override ERP trước khi đổi.
+    erp_static_admin_full_access: bool = True
     # Truy vấn số liệu ERP dùng pipeline discovery nội bộ.
     erp_schema_file: str = "data/erp_schema.json"
+    erp_sql_log_dir: str = "data/sql_logs"
     erp_schema_refresh_seconds: float = Field(default=300, ge=10, le=86400)
     erp_sql_policy_file: str = "config/erp_sql_policy.json"
     erp_semantic_file: str = "config/erp_semantic.yaml"
@@ -267,6 +278,9 @@ class Settings(BaseSettings):
     # (xem app/documents/slide_deck.py). "generate": đường cũ, để LLM của Presenton
     # tự chọn layout và viết lại slide - giữ lại để rollback bằng một biến môi trường.
     presenton_render_mode: str = "direct"
+    slide_max_slides: int = Field(default=15, ge=2, le=50)
+    slide_document_max_mb: int = Field(default=20, ge=1, le=100)
+    slide_document_max_chars: int = Field(default=60000, ge=1000, le=500000)
     # Đường "direct": Qwen viết tổng quan, nhận xét biểu đồ và kết luận (có kiểm số,
     # chữ hệ lạ, viết lại tối đa 3 lần). Tắt = mọi chữ do code tính.
     presenton_summary: bool = True
@@ -282,6 +296,13 @@ class Settings(BaseSettings):
     minio_secret_key: str = "minioadmin"
     minio_secure: bool = False
     minio_bucket: str = "tpv-documents"
+    minio_ingest_buckets: list[str] = Field(default_factory=list)
+    # MinIO BE chỉ đọc nguồn; không đổi kho upload/output phía AI.
+    be_minio_endpoint: str = ""
+    be_minio_access_key: str = ""
+    be_minio_secret_key: str = ""
+    be_minio_secure: bool = True
+    be_minio_buckets: list[str] = Field(default_factory=list)
 
     upload_dir: str = "./data/uploads"
     output_dir: str = "./data/output"
@@ -290,6 +311,7 @@ class Settings(BaseSettings):
     # lần đọc cả tài liệu - dựng lại tốn vài lượt LLM nên phải giữ được qua các
     # lần khởi động lại.
     mindmap_dir: str = "./data/mindmaps"
+    saved_documents_dir: str = "./data/saved_documents"
 
     # ------------------------------------------------------- Sơ đồ tư duy ---
     # Pha MAP đọc từng mẻ chunk, pha REDUCE gộp lại thành một cây. Hạn mức token

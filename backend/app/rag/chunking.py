@@ -252,6 +252,9 @@ class Chunker:
         def close() -> None:
             if any(b.strip() for b in body):
                 sections.append((title, chapter, "\n".join(body).strip(), unit))
+            elif title:
+                # Điều ngắn có toàn bộ nội dung ngay trên dòng tiêu đề vẫn là nội dung.
+                sections.append(("", chapter, title, unit))
 
         for i, line in enumerate(lines):
             if i in consumed:

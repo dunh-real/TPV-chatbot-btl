@@ -24,7 +24,7 @@ def query_result():
 
 
 @pytest.fixture
-async def environment(tmp_path, monkeypatch, query_result):
+async def environment(tmp_path, monkeypatch, query_result, business_store):
     engine = create_async_engine("sqlite+aiosqlite://")
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
@@ -39,7 +39,7 @@ async def environment(tmp_path, monkeypatch, query_result):
         questions.append(question)
         return query_result
     for module in (report,drafting):
-        monkeypatch.setattr(module, "session_scope", scope)
+        monkeypatch.setattr(module, "session_scope", scope, raising=False)
         monkeypatch.setattr(module, "query_erp", query)
     monkeypatch.setattr(get_settings(), "output_dir", str(tmp_path))
     yield questions
@@ -47,7 +47,7 @@ async def environment(tmp_path, monkeypatch, query_result):
 
 
 def initial():
-    return {"request":"Lập báo cáo số lượng theo danh mục tháng 9/2026", "inputs":{},
+    return {"request":"Lập báo cáo số lượng theo danh mục tháng 9/2026", "inputs":{"so_ky_hieu":"TEST/BC"},
         "params":{"ky":"2026-09", "thang":9, "nam":2026, "compare_to":"2026-08", "ma_don_vi":[]},
         "ma_don_vi":"", "template":{"ma_template":"BC_ERP", "ten_bao_cao":"Báo cáo ERP", "fields":{}, "file_path":""}}
 
@@ -83,6 +83,14 @@ async def test_draft_no_longer_requires_fixed_template_fields(environment):
 
 
 async def test_local_powerpoint_contains_every_dynamic_value(environment, monkeypatch):
+    async def no_llm(*args, **kwargs):
+        return None, {"attempts": []}
+
+    async def local_unit(*args, **kwargs):
+        return "Đơn vị thử nghiệm"
+
+    monkeypatch.setattr(presentation, "_summarize", no_llm)
+    monkeypatch.setattr(presentation, "_ten_don_vi", local_unit)
     state = initial()
     state.update(await report.gather_data_node(state))
     state.update(await presentation.brief_node(state))

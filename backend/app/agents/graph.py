@@ -42,7 +42,6 @@ from app.agents.nodes.drafting import (
     export_node,
     extract_params_node,
     fetch_data_node,
-    register_node,
     render_sections_node,
     select_template_node,
     validate_node,
@@ -53,7 +52,6 @@ from app.agents.nodes.report import (
     extract_params_node as agg_extract_params_node,
     gather_data_node,
     reconcile_node,
-    register_node as agg_register_node,
     render_node as agg_render_node,
     validate_node as agg_validate_node,
 )
@@ -77,6 +75,7 @@ from app.agents.state import (
     StepResult,
 )
 from app.services.conversation import get_memory
+from app.services.ai_outputs import tracked_workflow
 from app.services import errors, session_files
 from app.tools.base import ToolError
 
@@ -200,6 +199,7 @@ def get_document_graph():
     return build_document_graph()
 
 
+@tracked_workflow("Review")
 async def run_document_workflow(
     file_path: str,
     file_name: str = "",
@@ -217,6 +217,30 @@ async def run_document_workflow(
     }
     result = await get_document_graph().ainvoke(state)
     return result.get("result", {})
+
+
+@tracked_workflow("Summarize")
+async def run_summary_workflow(file_path: str, file_name: str = "", length: str = "medium",
+                               structure: str = "bullets", focus: str = ""):
+    """UC31 độc lập; dùng lại parser, nguồn và cơ chế lưu tác vụ hiện có."""
+    from app.agents.nodes.summarization import summarize
+    from app.services.llm import LLMError
+    try:
+        return await summarize(file_path, file_name, length, structure, focus)
+    except (ValueError, OSError, LLMError) as exc:
+        return dict(error=str(exc),summary="",sections=[],summary_refs=[],all_refs=[],
+                    length=length,structure=structure,coverage={"complete":False},warnings=[])
+
+
+@tracked_workflow("Summarize")
+async def run_analysis_workflow(file_path: str, file_name: str = "", noi_gui: str = "", rule_set: str = ""):
+    """Tóm tắt/trích nhiệm vụ chỉ parse và phân tích nội dung, không chạy toàn bộ soát lỗi."""
+    state = {"file_path": file_path, "file_name": file_name, "departments": [], "trace": {}}
+    state.update(await parse_node(state))
+    state.update(await tasks_node(state))
+    if not state.get("error") and not state.get("summary") and not state.get("tasks"):
+        state["error"] = "Không phân tích được nội dung tài liệu; vui lòng chạy lại"
+    return {key: state.get(key) for key in ("summary", "summary_refs", "tasks", "all_refs", "error")}
 
 
 # --------------------------------------------------------------------------- #
@@ -268,7 +292,6 @@ def build_draft_graph():
     graph.add_node("count_retry", _count_retry)
     graph.add_node("validate", validate_node)
     graph.add_node("export", export_node)
-    graph.add_node("register", register_node)
 
     graph.set_entry_point("extract_params")
     graph.add_conditional_edges("extract_params", route_after_params,
@@ -280,8 +303,7 @@ def build_draft_graph():
     graph.add_conditional_edges("validate", route_after_validate,
                                 {"render_sections": "count_retry", "export": "export"})
     graph.add_edge("count_retry", "render_sections")
-    graph.add_edge("export", "register")
-    graph.add_edge("register", END)
+    graph.add_edge("export", END)
     return graph.compile()
 
 
@@ -295,7 +317,7 @@ def build_draft_doc_graph():
 
     Ngắn hơn nhánh CSDL vì bỏ được ba bước không còn nghĩa: không tra ERP,
     không chọn mẫu (dàn ý dựng từ chính tài liệu), không tra quy định làm căn cứ.
-    Ba bước cuối - `validate`, `export`, `register` - dùng LẠI của nhánh CSDL,
+    Hai bước cuối - `validate`, `export` - dùng lại của nhánh CSDL,
     nên van chắn số, cách cấp số ký hiệu và cách ghi sổ văn bản giống hệt nhau.
     """
     from app.agents.nodes.drafting_doc import outline_node, read_document_node
@@ -308,7 +330,6 @@ def build_draft_doc_graph():
     graph.add_node("count_retry", _count_retry)
     graph.add_node("validate", validate_node)
     graph.add_node("export", export_node)
-    graph.add_node("register", register_node)
 
     graph.set_entry_point("read_document")
     graph.add_conditional_edges("read_document", route_after_document,
@@ -320,8 +341,7 @@ def build_draft_doc_graph():
     graph.add_conditional_edges("validate", route_after_validate,
                                 {"render_sections": "count_retry", "export": "export"})
     graph.add_edge("count_retry", "render_sections")
-    graph.add_edge("export", "register")
-    graph.add_edge("register", END)
+    graph.add_edge("export", END)
     return graph.compile()
 
 
@@ -330,6 +350,7 @@ def get_draft_doc_graph():
     return build_draft_doc_graph()
 
 
+@tracked_workflow("Draft")
 async def run_draft_workflow(
     request: str,
     ma_don_vi: str | None = None,
@@ -348,7 +369,7 @@ async def run_draft_workflow(
         "nguon": "tai_lieu" if tu_tai_lieu else "csdl",
         "file_id": file_id or "",
         # `params` phải có sẵn kể cả nhánh tài liệu (không có bước trích tham số):
-        # `export_node` và `register_node` đọc `params["ky"]` để đặt tên file và
+        # `export_node` đọc `params["ky"]` để đặt tên file và
         # ghi sổ, thiếu là KeyError ngay trước lúc xuất file.
         "params": {} if not tu_tai_lieu else {"loai_bao_cao": request, "thang": None,
                                               "nam": None, "ky": None, "ghi_chu": ""},
@@ -364,11 +385,14 @@ async def run_draft_workflow(
         "ma_don_vi": result.get("ma_don_vi", ""),
         "template": result.get("template", {}).get("ma_template", ""),
         "template_name": result.get("template", {}).get("ten_bao_cao", ""),
+        "template_id": result.get("template", {}).get("template_id"),
+        "template_version": result.get("template", {}).get("template_version"),
         "data": result.get("data", {}),
         "sections": result.get("sections", []),
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
         "registered_as": result.get("registered_as", ""),
+        "so_ky_hieu": result.get("so_ky_hieu", ""),
         "regulations": result.get("regulations", []),
         "assumptions": result.get("assumptions", []),
         "data_notes": result.get("data_notes", []),
@@ -395,7 +419,6 @@ def build_aggregate_graph():
     graph.add_node("render", agg_render_node)
     graph.add_node("validate", agg_validate_node)
     graph.add_node("export", agg_export_node)
-    graph.add_node("register", agg_register_node)
 
     graph.set_entry_point("extract_params")
     graph.add_edge("extract_params", "gather_data")
@@ -406,8 +429,7 @@ def build_aggregate_graph():
     graph.add_edge("charts", "render")
     graph.add_edge("render", "validate")
     graph.add_edge("validate", "export")
-    graph.add_edge("export", "register")
-    graph.add_edge("register", END)
+    graph.add_edge("export", END)
     return graph.compile()
 
 
@@ -416,6 +438,7 @@ def get_aggregate_graph():
     return build_aggregate_graph()
 
 
+@tracked_workflow("Aggregate")
 async def run_aggregate_workflow(
     request: str,
     inputs: dict[str, Any] | None = None,
@@ -433,6 +456,10 @@ async def run_aggregate_workflow(
     return {
         "request": request,
         "params": result.get("params", {}),
+        "template": result.get("template", ""),
+        "template_name": result.get("template_name", ""),
+        "template_id": result.get("template_id"),
+        "template_version": result.get("template_version"),
         "data": result.get("data", {}),
         "sections": sections,
         "reconciliation": result.get("reconciliation", []),
@@ -440,6 +467,7 @@ async def run_aggregate_workflow(
         "validation": result.get("validation", {}),
         "output_path": result.get("output_path", ""),
         "registered_as": result.get("registered_as", ""),
+        "so_ky_hieu": result.get("so_ky_hieu", ""),
         "assumptions": result.get("assumptions", []),
         "error": result.get("error", ""),
     }
@@ -477,18 +505,37 @@ def get_presentation_graph():
     return build_presentation_graph()
 
 
+@tracked_workflow("Slide")
 async def run_presentation_workflow(
     request: str,
     inputs: dict[str, Any] | None = None,
     history: list[dict[str, str]] | None = None,
+    nguon: str = "csdl",
+    file_id: str = "",
 ) -> dict[str, Any]:
     state: PresentationState = {"request": request, "history": history or [],
                                 "inputs": inputs or {}}
-    result = await get_presentation_graph().ainvoke(state)
+    if nguon == "tai_lieu":
+        from datetime import date
+        from app.agents.nodes.presentation_document import prepare
+        from app.agents.nodes.presentation import render_node, verify_node
+        try:
+            outline, sources = await prepare(file_id, request)
+            state.update(data={"document": sources}, params={"ky": date.today().strftime("%Y-%m")},
+                         document_outline=outline, sources=sources)
+            state.update(await render_node(state))
+            state.update(await verify_node(state))
+            result = state
+        except (ValueError, OSError) as exc:
+            result = {"error": str(exc)}
+    else:
+        result = await get_presentation_graph().ainvoke(state)
 
     # `brief` là thứ đã gửi cho Presenton. Trả về luôn để khi bộ slide có câu
     # lạ, người kiểm tra biết ngay là số liệu đưa vào sai hay bên kia viết thêm.
     return {
+        "sources": result.get("sources", []),
+        "document_outline": result.get("document_outline"),
         "request": request,
         "params": result.get("params", {}),
         "brief": result.get("brief", ""),
@@ -677,8 +724,10 @@ async def report_branch(state: AgentState, request: str) -> dict[str, Any]:
 
 
 async def presentation_branch(state: AgentState, request: str) -> dict[str, Any]:
-    result = await run_presentation_workflow(request, inputs=state.get("inputs", {}),
-                                             history=state.get("history"))
+    kwargs = dict(inputs=state.get("inputs", {}), history=state.get("history"))
+    if state.get("file_id"):
+        kwargs.update(nguon="tai_lieu", file_id=state["file_id"])
+    result = await run_presentation_workflow(request, **kwargs)
     return {"answer": _summarize_presentation(result), "result": result,
             "error": result.get("error", "")}
 

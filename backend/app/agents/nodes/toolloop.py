@@ -98,6 +98,24 @@ def _tool_message(call: ToolCall, content: str) -> dict[str, Any]:
     return {"role": "tool", "tool_call_id": call.id, "name": call.name, "content": content}
 
 
+def _erp_answer(results) -> str:
+    """Hiển thị nguyên bảng nguồn khi model chưa kết luận được hoặc viết sai số."""
+    def cell(value):
+        return ("—" if value is None else str(value)).replace("|", "\\|").replace("\n", " ").replace("\r", " ")
+    parts = ["Dưới đây là dữ liệu ERP trả về; giữ nguyên mã phân loại khi chưa có tên được xác nhận."]
+    for ref_id, result in results:
+        columns = [c.get("label") or c["name"] for c in result["columns"]]
+        parts += [f"{result.get('question', 'Kết quả truy vấn')} [{ref_id}]", "",
+                  "| " + " | ".join(map(cell, columns)) + " |",
+                  "| " + " | ".join("---" for _ in columns) + " |"]
+        parts += ["| " + " | ".join(map(cell, row)) + " |" for row in result["rows"]]
+        parts.extend(result.get("warnings", []))
+        if result.get("truncated"):
+            parts.append("Bảng chỉ là phần xem trước, không suy ra tổng từ các dòng này.")
+        parts.append("")
+    return "\n".join(parts)
+
+
 def looks_empty(result: Any) -> bool:
     """Kết quả hợp lệ nhưng rỗng ruột.
 
@@ -196,6 +214,7 @@ async def run_tool_loop(
     schemas = tool_schemas()
     tool_log: list[dict[str, Any]] = []
     known_numbers: set[str] = set()
+    erp_results: list[tuple[int, dict]] = []
     # Tập chữ ký, không phải một chữ ký: chu trình A -> B -> A cũng là kẹt, mà
     # chỉ nhớ lời gọi ngay trước thì không bao giờ thấy nó.
     seen_signatures: set[str] = set()
@@ -300,6 +319,8 @@ async def run_tool_loop(
             if result is None:
                 tool_errors += 1
             else:
+                if call.name == "query_erp" and isinstance(result, dict) and result.get("rows"):
+                    erp_results.append((ref_id, result))
                 payload = {"rows": result["rows"], "columns": result["columns"], "question": result["question"]} \
                     if call.name == "query_erp" and isinstance(result, dict) and "rows" in result else result
                 collect_known_numbers(payload, known_numbers)
@@ -314,6 +335,24 @@ async def run_tool_loop(
         # Dừng 2: hết vòng mà model vẫn đòi gọi tool.
         stop_reason = "chạm trần số bước"
 
+    # Đã có số liệu ERP nhưng model kẹt gọi tool: cho đúng một lượt kết luận.
+    if not answer and stop_reason in {"gọi lặp", "chạm trần số bước", "quá nhiều lỗi công cụ"} and any(
+        item["tool"] == "query_erp" and item.get("ok") and not item.get("empty") for item in tool_log
+    ):
+        try:
+            final = await get_llm().chat_with_tools(
+                [*messages, {"role": "user", "content":
+                    "Dừng gọi công cụ. Trả lời bằng dữ liệu ERP đã có, dẫn nguồn [n]. "
+                    "Nêu rõ phần chưa có hoặc phạm vi khác nhau; không tự gán tên cho mã enum chưa xác nhận."}],
+                schemas, tool_choice="none", thinking=False)
+            if final.content and not final.wants_tools:
+                answer, stop_reason = final.content, "hoàn thành"
+        except LLMError as exc:
+            logger.warning("Chưa kết luận được từ số liệu ERP đã có: %s", exc)
+
+    if not answer and erp_results and not pending_approval:
+        answer, stop_reason = _erp_answer(erp_results), "hoàn thành"
+
     # Van số: chỉ kiểm khi thực sự có câu trả lời và đã gọi được tool nào đó.
     validation: dict[str, Any] = {"status": "skipped", "issues": []}
     # Marker phải bị gỡ TRƯỚC khi đối chiếu: "[1]" mà lọt vào `check_numbers` sẽ bị
@@ -323,6 +362,10 @@ async def run_tool_loop(
         # Kỳ báo cáo nhắc trong câu hỏi cũng là số hợp lệ.
         known_numbers |= collect_known_numbers(request)
         check = check_numbers(answer_plain, known_numbers, "agent")
+        if not check.ok and erp_results:
+            logger.warning("Diễn giải ERP sai số; trả bảng nguồn thay thế: %s", check.unverified)
+            answer = _erp_answer(erp_results)
+            check = check_numbers(references.strip_markers(answer), known_numbers, "agent")
         validation = {
             "status": "failed" if not check.ok else "passed",
             "issues": ([{"type": "unverified_number", "section": "agent",

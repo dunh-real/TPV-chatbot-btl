@@ -18,7 +18,7 @@ from app.documents import mindmap
 from app.main import app
 from app.services import mindmap_store
 
-pytestmark = pytest.mark.anyio
+pytestmark = [pytest.mark.anyio, pytest.mark.usefixtures("authorized_account")]
 
 
 # --------------------------------------------------------------------------- #

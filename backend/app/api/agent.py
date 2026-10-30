@@ -175,8 +175,10 @@ def ten_that(ten_tren_dia: str) -> str:
 
 @router.post("/upload", response_model=UploadResponse, summary="Tải file cho agent xử lý")
 async def upload(background: BackgroundTasks, file: UploadFile = File(...),
-                 kind: str = Form(default="upload")) -> UploadResponse:
-    """Lưu file cho agent, ĐỒNG THỜI nạp nó vào kho tri thức.
+                 kind: str = Form(default="upload"), ingest: bool = Form(default=True)) -> UploadResponse:
+    """Lưu file đính kèm; ingest=false không nạp kho hoặc tạo bản ghi tài liệu.
+
+    Mặc định ingest=true giữ tương thích giao diện AI cũ.
 
     Hai việc này từng nằm ở hai cửa: cửa này lưu file để soát/trích dẫn, còn
     `/api/documents/upload` mới nạp vào kho. Phía gọi phải nhớ gọi cả hai, và
@@ -205,7 +207,7 @@ async def upload(background: BackgroundTasks, file: UploadFile = File(...),
         await file.close()
 
     ten = ten_that(ref.path.name)
-    if Path(ten).suffix.lower() in SUPPORTED_SUFFIXES:
+    if ingest and Path(ten).suffix.lower() in SUPPORTED_SUFFIXES:
         background.add_task(nap_vao_kho, ref.path, ten)
     return UploadResponse(**ref.as_dict())
 
@@ -247,4 +249,4 @@ async def tools() -> list[ToolInfo]:
 
 @router.get("/download/{filename}", summary="Tải file agent vừa tạo")
 async def download(filename: str) -> FileResponse:
-    return output_file_response(filename)
+    return await output_file_response(filename)

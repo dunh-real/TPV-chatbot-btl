@@ -1,21 +1,8 @@
-"""Đọc danh tính và quyền của một tài khoản từ ERP.
+"""Đọc quyền ERP theo role và quyền trực tiếp; không cấp quyền theo ID tài khoản.
 
-Bốn bảng, tất cả chỉ ĐỌC: `AbpUsers` (ai), `AbpUserRoles` (mang vai trò nào),
-`AbpRoles` (vai trò đó tên gì, có phải Admin tĩnh không), `AbpPermissions`
-(vai trò đó được cấp những quyền nào).
-
-VÌ SAO ADMIN TĨNH PHẢI XỬ LÝ RIÊNG
-
-Vai trò `Admin` của ABP có `IsStatic = 1`, và ABP cấp quyền cho nó NGẦM trong mã
-nguồn chứ không ghi dòng nào vào `AbpPermissions`. Đọc bảng quyền theo đúng nghĩa
-đen thì admin hoá ra gần như không có quyền gì - số liệu thật trên CSDL này:
-
-    tenant 63:0 quyền · 64:0 · 65:0 · 66:0 · 78:0 · 94:7
-
-Bảy dòng của tenant 94 là vài quyền quản trị người dùng được gán thêm, không phải
-toàn bộ. Nên `is_static_admin` được tách thành một cờ riêng, và `has()` trả về
-True cho mọi quyền khi cờ đó bật. Bỏ nhánh này đi thì tài khoản admin bị chính hệ
-thống khoá ra ngoài - đúng cái bẫy mà lần đọc đầu tiên suýt rơi vào.
+User grant/deny được xét trước quyền role. Các role lấy hợp quyền được cấp;
+role từ chối không trừ grant của role khác. Ngoại lệ Admin giữ tương thích qua
+ERP_STATIC_ADMIN_FULL_ACCESS, không phải quy tắc suy ra được chỉ từ schema DB.
 """
 
 from __future__ import annotations
@@ -42,17 +29,19 @@ class AccountAccess:
     role_names: tuple[str, ...] = ()
     permissions: frozenset[str] = field(default_factory=frozenset)
     is_static_admin: bool = False
+    denied_permissions: frozenset[str] = field(default_factory=frozenset)
 
     def has(self, permission: str) -> bool:
-        """Có quyền này không. Admin tĩnh thì luôn có - xem ghi chú đầu file."""
-        return self.is_static_admin or permission in self.permissions
+        """Deny trực tiếp chặn cả grant role; ngoại lệ Admin không bỏ qua deny user."""
+        return permission not in self.denied_permissions and (
+            self.is_static_admin or permission in self.permissions)
 
     def has_any(self, *permissions: str) -> bool:
         return any(self.has(p) for p in permissions)
 
     def describe(self) -> str:
         vai = ", ".join(self.role_names) or "không vai trò"
-        so = "toàn quyền (Admin tĩnh)" if self.is_static_admin else f"{len(self.permissions)} quyền"
+        so = "Admin (áp dụng deny trực tiếp)" if self.is_static_admin else f"{len(self.permissions)} quyền"
         return f"{self.user_name} (#{self.user_id}, tenant {self.tenant_id}) - {vai} - {so}"
 
 
@@ -99,14 +88,21 @@ class ErpAuthRepository:
         else:
             return None
 
-        row = (await self.session.execute(text(sql), tham_so)).fetchone()
-        if row is None:
+        row = (await self.session.execute(text(sql), tham_so)).fetchmany(2)
+        if len(row) != 1:
             return None
 
-        uid, tenant_id, user_name, name, surname, email = row
-        roles = await self._roles_of(uid)
+        uid, tenant_id, user_name, name, surname, email = row[0]
+        roles = await self._roles_of(uid, tenant_id)
         role_ids = tuple(r[0] for r in roles)
-        perms = await self._permissions_of(role_ids) if role_ids else frozenset()
+        perms = await self._permissions_of(role_ids, tenant_id) if role_ids else frozenset()
+        direct = (await self.session.execute(text(
+            "SELECT Name, IsGranted FROM AbpPermissions WHERE UserId=:uid AND RoleId IS NULL "
+            "AND (TenantId=:tenant OR (TenantId IS NULL AND :tenant IS NULL))"),
+            {"uid": uid, "tenant": tenant_id})).fetchall()
+        granted = {name for name, value in direct if value}
+        denied = {name for name, value in direct if not value} - granted
+        from app.core.config import get_settings
 
         return AccountAccess(
             user_id=uid,
@@ -116,11 +112,12 @@ class ErpAuthRepository:
             email=email or "",
             role_ids=role_ids,
             role_names=tuple(r[1] for r in roles),
-            permissions=perms,
-            is_static_admin=any(r[2] for r in roles),
+            permissions=frozenset((set(perms) | granted) - denied),
+            denied_permissions=frozenset(denied),
+            is_static_admin=any(r[2] for r in roles) and get_settings().erp_static_admin_full_access,
         )
 
-    async def _roles_of(self, user_id: int) -> list[tuple[int, str, bool]]:
+    async def _roles_of(self, user_id: int, tenant_id: int | None) -> list[tuple[int, str, bool]]:
         """(id, tên hiển thị, có phải Admin tĩnh) của từng vai trò.
 
         `IsStatic` một mình chưa đủ: vai trò `User` cũng tĩnh mà chẳng có quyền
@@ -131,13 +128,15 @@ class ErpAuthRepository:
             FROM AbpUserRoles ur
             JOIN AbpRoles r ON r.Id = ur.RoleId
             WHERE ur.UserId = :uid AND r.IsDeleted = 0
-            ORDER BY r.Id"""), {"uid": user_id})).fetchall()
+              AND (ur.TenantId = :tenant OR (ur.TenantId IS NULL AND :tenant IS NULL))
+              AND (r.TenantId = :tenant OR (r.TenantId IS NULL AND :tenant IS NULL))
+            ORDER BY r.Id"""), {"uid": user_id, "tenant": tenant_id})).fetchall()
         return [
             (x[0], (x[1] or x[2] or "").strip(), bool(x[3]) and (x[2] or "").lower() == "admin")
             for x in rows
         ]
 
-    async def _permissions_of(self, role_ids: tuple[int, ...]) -> frozenset[str]:
+    async def _permissions_of(self, role_ids: tuple[int, ...], tenant_id: int | None) -> frozenset[str]:
         """Hợp của các quyền ĐƯỢC CẤP trên mọi vai trò người đó mang.
 
         `IsGranted = 0` là một dòng từ chối tường minh. Người mang hai vai trò,
@@ -148,10 +147,17 @@ class ErpAuthRepository:
             return frozenset()
         cho = ", ".join(f":r{i}" for i in range(len(role_ids)))
         tham_so = {f"r{i}": rid for i, rid in enumerate(role_ids)}
+        tham_so["tenant"] = tenant_id
         rows = (await self.session.execute(text(
-            f"SELECT DISTINCT Name FROM AbpPermissions "
-            f"WHERE IsGranted = 1 AND RoleId IN ({cho})"), tham_so)).fetchall()
-        return frozenset(x[0] for x in rows)
+            f"SELECT RoleId, Name, IsGranted FROM AbpPermissions "
+            f"WHERE RoleId IN ({cho}) AND UserId IS NULL "
+            "AND (TenantId = :tenant OR (TenantId IS NULL AND :tenant IS NULL))"), tham_so)).fetchall()
+        grants, denials = {}, {}
+        for role, name, value in rows:
+            (grants if value else denials).setdefault(role, set()).add(name)
+        # Cấu hình trùng grant/deny trong cùng role không có thứ tự đáng tin cậy: không mở quyền đó.
+        return frozenset(name for role, names in grants.items()
+                         for name in names - denials.get(role, set()))
 
     async def list_accounts(self, tenant_id: int | None, limit: int = 50) -> list[dict]:
         """Danh sách tài khoản để giao diện demo chọn người đăng nhập giả.

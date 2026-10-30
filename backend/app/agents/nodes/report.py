@@ -36,8 +36,7 @@ from app.documents.verify import (
     tim_chu_ngoai_he,
 )
 from app.db.erp_session import erp_session_scope
-from app.db.repository import TemplateRepository, VanBanRepository
-from app.db.session import session_scope
+from app.db.repository import TemplateRepository
 from app.services import storage
 from app.services.llm import LLMError, get_llm
 from app.services import errors
@@ -60,27 +59,6 @@ METRIC_LABELS = {
 }
 
 
-async def next_so_ky_hieu(session, nam: int, ky_hieu: str) -> str:
-    """Số thứ tự tiếp theo trong sổ văn bản của năm, cho một ký hiệu cụ thể.
-
-    Văn bản hành chính đánh số thứ tự trong sổ ("88/BC-HCQT"), không đánh theo
-    tháng - dạng "TH08/BC-HCQT" không qua được kiểm tra thể thức.
-
-    Đếm theo KÝ HIỆU chứ không theo loại văn bản: mỗi đơn vị có sổ riêng, nên
-    "BC-00003" và "BC-HCQT" là hai dãy số độc lập. Đếm chung thì báo cáo đầu tiên
-    của một đơn vị đã mang số 45 vì các đơn vị khác đã phát hành 44 văn bản.
-    """
-    from sqlalchemy import extract, func, select
-
-    from app.db.models import VanBan
-
-    result = await session.execute(
-        select(func.count()).select_from(VanBan).where(
-            VanBan.ma_van_ban.like(f"%/{ky_hieu}"),
-            extract("year", VanBan.ngay_van_ban) == nam,
-        )
-    )
-    return f"{(result.scalar() or 0) + 1:02d}/{ky_hieu}"
 
 
 def _ngay_tieng_viet(value: date) -> str:
@@ -343,9 +321,19 @@ async def _gather_from_documents(state: dict[str, Any], session) -> dict[str, An
         return {"error": "Không có báo cáo đơn vị nào để đọc. Hãy tải báo cáo lên rồi "
                          "truyền file_id qua inputs.files, hoặc vào sổ văn bản trước."}
 
-    reports = await anyio.to_thread.run_sync(
-        lambda: [read_unit_report(path, code, name) for code, name, path in targets]
-    )
+    import tempfile
+    from app.services.object_storage import ObjectStorage, parse_reference
+    with tempfile.TemporaryDirectory(prefix="tpv-report-") as folder:
+        local = []
+        for i, (code, name, path) in enumerate(targets):
+            if path.startswith(("minio:", "s3:")):
+                bucket, key = parse_reference(path)
+                target = Path(folder) / f"report-{i}.docx"
+                await anyio.to_thread.run_sync(lambda: ObjectStorage().download(bucket, key, target, target.name))
+                path = str(target)
+            local.append((code, name, path))
+        reports = await anyio.to_thread.run_sync(
+            lambda: [read_unit_report(path, code, name) for code, name, path in local])
     equipment = aggregate_reports(reports, params["ky"])
     logger.info("Tổng hợp từ tài liệu: %d/%d báo cáo đọc được, tổng thiết bị %s",
                 len(equipment["sources"]), len(targets),
@@ -806,14 +794,11 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
         return {"output_path": "", "error": str(exc)}
     so_nhap = so_nguoi_dung(inputs)
 
-    async with session_scope() as session:
-        if (trung := await kiem_so_van_ban(session, so_nhap)):
-            return {"output_path": "", "error": trung}
-        template = await TemplateRepository(session).get("BC_TONGHOP")
-        template_file = template.file_path if template else ""
-        so_ky_hieu = so_nhap or await next_so_ky_hieu(
-            session, params["nam"], "BC-HCQT"
-        )
+    if (trung := await kiem_so_van_ban(so_nhap)):
+        return {"output_path": "", "error": trung}
+    template = await TemplateRepository().get(inputs.get("ma_template") or "BC_TONGHOP")
+    template_file = template.file_path if template else ""
+    so_ky_hieu = so_nhap
 
     payload = DocumentPayload(
         meta={
@@ -843,34 +828,8 @@ async def export_node(state: dict[str, Any]) -> dict[str, Any]:
     path = await anyio.to_thread.run_sync(
         lambda: build_docx(payload, output_path, template_file or None)
     )
-    return {"output_path": str(path), "so_ky_hieu": so_ky_hieu}
-
-
-async def register_node(state: dict[str, Any]) -> dict[str, Any]:
-    output_path = state.get("output_path")
-    if not output_path:
-        return {}
-
-    from app.db.models import VanBan
-
-    params = state["params"]
-    ma_van_ban = state.get("so_ky_hieu") or f"{params['thang']:02d}/BC-HCQT"
-    try:
-        async with session_scope() as session:
-            await VanBanRepository(session).upsert(VanBan(
-                ma_van_ban=ma_van_ban,
-                ten_van_ban=state.get("inputs", {}).get("trich_yeu") or state.get("request", "Báo cáo ERP")[:200],
-                loai_van_ban="bao_cao_tong_hop",
-                # Báo cáo tổng hợp là của cơ quan, không của đơn vị nào - để
-                # trống `ma_don_vi` thì nó không bị đếm nhầm là báo cáo đơn vị.
-                ky=params["ky"],
-                noi_gui="Phòng Hành chính nhân sự",
-                noi_nhan="Ban Giám đốc",
-                mo_ta=f"Tổng hợp kỳ {params['ky']}",
-                ngay_van_ban=ngay_ban_hanh_an_toan(state.get("inputs")),
-                file_path=output_path, dang_file="docx",
-            ))
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Không ghi được sổ văn bản: %s", exc)
-        return {}
-    return {"registered_as": ma_van_ban}
+    return {"output_path": str(path), "so_ky_hieu": so_ky_hieu,
+            "template_id": getattr(template, "ai_id", None),
+            "template_version": getattr(template, "ai_version", None),
+            "template": template.ma_template if template else "",
+            "template_name": template.ten_bao_cao if template else ""}

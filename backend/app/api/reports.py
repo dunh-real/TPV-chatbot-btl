@@ -12,7 +12,6 @@ from fastapi.responses import FileResponse
 from app.agents.graph import run_aggregate_workflow, run_draft_workflow
 from app.api.files import output_file_response
 from app.db.repository import TemplateRepository
-from app.db.session import session_scope
 from app.schemas.reports import (
     AggregateRequest,
     AggregateResponse,
@@ -30,12 +29,11 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 @router.get("/templates", response_model=list[TemplateSummary], summary="Danh sách mẫu báo cáo")
 async def list_templates() -> list[TemplateSummary]:
-    async with session_scope() as session:
-        return [TemplateSummary(**item) for item in await TemplateRepository(session).catalog()]
+    return [TemplateSummary(**item) for item in await TemplateRepository().catalog()]
 
 
 @router.post("/draft", response_model=DraftResponse, summary="Soạn báo cáo theo mẫu",
-             dependencies=[Depends(quyen.can_quyen("Ai.ReportSummary.Create", "soạn văn bản"))])
+             dependencies=[Depends(quyen.can_quyen("Ai.ReportDrafting", "soạn văn bản"))])
 async def draft(request: DraftRequest) -> DraftResponse:
     """Soạn một báo cáo từ MỘT nguồn. `nguon` chọn nguồn đó là gì.
 
@@ -77,4 +75,4 @@ async def aggregate(request: AggregateRequest) -> AggregateResponse:
 @router.get("/download/{filename}", summary="Tải file báo cáo đã sinh")
 async def download(filename: str) -> FileResponse:
     # Chặn cả vượt thư mục, đọc chéo thuê bao, lẫn bản cũ trong cache trình duyệt.
-    return output_file_response(filename)
+    return await output_file_response(filename)

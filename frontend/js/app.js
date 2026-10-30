@@ -121,13 +121,38 @@
     review: ['Soát tài liệu', 'Workflow 2 · rule engine cấu trúc + soát chữ nghĩa + phân rã nhiệm vụ'],
     draft: ['Soạn báo cáo', 'Workflow 3 · đọc một tài liệu tải lên, kiểm chứng từng con số trước khi xuất file'],
     aggregate: ['Tổng hợp báo cáo', 'Workflow 4 · nhiều đơn vị, biểu đồ do code vẽ, đối chiếu file đã gửi'],
+    routing: ['Phân luồng văn bản', 'UC33 · gợi ý đơn vị xử lý từ danh mục ERP'],
     slides: ['Tạo slide', 'Workflow 5 · hệ thống soạn nội dung từng slide, Presenton render'],
     mindmap: ['Sơ đồ tư duy', 'Đọc cả tài liệu bằng MAP-REDUCE rồi dựng cây chủ đề; nội dung từng mục sinh khi bấm vào'],
     ocr: ['OCR tài liệu', 'Mô hình thị giác đọc chữ trong ảnh trang, trả về Markdown giữ nguyên cấu trúc'],
     corpus: ['Kho tri thức', 'Nạp tài liệu vào Qdrant và xem thống kê collection'],
     retrieval: ['Truy hồi (debug)', 'Xem hạng từng nhánh, điểm RRF và điểm rerank'],
+    tasks: ['Tác vụ AI', 'Theo dõi xử lý, sản phẩm đầu ra và thông báo'],
     tools: ['Công cụ & hệ thống', 'Danh mục tool của agent và trạng thái hạ tầng'],
   };
+
+  $('#routingSuggest').addEventListener('click', async function () {
+    var button = this, box = $('#routingResult'), file = $('#routingFile').files[0];
+    var text = $('#routingText').value.trim();
+    if ((!file && !text) || (file && text)) { box.textContent = 'Chọn một nguồn: file hoặc nội dung.'; return; }
+    button.disabled = true; box.textContent = 'Đang phân tích…';
+    try {
+      var result = file ? await API.routingFile(file) : await API.routingSuggest({ExtractedText: text});
+      box.replaceChildren();
+      var heading = document.createElement('h3');
+      var unit = result.DepartmentCatalog.find(function (d) { return d.id === result.AiPrimaryUnitId; });
+      heading.textContent = 'Chủ trì: ' + (unit ? unit.display_name : 'Cần xem xét'); box.appendChild(heading);
+      var note = document.createElement('p'); note.textContent = result.AiReason; box.appendChild(note);
+      var coords = document.createElement('p');
+      coords.textContent = 'Phối hợp: ' + result.DepartmentCatalog.filter(function (d) {
+        return result.AiCoordinatingUnitCodes.indexOf(d.code) >= 0;
+      }).map(function (d) { return d.display_name; }).join(', '); box.appendChild(coords);
+      var details = document.createElement('pre');
+      details.style.whiteSpace = 'pre-wrap';
+      details.textContent = JSON.stringify(result, null, 2); box.appendChild(details);
+    } catch (error) { box.textContent = error.message; }
+    finally { button.disabled = false; }
+  });
 
   var currentView = 'chat';
   function showView(name) {
@@ -138,7 +163,8 @@
     $('#viewTitle').textContent = VIEWS[name][0];
     $('#viewSub').textContent = VIEWS[name][1];
     app.classList.remove('nav-open');
-    location.hash = name;
+    if (!(name === 'tasks' && location.hash.indexOf('#tasks/') === 0)) location.hash = name;
+    if (name === 'tasks' && window.TaskUI) window.TaskUI.show();
     if (name === 'tools') loadToolsPage();
     if (name === 'corpus') loadStats();
     if (name === 'review' && !ruleSetsLoaded) loadRuleSets();
@@ -229,10 +255,15 @@
       var name = a.file_name || a.name || '';
       var kind = (a.kind || name.split('.').pop() || '').toLowerCase();
       var href = a.download_url ? API.getBase() + a.download_url : (resolver ? resolver(name) : '#');
-      wrap.appendChild(el('a', { class: 'artifact', href: href, target: '_blank', rel: 'noopener', download: name },
+      var link = el('a', { class: 'artifact', href: href, target: '_blank', rel: 'noopener', download: name },
         '<span class="artifact-ic ' + (['docx', 'pptx', 'pdf'].indexOf(kind) >= 0 ? kind : 'other') + '">' + esc(kind.toUpperCase() || 'FILE') + '</span>' +
         '<span class="artifact-body"><span class="artifact-name">' + esc(name) + '</span>' +
-        '<span class="artifact-sub">Bấm để tải về</span></span>'));
+        '<span class="artifact-sub">Bấm để tải về</span></span>');
+      if (a.download_url) link.addEventListener('click', function (event) {
+        event.preventDefault();
+        API.taskDownload(a.download_url).catch(function (error) { toast(errText(error), 'err'); });
+      });
+      wrap.appendChild(link);
     });
     return wrap;
   }
@@ -1914,7 +1945,7 @@
        trong này thì là bên kia viết thêm, không phải số liệu sai. */
     if (data.brief) {
       box.appendChild(el('div', { class: 'card' })).appendChild(
-        block('Số liệu đã gửi cho Presenton', null, '<pre class="json">' + esc(data.brief) + '</pre>', false));
+        block('Nội dung đã gửi cho Presenton', null, '<pre class="json">' + esc(data.brief) + '</pre>', false));
     }
     if ((data.assumptions || []).length) {
       box.appendChild(el('div', { class: 'card' },
@@ -1923,19 +1954,41 @@
     }
   }
 
+  var slideFile = null;
+  $('#slideSource').addEventListener('change', function () {
+    var fromFile = this.value === 'tai_lieu';
+    $('#slideFileField').hidden = !fromFile;
+    var input = $('#slideRequest');
+    if (['Tạo slide báo cáo nhân sự tháng 8', 'Tạo slide tóm lược nội dung tài liệu này'].indexOf(input.value.trim()) >= 0) {
+      input.value = fromFile ? 'Tạo slide tóm lược nội dung tài liệu này' : 'Tạo slide báo cáo nhân sự tháng 8';
+    }
+  });
+  wireDropzone('#slideDrop', '#slideFile', function (file) {
+    if (!/\.(docx|pdf)$/i.test(file.name)) { toast('Chỉ nhận DOCX hoặc PDF có lớp chữ', 'err'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast('File vượt giới hạn 20 MB', 'err'); return; }
+    slideFile = { file: file, file_id: '' };
+    markDropzone('#slideDrop', file);
+  });
+
   $('#slideRun').addEventListener('click', function () {
     var request = $('#slideRequest').value.trim();
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
+    var source = $('#slideSource').value, selected = slideFile;
+    if (source === 'tai_lieu' && !selected) { toast('Chọn tài liệu nguồn trước đã', 'err'); return; }
+    var inputs = Object.assign({}, prefs.inputs, collectInputs('slideInputs'));
     runWorkflow({
       button: this,
       box: $('#slideResult'),
-      label: 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render…',
+      label: source === 'tai_lieu' ? 'Đang tải tài liệu, soạn nội dung và dựng slide…' : 'Đang lấy số liệu, soạn nội dung từng slide và chờ Presenton render…',
       hint: { text: 'thường 45-90 giây — Presenton render xong mới trả về', slowAfter: 90 },
-      call: function (signal) {
-        return API.presentation({
-          request: request,
-          inputs: Object.assign({}, prefs.inputs, collectInputs('slideInputs')),
-        }, signal);
+      call: async function (signal) {
+        var body = { request: request, inputs: inputs, nguon: source };
+        if (source === 'tai_lieu') {
+          if (!selected.file_id) selected.file_id = (await API.agentUpload(selected.file, 'upload')).file_id;
+          if (signal.aborted) throw new DOMException('Đã hủy', 'AbortError');
+          body.file_id = selected.file_id;
+        }
+        return API.presentation(body, signal);
       },
       render: renderPresentation,
     });
@@ -3255,12 +3308,13 @@
 
   /* ─────────────────────────────── khởi động ─────────────────────────── */
   renderConvos();
-  var initial = (location.hash || '').replace('#', '');
+  var initial = (location.hash || '').replace('#', '').split('/')[0];
   showView(VIEWS[initial] ? initial : 'chat');
   chatInput.focus();
 
   window.addEventListener('hashchange', function () {
-    var name = (location.hash || '').replace('#', '');
+    var name = (location.hash || '').replace('#', '').split('/')[0];
     if (VIEWS[name] && name !== currentView) showView(name);
+    else if (name === "tasks" && window.TaskUI) window.TaskUI.show();
   });
 })();

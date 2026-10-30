@@ -282,7 +282,15 @@ def parse_docx(path: Path) -> DocumentStructure:
     blocks: list[Block] = []
     table_cells: list[Block] = []
     so_doan = so_bang = 0
-    for child in document.element.body.iterchildren():
+    def content(parent):
+        # Word thường bọc thân văn bản trong content control (w:sdt).
+        # Chỉ đi qua container, không đi vào bảng/đoạn để tránh đọc trùng ô.
+        for child in parent.iterchildren():
+            if child.tag in {qn("w:p"), qn("w:tbl")}:
+                yield child
+            elif child.tag in {qn("w:sdt"), qn("w:sdtContent"), qn("w:customXml"), qn("w:ins")}:
+                yield from content(child)
+    for child in content(document.element.body):
         if child.tag == qn("w:p"):
             paragraph = Paragraph(child, document)
             if not paragraph.text.strip():

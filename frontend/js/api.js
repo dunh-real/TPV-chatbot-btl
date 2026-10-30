@@ -35,6 +35,7 @@
   function setTenant(value) {
     tenant = String(value == null ? '' : value).trim();
     localStorage.setItem(LS_TENANT, tenant);
+    global.dispatchEvent(new Event("tpv-identity-change"));
     return tenant;
   }
 
@@ -47,6 +48,7 @@
   function setUser(value) {
     userId = String(value == null ? '' : value).trim();
     localStorage.setItem(LS_USER, userId);
+    global.dispatchEvent(new Event("tpv-identity-change"));
     return userId;
   }
 
@@ -55,6 +57,7 @@
     var out = Object.assign({}, headers || {});
     if (tenant) out['X-Tenant-Id'] = tenant;
     if (userId) out['X-User-Id'] = userId;
+    if (localStorage.getItem('tpv.notifyTasks') === 'true') out['X-Notify-On-Finish'] = 'true';
     return out;
   }
 
@@ -154,6 +157,17 @@
   }
 
   global.API = {
+    taskRequest: function (path, options) { return request('/api/tasks' + path, options); },
+    taskDownload: async function (path) {
+      var response = await fetch(url(path), { headers: withIdentity() });
+      if (!response.ok) throw await parseError(response);
+      var disposition = response.headers.get('Content-Disposition') || '';
+      var match = disposition.match(/filename\*=UTF-8''([^;]+)/i) || disposition.match(/filename="([^"]+)"/i);
+      var name = match ? decodeURIComponent(match[1]) : 'ket-qua.json';
+      var href = URL.createObjectURL(await response.blob());
+      var link = document.createElement('a'); link.href = href; link.download = name; link.click();
+      setTimeout(function () { URL.revokeObjectURL(href); }, 1000);
+    },
     ApiError: ApiError,
     getBase: function () { return base; },
     setBase: setBase,
@@ -250,6 +264,11 @@
       return postForm('/api/ocr/extract', fd, signal);
     },
 
+    routingSuggest: function (body) { return postJSON('/api/document-routings/suggest', body); },
+    routingFile: function (file) {
+      var fd = new FormData(); fd.append('file', file);
+      return postForm('/api/document-routings/suggest-file', fd);
+    },
     // workflow 5
     presentation: function (body, signal) { return postJSON('/api/presentations/create', body, signal); },
     slideDownload: function (fileName) { return url('/api/presentations/download/' + encodeURIComponent(fileName)); },

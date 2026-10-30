@@ -15,6 +15,8 @@ một 304 rỗng.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import HTTPException, status
 from fastapi.responses import FileResponse
 
@@ -29,8 +31,30 @@ MEDIA_TYPES = {
 NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
 
 
-def output_file_response(filename: str) -> FileResponse:
+async def output_file_response(filename: str) -> FileResponse:
     """File trong thư mục output: đã chặn vượt thư mục, đọc chéo tenant, và cache cũ."""
+    from app.db.ai_session import enabled, repository
+    if enabled():
+        from sqlalchemy import select
+        from urllib.parse import urlsplit, quote
+        import anyio
+        from app.services.object_storage import ObjectStorage, parse_reference
+        from app.api.documents import _OriginalResponse
+        async with repository() as repo:
+            table = repo.table("Tasks")
+            rows = await repo.rows("Tasks", table.c.TextSearch == filename, owned=True)
+            exists = (await repo.conn.execute(select(table.c.Id).where(table.c.TextSearch == filename))).first()
+            if exists:
+                if not rows or not rows[0]["OutputFileUrl"]:
+                    raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm")
+                url = urlsplit(rows[0]["OutputFileUrl"])
+                if url.scheme not in {"s3", "minio"}:
+                    raise HTTPException(status_code=404, detail="Sản phẩm chưa có file MinIO")
+                bucket, key = parse_reference(rows[0]["OutputFileUrl"])
+                stream = await anyio.to_thread.run_sync(lambda: ObjectStorage().open(bucket, key))
+                return _OriginalResponse(stream, media_type=MEDIA_TYPES.get(Path(filename).suffix, "application/octet-stream"),
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename, safe='')}",
+                             "Cache-Control": "private, no-store"})
     try:
         ref = storage.resolve_output(filename)
     except storage.StorageError as exc:
