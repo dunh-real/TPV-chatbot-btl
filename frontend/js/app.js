@@ -415,9 +415,54 @@
   };
 
   var chatInput = $('#chatInput');
+  var chatModelTrigger = $('#chatModelTrigger');
+  var chatModelMenu = $('#chatModelMenu');
+  var chatModel = 'qwen3.6-35b';
   var chatMessages = $('#chatMessages');
   var chatEmpty = $('#chatEmpty');
   var chatThread = $('#chatThread');
+
+  try {
+    var savedChatModel = localStorage.getItem('tpv.chatModel');
+    var savedOption = Array.prototype.some.call(chatModelMenu.querySelectorAll('[data-model]'), function (option) {
+      return option.dataset.model === savedChatModel;
+    });
+    if (savedChatModel && savedOption) chatModel = savedChatModel;
+  } catch (e) { /* chế độ riêng tư hoặc trình duyệt cũ */ }
+  function setChatModel(value) {
+    chatModel = value;
+    var label = '';
+    chatModelMenu.querySelectorAll('[data-model]').forEach(function (option) {
+      var active = option.dataset.model === chatModel;
+      option.setAttribute('aria-checked', String(active));
+      if (active) label = option.textContent.trim();
+    });
+    if (chatModelTrigger) {
+      chatModelTrigger.textContent = label || 'Model';
+      chatModelTrigger.title = 'Model chat: ' + (label || chatModel);
+    }
+    try { localStorage.setItem('tpv.chatModel', chatModel); } catch (e) { /* bỏ qua */ }
+  }
+  setChatModel(chatModel);
+  function closeChatModelMenu() {
+    chatModelMenu.hidden = true;
+    chatModelTrigger.setAttribute('aria-expanded', 'false');
+  }
+  chatModelTrigger.addEventListener('click', function () {
+    if (chatModelTrigger.disabled) return;
+    var open = chatModelMenu.hidden;
+    chatModelMenu.hidden = !open;
+    chatModelTrigger.setAttribute('aria-expanded', String(open));
+  });
+  chatModelMenu.addEventListener('click', function (event) {
+    var option = event.target.closest('[data-model]');
+    if (!option) return;
+    setChatModel(option.dataset.model);
+    closeChatModelMenu();
+  });
+  document.addEventListener('click', function (event) {
+    if (!event.target.closest('.model-picker')) closeChatModelMenu();
+  });
 
   function autoGrow(node) {
     node.style.height = 'auto';
@@ -926,6 +971,7 @@
    *  không có đường thoát thì người dùng chỉ còn cách tải lại trang. */
   function setBusy(view, busy) {
     var btn = $('#chatSend');
+    chatModelTrigger.disabled = busy;
     btn.disabled = false;
     btn.classList.toggle('stop', busy);
     btn.innerHTML = busy ? STOP_ICON : SEND_ICON;
@@ -952,6 +998,7 @@
 
     var body = {
       request: text,
+      model: chatModel,
       conversation_id: chat.conversationId,
       file_id: (files[0] && files[0].file_id) || '',
       ma_don_vi: prefs.unit || '',

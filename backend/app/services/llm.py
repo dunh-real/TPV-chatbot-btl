@@ -10,6 +10,8 @@ import json
 import logging
 import re
 from collections.abc import AsyncIterator, Callable
+from contextlib import contextmanager
+from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,6 +23,19 @@ from app.core.config import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 Message = dict[str, str]
+_selected_chat_model: ContextVar[str | None] = ContextVar(
+    "selected_chat_model", default=None
+)
+
+
+@contextmanager
+def selected_chat_model(model: str | None):
+    """Chọn model mặc định cho một request Agent mà không ảnh hưởng request khác."""
+    token: Token[str | None] = _selected_chat_model.set(model.strip() if model else None)
+    try:
+        yield
+    finally:
+        _selected_chat_model.reset(token)
 
 # Model dòng Qwen3/R1 có thể trả kèm khối suy luận; câu trả lời cuối nằm sau nó.
 _THINK_RE = re.compile(r"<think>.*?</think>\s*", re.DOTALL)
@@ -100,7 +115,7 @@ class LLMClient:
     ) -> dict[str, Any]:
         cfg = self.settings
         payload: dict[str, Any] = {
-            "model": model or cfg.llm_model,
+            "model": model or _selected_chat_model.get() or cfg.llm_model,
             "messages": messages,
             "temperature": cfg.llm_temperature if temperature is None else temperature,
             "max_tokens": max_tokens or cfg.llm_max_tokens,

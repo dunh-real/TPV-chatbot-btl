@@ -13,6 +13,9 @@ from app.schemas.common import ReferenceModel
 class AgentRequest(BaseModel):
     request: str = Field(min_length=1, max_length=4000,
                          description="Yêu cầu bằng tiếng Việt, không cần nêu workflow")
+    model: str | None = Field(
+        default=None, description="Model chat tùy chọn; bỏ trống = model mặc định"
+    )
     conversation_id: str | None = Field(
         default=None, description="Bỏ trống để hệ thống tạo hội thoại mới"
     )

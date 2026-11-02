@@ -22,6 +22,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from app.agents import progress
 from app.services import errors
 from app.agents.graph import run_agent
+from app.services.llm import selected_chat_model
 from app.schemas.agent import (
     AgentRequest,
     AgentResponse,
@@ -53,15 +54,16 @@ async def chat(request: AgentRequest) -> AgentResponse:
     Gửi kèm `file_id` (lấy từ `POST /api/agent/upload`) khi muốn agent xử lý một
     văn bản cụ thể - không có file thì agent không đi nhánh soát văn bản.
     """
-    result = await run_agent(
-        request=request.request,
-        conversation_id=request.conversation_id,
-        file_id=request.file_id,
-        doc_ids=request.doc_ids,
-        sources=request.sources,
-        ma_don_vi=request.ma_don_vi,
-        inputs=request.inputs,
-    )
+    with selected_chat_model(request.model):
+        result = await run_agent(
+            request=request.request,
+            conversation_id=request.conversation_id,
+            file_id=request.file_id,
+            doc_ids=request.doc_ids,
+            sources=request.sources,
+            ma_don_vi=request.ma_don_vi,
+            inputs=request.inputs,
+        )
     return _response(result, request.include_trace)
 
 
@@ -121,15 +123,16 @@ async def chat_stream(request: AgentRequest) -> StreamingResponse:
     async def run() -> None:
         try:
             with progress.collecting(channel.put):
-                result = await run_agent(
-                    request=request.request,
-                    conversation_id=request.conversation_id,
-                    file_id=request.file_id,
-                    doc_ids=request.doc_ids,
-                    sources=request.sources,
-                    ma_don_vi=request.ma_don_vi,
-                    inputs=request.inputs,
-                )
+                with selected_chat_model(request.model):
+                    result = await run_agent(
+                        request=request.request,
+                        conversation_id=request.conversation_id,
+                        file_id=request.file_id,
+                        doc_ids=request.doc_ids,
+                        sources=request.sources,
+                        ma_don_vi=request.ma_don_vi,
+                        inputs=request.inputs,
+                    )
             channel.put("done", _response(result, request.include_trace).model_dump())
         except Exception as exc:  # noqa: BLE001 - lỗi phải tới được client, không chỉ vào log
             # `str(exc)` ở đây là nguyên văn ngoại lệ - với lỗi CSDL thì đó là cả
