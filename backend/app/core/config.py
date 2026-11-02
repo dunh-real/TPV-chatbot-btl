@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     llm_timeout: float = 120.0
     # Model nhỏ/nhanh cho các tác vụ phụ (viết lại truy vấn). Rỗng => dùng llm_model.
     llm_utility_model: str = ""
+    # Danh sách các model hỗ trợ trên thanh chat
+    chat_models: str = "qwen3.6-35b,qwen2.5-72b-instruct,qwen3.5-27b"
     # Dòng Qwen3.5/3.6 sinh một khối suy luận trước câu trả lời. Bật thì server vLLM
     # PHẢI chạy kèm `--reasoning-parser qwen3`, nếu không grammar của response_format
     # sẽ ép model xuất JSON ngay từ token đầu và giết luôn phần suy luận.
@@ -344,6 +346,10 @@ class Settings(BaseSettings):
     @property
     def utility_model(self) -> str:
         return self.llm_utility_model or self.llm_model
+
+    @property
+    def available_chat_models(self) -> list[str]:
+        return [m.strip() for m in self.chat_models.split(",") if m.strip()]
 
 
 

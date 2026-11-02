@@ -245,6 +245,11 @@ async def accounts() -> dict:
     }
 
 
+@router.get("/models", summary="Danh sách model hỗ trợ trên thanh chat")
+async def chat_models() -> list[str]:
+    return get_settings().available_chat_models
+
+
 @router.get("/tools", response_model=list[ToolInfo], summary="Những việc agent làm được")
 async def tools() -> list[ToolInfo]:
     return [ToolInfo(**item) for item in catalog()]
