@@ -7,7 +7,7 @@ import logging
 import uuid
 from collections.abc import AsyncIterator
 
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from app.agents.graph import build_initial_state, prepare_context, run_qa
@@ -47,7 +47,7 @@ def _sse(event: str, payload: dict) -> str:
 
 @router.post("/qa", response_model=ChatResponse, summary="Hỏi đáp trên kho tài liệu",
              dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "tra cứu tài liệu"))])
-async def ask(request: ChatRequest) -> ChatResponse:
+async def ask(request: ChatRequest, http_request: Request) -> ChatResponse:
     state = await build_initial_state(
         question=request.question,
         conversation_id=request.conversation_id,
@@ -56,6 +56,8 @@ async def ask(request: ChatRequest) -> ChatResponse:
         doc_types=request.filters.doc_types,
         top_n=request.top_n,
         use_rerank=request.use_rerank,
+        history=[turn.model_dump() for turn in request.history] if request.history is not None else None,
+        persist_history="x-user-id" not in http_request.headers,
     )
     result = await run_qa(state)
 
@@ -71,7 +73,7 @@ async def ask(request: ChatRequest) -> ChatResponse:
 
 @router.post("/qa/stream", summary="Hỏi đáp dạng streaming (SSE)",
              dependencies=[Depends(quyen.can_quyen("Ai.AiChatbot", "tra cứu tài liệu"))])
-async def ask_stream(request: ChatRequest) -> StreamingResponse:
+async def ask_stream(request: ChatRequest, http_request: Request) -> StreamingResponse:
     """Phát câu trả lời theo từng mảnh; trích dẫn được gửi trước ở event `meta`."""
     state = await build_initial_state(
         question=request.question,
@@ -81,6 +83,8 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
         doc_types=request.filters.doc_types,
         top_n=request.top_n,
         use_rerank=request.use_rerank,
+        history=[turn.model_dump() for turn in request.history] if request.history is not None else None,
+        persist_history="x-user-id" not in http_request.headers,
     )
     prepared = await prepare_context(state, defer_generation=True)
 
@@ -105,7 +109,8 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
             answer = prepared["answer"]
             yield _sse("delta", {"text": answer})
             yield _sse("done", {"citations": [], "conversation_id": conversation_id})
-            await _save_turn(conversation_id, request.question, answer)
+            if state["persist_history"]:
+                await _save_turn(conversation_id, request.question, answer)
             return
 
         # Truy hồi không ra gì: vẫn đối đáp bình thường (chào hỏi, hỏi hệ thống
@@ -137,7 +142,8 @@ async def ask_stream(request: ChatRequest) -> StreamingResponse:
         answer_id = await legal_hooks.record_answer(prepared, answer, used or citations)
         yield _sse("done", {"citations": used, "conversation_id": conversation_id,
                             **({"answer_id": answer_id} if answer_id else {})})
-        await _save_turn(conversation_id, request.question, answer)
+        if state["persist_history"]:
+            await _save_turn(conversation_id, request.question, answer)
 
     return StreamingResponse(
         event_stream(),

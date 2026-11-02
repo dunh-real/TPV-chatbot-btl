@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -28,7 +28,14 @@ class RetrievalFilters(BaseModel):
     doc_types: list[str] = Field(default_factory=list)
 
 
+class ChatHistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1)
+
+
 class ChatRequest(BaseModel):
+    history: list[ChatHistoryMessage] | None = Field(default=None,
+        description="Lịch sử BE gửi theo thứ tự cũ đến mới, không chứa câu hỏi hiện tại")
     question: str = Field(min_length=1, max_length=4000)
     conversation_id: str | None = Field(
         default=None, description="Bỏ trống để hệ thống tạo hội thoại mới"
