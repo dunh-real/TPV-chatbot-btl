@@ -43,15 +43,22 @@ def source_batches(blocks):
 
 async def generate(content, sources, length, structure, focus):
     low, high = LENGTHS[length]
+    # Chỉ đưa một mã trích dẫn; block_id như P19 dễ bị model nhầm với id=20.
+    if content and "id" in content[0]:
+        content = [{"id": item["id"], "text": item["text"]} for item in content]
     messages = [{"role": "system", "content": SUMMARY_SYSTEM}, {"role": "user", "content":
         f"Mục tiêu {low}-{high} từ; cấu trúc {structure}; trọng tâm: {focus or 'các ý chính toàn văn'}.\n"
         "Nguồn (hoặc bản tóm lược từng phần đã dẫn nguồn gốc):\n" + json.dumps(content, ensure_ascii=False)}]
-    for attempt in range(2):
-        raw = await get_llm().chat_json(messages, temperature=0, max_tokens=2500 if length=="long" else 1600,
+    for attempt in range(3):
+        raw = await get_llm().chat_json(messages, temperature=0, max_tokens=4000 if length=="long" else 2500,
                                        thinking=False)
         try:
             result = SummaryContent.model_validate(raw)
             for section in result.sections:
+                # Model có thể gom [12, 13]; chuẩn hóa trước khi kiểm tra số liệu.
+                for field in ("heading", "text"):
+                    setattr(section, field, re.sub(r"\[(\d+(?:\s*[,;]\s*\d+)+)\]",
+                        lambda m: "".join(f"[{n}]" for n in re.findall(r"\d+", m[1])), getattr(section, field)))
                 if not MARKER.sub("",section.text).strip(" -.*"):
                     raise ValueError("Bản tóm tắt không có nội dung")
                 cited = {int(n) for n in MARKER.findall(section.text)}
@@ -66,12 +73,23 @@ async def generate(content, sources, length, structure, focus):
                 original = "\n".join(sources[i]["text"] for i in cited)
                 heading = re.sub(r"^\s*\d{1,2}[.)]\s+", "", section.heading)
                 checked = MARKER.sub("", heading + " " + section.text)
+                checked = re.sub(r"\bBước\s+\d+\s*[:,.)]?", "Bước ", checked, flags=re.I)
                 missing = check_numbers(checked, collect_known_numbers(original)).unverified
                 if missing:
-                    raise ValueError("Số/mã không khớp nguồn được dẫn: " + ", ".join(missing))
+                    candidates = [dict(id=i, text=source["text"]) for i, source in sources.items()
+                        if not check_numbers(" ".join(missing), collect_known_numbers(source["text"])).unverified]
+                    terms = set(re.findall(r"\w+", checked.lower()))
+                    candidates.sort(key=lambda source: len(terms & set(re.findall(r"\w+", source["text"].lower()))),
+                                    reverse=True)
+                    candidates = candidates[:4]
+                    raise ValueError("Số/mã không khớp nguồn được dẫn: " + ", ".join(missing)
+                        + f". Câu/mục cần sửa: {section.text}. Nguồn đang dẫn: {sorted(cited)}. "
+                        "Đối chiếu các đoạn dưới đây và dẫn đúng id chứng minh từng số cùng ý nghĩa; "
+                        "không tự gắn nguồn chỉ vì trùng số. Nếu không có bằng chứng, bỏ phát biểu đó. "
+                        "Các đoạn ứng viên (không phải xác nhận): " + json.dumps(candidates, ensure_ascii=False))
             return result.sections
         except ValueError as exc:
-            if attempt:
+            if attempt == 2:
                 raise ValueError("Không tạo được bản tóm tắt có nguồn hợp lệ: " + str(exc)) from exc
             messages.extend([{"role":"assistant", "content":json.dumps(raw,ensure_ascii=False)},
                              {"role":"user", "content":f"Sửa JSON, giữ nguyên nguồn gốc. Lỗi: {exc}"}])
@@ -90,7 +108,7 @@ async def summarize(file_path, file_name, length, structure, focus):
     else:
         mapped = []
         for batch in batches:
-            mapped.extend(await generate(batch,{i["id"]:i for i in batch},"medium","sections",focus))
+            mapped.extend(await generate(batch,{i["id"]:i for i in batch},"short","sections",focus))
         used = {int(n) for section in mapped for n in MARKER.findall(section.text)}
         sections = await generate([s.model_dump() for s in mapped],{i:sources[i] for i in used},
                                   length,structure,focus)

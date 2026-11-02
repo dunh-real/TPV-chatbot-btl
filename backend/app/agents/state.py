@@ -43,6 +43,7 @@ class QAState(TypedDict, total=False):
     question: str
     conversation_id: str
     history: list[dict[str, str]]
+    persist_history: bool
     doc_ids: list[str]
     sources: list[str]
     doc_types: list[str]

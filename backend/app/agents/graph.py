@@ -133,13 +133,17 @@ async def build_initial_state(
     top_n: int | None = None,
     use_rerank: bool = True,
     load_history: bool = True,
+    history: list[dict[str, str]] | None = None,
+    persist_history: bool = True,
 ) -> QAState:
     conversation_id = conversation_id or str(uuid.uuid4())
-    history = await get_memory().get_history(conversation_id) if load_history else []
+    if history is None:
+        history = await get_memory().get_history(conversation_id) if load_history and persist_history else []
     state: QAState = {
         "question": question,
         "conversation_id": conversation_id,
         "history": history,
+        "persist_history": persist_history,
         "doc_ids": doc_ids or [],
         "sources": sources or [],
         "doc_types": doc_types or [],
@@ -229,7 +233,7 @@ async def run_summary_workflow(file_path: str, file_name: str = "", length: str 
         return await summarize(file_path, file_name, length, structure, focus)
     except (ValueError, OSError, LLMError) as exc:
         return dict(error=str(exc),summary="",sections=[],summary_refs=[],all_refs=[],
-                    length=length,structure=structure,coverage={"complete":False},warnings=[])
+                    length=length,structure=structure,word_count=0,coverage={"complete":False},warnings=[])
 
 
 @tracked_workflow("Summarize")
@@ -1366,10 +1370,11 @@ async def run_qa(state: QAState) -> dict[str, Any]:
     """Chạy trọn workflow và ghi lại lượt hội thoại."""
     result = await get_qa_graph().ainvoke(state)
 
-    await get_memory().append_turns(
-        state["conversation_id"],
-        [("user", state["question"]), ("assistant", result.get("answer", ""))],
-    )
+    if state.get("persist_history", True):
+        await get_memory().append_turns(
+            state["conversation_id"],
+            [("user", state["question"]), ("assistant", result.get("answer", ""))],
+        )
     # Nguồn gốc câu trả lời (VBQPPL theo phiên bản): để biết câu nào lỗi thời khi nguồn bị sửa.
     from app.legal import hooks as legal_hooks
 

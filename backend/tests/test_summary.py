@@ -64,6 +64,51 @@ async def test_invalid_citations_and_numbers_rejected(monkeypatch,body):
         await node.generate([{'id':1,'text':'Có 18 người'}],{1:{'text':'Có 18 người'}},'short','bullets','')
 
 
+async def test_wrong_numeric_citation_gets_specific_repair(monkeypatch):
+    class Repair:
+        calls = 0
+        async def chat_json(self, messages, **kwargs):
+            self.calls += 1
+            assert '"block_id"' not in messages[1]['content']
+            if self.calls == 2:
+                assert 'Nguồn đang dẫn: [1]' in messages[-1]['content']
+                assert '"id": 2' in messages[-1]['content']
+                assert '17% so với FedAvg' in messages[-1]['content']
+            return {'sections': [{'text': f'Tăng 17% so với FedAvg và 24% so với FedProx [{self.calls}].'}]}
+    llm = Repair()
+    monkeypatch.setattr(node, 'get_llm', lambda: llm)
+    sources = {1: {'text': 'Tổng quan tăng 25%.'},
+               2: {'text': 'Tăng 17% so với FedAvg và 24% so với FedProx.'}}
+    result = await node.generate([{'id': i, 'block_id': f'P{i-1}', **s}
+        for i, s in sources.items()], sources, 'medium', 'bullets', '')
+    assert llm.calls == 2 and '[2]' in result[0].text
+
+
+async def test_failed_summary_returns_error_not_500(environment, monkeypatch):
+    client, *_ = environment
+    client._transport.app.include_router(documents.router)
+    path = Path(get_settings().upload_dir) / 'invalid-summary.txt'
+    path.write_text('Có 18 người.')
+    class Invalid:
+        async def chat_json(self, *args, **kwargs):
+            return {'sections': [{'text': 'Có 999 người [1].'}]}
+    monkeypatch.setattr(node, 'get_llm', Invalid)
+    response = await client.post('/api/documents/summarize', json={'file_id': 'upload:invalid-summary.txt'})
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result['error'] and result['word_count'] == 0 and result['summary'] == ''
+
+
+async def test_grouped_citations_are_not_treated_as_numbers(monkeypatch):
+    class Grouped:
+        async def chat_json(self, *args, **kwargs):
+            return {'sections': [{'text': 'Bước 1: tạo mô hình và tổng hợp [119, 122].'}]}
+    monkeypatch.setattr(node, 'get_llm', Grouped)
+    result = await node.generate([], {119: {'text': 'Tạo mô hình'},
+        122: {'text': 'Tổng hợp mô hình'}}, 'short', 'bullets', '')
+    assert '[119][122]' in result[0].text
+
+
 async def test_api_permission_validation_storage_and_queue(environment,monkeypatch):
     client,scope,principal,*_=environment
     from fastapi.responses import JSONResponse
