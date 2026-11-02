@@ -99,6 +99,22 @@ class LLMClient:
         thinking: bool | None = None,
     ) -> dict[str, Any]:
         cfg = self.settings
+        from app.core.runtime import agent_config
+        active = agent_config.get()
+        if active:
+            from app.services.integration_errors import IntegrationError
+            instructions = active.systemPrompt + f"\nNgôn ngữ trả lời: {active.parameters.language}."
+            if active.requireCitation:
+                instructions += " Mọi kết luận dựa vào tài liệu phải có nguồn; không bịa nguồn."
+            messages = [*messages, {"role": "system", "content": instructions}]
+            # Ngân sách bảo thủ theo byte UTF-8, không tự cắt nội dung hoặc nạp tokenizer mới.
+            reserved = active.parameters.maxAnswerTokens + (cfg.llm_thinking_budget if self.thinking_enabled(thinking) else 0)
+            input_budget = len(json.dumps(messages, ensure_ascii=False).encode("utf-8"))
+            if input_budget + reserved > active.model.maxContextLength:
+                raise IntegrationError("CONTEXT_TOO_LONG", "Đầu vào vượt ngân sách context của Agent", 413)
+            model = active.model.code
+            temperature = active.parameters.temperature
+            max_tokens = min(max_tokens or active.parameters.maxAnswerTokens, active.parameters.maxAnswerTokens)
         payload: dict[str, Any] = {
             "model": model or cfg.llm_model,
             "messages": messages,
@@ -116,6 +132,8 @@ class LLMClient:
             payload["chat_template_kwargs"] = {"enable_thinking": False}
         if extra:
             payload.update(extra)
+        if active:
+            payload["top_p"] = active.parameters.topP
         return payload
 
     def thinking_enabled(self, thinking: bool | None) -> bool:
@@ -499,6 +517,9 @@ _llm: LLMClient | None = None
 
 
 def get_llm() -> LLMClient:
+    from app.core.runtime import runtime_llm
+    if runtime_llm.get() is not None:
+        return runtime_llm.get()
     global _llm
     if _llm is None:
         _llm = LLMClient()

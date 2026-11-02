@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     app_name: str = "TPV Chatbot Backend"
     debug: bool = False
     log_level: str = "INFO"
+    admin_api_key: str = ""
+    admin_model_hosts: list[str] = ["localhost", "127.0.0.1"]
+    agent_config_dir: str = "./data/agent_configs"
+    metadata_filter_required: bool = False
 
     # ------------------------------------------------- LLM (vLLM / OpenAI) ---
     # vLLM phục vụ OpenAI-compatible API: `vllm serve <model> --port 8000`
@@ -348,8 +352,16 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-def get_settings() -> Settings:
+def _base_settings() -> Settings:
     return Settings()
+
+
+def get_settings() -> Settings:
+    from app.core.runtime import runtime_settings
+    return runtime_settings.get() or _base_settings()
+
+
+get_settings.cache_clear = _base_settings.cache_clear
 
 
 settings = get_settings()

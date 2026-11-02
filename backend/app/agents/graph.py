@@ -1400,6 +1400,10 @@ async def prepare_context(state: QAState, *, defer_generation: bool = False) -> 
     if merged.get("can_tra_cuu", True):
         merged.update(await rewrite_query_node(merged))
     merged.update(await retrieve_node(merged))
+    from app.core.runtime import agent_config
+    if agent_config.get() and agent_config.get().requireCitation and merged.get("can_tra_cuu", True) and not merged.get("chunks"):
+        from app.services.integration_errors import IntegrationError
+        raise IntegrationError("NO_CONTEXT", "Không tìm thấy nguồn được phép để trả lời", 422)
     if merged.get("chunks"):
         merged.update(await build_context_node(merged))
     elif defer_generation and not merged.get("error"):

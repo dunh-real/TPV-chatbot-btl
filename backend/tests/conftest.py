@@ -231,3 +231,10 @@ def business_store(monkeypatch, tmp_path):
         return {"InputJson": json.dumps({"_uc37": {"managed": True, "lease_token": token, "lease_until": tasks.deadline()}})}
     monkeypatch.setattr(task_queue, "fence", fence)
     return repo
+
+
+@pytest.fixture(autouse=True)
+def business_api_token(monkeypatch):
+    """Các test API nghiệp vụ dùng shared token giả; test auth có thể ghi đè riêng."""
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "public_access_token", "test-business-token")

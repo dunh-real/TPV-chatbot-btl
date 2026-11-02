@@ -73,6 +73,9 @@ def tracked_workflow(kind):
     def decorate(function):
         @wraps(function)
         async def run(*args, **kwargs):
+            from app.core.runtime import test_mode
+            if test_mode.get():
+                return await function(*args, **kwargs)
             from app.db import ai_session
             from app.services import tasks, task_queue
             external = ai_session.erp_task_id.get()

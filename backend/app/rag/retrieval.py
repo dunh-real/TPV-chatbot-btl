@@ -25,6 +25,7 @@ import anyio
 from qdrant_client import models
 
 from app.core.config import Settings, get_settings
+from app.core.runtime import agent_config
 from app.rag.embedding import HybridEmbedding, get_bm25_encoder, get_embedder
 from app.rag.vectorstore import (
     BM25_VECTOR,
@@ -195,7 +196,7 @@ class HybridRetriever:
         """Chạy 3 nhánh cho mọi biến thể truy vấn rồi gộp bằng RRF."""
         from app.services.ai_documents import restrict
         query_filter = await restrict(query_filter)
-        cfg = self.settings
+        cfg = get_settings() if agent_config.get() else self.settings
         branch_limit = branch_limit or cfg.retrieval_branch_limit
         top_k = top_k or cfg.rrf_top_k
         timings: dict[str, float] = {}
@@ -268,8 +269,10 @@ class HybridRetriever:
         `score_threshold` ghi đè ngưỡng cấu hình. Dùng khi người gọi đã tự thu hẹp
         phạm vi - lúc đó ngưỡng không còn việc gì để làm, xem `retrieve_node`.
         """
-        cfg = self.settings
+        cfg = get_settings() if agent_config.get() else self.settings
         # Truy vấn gốc luôn đứng đầu, biến thể trùng lặp bị loại.
+        if agent_config.get():
+            top_n = min(top_n or cfg.rerank_top_n, cfg.rerank_top_n)
         queries = [query, *[q for q in (query_variants or []) if q and q != query]]
 
         fused, branch_hits, timings = await self.search(queries, query_filter=query_filter)
@@ -304,7 +307,7 @@ class HybridRetriever:
         )
         timings["rerank"] = (time.perf_counter() - t0) * 1000
 
-        limit = top_n or cfg.rerank_top_n
+        limit = min(top_n or cfg.rerank_top_n, cfg.rerank_top_n)
         nguong = cfg.rerank_score_threshold if score_threshold is None else score_threshold
         ranked = [r for r in scored if r.score >= nguong][:limit]
 

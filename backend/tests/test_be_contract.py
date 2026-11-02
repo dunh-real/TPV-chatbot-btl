@@ -40,7 +40,7 @@ async def test_same_erp_document_reindexes_without_inserting(monkeypatch):
     from app.services import ai_documents
     from app.rag.ingestion import IngestResult
     monkeypatch.setattr(ai_documents,'enabled',lambda:True)
-    repo=SimpleNamespace(lock=AsyncMock(),erp_document=AsyncMock(return_value={'AiServerDocId':'hash422'}),
+    repo=SimpleNamespace(lock=AsyncMock(),erp_document=AsyncMock(return_value={'AiServerDocId':'hash422','Id':422,'TenantId':94,'PartitionId':12}),
         patch=AsyncMock(),principal=who(),add=AsyncMock())
     repository_patch(monkeypatch,ai_documents,repo)
     writes=[]

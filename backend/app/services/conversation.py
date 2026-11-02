@@ -249,6 +249,9 @@ class ConversationMemory:
     async def get_history(self, conversation_id: str,
                           limit: int | None = None) -> list[dict[str, str]]:
         from app.db.ai_session import enabled, repository
+        from app.core.runtime import test_mode
+        if test_mode.get():
+            return []
         if enabled():
             async with repository() as repo:
                 return await repo.history(conversation_id, limit or get_settings().history_max_turns)
@@ -269,6 +272,9 @@ class ConversationMemory:
     async def append_turns(self, conversation_id: str,
                            turns: list[tuple[str, str]]) -> None:
         from app.db.ai_session import enabled, repository
+        from app.core.runtime import test_mode
+        if test_mode.get():
+            return
         if enabled():
             async with repository() as repo:
                 await repo.append_turns(conversation_id, turns)

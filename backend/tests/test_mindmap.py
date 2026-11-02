@@ -129,7 +129,7 @@ def he_thong_gia(kho, llm, monkeypatch):
 
 async def _call(method: str, path: str, **kwargs) -> httpx.Response:
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://test", headers={"X-Access-Token": "test-business-token"}) as client:
         return await client.request(method, path, **kwargs)
 
 

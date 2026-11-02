@@ -50,6 +50,9 @@ _BY_MODULE: tuple[tuple[str, str], ...] = (
 
 def friendly(exc: BaseException) -> str:
     """Một câu tiếng Việt cho người dùng cuối, không lộ chi tiết hạ tầng."""
+    from app.services.integration_errors import IntegrationError
+    if isinstance(exc, IntegrationError):
+        raise exc
     # `ToolError` do chính mình ném ra và đã viết sẵn bằng tiếng người ("Kỳ phải
     # có dạng YYYY-MM"), nên giữ nguyên - đó là thứ giúp người dùng sửa đầu vào.
     if isinstance(exc, ToolError):
@@ -58,6 +61,9 @@ def friendly(exc: BaseException) -> str:
     from app.services.llm import LLMError
 
     if isinstance(exc, LLMError):
+        from app.services.integration_errors import classify
+        from app.core.runtime import last_error
+        last_error.set(classify(exc))
         return LLM
 
     for cls in type(exc).__mro__:

@@ -25,14 +25,15 @@ class ReferenceModel(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    detail: str
-    code: str = "error"
+    error: dict[str, str] = Field(description="code, message, requestId")
 
 
 class HealthResponse(BaseModel):
     status: str = "ok"
     qdrant: bool = False
     llm: bool = False
+    embedding: bool = False
+    reranker: bool = False
     database: bool = False
     collection: str = ""
     points: int = 0

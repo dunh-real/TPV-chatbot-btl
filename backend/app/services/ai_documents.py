@@ -65,6 +65,8 @@ async def public_ids(doc_ids):
 
 
 async def restrict(query_filter=None):
+    from app.services.vector_metadata import restrict as metadata_filter
+    query_filter = metadata_filter(query_filter)
     if not enabled():
         return query_filter
     async with repository() as repo:
@@ -98,6 +100,8 @@ def tracked_ingestion(function):
             async with repository() as repo:
                 await repo.lock(f"erp-document:{row_id}", shared=True)
                 row = await repo.erp_document(row_id, version)
+                from app.services.vector_metadata import from_document
+                metadata = {**(metadata or {}), **await from_document(repo, row)}
                 index_id = row["AiServerDocId"] or hashlib.sha256(
                     f"erp:{repo.principal.tenant_id}:{row_id}:{version}".encode()).hexdigest()[:32]
                 await repo.patch("KnowledgeDocuments", row_id, AiServerDocId=index_id,
@@ -123,6 +127,10 @@ def tracked_ingestion(function):
                 raise ValueError("Tiền tố sql: dành cho định danh metadata, không dùng để nạp")
             row_id = await repo.begin_document(doc_id, doc_title, metadata or {})
         try:
+            async with repository() as repo:
+                row = await repo.document(f"sql:{row_id}", include_unready=True)
+                from app.services.vector_metadata import from_document
+                metadata = {**(metadata or {}), **await from_document(repo, row)}
             result = await function(self, text, doc_title, doc_id, source, doc_type, metadata, **kwargs)
             if not result.chunk_count:
                 raise ValueError("Tài liệu không tạo được đoạn nội dung")

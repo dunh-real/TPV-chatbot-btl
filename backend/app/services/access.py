@@ -63,11 +63,12 @@ async def resolve_access(identifier: str) -> AccountAccess | None:
                 else:
                     access = await repo.find_user(identifier=identifier)
         except ErpNotConfigured:
-            logger.debug("Chưa cấu hình ERP nên không tra được quyền")
-            return None
+            from app.services.integration_errors import IntegrationError
+            raise IntegrationError("INTERNAL_ERROR", "Chưa cấu hình ERP để xác minh quyền", 503)
         except Exception:  # noqa: BLE001 - ERP hỏng không được làm chết request
             logger.exception("Tra quyền thất bại cho %r", identifier)
-            return None
+            from app.services.integration_errors import IntegrationError
+            raise IntegrationError("INTERNAL_ERROR", "Không kết nối được ERP để xác minh quyền", 503)
 
         if access is None:
             logger.info("Không tìm thấy tài khoản %r trong ERP", identifier)

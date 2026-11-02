@@ -23,6 +23,9 @@ class CitationModel(BaseModel):
 
 
 class RetrievalFilters(BaseModel):
+    partition_ids: list[int] | None = None
+    access_level_ids: list[int] | None = None
+    security_level_ids: list[int] | None = None
     doc_ids: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
     doc_types: list[str] = Field(default_factory=list)

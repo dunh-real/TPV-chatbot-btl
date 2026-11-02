@@ -37,8 +37,17 @@ class IdentityMiddleware:
             key.decode("latin-1").lower(): value.decode("latin-1")
             for key, value in scope.get("headers", [])
         }
+        if scope.get("path", "").startswith("/api/admin/"):
+            # Admin dùng shared key; lượt test tự xác minh tài khoản dữ liệu ở endpoint.
+            await self.app(scope, receive, send)
+            return
         try:
-            principal = await _kem_quyen(resolve_principal(headers))
+            principal = resolve_principal(headers)
+            if not scope.get("path", "").startswith("/health"):
+                principal = await _kem_quyen(principal)
+            if headers.get("x-tenant-id") and principal.access is not None and int(headers["x-tenant-id"]) != principal.tenant_id:
+                from app.services.integration_errors import IntegrationError
+                raise IntegrationError("TENANT_MISMATCH", "Tenant trong header không khớp tài khoản ERP", 403)
         except IdentityError as exc:
             await JSONResponse(status_code=400, content={"detail": str(exc)})(
                 scope, receive, send
