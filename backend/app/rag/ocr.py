@@ -38,6 +38,7 @@ import pypdfium2 as pdfium
 from PIL import Image
 
 from app.core.config import Settings, get_settings
+from app.services.llm import _selected_chat_model
 
 logger = logging.getLogger(__name__)
 
@@ -344,7 +345,7 @@ class OCRService:
                 continue
 
             futures = {
-                pool.submit(self._ocr_one, image, semaphore): page_number
+                pool.submit(self._ocr_one, image, semaphore, _selected_chat_model.get()): page_number
                 for page_number, image in zip(group, images, strict=True)
             }
             try:
@@ -405,10 +406,19 @@ class OCRService:
         img.save(buffer, format="JPEG", quality=95)
         return buffer.getvalue()
 
-    def _ocr_one(self, image_bytes: bytes, semaphore: threading.Semaphore) -> str:
+    def _ocr_one(self, image_bytes: bytes, semaphore: threading.Semaphore, model: str | None = None) -> str:
         cfg = self.settings
+        chosen_model = model or _selected_chat_model.get()
+        if chosen_model:
+            base_url, api_key, resolved_model = cfg.resolve_llm_endpoint(chosen_model)
+            ocr_url = f"{base_url}/chat/completions"
+            ocr_headers = {"Authorization": f"Bearer {api_key}"}
+        else:
+            ocr_url = f"{cfg.ocr_base_url.rstrip('/')}/chat/completions"
+            ocr_headers = {"Authorization": f"Bearer {cfg.ocr_api_key}"}
+            resolved_model = cfg.ocr_model
         payload = {
-            "model": cfg.ocr_model,
+            "model": resolved_model,
             "messages": [
                 {
                     "role": "user",
@@ -444,15 +454,13 @@ class OCRService:
         # hẳn một đoạn lập luận, và phía trên không có cách nào biết mà bù - chỗ
         # rẻ nhất để chịu đựng sự cố mạng là ngay tại đây. Chờ giãn dần để không
         # nện thêm vào một vLLM đang quá tải.
-        url = f"{cfg.ocr_base_url.rstrip('/')}/chat/completions"
-        headers = {"Authorization": f"Bearer {cfg.ocr_api_key}"}
         so_lan = max(1, cfg.ocr_max_retries)
         loi_cuoi: Exception | None = None
         for lan in range(so_lan):
             try:
                 with semaphore:
                     response = httpx.post(
-                        url, json=payload, timeout=cfg.ocr_timeout, headers=headers
+                        ocr_url, json=payload, timeout=cfg.ocr_timeout, headers=ocr_headers
                     )
                     response.raise_for_status()
                     data = response.json()

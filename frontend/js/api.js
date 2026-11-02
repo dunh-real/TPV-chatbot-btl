@@ -58,6 +58,8 @@
     if (tenant) out['X-Tenant-Id'] = tenant;
     if (userId) out['X-User-Id'] = userId;
     if (localStorage.getItem('tpv.notifyTasks') === 'true') out['X-Notify-On-Finish'] = 'true';
+    var selectedModel = localStorage.getItem('tpv.chatModel');
+    if (selectedModel) out['X-Selected-Model'] = selectedModel;
     return out;
   }
 

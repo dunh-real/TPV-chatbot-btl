@@ -114,8 +114,17 @@ class LLMClient:
         thinking: bool | None = None,
     ) -> dict[str, Any]:
         cfg = self.settings
+        selected = _selected_chat_model.get()
+        if selected:
+            if not model or model in (cfg.llm_model, cfg.utility_model, cfg.llm_utility_model, *cfg.available_chat_models):
+                requested_model = selected
+            else:
+                requested_model = model
+        else:
+            requested_model = model or cfg.llm_model
+        _, _, resolved_model = cfg.resolve_llm_endpoint(requested_model)
         payload: dict[str, Any] = {
-            "model": model or _selected_chat_model.get() or cfg.llm_model,
+            "model": resolved_model,
             "messages": messages,
             "temperature": cfg.llm_temperature if temperature is None else temperature,
             "max_tokens": max_tokens or cfg.llm_max_tokens,
@@ -142,6 +151,11 @@ class LLMClient:
         return self.settings.llm_enable_thinking if thinking is None else thinking
 
     # --------------------------------------------------------------- chat -- #
+    def _endpoint_for(self, model_name: str | None) -> tuple[str, dict[str, str]]:
+        """Xác định URL đích và header xác thực tương ứng với model."""
+        base_url, api_key, _ = self.settings.resolve_llm_endpoint(model_name)
+        return f"{base_url}/chat/completions", {"Authorization": f"Bearer {api_key}"}
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=0.5, max=4),
@@ -149,8 +163,9 @@ class LLMClient:
         reraise=True,
     )
     async def _post(self, payload: dict[str, Any], timeout: float | None = None) -> httpx.Response:
+        url, headers = self._endpoint_for(payload.get("model"))
         response = await self._client.post(
-            "/chat/completions", json=payload, timeout=timeout or self.settings.llm_timeout
+            url, json=payload, headers=headers, timeout=timeout or self.settings.llm_timeout
         )
         response.raise_for_status()
         return response
@@ -315,7 +330,8 @@ class LLMClient:
         emitted = False
 
         try:
-            async with self._client.stream("POST", "/chat/completions", json=payload) as response:
+            url, headers = self._endpoint_for(payload.get("model"))
+            async with self._client.stream("POST", url, json=payload, headers=headers) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.startswith("data:"):
@@ -434,7 +450,8 @@ class LLMClient:
         # sinh khối suy luận nào cả, lúc đó những mảnh này chính là câu trả lời.
         pending: list[str] = []
         try:
-            async with self._client.stream("POST", "/chat/completions", json=payload) as response:
+            url, headers = self._endpoint_for(payload.get("model"))
+            async with self._client.stream("POST", url, json=payload, headers=headers) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.startswith("data:"):

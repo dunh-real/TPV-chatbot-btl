@@ -18,6 +18,7 @@ import dataclasses
 
 from app.core.context import IdentityError, resolve_principal, use_principal
 from app.services.access import resolve_access
+from app.services.llm import selected_chat_model
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,8 @@ class IdentityMiddleware:
             )
             return
 
-        with use_principal(principal):
+        selected_model = headers.get("x-selected-model", "").strip() or None
+        with use_principal(principal), selected_chat_model(selected_model):
             from app.db.ai_session import notify_on_finish, erp_task_id
             raw_task = headers.get("x-erp-task-id", "")
             if raw_task and (not raw_task.isdigit() or int(raw_task) <= 0):

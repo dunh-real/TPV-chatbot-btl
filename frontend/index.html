@@ -120,6 +120,18 @@
         <p id="viewSub">Một câu yêu cầu — hệ thống tự chọn workflow</p>
       </div>
       <div class="topbar-actions">
+        <div class="model-picker" id="topbarModelPicker">
+          <button type="button" class="model-trigger" id="topbarModelTrigger"
+                  aria-haspopup="menu" aria-expanded="false" title="Chọn model cho toàn bộ chức năng">Qwen3.6 35B</button>
+          <div class="model-menu" id="topbarModelMenu" role="menu" hidden>
+            <button type="button" role="menuitemradio" data-model="qwen3.6-35b"
+                    aria-checked="true">Qwen3.6 35B</button>
+            <button type="button" role="menuitemradio" data-model="qwen2.5-vl-72b-instruct"
+                    aria-checked="false">Qwen2.5-VL 72B Instruct</button>
+            <button type="button" role="menuitemradio" data-model="qwen3.5-vl-27b"
+                    aria-checked="false">Qwen3.5-VL 27B</button>
+          </div>
+        </div>
         <label class="switch" title="Trả kèm thông tin debug pipeline">
           <input type="checkbox" id="traceToggle" />
           <span class="switch-track"><span class="switch-thumb"></span></span>
@@ -167,10 +179,10 @@
                 <div class="model-menu" id="chatModelMenu" role="menu" hidden>
                   <button type="button" role="menuitemradio" data-model="qwen3.6-35b"
                           aria-checked="true">Qwen3.6 35B</button>
-                  <button type="button" role="menuitemradio" data-model="qwen2.5-72b-instruct"
-                          aria-checked="false">Qwen2.5 72B Instruct</button>
-                  <button type="button" role="menuitemradio" data-model="qwen3.5-27b"
-                          aria-checked="false">Qwen3.5 27B</button>
+                  <button type="button" role="menuitemradio" data-model="qwen2.5-vl-72b-instruct"
+                          aria-checked="false">Qwen2.5-VL 72B Instruct</button>
+                  <button type="button" role="menuitemradio" data-model="qwen3.5-vl-27b"
+                          aria-checked="false">Qwen3.5-VL 27B</button>
                 </div>
               </div>
               <span class="composer-meta" id="chatMeta"></span>

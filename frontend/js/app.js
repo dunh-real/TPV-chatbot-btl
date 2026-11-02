@@ -417,6 +417,8 @@
   var chatInput = $('#chatInput');
   var chatModelTrigger = $('#chatModelTrigger');
   var chatModelMenu = $('#chatModelMenu');
+  var topbarModelTrigger = $('#topbarModelTrigger');
+  var topbarModelMenu = $('#topbarModelMenu');
   var chatModel = 'qwen3.6-35b';
   var chatMessages = $('#chatMessages');
   var chatEmpty = $('#chatEmpty');
@@ -424,7 +426,7 @@
 
   try {
     var savedChatModel = localStorage.getItem('tpv.chatModel');
-    var savedOption = Array.prototype.some.call(chatModelMenu.querySelectorAll('[data-model]'), function (option) {
+    var savedOption = Array.prototype.some.call(document.querySelectorAll('.model-menu [data-model]'), function (option) {
       return option.dataset.model === savedChatModel;
     });
     if (savedChatModel && savedOption) chatModel = savedChatModel;
@@ -432,36 +434,60 @@
   function setChatModel(value) {
     chatModel = value;
     var label = '';
-    chatModelMenu.querySelectorAll('[data-model]').forEach(function (option) {
+    document.querySelectorAll('.model-menu [data-model]').forEach(function (option) {
       var active = option.dataset.model === chatModel;
       option.setAttribute('aria-checked', String(active));
       if (active) label = option.textContent.trim();
     });
-    if (chatModelTrigger) {
-      chatModelTrigger.textContent = label || 'Model';
-      chatModelTrigger.title = 'Model chat: ' + (label || chatModel);
-    }
+    [chatModelTrigger, topbarModelTrigger].forEach(function (btn) {
+      if (!btn) return;
+      btn.textContent = label || 'Model';
+      btn.title = 'Model đang chọn: ' + (label || chatModel);
+    });
+    var ocrModelEl = $('#ocrModel');
+    if (ocrModelEl) ocrModelEl.textContent = label || chatModel;
     try { localStorage.setItem('tpv.chatModel', chatModel); } catch (e) { /* bỏ qua */ }
   }
   setChatModel(chatModel);
-  function closeChatModelMenu() {
-    chatModelMenu.hidden = true;
-    chatModelTrigger.setAttribute('aria-expanded', 'false');
+  function closeAllModelMenus() {
+    [chatModelMenu, topbarModelMenu].forEach(function (m) {
+      if (m) m.hidden = true;
+    });
+    [chatModelTrigger, topbarModelTrigger].forEach(function (t) {
+      if (t) t.setAttribute('aria-expanded', 'false');
+    });
   }
-  chatModelTrigger.addEventListener('click', function () {
-    if (chatModelTrigger.disabled) return;
-    var open = chatModelMenu.hidden;
-    chatModelMenu.hidden = !open;
-    chatModelTrigger.setAttribute('aria-expanded', String(open));
-  });
-  chatModelMenu.addEventListener('click', function (event) {
-    var option = event.target.closest('[data-model]');
-    if (!option) return;
-    setChatModel(option.dataset.model);
-    closeChatModelMenu();
-  });
+  function toggleModelMenu(trigger, menu) {
+    if (!trigger || !menu || trigger.disabled) return;
+    var open = menu.hidden;
+    closeAllModelMenus();
+    menu.hidden = !open;
+    trigger.setAttribute('aria-expanded', String(open));
+  }
+  if (chatModelTrigger && chatModelMenu) {
+    chatModelTrigger.addEventListener('click', function () {
+      toggleModelMenu(chatModelTrigger, chatModelMenu);
+    });
+    chatModelMenu.addEventListener('click', function (event) {
+      var option = event.target.closest('[data-model]');
+      if (!option) return;
+      setChatModel(option.dataset.model);
+      closeAllModelMenus();
+    });
+  }
+  if (topbarModelTrigger && topbarModelMenu) {
+    topbarModelTrigger.addEventListener('click', function () {
+      toggleModelMenu(topbarModelTrigger, topbarModelMenu);
+    });
+    topbarModelMenu.addEventListener('click', function (event) {
+      var option = event.target.closest('[data-model]');
+      if (!option) return;
+      setChatModel(option.dataset.model);
+      closeAllModelMenus();
+    });
+  }
   document.addEventListener('click', function (event) {
-    if (!event.target.closest('.model-picker')) closeChatModelMenu();
+    if (!event.target.closest('.model-picker')) closeAllModelMenus();
   });
 
   function autoGrow(node) {

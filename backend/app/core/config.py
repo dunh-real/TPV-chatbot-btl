@@ -32,8 +32,15 @@ class Settings(BaseSettings):
     llm_timeout: float = 120.0
     # Model nhỏ/nhanh cho các tác vụ phụ (viết lại truy vấn). Rỗng => dùng llm_model.
     llm_utility_model: str = ""
+    # Endpoint riêng cho các model trên thanh chat Agent
+    llm_qwen25_base_url: str = "http://localhost:8001/v1"
+    llm_qwen25_api_key: str = "EMPTY"
+    llm_qwen25_model: str = "qwen2.5-vl-72b-instruct"
+    llm_qwen35_base_url: str = "http://localhost:8002/v1"
+    llm_qwen35_api_key: str = "EMPTY"
+    llm_qwen35_model: str = "qwen3.5-vl-27b"
     # Danh sách các model hỗ trợ trên thanh chat
-    chat_models: str = "qwen3.6-35b,qwen2.5-72b-instruct,qwen3.5-27b"
+    chat_models: str = "qwen3.6-35b,qwen2.5-vl-72b-instruct,qwen3.5-vl-27b"
     # Dòng Qwen3.5/3.6 sinh một khối suy luận trước câu trả lời. Bật thì server vLLM
     # PHẢI chạy kèm `--reasoning-parser qwen3`, nếu không grammar của response_format
     # sẽ ép model xuất JSON ngay từ token đầu và giết luôn phần suy luận.
@@ -350,6 +357,28 @@ class Settings(BaseSettings):
     @property
     def available_chat_models(self) -> list[str]:
         return [m.strip() for m in self.chat_models.split(",") if m.strip()]
+
+    def resolve_llm_endpoint(self, model_name: str | None) -> tuple[str, str, str]:
+        """Trả về (base_url, api_key, model_id) tương ứng với model được chọn."""
+        target = (model_name or self.llm_model).strip()
+        lower = target.lower()
+        if lower in ("qwen2.5-vl-72b-instruct", "qwen2.5-72b-instruct", self.llm_qwen25_model.lower()):
+            return (
+                (self.llm_qwen25_base_url or self.llm_base_url).rstrip("/"),
+                self.llm_qwen25_api_key or self.llm_api_key,
+                self.llm_qwen25_model or target,
+            )
+        if lower in ("qwen3.5-vl-27b", "qwen3.5-27b", self.llm_qwen35_model.lower()):
+            return (
+                (self.llm_qwen35_base_url or self.llm_base_url).rstrip("/"),
+                self.llm_qwen35_api_key or self.llm_api_key,
+                self.llm_qwen35_model or target,
+            )
+        return (
+            self.llm_base_url.rstrip("/"),
+            self.llm_api_key,
+            target,
+        )
 
 
 
