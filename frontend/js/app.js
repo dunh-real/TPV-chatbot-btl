@@ -415,6 +415,21 @@
   };
 
   var chatInput = $('#chatInput');
+  var modelPicker = $('#chatModelPicker');
+  API.chatModels().then(function (models) {
+    models.forEach(function (model) {
+      var option = document.createElement('option');
+      option.value = model.id;
+      option.textContent = model.name;
+      modelPicker.appendChild(option);
+    });
+    var saved = localStorage.getItem('tpv.chatModel') || '';
+    if (models.some(function (model) { return model.id === saved; })) modelPicker.value = saved;
+  }).catch(function () { /* Chưa có token: vẫn dùng cấu hình Agent mặc định. */ });
+  modelPicker.addEventListener('change', function () {
+    localStorage.setItem('tpv.chatModel', this.value);
+  });
+
   var chatMessages = $('#chatMessages');
   var chatEmpty = $('#chatEmpty');
   var chatThread = $('#chatThread');
@@ -925,6 +940,7 @@
   /** Khi đang chạy, nút gửi đổi thành nút dừng - yêu cầu dài vài chục giây,
    *  không có đường thoát thì người dùng chỉ còn cách tải lại trang. */
   function setBusy(view, busy) {
+    modelPicker.disabled = busy;
     var btn = $('#chatSend');
     btn.disabled = false;
     btn.classList.toggle('stop', busy);
@@ -952,6 +968,7 @@
 
     var body = {
       request: text,
+      model: modelPicker.value || null,
       conversation_id: chat.conversationId,
       file_id: (files[0] && files[0].file_id) || '',
       ma_don_vi: prefs.unit || '',
@@ -1984,7 +2001,7 @@
       call: async function (signal) {
         var body = { request: request, inputs: inputs, nguon: source };
         if (source === 'tai_lieu') {
-          if (!selected.file_id) selected.file_id = (await API.agentUpload(selected.file, 'upload')).file_id;
+          if (!selected.file_id) selected.file_id = (await API.agentUpload(selected.file, 'upload', false)).file_id;
           if (signal.aborted) throw new DOMException('Đã hủy', 'AbortError');
           body.file_id = selected.file_id;
         }
@@ -2411,6 +2428,8 @@
   $('#slideAddInput').addEventListener('click', function () { kvRow('slideInputs', '', ''); });
 
   // nạp giá trị đã lưu vào drawer
+  $('#apiAccessToken').value = sessionStorage.getItem('tpv.accessToken') || '';
+  $('#apiAccessToken').addEventListener('change', function () { sessionStorage.setItem('tpv.accessToken', this.value.trim()); });
   $('#apiBase').value = API.getBase();
   $('#apiBase').addEventListener('change', function () {
     var v = API.setBase(this.value);

@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     llm_max_tokens: int = 8192
     llm_timeout: float = 120.0
+    chat_small_base_url: str = "http://127.0.0.1:15001/v1"
+    chat_small_model: str = "Qwen/Qwen3.5-4B"
+    chat_small_api_key: str = "EMPTY"
+    chat_main_context: int = 32768
+    chat_small_context: int = 8192
     # Model nhỏ/nhanh cho các tác vụ phụ (viết lại truy vấn). Rỗng => dùng llm_model.
     llm_utility_model: str = ""
     # Dòng Qwen3.5/3.6 sinh một khối suy luận trước câu trả lời. Bật thì server vLLM

@@ -106,7 +106,11 @@ class LLMClient:
             instructions = active.systemPrompt + f"\nNgôn ngữ trả lời: {active.parameters.language}."
             if active.requireCitation:
                 instructions += " Mọi kết luận dựa vào tài liệu phải có nguồn; không bịa nguồn."
-            messages = [*messages, {"role": "system", "content": instructions}]
+            messages = [dict(message) for message in messages]
+            if messages and messages[0].get("role") == "system":
+                messages[0]["content"] += "\n" + instructions
+            else:
+                messages.insert(0, {"role": "system", "content": instructions})
             # Ngân sách bảo thủ theo byte UTF-8, không tự cắt nội dung hoặc nạp tokenizer mới.
             reserved = active.parameters.maxAnswerTokens + (cfg.llm_thinking_budget if self.thinking_enabled(thinking) else 0)
             input_budget = len(json.dumps(messages, ensure_ascii=False).encode("utf-8"))

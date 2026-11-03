@@ -119,7 +119,8 @@ def test_llm_applies_config_and_context_limit(config, draft):
     try:
         p = client._payload([{'role':'user','content':'Thử'}], model='old',temperature=1,max_tokens=2000,stream=False,extra=None,thinking=False)
         assert p['model']=='test-model' and p['temperature']==.4 and p['max_tokens']==300
-        assert 'Nội dung thử' in p['messages'][-1]['content']
+        assert p['messages'][0]['role'] == 'system'
+        assert 'Nội dung thử' in p['messages'][0]['content']
         with pytest.raises(IntegrationError, match='context'):
             client._payload([{'role':'user','content':'a'*40000}], model=None,temperature=None,max_tokens=None,stream=False,extra=None,thinking=False)
     finally:

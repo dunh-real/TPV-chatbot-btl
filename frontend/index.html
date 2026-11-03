@@ -120,6 +120,7 @@
         <p id="viewSub">Một câu yêu cầu — hệ thống tự chọn workflow</p>
       </div>
       <div class="topbar-actions">
+        <select id="chatModelPicker" aria-label="Model chat Agent" title="Chọn model cho chat Agent; không đổi model OCR hoặc Text2SQL"><option value="">Model theo cấu hình Agent</option></select>
         <label class="switch" title="Trả kèm thông tin debug pipeline">
           <input type="checkbox" id="traceToggle" />
           <span class="switch-track"><span class="switch-thumb"></span></span>
@@ -446,6 +447,7 @@
   </div>
   <div class="drawer-body">
     <label class="field"><span>API base URL</span><input type="text" id="apiBase" placeholder="http://localhost:8080" /></label>
+    <label class="field"><span>Token API nghiệp vụ (X-Access-Token)</span><input type="password" id="apiAccessToken" autocomplete="off" placeholder="Nhập token môi trường test" /></label>
     <label class="field"><span>Đăng nhập với tài khoản (demo)</span>
       <select id="userPicker"><option value="">— không chọn (dùng mặc định backend) —</option></select>
       <em id="userPickerNote">Quyền đọc từ ERP: AbpUsers → AbpUserRoles → AbpPermissions. Chọn người nào thì hệ thống dùng đúng tenant và quyền của người đó.</em></label>

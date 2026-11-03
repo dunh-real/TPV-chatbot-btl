@@ -11,6 +11,7 @@ from app.schemas.common import ReferenceModel
 
 
 class AgentRequest(BaseModel):
+    model: str | None = Field(default=None, max_length=200, description="Mã model từ GET /api/agent/models; bỏ trống dùng cấu hình Agent")
     request: str = Field(min_length=1, max_length=4000,
                          description="Yêu cầu bằng tiếng Việt, không cần nêu workflow")
     conversation_id: str | None = Field(
