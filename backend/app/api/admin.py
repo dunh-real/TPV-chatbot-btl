@@ -14,6 +14,14 @@ async def agents():
     return {"codes": sorted(agent_config.AGENTS)}
 
 
+@router.get("/agents/{code}/config", response_model=AgentConfig)
+async def read_config(code: str):
+    config = agent_config.load(code)
+    if config is None:
+        raise IntegrationError("CONFIG_INVALID", "Agent chưa có cấu hình đã lưu", 404)
+    return config
+
+
 @router.put("/agents/{code}/config")
 async def configure(code: str, config: AgentConfig):
     revision = agent_config.save(code, config)

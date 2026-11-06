@@ -238,6 +238,10 @@
 
     // workflow 3 / 4
     templates: function () { return request('/api/reports/templates'); },
+    templateVersion: function (id, version) { return request('/api/reports/templates/' + encodeURIComponent(id) + '/versions/' + encodeURIComponent(version)); },
+    templateAnalyze: function (body) { return postJSON('/api/reports/templates/analyze', body); },
+    templateConfirm: function (body) { return postJSON('/api/reports/templates/confirm', body); },
+    templatePreview: function (body, signal) { return postJSON('/api/reports/templates/preview', body, signal); },
     draft: function (body, signal) { return postJSON('/api/reports/draft', body, signal); },
     aggregate: function (body, signal) { return postJSON('/api/reports/aggregate', body, signal); },
     reportDownload: function (fileName) { return url('/api/reports/download/' + encodeURIComponent(fileName)); },

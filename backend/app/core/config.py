@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str | None = None
     qdrant_collection: str = "tpv_documents"
+    report_source_collection: str = ""  # Trống = <collection kho>_report_sources, không dùng chung kho.
+    report_source_ttl_days: int = Field(default=7, ge=1, le=365)
     # Hội thoại nằm riêng: chunk tài liệu cần 3 biểu diễn, lượt chat chỉ cần dense.
     qdrant_conversation_collection: str = "tpv_conversations"
     qdrant_timeout: float = 30.0

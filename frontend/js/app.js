@@ -1615,7 +1615,7 @@
     /* Nói thẳng mức bảo đảm của nhánh tài liệu. Hai nhánh cho ra hai văn bản
        trông giống hệt nhau, nhưng thứ đứng sau con số thì khác hẳn - người ký
        cần biết mình đang cầm loại nào. */
-    if (data.nguon === 'tai_lieu') {
+    if (data.nguon === 'tai_lieu' && !(data.field_results || []).length) {
       var sd = data.source_document || {};
       box.appendChild(el('div', { class: 'card' },
         '<div class="card-head"><h3>Nguồn là tài liệu tải lên</h3>' +
@@ -1631,6 +1631,9 @@
     if (v) box.appendChild(el('div', { class: 'card' })).appendChild(v);
 
     renderSections(box, data.sections, 'draft-');
+    (data.field_results || []).filter(function (r) { return r.status === 'needs_review' || r.status === 'missing'; }).forEach(function (r) {
+      box.appendChild(el('div', { class: 'card' }, '<b>' + esc(r.label) + '</b><p>' + esc(r.message) + '</p>'));
+    });
 
     if ((data.regulations || []).length) {
       var reg = el('div', { class: 'card' });
@@ -1679,7 +1682,7 @@
     draftFile = entry;
     renderDraftFile();
     try {
-      var res = await API.agentUpload(file, 'upload');
+      var res = await API.agentUpload(file, 'upload', false);
       entry.file_id = res.file_id;
       entry.pending = false;
       renderDraftFile();
@@ -1696,23 +1699,21 @@
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
     // Chặn ngay ở giao diện: backend cũng trả `missing_input` đúng như vậy,
     // nhưng bắt người dùng đợi một vòng gọi API chỉ để nghe "thiếu file" thì vô ích.
-    if (!(draftFile && draftFile.file_id)) {
+    if ($('#draftSource').value === 'tai_lieu' && !(draftFile && draftFile.file_id)) {
       toast(draftFile ? 'File đang tải lên, đợi một chút…' : 'Chọn tài liệu nguồn trước đã', 'err');
       return;
     }
     runWorkflow({
       button: this,
       box: $('#draftResult'),
-      label: 'Đang đọc tài liệu, lập dàn ý và viết từng mục…',
-      hint: { text: 'thường 20-40 giây', slowAfter: 45 },
+      label: 'Đang chuẩn bị nguồn, điền mẫu và đối chiếu…',
+      hint: { text: 'tài liệu mới cần lập chỉ mục; tài liệu dài có thể mất vài phút', slowAfter: 60 },
       call: function (signal) {
-        // Màn này CHỈ soạn từ tài liệu. Nhánh CSDL của cùng endpoint vẫn còn và
-        // agent tổng vẫn dùng (ý định `draft`), nhưng không phơi ra đây nữa:
-        // lấy số từ CSDL là việc của màn Tổng hợp.
-        return API.draft({
+        // Chế độ xem thử dùng mapping vừa duyệt; mẫu ERP dùng ID/phiên bản đã lưu.
+        return ReportTemplates.run({
           request: request,
-          nguon: 'tai_lieu',
-          file_id: draftFile.file_id,
+          nguon: $('#draftSource').value,
+          file_id: draftFile ? draftFile.file_id : '',
           inputs: Object.assign({}, prefs.inputs, collectInputs('draftInputs')),
         }, signal);
       },

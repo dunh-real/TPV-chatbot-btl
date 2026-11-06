@@ -211,14 +211,20 @@ class QdrantVectorStore:
         if enabled():
             from app.services.ai_documents import document_metadata
             return await document_metadata(doc_ids)
+        return await self.raw_document_metadata(doc_ids)
+
+    async def raw_document_metadata(self, doc_ids, extra_filter=None):
+        """Đọc metadata trực tiếp; caller chịu trách nhiệm cung cấp phạm vi hợp lệ."""
         import asyncio
         gate = asyncio.Semaphore(8)
         fields = ["doc_title", "source", "doc_type", "ingested_at", "storage_bucket",
-                  "storage_object_key", "original_filename", "file_size_bytes", "checksum_sha256"]
+                  "storage_object_key", "original_filename", "file_size_bytes", "checksum_sha256",
+                  "knowledge_scope", "legal_index_status"]
         async def read(doc_id):
             async with gate:
                 query = models.Filter(
-                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))],
+                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id)),
+                          *([extra_filter] if extra_filter else [])],
                     must_not=[models.FieldCondition(key="latest", match=models.MatchValue(value=False))])
                 points, _ = await self.client.scroll(self.collection, scroll_filter=query,
                     limit=1, with_payload=fields, with_vectors=False)

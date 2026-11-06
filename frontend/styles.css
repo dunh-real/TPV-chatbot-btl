@@ -307,6 +307,11 @@ em { font-style: normal; }
 .dropzone.has-file { border-style: solid; border-color: var(--accent); }
 
 .kv-list { display: flex; flex-direction: column; gap: 7px; }
+.template-test { display: grid; gap: 10px; }
+.template-test p { margin: 0; font-size: 12px; line-height: 1.5; }
+.template-field { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-top: 8px; }
+.template-field summary { cursor: pointer; font-weight: 600; }
+.template-field .field { margin-top: 10px; }
 .kv-row { display: flex; gap: 6px; align-items: center; }
 .kv-row input { flex: 1; min-width: 0; padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 12.8px; outline: none; }
 .kv-row input:focus { border-color: var(--accent); }

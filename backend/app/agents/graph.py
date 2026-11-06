@@ -362,7 +362,16 @@ async def run_draft_workflow(
     history: list[dict[str, str]] | None = None,
     nguon: str = "csdl",
     file_id: str = "",
+    template_id: int | None = None,
+    template_version: int | None = None,
+    doc_ids: list[str] | None = None,
+    period: str = "",
+    content: str = "",
 ) -> dict[str, Any]:
+    if template_id is not None:
+        from app.services.report_fields import draft_from_mapping
+        return await draft_from_mapping(request, template_id, template_version,
+            inputs or {}, nguon, file_id, doc_ids or [], ma_don_vi, history or [], period=period, content=content)
     nguon = (nguon or "csdl").strip().lower()
     tu_tai_lieu = nguon in ("tai_lieu", "file", "document")
     state: DraftState = {

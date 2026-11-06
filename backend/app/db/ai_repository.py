@@ -194,10 +194,10 @@ class AIRepository:
         # Chính sách mẫu có phạm vi riêng cần được triển khai trước khi mở cho người khác.
         return [dict(r) for r in rows if self.principal.is_admin or not r["UsageScopeJson"]]
 
-    async def template_version(self, template):
+    async def template_version(self, template, version_no=None):
         table = self.table("TemplateVersions")
         rows = await self.rows("TemplateVersions", table.c.TemplateId == template["Id"],
-            table.c.VersionNo == template["CurrentVersionNo"], table.c.Status == "Published")
+            table.c.VersionNo == (version_no or template["CurrentVersionNo"]), table.c.Status == "Published")
         return dict(rows[0]) if rows else None
 
     async def conversation(self, key, create=False):

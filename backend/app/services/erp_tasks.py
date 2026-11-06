@@ -41,17 +41,8 @@ async def append_version(repo, task_id, result, url, inputs):
         table.c.OwnerType == "Task", table.c.OwnerId == task_id))).scalar() or 0
     await repo.add("OutputVersions", OwnerType="Task", OwnerId=task_id, VersionNo=version+1,
         ContentJson=dumps(public_result(result)), FileUrl=url, ChangeNote="Kết quả AI cho tác vụ ERP")
-    if inputs.get("source_url"):
-        await repo.add("SourceReferences", OwnerType="Task", OwnerId=task_id,
-                       ExternalSourceRef=inputs["source_url"])
-    for ref in result.get("refs", []) or result.get("all_refs", []):
-        if not isinstance(ref, dict):
-            continue
-        doc = await repo.document(str(ref.get("doc_id") or ""))
-        if doc:
-            await repo.add("SourceReferences", OwnerType="Task", OwnerId=task_id,
-                DocumentId=doc["Id"], DocumentVersionNo=doc["VersionNo"],
-                Snippet=ref.get("text") or ref.get("quote"), PageNumber=ref.get("page"))
+    from app.services.ai_outputs import save_sources
+    await save_sources(repo, 'Task', task_id, result, inputs)
 
 
 async def run(function, kind, task_id, args, kwargs):

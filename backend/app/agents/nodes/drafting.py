@@ -97,7 +97,7 @@ async def select_template_node(state: dict[str, Any]) -> dict[str, Any]:
         return {}
 
     repo = TemplateRepository()
-    catalog = await repo.catalog()
+    catalog = [t for t in await repo.catalog() if not t.get("uses_mapping")]
     if not catalog:
         return {"missing_input": ["Mẫu SQL và phiên bản đang công bố"]}
 
