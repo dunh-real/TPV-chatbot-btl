@@ -10,8 +10,6 @@ import json
 import logging
 import re
 from collections.abc import AsyncIterator, Callable
-from contextlib import contextmanager
-from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from typing import Any
 
@@ -23,19 +21,6 @@ from app.core.config import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 Message = dict[str, str]
-_selected_chat_model: ContextVar[str | None] = ContextVar(
-    "selected_chat_model", default=None
-)
-
-
-@contextmanager
-def selected_chat_model(model: str | None):
-    """Chọn model mặc định cho một request Agent mà không ảnh hưởng request khác."""
-    token: Token[str | None] = _selected_chat_model.set(model.strip() if model else None)
-    try:
-        yield
-    finally:
-        _selected_chat_model.reset(token)
 
 # Model dòng Qwen3/R1 có thể trả kèm khối suy luận; câu trả lời cuối nằm sau nó.
 _THINK_RE = re.compile(r"<think>.*?</think>\s*", re.DOTALL)
@@ -114,17 +99,28 @@ class LLMClient:
         thinking: bool | None = None,
     ) -> dict[str, Any]:
         cfg = self.settings
-        selected = _selected_chat_model.get()
-        if selected:
-            if not model or model in (cfg.llm_model, cfg.utility_model, cfg.llm_utility_model, *cfg.available_chat_models):
-                requested_model = selected
+        from app.core.runtime import agent_config
+        active = agent_config.get()
+        if active:
+            from app.services.integration_errors import IntegrationError
+            instructions = active.systemPrompt + f"\nNgôn ngữ trả lời: {active.parameters.language}."
+            if active.requireCitation:
+                instructions += " Mọi kết luận dựa vào tài liệu phải có nguồn; không bịa nguồn."
+            messages = [dict(message) for message in messages]
+            if messages and messages[0].get("role") == "system":
+                messages[0]["content"] += "\n" + instructions
             else:
-                requested_model = model
-        else:
-            requested_model = model or cfg.llm_model
-        _, _, resolved_model = cfg.resolve_llm_endpoint(requested_model)
+                messages.insert(0, {"role": "system", "content": instructions})
+            # Ngân sách bảo thủ theo byte UTF-8, không tự cắt nội dung hoặc nạp tokenizer mới.
+            reserved = active.parameters.maxAnswerTokens + (cfg.llm_thinking_budget if self.thinking_enabled(thinking) else 0)
+            input_budget = len(json.dumps(messages, ensure_ascii=False).encode("utf-8"))
+            if input_budget + reserved > active.model.maxContextLength:
+                raise IntegrationError("CONTEXT_TOO_LONG", "Đầu vào vượt ngân sách context của Agent", 413)
+            model = active.model.code
+            temperature = active.parameters.temperature
+            max_tokens = min(max_tokens or active.parameters.maxAnswerTokens, active.parameters.maxAnswerTokens)
         payload: dict[str, Any] = {
-            "model": resolved_model,
+            "model": model or cfg.llm_model,
             "messages": messages,
             "temperature": cfg.llm_temperature if temperature is None else temperature,
             "max_tokens": max_tokens or cfg.llm_max_tokens,
@@ -140,6 +136,8 @@ class LLMClient:
             payload["chat_template_kwargs"] = {"enable_thinking": False}
         if extra:
             payload.update(extra)
+        if active:
+            payload["top_p"] = active.parameters.topP
         return payload
 
     def thinking_enabled(self, thinking: bool | None) -> bool:
@@ -151,11 +149,6 @@ class LLMClient:
         return self.settings.llm_enable_thinking if thinking is None else thinking
 
     # --------------------------------------------------------------- chat -- #
-    def _endpoint_for(self, model_name: str | None) -> tuple[str, dict[str, str]]:
-        """Xác định URL đích và header xác thực tương ứng với model."""
-        base_url, api_key, _ = self.settings.resolve_llm_endpoint(model_name)
-        return f"{base_url}/chat/completions", {"Authorization": f"Bearer {api_key}"}
-
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=0.5, max=4),
@@ -163,9 +156,8 @@ class LLMClient:
         reraise=True,
     )
     async def _post(self, payload: dict[str, Any], timeout: float | None = None) -> httpx.Response:
-        url, headers = self._endpoint_for(payload.get("model"))
         response = await self._client.post(
-            url, json=payload, headers=headers, timeout=timeout or self.settings.llm_timeout
+            "/chat/completions", json=payload, timeout=timeout or self.settings.llm_timeout
         )
         response.raise_for_status()
         return response
@@ -330,8 +322,7 @@ class LLMClient:
         emitted = False
 
         try:
-            url, headers = self._endpoint_for(payload.get("model"))
-            async with self._client.stream("POST", url, json=payload, headers=headers) as response:
+            async with self._client.stream("POST", "/chat/completions", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.startswith("data:"):
@@ -450,8 +441,7 @@ class LLMClient:
         # sinh khối suy luận nào cả, lúc đó những mảnh này chính là câu trả lời.
         pending: list[str] = []
         try:
-            url, headers = self._endpoint_for(payload.get("model"))
-            async with self._client.stream("POST", url, json=payload, headers=headers) as response:
+            async with self._client.stream("POST", "/chat/completions", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.startswith("data:"):
@@ -531,6 +521,9 @@ _llm: LLMClient | None = None
 
 
 def get_llm() -> LLMClient:
+    from app.core.runtime import runtime_llm
+    if runtime_llm.get() is not None:
+        return runtime_llm.get()
     global _llm
     if _llm is None:
         _llm = LLMClient()

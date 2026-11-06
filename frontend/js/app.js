@@ -415,80 +415,24 @@
   };
 
   var chatInput = $('#chatInput');
-  var chatModelTrigger = $('#chatModelTrigger');
-  var chatModelMenu = $('#chatModelMenu');
-  var topbarModelTrigger = $('#topbarModelTrigger');
-  var topbarModelMenu = $('#topbarModelMenu');
-  var chatModel = 'qwen3.6-35b';
+  var modelPicker = $('#chatModelPicker');
+  API.chatModels().then(function (models) {
+    models.forEach(function (model) {
+      var option = document.createElement('option');
+      option.value = model.id;
+      option.textContent = model.name;
+      modelPicker.appendChild(option);
+    });
+    var saved = localStorage.getItem('tpv.chatModel') || '';
+    if (models.some(function (model) { return model.id === saved; })) modelPicker.value = saved;
+  }).catch(function () { /* Chưa có token: vẫn dùng cấu hình Agent mặc định. */ });
+  modelPicker.addEventListener('change', function () {
+    localStorage.setItem('tpv.chatModel', this.value);
+  });
+
   var chatMessages = $('#chatMessages');
   var chatEmpty = $('#chatEmpty');
   var chatThread = $('#chatThread');
-
-  try {
-    var savedChatModel = localStorage.getItem('tpv.chatModel');
-    var savedOption = Array.prototype.some.call(document.querySelectorAll('.model-menu [data-model]'), function (option) {
-      return option.dataset.model === savedChatModel;
-    });
-    if (savedChatModel && savedOption) chatModel = savedChatModel;
-  } catch (e) { /* chế độ riêng tư hoặc trình duyệt cũ */ }
-  function setChatModel(value) {
-    chatModel = value;
-    var label = '';
-    document.querySelectorAll('.model-menu [data-model]').forEach(function (option) {
-      var active = option.dataset.model === chatModel;
-      option.setAttribute('aria-checked', String(active));
-      if (active) label = option.textContent.trim();
-    });
-    [chatModelTrigger, topbarModelTrigger].forEach(function (btn) {
-      if (!btn) return;
-      btn.textContent = label || 'Model';
-      btn.title = 'Model đang chọn: ' + (label || chatModel);
-    });
-    var ocrModelEl = $('#ocrModel');
-    if (ocrModelEl) ocrModelEl.textContent = label || chatModel;
-    try { localStorage.setItem('tpv.chatModel', chatModel); } catch (e) { /* bỏ qua */ }
-  }
-  setChatModel(chatModel);
-  function closeAllModelMenus() {
-    [chatModelMenu, topbarModelMenu].forEach(function (m) {
-      if (m) m.hidden = true;
-    });
-    [chatModelTrigger, topbarModelTrigger].forEach(function (t) {
-      if (t) t.setAttribute('aria-expanded', 'false');
-    });
-  }
-  function toggleModelMenu(trigger, menu) {
-    if (!trigger || !menu || trigger.disabled) return;
-    var open = menu.hidden;
-    closeAllModelMenus();
-    menu.hidden = !open;
-    trigger.setAttribute('aria-expanded', String(open));
-  }
-  if (chatModelTrigger && chatModelMenu) {
-    chatModelTrigger.addEventListener('click', function () {
-      toggleModelMenu(chatModelTrigger, chatModelMenu);
-    });
-    chatModelMenu.addEventListener('click', function (event) {
-      var option = event.target.closest('[data-model]');
-      if (!option) return;
-      setChatModel(option.dataset.model);
-      closeAllModelMenus();
-    });
-  }
-  if (topbarModelTrigger && topbarModelMenu) {
-    topbarModelTrigger.addEventListener('click', function () {
-      toggleModelMenu(topbarModelTrigger, topbarModelMenu);
-    });
-    topbarModelMenu.addEventListener('click', function (event) {
-      var option = event.target.closest('[data-model]');
-      if (!option) return;
-      setChatModel(option.dataset.model);
-      closeAllModelMenus();
-    });
-  }
-  document.addEventListener('click', function (event) {
-    if (!event.target.closest('.model-picker')) closeAllModelMenus();
-  });
 
   function autoGrow(node) {
     node.style.height = 'auto';
@@ -996,8 +940,8 @@
   /** Khi đang chạy, nút gửi đổi thành nút dừng - yêu cầu dài vài chục giây,
    *  không có đường thoát thì người dùng chỉ còn cách tải lại trang. */
   function setBusy(view, busy) {
+    modelPicker.disabled = busy;
     var btn = $('#chatSend');
-    chatModelTrigger.disabled = busy;
     btn.disabled = false;
     btn.classList.toggle('stop', busy);
     btn.innerHTML = busy ? STOP_ICON : SEND_ICON;
@@ -1024,7 +968,7 @@
 
     var body = {
       request: text,
-      model: chatModel,
+      model: modelPicker.value || null,
       conversation_id: chat.conversationId,
       file_id: (files[0] && files[0].file_id) || '',
       ma_don_vi: prefs.unit || '',
@@ -1671,7 +1615,7 @@
     /* Nói thẳng mức bảo đảm của nhánh tài liệu. Hai nhánh cho ra hai văn bản
        trông giống hệt nhau, nhưng thứ đứng sau con số thì khác hẳn - người ký
        cần biết mình đang cầm loại nào. */
-    if (data.nguon === 'tai_lieu') {
+    if (data.nguon === 'tai_lieu' && !(data.field_results || []).length) {
       var sd = data.source_document || {};
       box.appendChild(el('div', { class: 'card' },
         '<div class="card-head"><h3>Nguồn là tài liệu tải lên</h3>' +
@@ -1687,6 +1631,9 @@
     if (v) box.appendChild(el('div', { class: 'card' })).appendChild(v);
 
     renderSections(box, data.sections, 'draft-');
+    (data.field_results || []).filter(function (r) { return r.status === 'needs_review' || r.status === 'missing'; }).forEach(function (r) {
+      box.appendChild(el('div', { class: 'card' }, '<b>' + esc(r.label) + '</b><p>' + esc(r.message) + '</p>'));
+    });
 
     if ((data.regulations || []).length) {
       var reg = el('div', { class: 'card' });
@@ -1735,7 +1682,7 @@
     draftFile = entry;
     renderDraftFile();
     try {
-      var res = await API.agentUpload(file, 'upload');
+      var res = await API.agentUpload(file, 'upload', false);
       entry.file_id = res.file_id;
       entry.pending = false;
       renderDraftFile();
@@ -1752,23 +1699,21 @@
     if (!request) { toast('Nhập yêu cầu trước đã', 'err'); return; }
     // Chặn ngay ở giao diện: backend cũng trả `missing_input` đúng như vậy,
     // nhưng bắt người dùng đợi một vòng gọi API chỉ để nghe "thiếu file" thì vô ích.
-    if (!(draftFile && draftFile.file_id)) {
+    if ($('#draftSource').value === 'tai_lieu' && !(draftFile && draftFile.file_id)) {
       toast(draftFile ? 'File đang tải lên, đợi một chút…' : 'Chọn tài liệu nguồn trước đã', 'err');
       return;
     }
     runWorkflow({
       button: this,
       box: $('#draftResult'),
-      label: 'Đang đọc tài liệu, lập dàn ý và viết từng mục…',
-      hint: { text: 'thường 20-40 giây', slowAfter: 45 },
+      label: 'Đang chuẩn bị nguồn, điền mẫu và đối chiếu…',
+      hint: { text: 'tài liệu mới cần lập chỉ mục; tài liệu dài có thể mất vài phút', slowAfter: 60 },
       call: function (signal) {
-        // Màn này CHỈ soạn từ tài liệu. Nhánh CSDL của cùng endpoint vẫn còn và
-        // agent tổng vẫn dùng (ý định `draft`), nhưng không phơi ra đây nữa:
-        // lấy số từ CSDL là việc của màn Tổng hợp.
-        return API.draft({
+        // Chế độ xem thử dùng mapping vừa duyệt; mẫu ERP dùng ID/phiên bản đã lưu.
+        return ReportTemplates.run({
           request: request,
-          nguon: 'tai_lieu',
-          file_id: draftFile.file_id,
+          nguon: $('#draftSource').value,
+          file_id: draftFile ? draftFile.file_id : '',
           inputs: Object.assign({}, prefs.inputs, collectInputs('draftInputs')),
         }, signal);
       },
@@ -2057,7 +2002,7 @@
       call: async function (signal) {
         var body = { request: request, inputs: inputs, nguon: source };
         if (source === 'tai_lieu') {
-          if (!selected.file_id) selected.file_id = (await API.agentUpload(selected.file, 'upload')).file_id;
+          if (!selected.file_id) selected.file_id = (await API.agentUpload(selected.file, 'upload', false)).file_id;
           if (signal.aborted) throw new DOMException('Đã hủy', 'AbortError');
           body.file_id = selected.file_id;
         }
@@ -2484,6 +2429,8 @@
   $('#slideAddInput').addEventListener('click', function () { kvRow('slideInputs', '', ''); });
 
   // nạp giá trị đã lưu vào drawer
+  $('#apiAccessToken').value = sessionStorage.getItem('tpv.accessToken') || '';
+  $('#apiAccessToken').addEventListener('change', function () { sessionStorage.setItem('tpv.accessToken', this.value.trim()); });
   $('#apiBase').value = API.getBase();
   $('#apiBase').addEventListener('change', function () {
     var v = API.setBase(this.value);

@@ -18,7 +18,6 @@ import dataclasses
 
 from app.core.context import IdentityError, resolve_principal, use_principal
 from app.services.access import resolve_access
-from app.services.llm import selected_chat_model
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +37,24 @@ class IdentityMiddleware:
             key.decode("latin-1").lower(): value.decode("latin-1")
             for key, value in scope.get("headers", [])
         }
+        if scope.get("path", "").startswith("/api/admin/"):
+            # Admin dùng shared key; lượt test tự xác minh tài khoản dữ liệu ở endpoint.
+            await self.app(scope, receive, send)
+            return
         try:
-            principal = await _kem_quyen(resolve_principal(headers))
+            principal = resolve_principal(headers)
+            if not scope.get("path", "").startswith("/health"):
+                principal = await _kem_quyen(principal)
+            if headers.get("x-tenant-id") and principal.access is not None and int(headers["x-tenant-id"]) != principal.tenant_id:
+                from app.services.integration_errors import IntegrationError
+                raise IntegrationError("TENANT_MISMATCH", "Tenant trong header không khớp tài khoản ERP", 403)
         except IdentityError as exc:
             await JSONResponse(status_code=400, content={"detail": str(exc)})(
                 scope, receive, send
             )
             return
 
-        selected_model = headers.get("x-selected-model", "").strip() or None
-        with use_principal(principal), selected_chat_model(selected_model):
+        with use_principal(principal):
             from app.db.ai_session import notify_on_finish, erp_task_id
             raw_task = headers.get("x-erp-task-id", "")
             if raw_task and (not raw_task.isdigit() or int(raw_task) <= 0):

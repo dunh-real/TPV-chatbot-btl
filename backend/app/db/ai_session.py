@@ -56,8 +56,16 @@ async def tables():
 async def repository():
     from app.db.ai_repository import AIRepository
     mapped = await tables()
-    async with get_engine().begin() as conn:
-        yield AIRepository(conn, mapped)
+    from app.core.runtime import test_mode
+    async with get_engine().connect() as conn:
+        transaction = await conn.begin()
+        try:
+            yield AIRepository(conn, mapped)
+            if not test_mode.get():
+                await transaction.commit()
+        finally:
+            if transaction.is_active:
+                await transaction.rollback()
 
 
 async def dispose():

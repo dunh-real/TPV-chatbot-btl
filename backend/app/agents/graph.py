@@ -362,7 +362,16 @@ async def run_draft_workflow(
     history: list[dict[str, str]] | None = None,
     nguon: str = "csdl",
     file_id: str = "",
+    template_id: int | None = None,
+    template_version: int | None = None,
+    doc_ids: list[str] | None = None,
+    period: str = "",
+    content: str = "",
 ) -> dict[str, Any]:
+    if template_id is not None:
+        from app.services.report_fields import draft_from_mapping
+        return await draft_from_mapping(request, template_id, template_version,
+            inputs or {}, nguon, file_id, doc_ids or [], ma_don_vi, history or [], period=period, content=content)
     nguon = (nguon or "csdl").strip().lower()
     tu_tai_lieu = nguon in ("tai_lieu", "file", "document")
     state: DraftState = {
@@ -1400,6 +1409,10 @@ async def prepare_context(state: QAState, *, defer_generation: bool = False) -> 
     if merged.get("can_tra_cuu", True):
         merged.update(await rewrite_query_node(merged))
     merged.update(await retrieve_node(merged))
+    from app.core.runtime import agent_config
+    if agent_config.get() and agent_config.get().requireCitation and merged.get("can_tra_cuu", True) and not merged.get("chunks"):
+        from app.services.integration_errors import IntegrationError
+        raise IntegrationError("NO_CONTEXT", "Không tìm thấy nguồn được phép để trả lời", 422)
     if merged.get("chunks"):
         merged.update(await build_context_node(merged))
     elif defer_generation and not merged.get("error"):

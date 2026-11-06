@@ -31,13 +31,15 @@ def metadata(row):
 
 
 async def document_metadata(doc_ids):
+    from app.services import shared_legal
+    shared = await shared_legal.metadata(doc_ids)
     async with repository() as repo:
         result = {}
         for key in dict.fromkeys(doc_ids):
             row = await repo.document(key)
             if row:
                 result[key] = metadata(row)
-        return result
+        return {**shared, **result}
 
 
 async def resolve_ids(doc_ids):
@@ -49,7 +51,9 @@ async def resolve_ids(doc_ids):
             row = await repo.document(key)
             if row and row["AiServerDocId"]:
                 result.append(row["AiServerDocId"])
-        return list(dict.fromkeys(result))
+    from app.services import shared_legal
+    shared = await shared_legal.metadata([key for key in doc_ids if key not in result and not key.startswith("sql:")])
+    return list(dict.fromkeys([*result, *shared]))
 
 
 async def public_ids(doc_ids):
@@ -61,12 +65,15 @@ async def public_ids(doc_ids):
             row = await repo.document(key)
             if row:
                 result[key] = f"sql:{row['Id']}"
-        return result
+    from app.services import shared_legal
+    shared = await shared_legal.metadata([key for key in doc_ids if key not in result])
+    return {**{key: key for key in shared}, **result}
 
 
 async def restrict(query_filter=None):
+    from app.services.vector_metadata import restrict as metadata_filter
     if not enabled():
-        return query_filter
+        return metadata_filter(query_filter)
     async with repository() as repo:
         allowed = await repo.document_ids()
     async def normalized(value):
@@ -82,13 +89,21 @@ async def restrict(query_filter=None):
             values = match.any if isinstance(match, models.MatchAny) else [match.value] if isinstance(match, models.MatchValue) else []
             return models.FieldCondition(key="doc_id", match=models.MatchAny(any=await resolve_ids(values)))
         return value
-    return models.Filter(must=[*([await normalized(query_filter)] if query_filter else []),
-        models.FieldCondition(key="doc_id", match=models.MatchAny(any=allowed))])
+    from app.services.shared_legal import scope
+    erp = metadata_filter(models.Filter(must=[
+        models.FieldCondition(key="doc_id", match=models.MatchAny(any=allowed))]))
+    return models.Filter(must=[await normalized(query_filter)] if query_filter else None,
+                         should=[erp, scope()])
 
 
 def tracked_ingestion(function):
     @wraps(function)
     async def run(self, text, doc_title, doc_id=None, source="", doc_type="", metadata=None, **kwargs):
+        from app.services import shared_legal
+        async def writable(key):
+            if key and len(key) == 16 and await shared_legal.metadata([key]):
+                raise PermissionError("Kho pháp luật chung chỉ được sửa bằng công cụ quản trị")
+        await writable(doc_id)
         if not enabled():
             return await function(self, text, doc_title, doc_id, source, doc_type, metadata, **kwargs)
         from app.db.ai_session import erp_document
@@ -98,8 +113,11 @@ def tracked_ingestion(function):
             async with repository() as repo:
                 await repo.lock(f"erp-document:{row_id}", shared=True)
                 row = await repo.erp_document(row_id, version)
+                from app.services.vector_metadata import from_document
+                metadata = {**(metadata or {}), **await from_document(repo, row)}
                 index_id = row["AiServerDocId"] or hashlib.sha256(
                     f"erp:{repo.principal.tenant_id}:{row_id}:{version}".encode()).hexdigest()[:32]
+                await writable(index_id)
                 await repo.patch("KnowledgeDocuments", row_id, AiServerDocId=index_id,
                                  IndexStatus="Pending", ProcessingStatus="Extracting")
                 failure = None
@@ -123,6 +141,10 @@ def tracked_ingestion(function):
                 raise ValueError("Tiền tố sql: dành cho định danh metadata, không dùng để nạp")
             row_id = await repo.begin_document(doc_id, doc_title, metadata or {})
         try:
+            async with repository() as repo:
+                row = await repo.document(f"sql:{row_id}", include_unready=True)
+                from app.services.vector_metadata import from_document
+                metadata = {**(metadata or {}), **await from_document(repo, row)}
             result = await function(self, text, doc_title, doc_id, source, doc_type, metadata, **kwargs)
             if not result.chunk_count:
                 raise ValueError("Tài liệu không tạo được đoạn nội dung")

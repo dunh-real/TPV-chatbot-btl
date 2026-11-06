@@ -127,8 +127,8 @@ async def ask_stream(request: ChatRequest, http_request: Request) -> StreamingRe
                 yield _sse("delta", {"text": piece})
         except LLMError as exc:
             logger.exception("Streaming thất bại")
-            yield _sse("error", {"detail": str(exc)})
-            return
+            from app.services.integration_errors import classify
+            raise classify(exc) from exc
 
         answer = "".join(collected).strip()
         if not answer:
@@ -137,6 +137,10 @@ async def ask_stream(request: ChatRequest, http_request: Request) -> StreamingRe
             yield _sse("delta", {"text": answer})
 
         used = extract_used_citations(answer, citations) if citations else []
+        from app.core.runtime import agent_config
+        if agent_config.get() and agent_config.get().requireCitation and prepared.get("can_tra_cuu", True) and not used:
+            from app.services.integration_errors import IntegrationError
+            raise IntegrationError("NO_CONTEXT", "Câu trả lời không có nguồn hợp lệ", 422)
         from app.legal import hooks as legal_hooks
 
         answer_id = await legal_hooks.record_answer(prepared, answer, used or citations)

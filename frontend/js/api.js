@@ -55,11 +55,11 @@
   /** Gắn định danh vào mọi lời gọi - một chỗ duy nhất, để không sót endpoint. */
   function withIdentity(headers) {
     var out = Object.assign({}, headers || {});
+    var token = sessionStorage.getItem('tpv.accessToken');
+    if (token) out['X-Access-Token'] = token;
     if (tenant) out['X-Tenant-Id'] = tenant;
     if (userId) out['X-User-Id'] = userId;
     if (localStorage.getItem('tpv.notifyTasks') === 'true') out['X-Notify-On-Finish'] = 'true';
-    var selectedModel = localStorage.getItem('tpv.chatModel');
-    if (selectedModel) out['X-Selected-Model'] = selectedModel;
     return out;
   }
 
@@ -75,7 +75,7 @@
     var detail = '';
     try {
       var data = await res.json();
-      detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data);
+      detail = data.error && data.error.message ? data.error.message + (data.error.requestId ? ' (requestId: ' + data.error.requestId + ')' : '') : typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data);
     } catch (e) {
       try { detail = await res.text(); } catch (e2) { detail = ''; }
     }
@@ -187,13 +187,15 @@
 
     // agent tổng
     agentChat: function (body, signal) { return postJSON('/api/agent/chat', body, signal); },
+    chatModels: function () { return request('/api/agent/models'); },
     agentChatStream: function (body, handlers, signal) {
       return postSSE('/api/agent/chat/stream', body, handlers, signal);
     },
-    agentUpload: function (file, kind) {
+    agentUpload: function (file, kind, ingest) {
       var fd = new FormData();
       fd.append('file', file);
       fd.append('kind', kind || 'upload');
+      if (ingest === false) fd.append('ingest', 'false');
       return postForm('/api/agent/upload', fd);
     },
     agentDownload: function (fileName) { return url('/api/agent/download/' + encodeURIComponent(fileName)); },
@@ -236,6 +238,10 @@
 
     // workflow 3 / 4
     templates: function () { return request('/api/reports/templates'); },
+    templateVersion: function (id, version) { return request('/api/reports/templates/' + encodeURIComponent(id) + '/versions/' + encodeURIComponent(version)); },
+    templateAnalyze: function (body) { return postJSON('/api/reports/templates/analyze', body); },
+    templateConfirm: function (body) { return postJSON('/api/reports/templates/confirm', body); },
+    templatePreview: function (body, signal) { return postJSON('/api/reports/templates/preview', body, signal); },
     draft: function (body, signal) { return postJSON('/api/reports/draft', body, signal); },
     aggregate: function (body, signal) { return postJSON('/api/reports/aggregate', body, signal); },
     reportDownload: function (fileName) { return url('/api/reports/download/' + encodeURIComponent(fileName)); },

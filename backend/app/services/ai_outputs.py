@@ -22,6 +22,38 @@ def public_result(result):
     return {k: v for k, v in result.items() if k not in {"output_path", "file_path"}}
 
 
+async def save_sources(repo, owner_type, owner_id, result, inputs):
+    """Nguồn của kho/file/ERP dùng chung cho tác vụ ERP và chế độ gọi trực tiếp."""
+    from urllib.parse import quote
+    seen = set()
+    if inputs.get('source_url'):
+        await repo.add('SourceReferences', OwnerType=owner_type, OwnerId=owner_id,
+                       ExternalSourceRef=inputs['source_url'])
+    for ref in result.get('refs', []) or result.get('all_refs', []):
+        if not isinstance(ref, dict):
+            continue
+        key = dumps(ref)
+        if key in seen:
+            continue
+        seen.add(key)
+        doc = await repo.document(str(ref['doc_id'])) if ref.get('doc_id') else None
+        values = dict(Snippet=str(ref.get('text') or ref.get('quote') or '')[:2000], PageNumber=ref.get('page'))
+        if doc:
+            values.update(DocumentId=doc['Id'], DocumentVersionNo=doc['VersionNo'])
+        elif ref.get('file_id') and inputs.get('source_url'):
+            values['ExternalSourceRef'] = inputs['source_url']
+        elif ref.get('query_id'):
+            values['ExternalSourceRef'] = 'erp-query:' + quote(str(ref['query_id']), safe='')[:200]
+        elif ref.get('input_key'):
+            values['ExternalSourceRef'] = 'request-input:' + quote(str(ref['input_key']), safe='')[:200]
+        else:
+            continue
+        chunk = ref.get('point_id') or ref.get('block_id') or ref.get('chunk_index')
+        if chunk is not None:
+            values['ChunkId'] = str(chunk)[:100]
+        await repo.add('SourceReferences', OwnerType=owner_type, OwnerId=owner_id, **values)
+
+
 async def save_product(repo, kind, inputs, result, url):
     title = str(inputs.get("request") or inputs.get("file_name") or "Sản phẩm AI")[:500]
     content = dumps(public_result(result))
@@ -55,17 +87,7 @@ async def save_product(repo, kind, inputs, result, url):
     row_id = await repo.add(name, **values)
     await repo.add("OutputVersions", OwnerType=kind, OwnerId=row_id, VersionNo=1,
                    ContentJson=content, FileUrl=url, ChangeNote="Tạo bởi backend AI")
-    if inputs.get("source_url"):
-        await repo.add("SourceReferences", OwnerType=kind, OwnerId=row_id,
-                       ExternalSourceRef=inputs["source_url"])
-    for ref in result.get("refs", []) or result.get("all_refs", []):
-        if not isinstance(ref, dict):
-            continue
-        doc = await repo.document(str(ref.get("doc_id") or ""))
-        if doc:
-            await repo.add("SourceReferences", OwnerType=kind, OwnerId=row_id, DocumentId=doc["Id"],
-                DocumentVersionNo=doc["VersionNo"], Snippet=ref.get("text") or ref.get("quote"),
-                PageNumber=ref.get("page"))
+    await save_sources(repo, kind, row_id, result, inputs)
     return name, row_id
 
 
@@ -73,6 +95,9 @@ def tracked_workflow(kind):
     def decorate(function):
         @wraps(function)
         async def run(*args, **kwargs):
+            from app.core.runtime import test_mode
+            if test_mode.get():
+                return await function(*args, **kwargs)
             from app.db import ai_session
             from app.services import tasks, task_queue
             external = ai_session.erp_task_id.get()

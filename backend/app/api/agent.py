@@ -21,8 +21,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 from app.agents import progress
 from app.services import errors
+from app.services.chat_models import selected_model, model_choices
 from app.agents.graph import run_agent
-from app.services.llm import selected_chat_model
 from app.schemas.agent import (
     AgentRequest,
     AgentResponse,
@@ -54,7 +54,7 @@ async def chat(request: AgentRequest) -> AgentResponse:
     Gửi kèm `file_id` (lấy từ `POST /api/agent/upload`) khi muốn agent xử lý một
     văn bản cụ thể - không có file thì agent không đi nhánh soát văn bản.
     """
-    with selected_chat_model(request.model):
+    async with selected_model(request.model):
         result = await run_agent(
             request=request.request,
             conversation_id=request.conversation_id,
@@ -122,8 +122,8 @@ async def chat_stream(request: AgentRequest) -> StreamingResponse:
 
     async def run() -> None:
         try:
-            with progress.collecting(channel.put):
-                with selected_chat_model(request.model):
+            async with selected_model(request.model):
+                with progress.collecting(channel.put):
                     result = await run_agent(
                         request=request.request,
                         conversation_id=request.conversation_id,
@@ -245,11 +245,6 @@ async def accounts() -> dict:
     }
 
 
-@router.get("/models", summary="Danh sách model hỗ trợ trên thanh chat")
-async def chat_models() -> list[str]:
-    return get_settings().available_chat_models
-
-
 @router.get("/tools", response_model=list[ToolInfo], summary="Những việc agent làm được")
 async def tools() -> list[ToolInfo]:
     return [ToolInfo(**item) for item in catalog()]
@@ -258,3 +253,8 @@ async def tools() -> list[ToolInfo]:
 @router.get("/download/{filename}", summary="Tải file agent vừa tạo")
 async def download(filename: str) -> FileResponse:
     return await output_file_response(filename)
+
+
+@router.get("/models", summary="Model chat được phép chọn")
+async def models():
+    return model_choices()

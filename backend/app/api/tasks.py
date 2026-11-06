@@ -131,7 +131,8 @@ async def source(task_id: int):
             owner, owner_id = await tasks.output_owner(repo, row)
             refs = repo.table("SourceReferences")
             sources = await repo.rows("SourceReferences", refs.c.OwnerType == owner, refs.c.OwnerId == owner_id)
-            reference = next((s["ExternalSourceRef"] for s in sources if s["ExternalSourceRef"]), None)
+            reference = next((s["ExternalSourceRef"] for s in sources
+                if (s["ExternalSourceRef"] or '').startswith(('s3:', 'minio:'))), None)
         if not reference:
             raise HTTPException(404, "Tác vụ không có file nguồn được lưu bền")
         name = tasks.payload(row).get("source_name") or tasks.payload(row).get("file_name") or "source.bin"

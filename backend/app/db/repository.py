@@ -79,7 +79,9 @@ class TemplateRepository:
 
     async def catalog(self):
         return [{"ma_template": t.ma_template, "ten_bao_cao": t.ten_bao_cao,
-                 "loai_bao_cao": t.loai_bao_cao, "mo_ta": t.mo_ta}
+                 "loai_bao_cao": t.loai_bao_cao, "mo_ta": t.mo_ta,
+                 "template_id": t.ai_id, "template_version": t.ai_version,
+                 "uses_mapping": bool(t.fields.get("binding"))}
                 for t in await self.list_all()]
 
 

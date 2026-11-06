@@ -21,8 +21,10 @@ from conftest import ERP_TENANT
 
 
 @pytest.fixture
-def api():
+def api(monkeypatch):
     """App tối giản: chỉ middleware danh tính, không kéo theo Qdrant/LLM."""
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr("app.api.identity.resolve_access", AsyncMock(return_value=None))
     app = FastAPI()
     app.add_middleware(IdentityMiddleware)
 

@@ -55,7 +55,8 @@ async def ghi_nho(conversation_id: str, file_id: str, ten: str = "") -> None:
     Trùng `file_id` thì đẩy lên đầu thay vì thêm dòng mới - gửi lại cùng một file
     nghĩa là nó đang được quan tâm, không phải là có thêm một file nữa.
     """
-    if not conversation_id or not file_id:
+    from app.core.runtime import test_mode
+    if test_mode.get() or not conversation_id or not file_id:
         return
     cache = get_cache()
     key = _key(conversation_id)
@@ -74,7 +75,8 @@ async def ghi_nho(conversation_id: str, file_id: str, ten: str = "") -> None:
 
 async def danh_sach(conversation_id: str) -> list[dict]:
     """Tài liệu của hội thoại, mới nhất trước."""
-    if not conversation_id:
+    from app.core.runtime import test_mode
+    if test_mode.get() or not conversation_id:
         return []
     return await get_cache().get_json(_key(conversation_id)) or []
 

@@ -26,11 +26,17 @@ def test_content_addressed_upload_and_bucket_allowlist(monkeypatch, tmp_path):
     assert store.upload(path, 'a.pdf')['storage_object_key'] != first['storage_object_key']
     with pytest.raises(PermissionError):
         store.download('blocked', 'folder/a.pdf', path, 'a.pdf')
-    client.fget_object.assert_not_called()
-    client.fget_object.side_effect = lambda bucket, key, destination: path.write_bytes(b'original')
+    client.get_object.assert_not_called()
+    response = Mock()
+    response.stream.return_value = iter([b'orig', b'inal'])
+    client.get_object.return_value = response
     metadata = store.download('laws', 'folder/a.pdf', path, 'a.pdf')
     assert metadata['storage_object_key'] == 'folder/a.pdf'
     assert metadata['file_size_bytes'] == len(b'original')
+    assert path.read_bytes() == b'original'
+    client.stat_object.assert_not_called()
+    response.close.assert_called_once()
+    response.release_conn.assert_called_once()
 
 
 def test_script_sends_object_reference_only():

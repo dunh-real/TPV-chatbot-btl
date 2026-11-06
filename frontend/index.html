@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TPV Trợ lý — Multi-agent</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>" />
-<link rel="stylesheet" href="styles.css?v=20261028" />
+<link rel="stylesheet" href="styles.css?v=20261104-report-reuse" />
 </head>
 <body>
 <div class="app" id="app">
@@ -120,18 +120,7 @@
         <p id="viewSub">Một câu yêu cầu — hệ thống tự chọn workflow</p>
       </div>
       <div class="topbar-actions">
-        <div class="model-picker" id="topbarModelPicker">
-          <button type="button" class="model-trigger" id="topbarModelTrigger"
-                  aria-haspopup="menu" aria-expanded="false" title="Chọn model cho toàn bộ chức năng">Qwen3.6 35B</button>
-          <div class="model-menu" id="topbarModelMenu" role="menu" hidden>
-            <button type="button" role="menuitemradio" data-model="qwen3.6-35b"
-                    aria-checked="true">Qwen3.6 35B</button>
-            <button type="button" role="menuitemradio" data-model="qwen2.5-vl-72b-instruct"
-                    aria-checked="false">Qwen2.5-VL 72B Instruct</button>
-            <button type="button" role="menuitemradio" data-model="qwen3.5-vl-27b"
-                    aria-checked="false">Qwen3.5-VL 27B</button>
-          </div>
-        </div>
+        <select id="chatModelPicker" aria-label="Model chat Agent" title="Chọn model cho chat Agent; không đổi model OCR hoặc Text2SQL"><option value="">Model theo cấu hình Agent</option></select>
         <label class="switch" title="Trả kèm thông tin debug pipeline">
           <input type="checkbox" id="traceToggle" />
           <span class="switch-track"><span class="switch-thumb"></span></span>
@@ -173,18 +162,6 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.3-8.3a3.4 3.4 0 0 1 4.8 4.8L10.2 17.8a1.8 1.8 0 0 1-2.5-2.5l7.8-7.8"/></svg>
               </button>
               <input type="file" id="chatFile" hidden />
-              <div class="model-picker">
-                <button type="button" class="model-trigger" id="chatModelTrigger"
-                        aria-haspopup="menu" aria-expanded="false">Model</button>
-                <div class="model-menu" id="chatModelMenu" role="menu" hidden>
-                  <button type="button" role="menuitemradio" data-model="qwen3.6-35b"
-                          aria-checked="true">Qwen3.6 35B</button>
-                  <button type="button" role="menuitemradio" data-model="qwen2.5-vl-72b-instruct"
-                          aria-checked="false">Qwen2.5-VL 72B Instruct</button>
-                  <button type="button" role="menuitemradio" data-model="qwen3.5-vl-27b"
-                          aria-checked="false">Qwen3.5-VL 27B</button>
-                </div>
-              </div>
               <span class="composer-meta" id="chatMeta"></span>
             </div>
             <button class="send-btn" id="chatSend" title="Gửi (Enter)">
@@ -229,14 +206,41 @@
     <section class="view view-split" id="view-draft">
       <div class="panel">
         <div class="panel-inner">
-          <h2 class="panel-title">Soạn báo cáo từ tài liệu</h2>
-          <p class="panel-sub">Đọc toàn bộ nội dung một tài liệu rồi soạn thành báo cáo. Số trong báo cáo phải có nguyên văn trong tài liệu, không thì không xuất file. Muốn lấy số từ CSDL thì dùng màn <b>Tổng hợp báo cáo</b>.</p>
+          <h2 class="panel-title">Soạn báo cáo</h2>
+          <p class="panel-sub">Chọn mẫu và nguồn dữ liệu. Bản nháp trả kèm bằng chứng cho từng vùng; cần người dùng duyệt trước khi phát hành.</p>
+          <label class="field"><span>Mẫu báo cáo</span><select id="draftTemplateMode">
+            <option value="upload">Tải mẫu DOCX để xem thử</option>
+            <option value="published">Mẫu ERP đã công bố</option>
+            <option value="legacy">Luồng soạn cũ</option>
+          </select></label>
+          <div id="draftTemplateUpload" class="template-test">
+            <label class="field"><span>File mẫu DOCX</span><input id="draftTemplateFile" type="file" accept=".docx" /></label>
+            <button class="ghost-btn" id="draftTemplateAnalyze">Phân tích mẫu</button>
+            <p class="muted">Xem thử không lưu mẫu hoặc sản phẩm vào DB. Không cần thêm placeholder thủ công.</p>
+            <p id="draftTemplateStatus" role="status" aria-live="polite"></p>
+            <div id="draftTemplateQuestions"></div>
+            <div id="draftTemplateFields"></div>
+            <button class="ghost-btn" id="draftTemplateConfirm" hidden>Xác nhận các vùng và dùng mẫu</button>
+          </div>
+          <div id="draftTemplatePublished" hidden>
+            <label class="field"><span>Phiên bản mẫu</span><select id="draftTemplateSelect"><option value="">Chọn mẫu</option></select></label>
+            <button class="ghost-btn sm" id="draftTemplateRefresh">Tải lại danh sách</button>
+            <p id="draftTemplateCatalogStatus" class="muted" role="status"></p>
+          </div>
           <label class="field">
             <span>Yêu cầu</span>
             <textarea id="draftRequest" rows="3" placeholder="Soạn báo cáo tổng hợp từ tài liệu này">Soạn báo cáo tổng hợp từ tài liệu này</textarea>
           </label>
+          <label class="field"><span>Kỳ báo cáo (không bắt buộc)</span><input id="draftPeriod" type="text" placeholder="2026-10 hoặc 2026-Q3 hoặc 2026" /></label>
+          <label class="field"><span>Thông tin nội dung bổ sung</span><textarea id="draftContent" rows="2" placeholder="Thông tin thực tế bổ sung, được ghi nhận là nguồn người dùng cung cấp"></textarea></label>
+          <label class="field"><span>Nguồn nội dung</span><select id="draftSource">
+            <option value="tai_lieu">Tài liệu tải lên</option><option value="csdl">CSDL ERP</option>
+            <option value="kho_tri_thuc">Tài liệu trong kho tri thức</option>
+          </select></label>
+          <label class="field" id="draftDocIdsField" hidden><span>Mã tài liệu kho</span>
+            <input type="text" id="draftDocIds" placeholder="sql:422, sql:429" /></label>
           <div class="field" id="draftFileField">
-            <span>Tài liệu nguồn <em>(đọc toàn bộ nội dung file này)</em></span>
+            <span>Tài liệu nguồn <em>(truy hồi các đoạn liên quan cho từng vùng)</em></span>
             <div class="dropzone" id="draftDrop">
               <input type="file" id="draftFile" accept=".docx,.pdf,.md,.txt" hidden />
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -246,7 +250,7 @@
             <div class="attach-row" id="draftAttachments" hidden></div>
           </div>
           <div class="field">
-            <span>Thông tin bắt buộc (inputs)</span>
+            <span>Thông tin bổ sung (inputs)</span>
             <div class="kv-list" id="draftInputs"></div>
             <button class="ghost-btn sm" id="draftAddInput">+ Thêm trường</button>
           </div>
@@ -470,6 +474,7 @@
   </div>
   <div class="drawer-body">
     <label class="field"><span>API base URL</span><input type="text" id="apiBase" placeholder="http://localhost:8080" /></label>
+    <label class="field"><span>Token API nghiệp vụ (X-Access-Token)</span><input type="password" id="apiAccessToken" autocomplete="off" placeholder="Nhập token môi trường test" /></label>
     <label class="field"><span>Đăng nhập với tài khoản (demo)</span>
       <select id="userPicker"><option value="">— không chọn (dùng mặc định backend) —</option></select>
       <em id="userPickerNote">Quyền đọc từ ERP: AbpUsers → AbpUserRoles → AbpPermissions. Chọn người nào thì hệ thống dùng đúng tenant và quyền của người đó.</em></label>
@@ -498,8 +503,9 @@
 <div class="popover" id="popover" hidden></div>
 
 <script src="js/markdown.js?v=20260920l"></script>
-<script src="js/api.js?v=20261030-uc33"></script>
+<script src="js/api.js?v=20261104-report-reuse"></script>
+<script src="js/report_templates.js?v=20261104-report-reuse"></script>
 <script src="js/tasks.js?v=20261028"></script>
-<script src="js/app.js?v=20261030-uc33"></script>
+<script src="js/app.js?v=20261104-report-reuse"></script>
 </body>
 </html>

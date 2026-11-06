@@ -70,6 +70,9 @@ class CacheService:
             return None
 
     async def set_json(self, key: str, value: Any, ttl: int | None = None) -> None:
+        from app.core.runtime import test_mode
+        if test_mode.get():
+            return
         ttl = ttl or self.settings.cache_ttl_seconds
         client = await self._get_client()
         if client is None:

@@ -247,6 +247,9 @@ async def prepare_query(question: str, base_filter: models.Filter | None) -> Que
 # Ghi câu trả lời
 # --------------------------------------------------------------------------- #
 async def record_answer(state: dict[str, Any], answer: str, citations: list[dict[str, Any]]) -> str | None:
+    from app.core.runtime import test_mode
+    if test_mode.get():
+        return None
     cfg = get_settings()
     if not cfg.legal_versioning_enabled or not answer or not citations:
         return None

@@ -98,7 +98,7 @@ async def test_draft_from_document_uses_published_sql_template(ai_mode, monkeypa
 async def test_ingestion_failure_records_failed_state(ai_mode, monkeypatch):
     from app.services import ai_documents
     repo = AsyncMock()
-    repo.document.return_value = {"Id": 1}
+    repo.document.return_value = {"Id": 1, "TenantId": 94, "PartitionId": 12}
     repo.begin_document.return_value = 1
     repo.conn.execute.return_value.first.return_value = None
     @asynccontextmanager

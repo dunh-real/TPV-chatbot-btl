@@ -266,15 +266,25 @@ async def upload_document(
     force_reingest: bool = Form(default=False),
     erp_doc_id: int | None = Form(default=None, gt=0),
     version_no: int | None = Form(default=None, gt=0),
+    tenant_id: int | None = Form(default=None, ge=0),
+    partition_id: int | None = Form(default=None, gt=0),
 ) -> IngestResponse:
     from app.db.ai_session import erp_document, repository
     token = None
     try:
+        from app.core.context import current_principal
+        from app.services.integration_errors import IntegrationError
+        if tenant_id is not None and tenant_id != current_principal().tenant_id:
+            raise IntegrationError("TENANT_MISMATCH", "tenant_id không khớp tài khoản ERP", 403)
+        if partition_id is not None and erp_doc_id is None:
+            raise IntegrationError("INVALID_REQUEST", "Nạp vào phân vùng BE cần erp_doc_id và version_no", 422)
         if (erp_doc_id is None) != (version_no is None):
             raise HTTPException(422, "Cần gửi đồng thời erp_doc_id và version_no")
         if erp_doc_id:
             async with repository() as repo:
-                await repo.erp_document(erp_doc_id, version_no)
+                row = await repo.erp_document(erp_doc_id, version_no)
+                if partition_id is not None and row["PartitionId"] != partition_id:
+                    raise IntegrationError("PARTITION_DENIED", "partition_id không khớp tài liệu ERP", 403)
             token = erp_document.set((erp_doc_id, version_no))
         filename = _check_filename(file.filename or "")
         with tempfile.TemporaryDirectory(prefix="tpv-ingest-") as folder:
@@ -344,6 +354,8 @@ async def ingest_text(request: IngestTextRequest) -> IngestResponse:
             doc_type=request.doc_type,
             metadata=request.metadata,
         )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         logger.exception("Nạp văn bản thất bại")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc

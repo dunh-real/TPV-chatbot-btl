@@ -459,6 +459,10 @@ async def generate_node(state: QAState) -> dict[str, Any]:
                 "used_citations": [], "error": errors.friendly(exc)}
 
     citations = state.get("citations", [])
+    from app.core.runtime import agent_config
+    from app.services.integration_errors import IntegrationError
+    if agent_config.get() and agent_config.get().requireCitation and not extract_used_citations(answer, citations):
+        raise IntegrationError("NO_CONTEXT", "Câu trả lời không có nguồn hợp lệ", 422)
     return {
         "answer": answer,
         "used_citations": extract_used_citations(answer, citations),
@@ -490,6 +494,10 @@ async def no_context_node(state: QAState) -> dict[str, Any]:
 
     Suy luận tắt: đây là câu xã giao, bật lên chỉ tốn vài giây chờ.
     """
+    from app.core.runtime import agent_config
+    if agent_config.get() and agent_config.get().requireCitation and state.get("can_tra_cuu", True):
+        from app.services.integration_errors import IntegrationError
+        raise IntegrationError("NO_CONTEXT", "Không tìm thấy nguồn được phép để trả lời", 422)
     # Truy hồi HỎNG khác hẳn truy hồi KHÔNG RA GÌ: để model đối đáp vui vẻ lúc
     # Qdrant chết là giấu mất sự cố, người dùng tưởng kho rỗng.
     if (failure := state.get("error")):

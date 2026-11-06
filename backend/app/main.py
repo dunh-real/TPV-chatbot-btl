@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import secrets
 from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from pathlib import Path
@@ -138,6 +137,9 @@ if settings.trust_identity_headers:
         "Đặt TRUST_IDENTITY_HEADERS=false khi giao diện đã có đăng nhập."
     )
 
+from app.api.integration import IntegrationMiddleware
+app.add_middleware(IntegrationMiddleware)
+
 # Thêm sau cùng = nằm ngoài cùng, nên cả phản hồi lỗi của IdentityMiddleware
 # cũng có header CORS. Ngược lại trình duyệt chỉ thấy "network error".
 app.add_middleware(
@@ -146,40 +148,19 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-Id"],
 )
 
-ACCESS_COOKIE = "tpv_access"
-
-if settings.public_access_token:
-    # Quick tunnel của Cloudflare không gắn được Access, nên chặn ở tầng ứng dụng:
-    # không có nó thì bất kỳ ai biết URL đều gọi được cả /api/documents/{id} (DELETE)
-    # lẫn cả GPU phía sau.
-    @app.middleware("http")
-    async def require_access_token(request: Request, call_next):
-        expected = settings.public_access_token
-        supplied = (
-            request.headers.get("x-access-token")
-            or request.query_params.get("token")
-            or request.cookies.get(ACCESS_COOKIE)
-            or ""
-        )
-        try:
-            ok = secrets.compare_digest(supplied, expected)
-        except TypeError:  # token có ký tự ngoài ASCII
-            ok = supplied == expected
-        if not ok:
-            return JSONResponse(status_code=401,
-                                content={"detail": "Thiếu hoặc sai token truy cập"})
-
-        response = await call_next(request)
-        # Vào bằng ...?token=... một lần rồi thì cookie lo phần còn lại, không phải
-        # nhét token vào từng lời gọi API của trang.
-        if request.query_params.get("token") == expected:
-            response.set_cookie(ACCESS_COOKIE, expected, httponly=True,
-                                samesite="lax", max_age=86400)
-        return response
-
-    logger.info("Đã bật chốt token truy cập cho toàn bộ API")
+# Request ID đi vào mọi dòng log trong cùng ngữ cảnh, kể cả threadpool.
+_record_factory = logging.getLogRecordFactory()
+def _traced_record(*args, _previous=_record_factory, **kwargs):
+    record = _previous(*args, **kwargs)
+    from app.core.runtime import request_id
+    record.request_id = request_id.get() or "-"
+    return record
+logging.setLogRecordFactory(_traced_record)
+for _handler in logging.getLogger().handlers:
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s [%(request_id)s]: %(message)s"))
 
 # Giao diện demo: phục vụ ngay từ backend để không phải dựng thêm web server và
 # không phải mở CORS - mọi lời gọi API đều cùng origin với trang.
@@ -221,6 +202,8 @@ app.include_router(mindmap.router)
 app.include_router(ocr.router)
 from app.api import tasks as tasks_api
 app.include_router(tasks_api.router)
+from app.api import admin
+app.include_router(admin.router)
 
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
@@ -254,10 +237,15 @@ async def health() -> HealthResponse:
     from app.db import ai_session
     database_ok = await ai_session.healthcheck()
     legal_ok = await healthcheck() if settings.legal_versioning_enabled else None
+    from app.rag import embedding, reranker
+    embedding_ok = embedding._embedder is not None
+    reranker_ok = reranker._reranker is not None
     return HealthResponse(
-        status="ok" if (qdrant_ok and llm_ok and database_ok and legal_ok is not False) else "degraded",
+        status="ok" if (qdrant_ok and llm_ok and embedding_ok and reranker_ok and database_ok and legal_ok is not False) else "degraded",
         qdrant=qdrant_ok,
         llm=llm_ok,
+        embedding=embedding_ok,
+        reranker=reranker_ok,
         database=database_ok,
         collection=store.collection,
         points=points,

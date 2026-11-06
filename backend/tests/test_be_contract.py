@@ -26,6 +26,24 @@ def repository_patch(monkeypatch, module, repo):
     monkeypatch.setattr(module,'repository',repository)
 
 
+async def test_report_sources_save_file_query_and_input_under_existing_task():
+    from app.services.ai_outputs import save_sources
+    repo=SimpleNamespace(add=AsyncMock(),document=AsyncMock(return_value={'Id':422,'VersionNo':2}))
+    refs=[dict(doc_id='sql:422',quote='Đoạn nguồn',point_id='p1'),
+          dict(file_id='upload:a.docx',chunk_index=0,quote='Bảng nguồn'),
+          dict(query_id='q1',row=0,column='Total',quote='13'),
+          dict(input_key='content',quote='Thông tin người dùng')]
+    await save_sources(repo,'Task',554,{'all_refs':refs+[refs[0]]},{'source_url':'minio://btl-ai/uploads/a.docx'})
+    writes=[call.kwargs for call in repo.add.call_args_list]
+    assert len(writes)==5
+    assert all(v['OwnerType']=='Task' and v['OwnerId']==554 for v in writes)
+    assert any(v.get('DocumentId')==422 for v in writes)
+    assert any(v.get('ChunkId')=='0' and v['Snippet']=='Bảng nguồn' for v in writes)
+    assert any(v.get('ExternalSourceRef')=='erp-query:q1' for v in writes)
+    assert any(v.get('ExternalSourceRef')=='request-input:content' for v in writes)
+    repo.document.assert_awaited_once_with('sql:422')
+
+
 async def test_attachment_without_ingest(monkeypatch,tmp_path):
     from app.api import agent
     path=tmp_path/'source.txt';path.write_text('Nội dung đính kèm')
@@ -40,7 +58,7 @@ async def test_same_erp_document_reindexes_without_inserting(monkeypatch):
     from app.services import ai_documents
     from app.rag.ingestion import IngestResult
     monkeypatch.setattr(ai_documents,'enabled',lambda:True)
-    repo=SimpleNamespace(lock=AsyncMock(),erp_document=AsyncMock(return_value={'AiServerDocId':'hash422'}),
+    repo=SimpleNamespace(lock=AsyncMock(),erp_document=AsyncMock(return_value={'AiServerDocId':'hash422','Id':422,'TenantId':94,'PartitionId':12}),
         patch=AsyncMock(),principal=who(),add=AsyncMock())
     repository_patch(monkeypatch,ai_documents,repo)
     writes=[]

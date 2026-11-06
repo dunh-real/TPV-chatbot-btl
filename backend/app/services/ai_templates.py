@@ -69,3 +69,33 @@ async def materialize(template):
         await anyio.to_thread.run_sync(download)
     template.file_path = str(target)
     return template
+
+
+async def get_version(template_id, version_no):
+    """Chỉ lấy phiên bản đã công bố, trong cùng phạm vi quyền như danh sách mẫu."""
+    from app.services.integration_errors import IntegrationError
+    if template_id <= 0 or version_no <= 0:
+        raise IntegrationError('INVALID_REQUEST', 'ID mẫu và phiên bản phải lớn hơn 0', 422)
+    async with repository() as repo:
+        row = next((r for r in await repo.templates() if r["Id"] == template_id), None)
+        version = await repo.template_version(row, version_no) if row else None
+        if not version:
+            raise IntegrationError("INVALID_REQUEST", "Không tìm thấy phiên bản mẫu đã công bố trong phạm vi quyền", 404)
+        template = TemplateInfo(ma_template=row["Code"], ten_bao_cao=row["Name"],
+            file_path=version["FileUrl"], fields=template_fields(version["FieldsJson"], version["StructureJson"]),
+            ai_id=template_id, ai_version=version["VersionNo"], ai_hash=version["FileHashSha256"])
+    binding(template)
+    return await materialize(template)
+
+
+def binding(template):
+    """Hợp đồng mapping phải đúng file/phiên bản, không tự suy luận lại mẫu cũ."""
+    from app.schemas.templates import TemplateMapping
+    from app.services.integration_errors import IntegrationError
+    try:
+        mapping = TemplateMapping.model_validate(template.fields.get('binding'))
+    except ValueError as exc:
+        raise IntegrationError('CONFIG_INVALID', 'Phiên bản mẫu chưa có mapping hợp lệ; cần phân tích và duyệt một lần', 422) from exc
+    if template.ai_hash and template.ai_hash != mapping.file_sha256:
+        raise IntegrationError('CONFIG_INVALID', 'Hash mapping không khớp phiên bản mẫu đã lưu', 409)
+    return mapping

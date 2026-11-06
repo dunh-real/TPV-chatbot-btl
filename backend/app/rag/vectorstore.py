@@ -109,6 +109,8 @@ class QdrantVectorStore:
             "source": models.PayloadSchemaType.KEYWORD,
             "doc_type": models.PayloadSchemaType.KEYWORD,
             "chunk_index": models.PayloadSchemaType.INTEGER,
+            **{key: models.PayloadSchemaType.INTEGER for key in
+               ("document_id", "tenant_id", "partition_id", "access_level_id", "security_level_id")},
             # VBQPPL theo phiên bản (app.legal)
             "legal_id": models.PayloadSchemaType.KEYWORD,
             "dieus": models.PayloadSchemaType.KEYWORD,
@@ -209,14 +211,20 @@ class QdrantVectorStore:
         if enabled():
             from app.services.ai_documents import document_metadata
             return await document_metadata(doc_ids)
+        return await self.raw_document_metadata(doc_ids)
+
+    async def raw_document_metadata(self, doc_ids, extra_filter=None):
+        """Đọc metadata trực tiếp; caller chịu trách nhiệm cung cấp phạm vi hợp lệ."""
         import asyncio
         gate = asyncio.Semaphore(8)
         fields = ["doc_title", "source", "doc_type", "ingested_at", "storage_bucket",
-                  "storage_object_key", "original_filename", "file_size_bytes", "checksum_sha256"]
+                  "storage_object_key", "original_filename", "file_size_bytes", "checksum_sha256",
+                  "knowledge_scope", "legal_index_status"]
         async def read(doc_id):
             async with gate:
                 query = models.Filter(
-                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))],
+                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id)),
+                          *([extra_filter] if extra_filter else [])],
                     must_not=[models.FieldCondition(key="latest", match=models.MatchValue(value=False))])
                 points, _ = await self.client.scroll(self.collection, scroll_filter=query,
                     limit=1, with_payload=fields, with_vectors=False)
@@ -244,12 +252,13 @@ class QdrantVectorStore:
             doc_id = resolved[0]
         payloads: list[dict[str, Any]] = []
         offset = None
+        from app.services.ai_documents import restrict
+        scoped_filter = await restrict(models.Filter(must=[
+            models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))]))
         while True:
             points, offset = await self._client.scroll(
                 collection_name=self.collection,
-                scroll_filter=models.Filter(
-                    must=[models.FieldCondition(key="doc_id", match=models.MatchValue(value=doc_id))]
-                ),
+                scroll_filter=scoped_filter,
                 limit=page_size,
                 offset=offset,
                 with_payload=True,
@@ -387,6 +396,9 @@ def build_filter(
     doc_ids: Iterable[str] | None = None,
     sources: Iterable[str] | None = None,
     doc_types: Iterable[str] | None = None,
+    partition_ids: Iterable[int] | None = None,
+    access_level_ids: Iterable[int] | None = None,
+    security_level_ids: Iterable[int] | None = None,
 ) -> models.Filter | None:
     conditions: list[models.Condition] = []
     for key, values in (("doc_id", doc_ids), ("source", sources), ("doc_type", doc_types)):
@@ -395,6 +407,10 @@ def build_filter(
             conditions.append(
                 models.FieldCondition(key=key, match=models.MatchAny(any=list(values)))
             )
+    for key, values in (("partition_id", partition_ids), ("access_level_id", access_level_ids),
+                        ("security_level_id", security_level_ids)):
+        if values is not None:
+            conditions.append(models.FieldCondition(key=key, match=models.MatchAny(any=list(values))))
     return models.Filter(must=conditions) if conditions else None
 
 

@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.common import ReferenceModel
+from app.schemas.templates import PERIOD_PATTERN
 
 
 class DraftRequest(BaseModel):
+    period: str = Field(default="", pattern=PERIOD_PATTERN + r"|^$", description="YYYY, YYYY-MM hoặc YYYY-Q1..Q4")
+    content: str = Field(default="", max_length=20000, description="Thông tin bổ sung của người dùng, nguồn riêng để đối chiếu")
     request: str = Field(min_length=1, max_length=2000,
                          examples=["Soạn báo cáo tình hình thiết bị tháng 8"])
     ma_don_vi: str | None = Field(
@@ -20,7 +23,7 @@ class DraftRequest(BaseModel):
         description="Các trường người dùng nhập: nguoi_ky, chuc_vu_ky, so_ky_hieu (số văn bản, trống = bản nháp chưa có số, ERP cấp khi ban hành), ngay_ban_hanh (dd/mm/yyyy, trống = hôm nay)...",
         examples=[{"nguoi_ky": "Trần Văn B", "chuc_vu_ky": "TRƯỞNG ĐƠN VỊ"}],
     )
-    nguon: Literal["csdl", "tai_lieu"] = Field(
+    nguon: Literal["csdl", "tai_lieu", "kho_tri_thuc"] = Field(
         default="csdl",
         description="csdl = truy vấn ERP bằng discovery; tai_lieu = soạn từ một file đã tải lên",
     )
@@ -29,6 +32,19 @@ class DraftRequest(BaseModel):
         description="Bắt buộc khi nguon=tai_lieu. Lấy từ POST /api/agent/upload",
         examples=["upload:bao_cao_don_vi.docx"],
     )
+    template_id: int | None = Field(default=None, gt=0, description="ID mẫu ERP đã công bố và lưu mapping")
+    template_version: int | None = Field(default=None, gt=0)
+    doc_ids: list[str] = Field(default_factory=list, max_length=30, description="Tài liệu kho được chọn cho mẫu đã lưu mapping")
+
+    @model_validator(mode="after")
+    def mapping_source(self):
+        if (self.template_id is None) != (self.template_version is None):
+            raise ValueError("Cần gửi cả template_id và template_version")
+        if self.nguon == "kho_tri_thuc" and (not self.template_id or not self.doc_ids):
+            raise ValueError("Nguồn kho cần phiên bản mẫu và doc_ids được chọn")
+        if self.template_id and self.nguon == "tai_lieu" and not self.file_id:
+            raise ValueError("Cần file_id tài liệu nguồn")
+        return self
 
 
 class SectionModel(BaseModel):
@@ -72,6 +88,10 @@ class RegulationRef(BaseModel):
 
 
 class DraftResponse(BaseModel):
+    period: str = ""
+    template_id: int | None = None
+    template_version: int | None = None
+    field_results: list[dict[str, Any]] = Field(default_factory=list, description="Giá trị, bằng chứng, trạng thái từng vùng của mẫu")
     ai_task_id: int | None = None
     output_file_url: str = ""
     nguon: str = Field(default="csdl", description="Nguồn số liệu đã dùng")
@@ -105,6 +125,9 @@ class DraftResponse(BaseModel):
 
 
 class TemplateSummary(BaseModel):
+    template_id: int | None = None
+    template_version: int | None = None
+    uses_mapping: bool = False
     ma_template: str
     ten_bao_cao: str
     loai_bao_cao: str = ""

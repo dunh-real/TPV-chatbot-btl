@@ -152,13 +152,19 @@ async def detail(repo, task_id):
         download_url=f"/api/tasks/{task_id}/result?version_id={v['Id']}") for v in sorted(rows, key=lambda v: v["VersionNo"])]
     refs = repo.table("SourceReferences")
     for ref in await repo.rows("SourceReferences", refs.c.OwnerType == owner_type, refs.c.OwnerId == owner_id):
-        source = dict(document_id=ref["DocumentId"], version=ref["DocumentVersionNo"], page=ref["PageNumber"])
+        source = dict(document_id=ref["DocumentId"], version=ref["DocumentVersionNo"], page=ref["PageNumber"],
+                      snippet=ref.get('Snippet'), chunk_id=ref.get('ChunkId'))
         if ref["DocumentId"]:
             doc = await repo.document(f"sql:{ref['DocumentId']}")
             source.update(available=bool(doc), title=doc["Title"] if doc else None,
                           detail_url=f"/api/documents/sql:{ref['DocumentId']}/detail" if doc else None)
         else:
-            source.update(available=bool(ref["ExternalSourceRef"] or payload(row).get("source_url")), download_url=f"/api/tasks/{task_id}/source")
+            external = ref["ExternalSourceRef"] or ''
+            downloadable = external.startswith(('s3:', 'minio:')) or (not external and bool(payload(row).get('source_url')))
+            source.update(available=bool(external) or downloadable,
+                source_type='file' if downloadable else 'erp' if external.startswith('erp-query:') else 'input',
+                reference=None if downloadable else external,
+                download_url=f"/api/tasks/{task_id}/source" if downloadable else None)
         out["sources"].append(source)
     result = await latest_output(repo, row)
     result = result if isinstance(result, dict) else {}

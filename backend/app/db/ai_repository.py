@@ -57,7 +57,15 @@ class AIRepository:
 
     def document_scope(self, table):
         from app.services.partition_access import document_scope
-        return document_scope(self, table)
+        from app.core.runtime import agent_config, metadata_filters
+        terms = [document_scope(self, table)]
+        active = agent_config.get()
+        if active and active.allowedPartitionIds is not None:
+            terms.append(table.c.PartitionId.in_(active.allowedPartitionIds))
+        requested = (metadata_filters.get() or {}).get("partition_ids")
+        if requested is not None:
+            terms.append(table.c.PartitionId.in_(requested))
+        return and_(*terms)
 
     async def erp_document(self, row_id, version):
         row = await self.document(f"sql:{row_id}", include_unready=True)
@@ -186,10 +194,10 @@ class AIRepository:
         # Chính sách mẫu có phạm vi riêng cần được triển khai trước khi mở cho người khác.
         return [dict(r) for r in rows if self.principal.is_admin or not r["UsageScopeJson"]]
 
-    async def template_version(self, template):
+    async def template_version(self, template, version_no=None):
         table = self.table("TemplateVersions")
         rows = await self.rows("TemplateVersions", table.c.TemplateId == template["Id"],
-            table.c.VersionNo == template["CurrentVersionNo"], table.c.Status == "Published")
+            table.c.VersionNo == (version_no or template["CurrentVersionNo"]), table.c.Status == "Published")
         return dict(rows[0]) if rows else None
 
     async def conversation(self, key, create=False):
