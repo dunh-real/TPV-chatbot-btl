@@ -1,0 +1,2261 @@
+// =====================================================================
+// CSDL Trợ lý ảo BTL Thủ đô Hà Nội — trạng thái SAU tái cấu trúc
+// Nguồn: db.sql (bảng giữ lại) + Btl_claude_plan.md mục 5.4, 5.5 (25 bảng mới, 7 bảng nâng cấp)
+// Không gồm 94 bảng bị xóa (82 ERP/Meeting + 12 template Zero không dùng) và 2 bảng chuyển tiếp DocumentsChatBot, DocumentsChatBotOutput
+// Ref "> " liền nét = FK vật lý; ref ghi chú "logical" = quan hệ trong code, không có FK trong DB
+// Mở tại https://dbdiagram.io → Import / dán nội dung file
+// =====================================================================
+
+Project TroLyAo_BTL {
+  database_type: 'SQLServer'
+  Note: '''
+  Hệ thống Trợ lý ảo thông minh — Bộ Tư lệnh Thủ đô Hà Nội.
+  108 bảng: hệ thống ABP/Hangfire, Dms (đơn vị, cán bộ, danh mục, thông báo), luồng phê duyệt, AI.
+  Bảng mới: xanh lá = kế thừa BaseEntity, xanh dương = FullAuditedEntity<long>; cam = bảng có sẵn được nâng cấp. Cột mới đánh dấu [MỚI].
+  '''
+}
+
+// ---------------- ABP_He_thong ----------------
+Table AbpUsers {
+  Id bigint [pk, increment]
+  AccessFailedCount int [not null]
+  AuthenticationSource nvarchar(64)
+  ConcurrencyStamp nvarchar(128)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  EmailAddress nvarchar(256) [not null]
+  EmailConfirmationCode nvarchar(328)
+  IsActive bit [not null]
+  IsDeleted bit [not null]
+  IsEmailConfirmed bit [not null]
+  IsLockoutEnabled bit [not null]
+  IsPhoneNumberConfirmed bit [not null]
+  IsTwoFactorEnabled bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  LockoutEndDateUtc datetime2(7)
+  Name nvarchar(64) [not null]
+  NormalizedEmailAddress nvarchar(256) [not null]
+  NormalizedUserName nvarchar(256) [not null]
+  Password nvarchar(128) [not null]
+  PasswordResetCode nvarchar(328)
+  PhoneNumber nvarchar(32)
+  ProfilePictureId uniqueidentifier
+  SecurityStamp nvarchar(128)
+  ShouldChangePasswordOnNextLogin bit [not null]
+  Surname nvarchar(64) [not null]
+  TenantId int
+  UserName nvarchar(256) [not null]
+  SignInToken nvarchar(max)
+  SignInTokenExpireTimeUtc datetime2(7)
+  GoogleAuthenticatorKey nvarchar(max)
+  IsInTrialPeriod bit [not null]
+  SubscriptionEndDateUtc datetime2(7)
+  SubscriptionPaymentType int [not null]
+}
+
+Table AbpRoles {
+  Id int [pk, increment]
+  ConcurrencyStamp nvarchar(128)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  DisplayName nvarchar(64) [not null]
+  IsDefault bit [not null]
+  IsDeleted bit [not null]
+  IsStatic bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  Name nvarchar(32) [not null]
+  NormalizedName nvarchar(32) [not null]
+  TenantId int
+  AutoCreateForTenant bit [not null]
+  IsDefaultMember bit [not null]
+  DefaultMenu nvarchar(max)
+}
+
+Table AbpUserRoles {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  RoleId int [not null]
+  TenantId int
+  UserId bigint [not null]
+}
+
+Table AbpPermissions {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  Discriminator nvarchar(max) [not null]
+  IsGranted bit [not null]
+  Name nvarchar(128) [not null]
+  TenantId int
+  RoleId int
+  UserId bigint
+}
+
+Table AbpRoleClaims {
+  Id bigint [pk, increment]
+  ClaimType nvarchar(256)
+  ClaimValue nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  RoleId int [not null]
+  TenantId int
+}
+
+Table AbpUserClaims {
+  Id bigint [pk, increment]
+  ClaimType nvarchar(256)
+  ClaimValue nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  TenantId int
+  UserId bigint [not null]
+}
+
+Table AbpUserLogins {
+  Id bigint [pk, increment]
+  LoginProvider nvarchar(128) [not null]
+  ProviderKey nvarchar(256) [not null]
+  TenantId int
+  UserId bigint [not null]
+}
+
+Table AbpUserTokens {
+  Id bigint [pk, increment]
+  LoginProvider nvarchar(128)
+  Name nvarchar(128)
+  TenantId int
+  UserId bigint [not null]
+  Value nvarchar(512)
+  ExpireDate datetime2(7)
+}
+
+Table AbpUserAccounts {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  EmailAddress nvarchar(256)
+  IsDeleted bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  TenantId int
+  UserId bigint [not null]
+  UserLinkId bigint
+  UserName nvarchar(256)
+}
+
+Table AbpPersistedGrants {
+  Id nvarchar(200) [pk]
+  ClientId nvarchar(200) [not null]
+  CreationTime datetime2(7) [not null]
+  Data nvarchar(max) [not null]
+  Expiration datetime2(7)
+  SubjectId nvarchar(200)
+  Type nvarchar(50) [not null]
+  ConsumedTime datetime2(7)
+  Description nvarchar(200)
+  SessionId nvarchar(100)
+}
+
+Table AbpOrganizationUnits {
+  Id bigint [pk, increment]
+  Code nvarchar(95) [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  DisplayName nvarchar(128) [not null]
+  IsDeleted bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  ParentId bigint
+  TenantId int
+}
+
+Table AbpOrganizationUnitRoles {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  TenantId int
+  RoleId int [not null]
+  OrganizationUnitId bigint [not null]
+  IsDeleted bit [not null]
+}
+
+Table AbpUserOrganizationUnits {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  OrganizationUnitId bigint [not null]
+  TenantId int
+  UserId bigint [not null]
+  IsDeleted bit [not null]
+}
+
+Table AbpAuditLogs {
+  Id bigint [pk, increment]
+  BrowserInfo nvarchar(512)
+  ClientIpAddress nvarchar(64)
+  ClientName nvarchar(128)
+  CustomData nvarchar(2000)
+  Exception nvarchar(2000)
+  ExecutionDuration int [not null]
+  ExecutionTime datetime2(7) [not null]
+  ImpersonatorTenantId int
+  ImpersonatorUserId bigint
+  MethodName nvarchar(256)
+  Parameters nvarchar(1024)
+  ServiceName nvarchar(256)
+  TenantId int
+  UserId bigint
+  ReturnValue nvarchar(max)
+  ExceptionMessage nvarchar(1024)
+}
+
+Table AbpUserLoginAttempts {
+  Id bigint [pk, increment]
+  BrowserInfo nvarchar(512)
+  ClientIpAddress nvarchar(64)
+  ClientName nvarchar(128)
+  CreationTime datetime2(7) [not null]
+  Result tinyint [not null]
+  TenancyName nvarchar(64)
+  TenantId int
+  UserId bigint
+  UserNameOrEmailAddress nvarchar(256)
+}
+
+Table AbpEntityChangeSets {
+  Id bigint [pk, increment]
+  BrowserInfo nvarchar(512)
+  ClientIpAddress nvarchar(64)
+  ClientName nvarchar(128)
+  CreationTime datetime2(7) [not null]
+  ExtensionData nvarchar(max)
+  ImpersonatorTenantId int
+  ImpersonatorUserId bigint
+  Reason nvarchar(256)
+  TenantId int
+  UserId bigint
+}
+
+Table AbpEntityChanges {
+  Id bigint [pk, increment]
+  ChangeTime datetime2(7) [not null]
+  ChangeType tinyint [not null]
+  EntityChangeSetId bigint [not null]
+  EntityId nvarchar(48)
+  EntityTypeFullName nvarchar(192)
+  TenantId int
+}
+
+Table AbpEntityPropertyChanges {
+  Id bigint [pk, increment]
+  EntityChangeId bigint [not null]
+  NewValue nvarchar(512)
+  OriginalValue nvarchar(512)
+  PropertyName nvarchar(96)
+  PropertyTypeFullName nvarchar(192)
+  TenantId int
+  NewValueHash nvarchar(max)
+  OriginalValueHash nvarchar(max)
+}
+
+Table AbpSettings {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  Name nvarchar(256) [not null]
+  TenantId int
+  UserId bigint
+  Value nvarchar(max)
+}
+
+Table AbpLanguages {
+  Id int [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  DisplayName nvarchar(64) [not null]
+  Icon nvarchar(128)
+  IsDeleted bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  Name nvarchar(128) [not null]
+  TenantId int
+  IsDisabled bit [not null]
+}
+
+Table AbpLanguageTexts {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  "Key" nvarchar(256) [not null]
+  LanguageName nvarchar(128) [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  Source nvarchar(128) [not null]
+  TenantId int
+  Value nvarchar(max) [not null]
+}
+
+Table AbpFeatures {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  Discriminator nvarchar(max) [not null]
+  Name nvarchar(128) [not null]
+  Value nvarchar(2000) [not null]
+  EditionId int
+  TenantId int
+}
+
+Table AbpEditions {
+  Id int [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  DisplayName nvarchar(64) [not null]
+  IsDeleted bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  Name nvarchar(32) [not null]
+  Discriminator nvarchar(max) [not null]
+  AnnualPrice decimal(18,2)
+  ExpiringEditionId int
+  MonthlyPrice decimal(18,2)
+  TrialDayCount int
+  WaitingDayAfterExpire int
+  DailyPrice decimal(18,2)
+  WeeklyPrice decimal(18,2)
+  IsDefault bit
+}
+
+Table AbpEditionPermissions {
+  Id int [pk, increment]
+  EditionId int [not null]
+  PermissionName nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AbpTenants {
+  Id int [pk, increment]
+  ConnectionString nvarchar(1024)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  CustomCssId uniqueidentifier
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  EditionId int
+  IsActive bit [not null]
+  IsDeleted bit [not null]
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  LogoFileType nvarchar(64)
+  LogoId uniqueidentifier
+  Name nvarchar(128) [not null]
+  TenancyName nvarchar(64) [not null]
+  IsInTrialPeriod bit [not null]
+  SubscriptionEndDateUtc datetime2(7)
+  SubscriptionPaymentType int [not null]
+  Code nvarchar(max)
+  LoginBackgroundFileType nvarchar(64)
+  LoginBackgroundId uniqueidentifier
+  LoginLogoFileType nvarchar(64)
+  LoginLogoId uniqueidentifier
+  MenuLogoFileType nvarchar(64)
+  MenuLogoId uniqueidentifier
+  ParentId int
+  WebAuthor nvarchar(max)
+  WebDescription nvarchar(max)
+  WebFavicon nvarchar(max)
+  WebKeyword nvarchar(max)
+  WebTitle nvarchar(max)
+  Domain nvarchar(max)
+  UseCustomDomain bit [not null]
+  TenantType int
+}
+
+Table AbpEmailTemplates {
+  Id int [pk, increment]
+  TenantId int
+  Title nvarchar(max)
+  Content nvarchar(max)
+  Sign nvarchar(max)
+  "Note" nvarchar(max)
+  AutoCreateForNewTenant bit [not null]
+  IsActive bit [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  EmailTemplateType int
+}
+
+Table AbpNotifications {
+  Id uniqueidentifier [pk]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  Data nvarchar(max)
+  DataTypeName nvarchar(512)
+  EntityId nvarchar(96)
+  EntityTypeAssemblyQualifiedName nvarchar(512)
+  EntityTypeName nvarchar(250)
+  ExcludedUserIds nvarchar(max)
+  NotificationName nvarchar(96) [not null]
+  Severity tinyint [not null]
+  TenantIds nvarchar(max)
+  UserIds nvarchar(max)
+}
+
+Table AbpUserNotifications {
+  Id uniqueidentifier [pk]
+  CreationTime datetime2(7) [not null]
+  State int [not null]
+  TenantId int
+  TenantNotificationId uniqueidentifier [not null]
+  UserId bigint [not null]
+}
+
+Table AbpTenantNotifications {
+  Id uniqueidentifier [pk]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  Data nvarchar(max)
+  DataTypeName nvarchar(512)
+  EntityId nvarchar(96)
+  EntityTypeAssemblyQualifiedName nvarchar(512)
+  EntityTypeName nvarchar(250)
+  NotificationName nvarchar(96) [not null]
+  Severity tinyint [not null]
+  TenantId int
+}
+
+Table AbpNotificationSubscriptions {
+  Id uniqueidentifier [pk]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  EntityId nvarchar(96)
+  EntityTypeAssemblyQualifiedName nvarchar(512)
+  EntityTypeName nvarchar(250)
+  NotificationName nvarchar(96)
+  TenantId int
+  UserId bigint [not null]
+}
+
+Table AbpBackgroundJobs {
+  Id bigint [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  IsAbandoned bit [not null]
+  JobArgs nvarchar(max) [not null]
+  JobType nvarchar(512) [not null]
+  LastTryTime datetime2(7)
+  NextTryTime datetime2(7) [not null]
+  Priority tinyint [not null]
+  TryCount smallint [not null]
+}
+
+Table AbpWebhookEvents {
+  Id uniqueidentifier [pk]
+  WebhookName nvarchar(max) [not null]
+  Data nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  TenantId int
+  IsDeleted bit [not null]
+  DeletionTime datetime2(7)
+}
+
+Table AbpWebhookSendAttempts {
+  Id uniqueidentifier [pk]
+  WebhookEventId uniqueidentifier [not null]
+  WebhookSubscriptionId uniqueidentifier [not null]
+  Response nvarchar(max)
+  ResponseStatusCode int
+  CreationTime datetime2(7) [not null]
+  LastModificationTime datetime2(7)
+  TenantId int
+}
+
+Table AbpWebhookSubscriptions {
+  Id uniqueidentifier [pk]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  TenantId int
+  WebhookUri nvarchar(max) [not null]
+  Secret nvarchar(max) [not null]
+  IsActive bit [not null]
+  Webhooks nvarchar(max)
+  Headers nvarchar(max)
+}
+
+Table AbpDynamicProperties {
+  Id int [pk, increment]
+  PropertyName nvarchar(256)
+  InputType nvarchar(max)
+  Permission nvarchar(max)
+  TenantId int
+  DisplayName nvarchar(max)
+  Discriminator nvarchar(max) [not null]
+  MultiChild bit
+}
+
+Table AbpDynamicPropertyValues {
+  Value nvarchar(max) [not null]
+  TenantId int
+  DynamicPropertyId int [not null]
+  Id bigint [pk, increment]
+}
+
+Table AbpDynamicEntityProperties {
+  Id int [pk, increment]
+  EntityFullName nvarchar(256)
+  DynamicPropertyId int [not null]
+  TenantId int
+  Discriminator nvarchar(max) [not null]
+  "Order" int
+}
+
+Table AbpDynamicEntityPropertyValues {
+  Value nvarchar(max) [not null]
+  EntityId nvarchar(max)
+  DynamicEntityPropertyId int [not null]
+  TenantId int
+  Id bigint [pk, increment]
+}
+
+Table AbpDynamicEntityPropertyValueRevisions {
+  Id int [pk, increment]
+  TenantId int
+  EntityId int [not null]
+  Value nvarchar(max)
+  RevisionDate datetime2(7) [not null]
+  IsUsing bit [not null]
+}
+
+Table AbpDynamicProperties_Entity_UI {
+  Id int [pk, increment]
+  TenantId int
+  EntityName nvarchar(max)
+  UseTab bit [not null]
+  IsActive bit [not null]
+}
+
+Table AbpDynamicProperties_Entity_UI_Page {
+  Id int [pk, increment]
+  UIId int [not null]
+  "Order" int [not null]
+  Title nvarchar(max)
+}
+
+Table AbpDynamicProperties_Entity_UI_Page_Detail {
+  Id int [pk, increment]
+  UILayoutId int [not null]
+  UiPageId int
+  PropertyId nvarchar(max)
+  PropertyName nvarchar(max)
+  PropertyDisplayName nvarchar(max)
+  PropertyInputType nvarchar(max)
+  IsMainProperty bit [not null]
+  Required bit [not null]
+  Width int [not null]
+  Height int [not null]
+  UseRawDisplayName bit [not null]
+  OverridePropertyDisplayName nvarchar(max)
+  UseValidation bit [not null]
+  MinValue nvarchar(max)
+  MaxValue nvarchar(max)
+  Regex nvarchar(max)
+  PasswordValidation bit [not null]
+}
+
+Table AbpDashboardWidgets {
+  Id int [pk, increment]
+  WidgetId nvarchar(max)
+  Name nvarchar(max)
+  Description nvarchar(max)
+  Height tinyint [not null]
+  Width tinyint [not null]
+  PositionX tinyint [not null]
+  PositionY tinyint [not null]
+  ViewName nvarchar(max)
+  JsPath nvarchar(max)
+  CssPath nvarchar(max)
+  Filters nvarchar(max)
+  IsDefault bit [not null]
+}
+
+Table AbpRoleDashboardWidgets {
+  Id int [pk, increment]
+  RoleId int [not null]
+  DashboardWidgetId int [not null]
+}
+
+Table AbpEditionDashboardWidgets {
+  Id int [pk, increment]
+  EditionId int [not null]
+  DashboardWidgetId int [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AppBinaryObjects {
+  Id uniqueidentifier [pk]
+  Bytes varbinary(max) [not null]
+  TenantId int
+  Description nvarchar(max)
+}
+
+Table __EFMigrationsHistory {
+  MigrationId nvarchar(150) [pk]
+  ProductVersion nvarchar(32) [not null]
+}
+
+// ---------------- HangFire_Jobs ----------------
+Table HangFire.AggregatedCounter {
+  "Key" nvarchar(100) [pk]
+  Value bigint [not null]
+  ExpireAt datetime
+}
+
+Table HangFire.Counter {
+  "Key" nvarchar(100) [not null]
+  Value int [not null]
+  ExpireAt datetime
+}
+
+Table HangFire.Hash {
+  "Key" nvarchar(100) [not null]
+  Field nvarchar(100) [not null]
+  Value nvarchar(max)
+  ExpireAt datetime2(7)
+
+  indexes {
+    ("Key", Field) [pk]
+  }
+}
+
+Table HangFire.Job {
+  Id bigint [pk, increment]
+  StateId bigint
+  StateName nvarchar(20)
+  InvocationData nvarchar(max) [not null]
+  Arguments nvarchar(max) [not null]
+  CreatedAt datetime [not null]
+  ExpireAt datetime
+}
+
+Table HangFire.JobParameter {
+  JobId bigint [not null]
+  Name nvarchar(40) [not null]
+  Value nvarchar(max)
+
+  indexes {
+    (JobId, Name) [pk]
+  }
+}
+
+Table HangFire.JobQueue {
+  Id int [increment, not null]
+  JobId bigint [not null]
+  Queue nvarchar(50) [not null]
+  FetchedAt datetime
+
+  indexes {
+    (Queue, Id) [pk]
+  }
+}
+
+Table HangFire.List {
+  Id bigint [increment, not null]
+  "Key" nvarchar(100) [not null]
+  Value nvarchar(max)
+  ExpireAt datetime
+
+  indexes {
+    ("Key", Id) [pk]
+  }
+}
+
+Table HangFire.Schema {
+  Version int [pk]
+}
+
+Table HangFire.Server {
+  Id nvarchar(200) [pk]
+  Data nvarchar(max)
+  LastHeartbeat datetime [not null]
+}
+
+Table HangFire.Set {
+  "Key" nvarchar(100) [not null]
+  Score float [not null]
+  Value nvarchar(256) [not null]
+  ExpireAt datetime
+
+  indexes {
+    ("Key", Value) [pk]
+  }
+}
+
+Table HangFire.State {
+  Id bigint [increment, not null]
+  JobId bigint [not null]
+  Name nvarchar(20) [not null]
+  Reason nvarchar(100)
+  CreatedAt datetime [not null]
+  Data nvarchar(max)
+
+  indexes {
+    (JobId, Id) [pk]
+  }
+}
+
+// ---------------- Dms_Don_vi_Can_bo ----------------
+Table Dms_WorkDepartment {
+  Id bigint [pk, increment]
+  TenantId int
+  ParentId bigint
+  Code nvarchar(95) [not null]
+  DepartmentCode nvarchar(95) [not null]
+  DisplayName nvarchar(512) [not null]
+  Describe nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table Dms_WorkPosition {
+  Id int [pk, increment]
+  IsManager bit [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TenantId int
+  Numbering nvarchar(max)
+  Code nvarchar(95)
+  Name nvarchar(512) [not null]
+  "Note" nvarchar(max)
+  "Order" int [not null]
+  IsDefault bit [not null]
+  IsActive bit [not null]
+}
+
+Table Dms_Employee {
+  Id int [pk, increment]
+  TenantId int
+  Code nvarchar(95) [not null]
+  UserId bigint
+  RoleId int [not null]
+  Avatar nvarchar(max)
+  FullName nvarchar(max)
+  DoB datetime2(7) [not null]
+  Gender int [not null]
+  Address nvarchar(max)
+  Email nvarchar(max)
+  Phone nvarchar(max)
+  WorkDepartmentId bigint [not null]
+  WorkPositionId int [not null]
+  TextSearch nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  Log nvarchar(max)
+  WorkLocationId bigint
+}
+
+Table Hrm_Employee_WorkLocation {
+  Id bigint [pk, increment]
+  TenantId int
+  EmployeeId int [not null]
+  WorkLocationId bigint [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+}
+
+Table Dms_TenantInfo {
+  Id int [pk, increment]
+  TenantId int
+  TenantParentId int
+  TaxCode nvarchar(max)
+  Telephone nvarchar(max)
+  CityId int
+  WardId int
+  Address nvarchar(max)
+  Email nvarchar(max)
+  Fax nvarchar(max)
+  Website nvarchar(max)
+  ManagerName nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table Dms_TenantInfo_Detail {
+  Id bigint [pk, increment]
+  TenantId int
+  TenantInfoId int [not null]
+  Latitude float
+  Longitude float
+  AllowedRadiusMeters int
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  Code nvarchar(100)
+  Name nvarchar(250)
+}
+
+// ---------------- Dms_Danh_muc ----------------
+Table Dms_City {
+  Id int [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TenantId int
+  Numbering nvarchar(max)
+  Code nvarchar(95)
+  Name nvarchar(512) [not null]
+  "Note" nvarchar(max)
+  "Order" int [not null]
+  IsDefault bit [not null]
+  IsActive bit [not null]
+}
+
+Table Dms_District {
+  Id int [pk, increment]
+  CityId int [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TenantId int
+  Numbering nvarchar(max)
+  Code nvarchar(95)
+  Name nvarchar(512) [not null]
+  "Note" nvarchar(max)
+  "Order" int [not null]
+  IsDefault bit [not null]
+  IsActive bit [not null]
+}
+
+Table Dms_Ward {
+  Id int [pk, increment]
+  CityId int
+  DistrictId int
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TenantId int
+  Numbering nvarchar(max)
+  Code nvarchar(95)
+  Name nvarchar(512) [not null]
+  "Note" nvarchar(max)
+  "Order" int [not null]
+  IsDefault bit [not null]
+  IsActive bit [not null]
+}
+
+Table Dms_Nation {
+  Id int [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TenantId int
+  Numbering nvarchar(max)
+  Code nvarchar(95)
+  Name nvarchar(512) [not null]
+  "Note" nvarchar(max)
+  "Order" int [not null]
+  IsDefault bit [not null]
+  IsActive bit [not null]
+}
+
+Table Dms_Ethnic {
+  Id int [pk, increment]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TenantId int
+  Numbering nvarchar(max)
+  Code nvarchar(95)
+  Name nvarchar(512) [not null]
+  "Note" nvarchar(max)
+  "Order" int [not null]
+  IsDefault bit [not null]
+  IsActive bit [not null]
+  IsMinority bit [not null]
+}
+
+// ---------------- Dms_Thong_bao ----------------
+Table Dms_SystemNotifications {
+  Id bigint [pk, increment]
+  TenantId int
+  Title nvarchar(256)
+  Content nvarchar(2048)
+  TargetType int [not null]
+  WorkDepartmentId int
+  "Note" nvarchar(1000)
+  IsLock bit [not null]
+  IsActive bit [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table Dms_SystemNotificationUsers {
+  Id bigint [pk, increment]
+  SystemNotificationId bigint [not null]
+  UserId bigint [not null]
+  IsRead bit [not null]
+  ReadAt datetime2(7)
+}
+
+Table UserDeviceTokens {
+  Id bigint [pk, increment]
+  UserId bigint [not null]
+  DeviceToken nvarchar(500) [not null]
+  DeviceType nvarchar(50)
+  CreatedDate datetime2(7) [not null]
+  LastUsedDate datetime2(7)
+  IsActive bit [not null]
+  ExpiresInSeconds int [not null]
+}
+
+// ---------------- Luong_phe_duyet ----------------
+Table App_ApprovalWorkflows {
+  Id int [pk, increment]
+  TenantId int
+  Code nvarchar(50) [not null]
+  Name nvarchar(200) [not null]
+  EntityFullName nvarchar(500) [not null]
+  IsActive bit [not null]
+  Description nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  MaxAmount decimal(18,2)
+  MinAmount decimal(18,2)
+}
+
+Table App_ApprovalWorkflowSteps {
+  Id int [pk, increment]
+  TenantId int
+  WorkflowId int [not null]
+  StepOrder int [not null]
+  StepName nvarchar(200) [not null]
+  ApproverType int [not null]
+  ApproverUserId bigint
+  ApproverRoleId int
+  RequiredPermission nvarchar(200)
+  IsFinalStep bit [not null]
+  CanReject bit [not null]
+  CanReturn bit [not null]
+  AutoApproveAfterDays int
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table App_ApprovalWorkflowDepartments {
+  Id int [pk, increment]
+  TenantId int
+  WorkflowId int [not null]
+  WorkDepartmentId bigint [not null]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table App_ApprovalRequests [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id int [pk, increment]
+  TenantId int
+  WorkflowId int [not null]
+  WorkflowStepId int [not null]
+  EntityId bigint [not null, note: '[ĐỔI KIỂU] int → bigint.']
+  EntityFullName nvarchar(500) [not null]
+  CurrentStepOrder int [not null]
+  Status int [not null]
+  Action int [not null]
+  ActionByUserId bigint
+  ActionDate datetime2(7)
+  Comment nvarchar(max)
+  EscalationToId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AbpApprovalHistory [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id int [pk, increment]
+  EntityId bigint [not null, note: '[ĐỔI KIỂU] int → bigint.']
+  EntityName nvarchar(max)
+  EntityFullName nvarchar(max)
+  Status int [not null]
+  StatusName nvarchar(max)
+  StatusFullName nvarchar(max)
+  "Note" nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+// ---------------- AI_Hien_co ----------------
+Table AI_ChatConversations [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id bigint [pk, increment]
+  UserId bigint [not null]
+  TenantId int
+  Title nvarchar(256) [not null]
+  CreationTime datetime2(7) [not null]
+  AiConversationId nvarchar(256)
+  AiFeatureType nvarchar(64) [not null]
+  CreatorUserId bigint [note: '[MỚI] Bắt buộc khi entity chuyển sang FullAuditedEntity<long>']
+  DataScopeJson nvarchar(max) [note: '[MỚI] Phạm vi dữ liệu cấp phiên (28.1, 29.2)']
+  LastActivityTime datetime2(7) [note: '[MỚI]']
+  LastModificationTime datetime2(7) [note: '[MỚI]']
+  LastModifierUserId bigint [note: '[MỚI]']
+  IsDeleted bit [not null, default: 0, note: '[MỚI] Xóa mềm (29.3)']
+  DeleterUserId bigint [note: '[MỚI]']
+  DeletionTime datetime2(7) [note: '[MỚI]']
+}
+
+Table AI_ChatMessages [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id bigint [pk, increment]
+  ConversationId bigint [not null]
+  Message nvarchar(max) [not null]
+  IsFromUser bit [not null]
+  CreationTime datetime2(7) [not null]
+  ExecutionLogId bigint [note: '[MỚI] Model, tokens, phản hồi (28.7)']
+  NoEvidence bit [not null, default: 0, note: '[MỚI] (28.5)']
+  SuggestedQuestionsJson nvarchar(max) [note: '[MỚI]']
+}
+
+Table AI_ReportSummaries [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id bigint [pk, increment]
+  TenantId int
+  Title nvarchar(500) [not null]
+  Description nvarchar(max)
+  DataSource nvarchar(100)
+  AttachedFiles nvarchar(max)
+  AdditionalInputs nvarchar(max)
+  Status nvarchar(50)
+  ResultSummaryJson nvarchar(max)
+  ResultFileUrl nvarchar(1000)
+  TextSearch nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TemplateId int [note: '[MỚI] (35.2)']
+  PeriodFrom date [note: '[MỚI] (35.1)']
+  PeriodTo date [note: '[MỚI]']
+  SubmissionsJson nvarchar(max) [note: '[MỚI] Đơn vị phải nộp + trạng thái nộp (35.1)']
+  StrictNumericMode bit [not null, default: 0, note: '[MỚI] (35.2)']
+  UnresolvedConflictCount int [not null, default: 0, note: '[MỚI] (35.6)']
+  CurrentVersionNo int [not null, default: 0, note: '[MỚI]']
+  TaskId bigint [note: '[MỚI]']
+}
+
+Table AI_Slides [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id bigint [pk, increment]
+  TenantId int
+  Title nvarchar(500) [not null]
+  Description nvarchar(max)
+  AdditionalInputs nvarchar(max)
+  Status nvarchar(50)
+  OutlineJson nvarchar(max)
+  FileUrl nvarchar(1000)
+  TextSearch nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TemplateId int [note: '[MỚI] (36.1)']
+  VisualSuggestionsJson nvarchar(max) [note: '[MỚI] Bảng/biểu đồ đề xuất (36.3)']
+  CurrentVersionNo int [not null, default: 0, note: '[MỚI]']
+  TaskId bigint [note: '[MỚI]']
+}
+
+Table AI_ReportTemplate [headercolor: #F2994A, note: 'Bảng có sẵn, được nâng cấp'] {
+  Id int [pk, increment]
+  TenantId int
+  Code nvarchar(50) [not null]
+  Name nvarchar(200) [not null]
+  Description nvarchar(1000)
+  FileName nvarchar(255)
+  FilePath nvarchar(1000)
+  FileType nvarchar(50)
+  IsActive bit [not null]
+  TextSearch nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+  TemplateCategory nvarchar(20) [not null, default: 'Report', note: '[MỚI] \'Report\',\'Plan\',\'OfficialDoc\',\'Slide\',\'ReviewRule\'']
+  FieldCode nvarchar(100) [note: '[MỚI]']
+  WorkDepartmentId bigint [note: '[MỚI] Đơn vị áp dụng (38.1)']
+  Status nvarchar(20) [not null, default: 'Active', note: '[MỚI]']
+  CurrentVersionNo int [note: '[MỚI]']
+  AllowedRoleIdsJson nvarchar(max) [note: '[MỚI] Quyền sử dụng (38.3)']
+  AllowedUnitIdsJson nvarchar(max) [note: '[MỚI]']
+  RulesJson nvarchar(max) [note: '[MỚI]']
+}
+
+Table AI_MindMaps {
+  Id bigint [pk, increment]
+  TenantId int
+  UserId bigint [not null]
+  Title nvarchar(500) [not null]
+  DocId nvarchar(64)
+  FileName nvarchar(260)
+  FileSize bigint
+  FileUrl nvarchar(1000)
+  NodeCount int [not null]
+  TreeJson nvarchar(max)
+  SectionsJson nvarchar(max)
+  TextSearch nvarchar(max)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+// ---------------- AI_Nen_tang ----------------
+Table AI_Categories [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int)'] {
+  Id int [pk, increment]
+  CategoryType nvarchar(50) [not null, note: '\'Field\', \'DocumentType\', \'AccessLevel\', \'SecurityLevel\', \'IssueCategory\'']
+  ParentId int
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, CategoryType, Code) [unique, name: 'UX_AI_Categories_Code', note: 'Filtered: WHERE IsDeleted = 0 AND Code IS NOT NULL']
+  }
+}
+
+Table AI_UserGroups [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int). CK_AI_UserGroups_Type: ([GroupType] = \'WorkGroup\' AND [WorkDepartmentId] IS NULL) OR ([GroupType] <> \'WorkGroup\' AND [WorkDepartmentId] IS NOT NULL)'] {
+  Id int [pk, increment]
+  GroupType nvarchar(20) [not null, note: '\'Department\', \'Unit\', \'WorkGroup\'']
+  WorkDepartmentId bigint [note: 'Dms_WorkDepartment; bắt buộc với \'Department\', \'Unit\'']
+  ManagingDepartmentId bigint [note: 'Đơn vị quản lý nhóm công tác']
+  Status nvarchar(20) [not null, default: 'Active', note: '\'Active\', \'Suspended\', \'Dissolved\' (3.4)']
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    WorkDepartmentId [unique, name: 'UX_AI_UserGroups_Department', note: 'Filtered: WHERE WorkDepartmentId IS NOT NULL AND IsDeleted = 0']
+  }
+}
+
+Table AI_UserGroupMembers [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  UserGroupId int [not null]
+  UserId bigint [not null, note: 'AbpUsers']
+  MemberRole nvarchar(20) [not null, default: 'Member', note: '\'Manager\' (phụ trách), \'Member\'']
+  JoinedTime datetime2(7) [not null]
+  LeftTime datetime2(7) [note: 'Rời nhóm: giữ lịch sử, không xóa dòng']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (UserGroupId, UserId) [unique, name: 'UX_AI_UserGroupMembers_Active', note: 'Filtered: WHERE LeftTime IS NULL AND IsDeleted = 0']
+    UserId [name: 'IX_AI_UserGroupMembers_User']
+  }
+}
+
+Table AI_DataPartitions [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int). CK_AI_DataPartitions_Owner: ([PartitionType] = \'Personal\' AND [OwnerUserId] IS NOT NULL AND [UserGroupId] IS NULL) OR ([PartitionType] = \'Group\' AND [UserGroupId] IS NOT NULL AND [OwnerUserId] IS NULL) OR ([PartitionType] = \'Common\' AND [OwnerUserId] IS NULL AND [UserGroupId] IS NULL)'] {
+  Id int [pk, increment]
+  PartitionType nvarchar(20) [not null, note: '\'Common\', \'Group\', \'Personal\'']
+  OwnerUserId bigint [note: 'Kho cá nhân']
+  UserGroupId int [note: 'Kho nhóm']
+  WorkDepartmentId bigint [note: 'Kho dùng chung của đơn vị (NULL = toàn hệ thống)']
+  StorageQuotaBytes bigint [not null, note: 'Sao từ AbpSettings khi tạo, cho phép chỉnh riêng (5.3)']
+  UsedStorageBytes bigint [not null, default: 0]
+  MaxDocumentCount int
+  DocumentCount int [not null, default: 0]
+  PolicyJson nvarchar(max) [note: 'Định dạng cho phép, thời gian lưu trữ, chính sách chia sẻ (5.2, 5.3)']
+  Status nvarchar(20) [not null, default: 'Active', note: '\'Active\', \'Locked\', \'Revoked\', \'Transferred\', \'Archived\' (5.4)']
+  TransferredToPartitionId int
+  LastActivityTime datetime2(7) [note: 'Lọc phân vùng không hoạt động (22.2)']
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, PartitionType, Status) [name: 'IX_AI_DataPartitions_Type']
+    OwnerUserId [unique, name: 'UX_AI_DataPartitions_Owner', note: 'Filtered: WHERE OwnerUserId IS NOT NULL AND IsDeleted = 0']
+    UserGroupId [unique, name: 'UX_AI_DataPartitions_Group', note: 'Filtered: WHERE UserGroupId IS NOT NULL AND IsDeleted = 0']
+  }
+}
+
+Table AI_Folders [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int)'] {
+  Id int [pk, increment]
+  PartitionId int [not null]
+  ParentId int
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (PartitionId, ParentId) [name: 'IX_AI_Folders_Partition']
+  }
+}
+
+Table AI_PartitionPermissions [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant. CK_AI_PartitionPermissions_Subject: ([SubjectType] = \'User\' AND [UserId] IS NOT NULL AND [RoleId] IS NULL AND [WorkDepartmentId] IS NULL AND [UserGroupId] IS NULL) OR ([SubjectType] = \'Role\' AND [RoleId] IS NOT NULL AND [UserId] IS NULL AND [WorkDepartmentId] IS NULL AND [UserGroupId] IS NULL) OR ([SubjectType] = \'Unit\' AND [WorkDepartmentId] IS NOT NULL AND [UserId] IS NULL AND [RoleId] IS NULL AND [UserGroupId] IS NULL) OR ([SubjectType] = \'Group\' AND [UserGroupId] IS NOT NULL AND [UserId] IS NULL AND [RoleId] IS NULL AND [WorkDepartmentId] IS NULL)'] {
+  Id bigint [pk, increment]
+  TenantId int
+  SubjectType nvarchar(20) [not null, note: '\'User\', \'Role\', \'Unit\', \'Group\' (đúng 1 cột chủ thể dưới đây khác NULL)']
+  UserId bigint
+  RoleId int
+  WorkDepartmentId bigint [note: 'Unit']
+  IncludeSubUnits bit [not null, default: 1, note: 'Áp cả đơn vị con (dùng cây WorkDepartment)']
+  UserGroupId int [note: 'Group']
+  PartitionId int [not null]
+  FolderId int
+  DocumentId bigint [note: 'Chia sẻ một tài liệu (26.4); FK tạo ở migration `Ai_KnowledgeBase`']
+  FieldCode nvarchar(100)
+  DocumentTypeCode nvarchar(100)
+  MaxSecurityLevelCode nvarchar(100)
+  PermissionLevel nvarchar(20) [not null, note: '\'ReadOnly\', \'RagSearch\', \'Contributor\', \'Admin\'']
+  IsDeny bit [not null, default: 0, note: 'Kiểm tra xung đột (6.2)']
+  ConfigVersionNo int
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (PartitionId, SubjectType) [name: 'IX_AI_PartitionPermissions_Partition']
+    UserId [name: 'IX_AI_PartitionPermissions_User', note: 'Filtered: WHERE UserId IS NOT NULL']
+  }
+}
+
+Table AI_ConfigVersions [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  ConfigType nvarchar(50) [not null, note: '\'RolePermission\', \'DataPermission\', \'AgentConfig\'']
+  TargetKey nvarchar(100) [not null, note: 'RoleId / AgentCode / \'ALL\'']
+  VersionNo int [not null]
+  SnapshotJson nvarchar(max) [not null]
+  ChangeNote nvarchar(1000)
+  Status nvarchar(20) [not null, default: 'Draft', note: '\'Draft\', \'Applied\', \'Superseded\', \'RolledBack\'']
+  AppliedTime datetime2(7)
+  AppliedByUserId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, ConfigType, TargetKey, VersionNo) [unique, name: 'UX_AI_ConfigVersions']
+  }
+}
+
+// ---------------- AI_Loi ----------------
+Table AI_Models [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int)'] {
+  Id int [pk, increment]
+  Version nvarchar(50)
+  ModelType nvarchar(20) [not null, note: '\'LLM\', \'Embedding\', \'Rerank\', \'OCR\'']
+  EndpointUrl nvarchar(500) [not null, note: 'Dịch vụ nội bộ']
+  Purpose nvarchar(500)
+  MaxContextLength int [not null, default: 8192]
+  MaxConcurrentRequests int [not null, default: 4]
+  Status nvarchar(20) [not null, default: 'Active', note: '\'Active\', \'Maintenance\', \'Disabled\'']
+  LastTestJson nvarchar(max) [note: 'Kết quả chạy thử: thời gian, độ trễ, lỗi (7.3)']
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, Code) [unique, name: 'UX_AI_Models_Code', note: 'Filtered: WHERE IsDeleted = 0 AND Code IS NOT NULL']
+  }
+}
+
+Table AI_AgentConfigs [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int)'] {
+  Id int [pk, increment]
+  ModelId int [not null]
+  SystemPrompt nvarchar(max)
+  ParametersJson nvarchar(max) [note: 'temperature, top-k, độ dài trả lời, ngôn ngữ (8.2)']
+  RequireCitation bit [not null, default: 1, note: '(8.4)']
+  MinRelevanceScore float [not null, default: 0.5]
+  AllowedPartitionIdsJson nvarchar(max) [note: '(8.3)']
+  AllowedTemplateIdsJson nvarchar(max)
+  AllowedSourceIdsJson nvarchar(max) [note: 'Nguồn tích hợp (39.3)']
+  CurrentVersionNo int [not null, default: 1, note: 'AI_ConfigVersions']
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, Code) [unique, name: 'UX_AI_AgentConfigs_Code', note: 'Filtered: WHERE IsDeleted = 0 AND Code IS NOT NULL']
+  }
+}
+
+Table AI_Tasks [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  UserId bigint [not null]
+  WorkDepartmentId bigint [note: 'Thống kê theo đơn vị (21.1)']
+  TaskType nvarchar(30) [not null, note: '\'Review\',\'Summarize\',\'TaskExtract\',\'Routing\',\'Draft\',\'Aggregate\',\'Slide\', \'Import\',\'Indexing\',\'Backup\',\'Restore\',\'Sync\'']
+  AgentCode nvarchar(50)
+  TemplateId int [note: 'AI_ReportTemplate']
+  RelatedEntityType nvarchar(100) [note: 'Bản ghi nghiệp vụ liên quan: \'AI_DocumentReviews\', \'AI_Slides\', \'AI_Backups\', \'AI_IntegrationConfigs\'...']
+  RelatedEntityId bigint
+  Status nvarchar(20) [not null, default: 'Queued', note: '\'Queued\',\'Processing\',\'Completed\',\'Failed\',\'Cancelled\'']
+  ProgressPercentage int [not null, default: 0]
+  InputJson nvarchar(max) [note: 'Tham số; với Import: metadata chung của lô (13.2)']
+  ResultJson nvarchar(max) [note: 'Kết quả từng tệp (13.5), số chunk (18.3), ảnh hưởng khôi phục (12.4)...']
+  OutputFileUrl nvarchar(1000)
+  ErrorMessage nvarchar(max)
+  RetryOfTaskId bigint [note: 'Chạy lại tạo dòng mới, giữ lịch sử (37.3)']
+  NotifyOnFinish bit [not null, default: 0, note: '(37.4)']
+  StartTime datetime2(7)
+  EndTime datetime2(7)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (UserId, Status) [name: 'IX_AI_Tasks_User_Status']
+    (TaskType, CreationTime) [name: 'IX_AI_Tasks_Type_Time']
+    (RelatedEntityType, RelatedEntityId) [name: 'IX_AI_Tasks_Related']
+  }
+}
+
+Table AI_ExecutionLogs [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  UserId bigint [not null, note: 'Người hỏi, đồng thời là người gửi phản hồi']
+  WorkDepartmentId bigint
+  EventType nvarchar(30) [not null, note: '\'Query\', \'Process\', \'FileGenerated\', \'Error\'']
+  AgentCode nvarchar(50)
+  ModelId int
+  ConfigVersionNo int
+  ConversationId bigint
+  MessageId bigint [note: 'Câu trả lời trong AI_ChatMessages']
+  TaskId bigint
+  TemplateId int
+  UserQuery nvarchar(max)
+  PromptTokens int
+  CompletionTokens int
+  DurationMs int
+  HasCitations bit [not null, default: 0]
+  NoEvidence bit [not null, default: 0, note: 'Không tìm thấy căn cứ (24.1, 28.5)']
+  DataScopeJson nvarchar(max)
+  OutputFileUrl nvarchar(1000) [note: 'Truy vết ngược từ tệp (10.3)']
+  Status nvarchar(20) [not null, note: '\'Success\', \'Failed\'']
+  ErrorMessage nvarchar(max)
+  FeedbackSatisfied bit [note: 'Phản hồi người dùng (24, 28.7)']
+  FeedbackIssueCode nvarchar(100) [note: 'AI_Categories \'IssueCategory\'']
+  FeedbackComment nvarchar(1000)
+  FeedbackTime datetime2(7)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, CreationTime) [name: 'IX_AI_ExecutionLogs_Time']
+    (UserId, CreationTime) [name: 'IX_AI_ExecutionLogs_User']
+    MessageId [unique, name: 'UX_AI_ExecutionLogs_Message', note: 'Filtered: WHERE MessageId IS NOT NULL']
+  }
+}
+
+Table AI_SystemAlerts [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  ServiceCode nvarchar(50) [not null, note: '\'LLM\', \'Embedding\', \'VectorIndex\', \'Storage\', \'AiServer\', \'Integration\'']
+  MetricCode nvarchar(50) [not null, note: '\'ResponseTime\', \'QueueLength\', \'StorageUsed\', \'ErrorRate\'']
+  Severity nvarchar(20) [not null, note: '\'Warning\', \'Critical\'']
+  Message nvarchar(1000) [not null]
+  Cause nvarchar(max)
+  HandlingStatus nvarchar(20) [not null, default: 'Open', note: '\'Open\', \'InProgress\', \'Resolved\', \'Ignored\'']
+  HandlingNote nvarchar(max)
+  HandledByUserId bigint
+  HandledTime datetime2(7)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AI_Backups [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  BackupCode nvarchar(50) [not null, note: 'Mã phiên sao lưu (12.2)']
+  TriggerType nvarchar(20) [not null, note: '\'Scheduled\', \'Manual\'']
+  ScopeJson nvarchar(max) [not null, note: '{database, partitions[], vectorIndex, configs} (12.1)']
+  DataTypes nvarchar(200) [not null, note: '\'Database,Files,VectorIndex,Config\'']
+  StorageLocation nvarchar(1000) [note: 'Vị trí bản backup']
+  SizeBytes bigint [note: '(12.3)']
+  ChecksumSha256 char(64)
+  Status nvarchar(20) [not null, default: 'Running', note: '\'Running\', \'Completed\', \'Failed\', \'Expired\', \'Deleted\'']
+  StartTime datetime2(7) [not null]
+  EndTime datetime2(7)
+  ExpireTime datetime2(7) [note: 'Hết hạn giữ']
+  VerifiedTime datetime2(7) [note: 'Đã kiểm tra checksum']
+  ErrorMessage nvarchar(max)
+  TaskId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, BackupCode) [unique, name: 'UX_AI_Backups_Code']
+    (Status, StartTime) [name: 'IX_AI_Backups_Status']
+  }
+}
+
+// ---------------- AI_Kho_tri_thuc ----------------
+Table AI_KnowledgeDocuments [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  DocumentNumber nvarchar(50) [not null, note: 'Mã do hệ thống cấp (13.4)']
+  PartitionId int [not null]
+  FolderId int
+  ImportTaskId bigint [note: 'Lô tiếp nhận (13)']
+  Title nvarchar(500) [not null]
+  FileName nvarchar(260) [not null]
+  FileUrl nvarchar(1000) [not null, note: 'MinIO']
+  FileSizeBytes bigint [not null]
+  FileHashSha256 char(64) [note: 'Chống trùng (13.3)']
+  HasTextLayer bit [not null, default: 1, note: 'Từ chối tệp scan (13.1)']
+  ExtractedTextUrl nvarchar(1000)
+  ProcessingStatus nvarchar(20) [not null, default: 'Received', note: '\'Received\',\'Extracting\',\'Extracted\',\'Error\' (13.5)']
+  DocCode nvarchar(100) [note: 'Số/ký hiệu']
+  DocumentTypeCode nvarchar(100)
+  FieldCode nvarchar(100)
+  IssuingAgency nvarchar(250)
+  IssuedDate date
+  EffectiveFrom date [note: '(14.2)']
+  EffectiveTo date
+  Keywords nvarchar(1000)
+  SourceOrigin nvarchar(250) [note: 'Nguồn gốc, đơn vị cung cấp (13.2)']
+  ProvidingUnit nvarchar(250)
+  SecurityLevelCode nvarchar(100)
+  AccessLevelCode nvarchar(100) [note: 'Mức khai thác khi duyệt (16.4)']
+  AiSuggestionJson nvarchar(max) [note: 'Gợi ý AI, căn cứ, chênh lệch (14.2, 14.3)']
+  MetadataConfirmedByUserId bigint [note: '(14.4)']
+  QualityStatus nvarchar(20) [not null, default: 'Unchecked', note: '\'Unchecked\',\'Issues\',\'Standardized\' (15)']
+  VersionGroupId bigint [note: 'Chuỗi phiên bản (17)']
+  VersionNo int [not null, default: 1]
+  PreviousVersionId bigint
+  ReplacedByDocId bigint
+  LifecycleStatus nvarchar(20) [not null, default: 'Effective', note: '\'Draft\',\'Effective\',\'Expired\',\'Archived\'']
+  ApprovalStatus nvarchar(20) [not null, default: 'NotRequired', note: '\'NotRequired\',\'Pending\',\'Returned\',\'Approved\',\'Rejected\' (16)']
+  ApprovalRequestId int [note: 'App_ApprovalRequests']
+  IndexStatus nvarchar(20) [not null, default: 'NotIndexed', note: '\'NotIndexed\',\'Queued\',\'Indexed\',\'Failed\' (18)']
+  ChunkCount int [not null, default: 0]
+  EmbeddingModelId int
+  LastIndexedTime datetime2(7)
+  AiServerDocId nvarchar(64) [note: 'Id phía máy chủ AI (tương đương DocumentsChatBot.DocId)']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, DocumentNumber) [unique, name: 'UX_AI_KnowledgeDocuments_Number']
+    (TenantId, FileHashSha256) [name: 'IX_AI_KnowledgeDocuments_Hash']
+    (PartitionId, LifecycleStatus, ApprovalStatus, IndexStatus) [name: 'IX_AI_KnowledgeDocuments_Partition']
+    (VersionGroupId, VersionNo) [name: 'IX_AI_KnowledgeDocuments_Version']
+  }
+}
+
+Table AI_SourceReferences [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  OwnerType nvarchar(30) [not null, note: '\'ChatMessage\',\'Review\',\'Analysis\',\'ExtractedTask\',\'Routing\',\'Draft\',\'Aggregate\',\'DataPoint\',\'Slide\'']
+  OwnerId bigint [not null]
+  DocumentId bigint
+  ExternalSourceRef nvarchar(500) [note: 'Nguồn ngoài truy vấn thời gian thực (39.3)']
+  DocumentVersionNo int
+  ChunkId nvarchar(100)
+  PageNumber int
+  CharStart int [note: 'Mở tài liệu đúng vị trí (27.2, 28.4)']
+  CharEnd int
+  Snippet nvarchar(2000)
+  RelevanceScore float
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (OwnerType, OwnerId) [name: 'IX_AI_SourceReferences_Owner']
+    DocumentId [name: 'IX_AI_SourceReferences_Document']
+  }
+}
+
+// ---------------- AI_Nghiep_vu_van_ban ----------------
+Table AI_DocumentReviews [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  UserId bigint [not null]
+  SourceDocumentId bigint [note: 'Chọn từ kho']
+  DocumentTitle nvarchar(500) [not null]
+  FileUrl nvarchar(1000) [not null, note: 'Bản gốc, không ghi đè (30.4)']
+  RuleTemplateId int [not null, note: 'AI_ReportTemplate loại \'ReviewRule\' (30.1)']
+  CompareTemplateId int [note: 'So sánh với mẫu (30.3)']
+  IssuesJson nvarchar(max) [note: '[{type, severity, location, original, suggestion, decision}] (30.2, 30.4)']
+  TemplateComparisonJson nvarchar(max)
+  TotalIssues int [not null, default: 0]
+  ReportFileUrl nvarchar(1000) [note: 'Phiếu soát']
+  MarkedFileUrl nvarchar(1000) [note: 'Bản đánh dấu đề xuất']
+  TaskId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AI_DocumentAnalyses [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  UserId bigint [not null]
+  SourceDocumentId bigint
+  DocumentTitle nvarchar(500) [not null]
+  FileUrl nvarchar(1000)
+  OptionsJson nvarchar(max) [note: 'Độ dài, cấu trúc tóm tắt (31.1)']
+  SummaryJson nvarchar(max) [note: 'Ý chính (31.2)']
+  KeyInfoJson nvarchar(max) [note: 'Số liệu, mốc thời gian, đơn vị, cá nhân (31.3)']
+  AttentionPointsJson nvarchar(max) [note: 'Mâu thuẫn, thiếu sót (31.4)']
+  ClarificationsJson nvarchar(max) [note: '(31.5)']
+  ResultFileUrl nvarchar(1000)
+  TaskId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AI_ExtractedTasks [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  TaskId bigint [not null]
+  SourceDocumentId bigint
+  TaskContent nvarchar(max) [not null]
+  LeadUnitId bigint [note: 'Dms_WorkDepartment']
+  LeadUnitName nvarchar(250)
+  LeadPerson nvarchar(250)
+  CoordinatingUnits nvarchar(1000)
+  Deadline date
+  DeadlineText nvarchar(250) [note: 'Nguyên văn thời hạn']
+  TargetOutput nvarchar(500)
+  SourceQuote nvarchar(max) [note: 'Trích dẫn (32.2)']
+  IsMissingDeadline bit [not null, default: 0, note: '(32.3)']
+  IsMissingOwner bit [not null, default: 0]
+  IsConfirmed bit [not null, default: 0, note: '(32.4)']
+  ConfirmedByUserId bigint
+  ConfirmedTime datetime2(7)
+  ExternalSyncStatus nvarchar(20) [note: 'Đẩy sang hệ thống quản lý công việc']
+  ExternalRefId nvarchar(100)
+  SortOrder int [not null, default: 0]
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    TaskId [name: 'IX_AI_ExtractedTasks_Task']
+  }
+}
+
+Table AI_DocumentRoutings [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  SourceDocumentId bigint
+  DocumentTitle nvarchar(500) [not null]
+  DocCode nvarchar(100)
+  FileUrl nvarchar(1000)
+  DocumentTypeCode nvarchar(100) [note: '(33.1)']
+  FieldCode nvarchar(100)
+  UrgencyLevel nvarchar(20) [note: '\'Thuong\',\'Khan\',\'ThuongKhan\',\'HoaToc\'']
+  AiPrimaryUnitId bigint [note: 'Phương án AI (33.2) – Dms_WorkDepartment']
+  AiCoordinatingUnitsJson nvarchar(max)
+  AiReason nvarchar(max)
+  FinalPrimaryUnitId bigint [note: 'Phương án người dùng chốt (33.3)']
+  FinalCoordinatingUnitsJson nvarchar(max)
+  IsAdjustedByUser bit [not null, default: 0]
+  Status nvarchar(20) [not null, default: 'Suggested', note: '\'Suggested\',\'Confirmed\',\'Sent\',\'SendFailed\'']
+  ConfirmedByUserId bigint
+  ConfirmedTime datetime2(7)
+  IntegrationConfigId int [note: '(33.4)']
+  SendResultJson nvarchar(max)
+  TaskId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AI_DocumentDrafts [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  UserId bigint [not null]
+  DraftType nvarchar(30) [not null, note: '\'Report\', \'Plan\', \'OfficialLetter\'...']
+  TemplateId int [not null, note: 'AI_ReportTemplate']
+  TemplateVersionNo int
+  Title nvarchar(500) [not null]
+  RequestContent nvarchar(max) [note: '(34.2)']
+  FieldValuesJson nvarchar(max) [note: '(34.1)']
+  DataScopeJson nvarchar(max) [note: 'Nguồn đã kiểm quyền (34.2)']
+  OutlineJson nvarchar(max) [note: 'Dàn ý (34.3)']
+  Status nvarchar(20) [not null, default: 'Outline', note: '\'Outline\',\'Drafting\',\'Editing\',\'Exported\'']
+  CurrentVersionNo int [not null, default: 0, note: 'AI_OutputVersions']
+  ExportedFileUrl nvarchar(1000)
+  SavedDocumentId bigint [note: 'Lưu vào kho cá nhân (34.6)']
+  TaskId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+}
+
+Table AI_OutputVersions [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  OwnerType nvarchar(20) [not null, note: '\'Draft\', \'Aggregate\', \'Slide\'']
+  OwnerId bigint [not null]
+  VersionNo int [not null]
+  ContentJson nvarchar(max) [not null, note: 'Mỗi đoạn có origin = \'AI\' | \'UserConfirmed\' (34.4)']
+  ChangeType nvarchar(30) [not null, note: '\'Generated\',\'UserEdit\',\'AiRewriteSection\',\'Reaggregate\'']
+  ChangedSection nvarchar(250)
+  FileUrl nvarchar(1000)
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (OwnerType, OwnerId, VersionNo) [unique, name: 'UX_AI_OutputVersions']
+  }
+}
+
+Table AI_ReportDataPoints [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  ReportSummaryId bigint [not null]
+  VersionNo int [not null, note: 'Khớp AI_OutputVersions (\'Aggregate\'); tổng hợp lại không ghi đè số liệu cũ']
+  SourceUnitId bigint [note: 'Dms_WorkDepartment nộp báo cáo']
+  SourceDocumentId bigint
+  IndicatorCode nvarchar(100) [not null]
+  IndicatorName nvarchar(500) [not null]
+  RawValue nvarchar(250)
+  NumericValue decimal(28,6)
+  Unit nvarchar(50)
+  SourcePosition nvarchar(250) [note: 'Trang / bảng / ô (35.4)']
+  IsConflict bit [not null, default: 0, note: '(35.3)']
+  ConflictNote nvarchar(max)
+  ResolutionMethod nvarchar(20) [note: '\'KeepSource\',\'UseOther\',\'ManualValue\',\'Unresolved\'']
+  ResolvedValue decimal(28,6)
+  ResolvedByUserId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (ReportSummaryId, VersionNo, IndicatorCode) [name: 'IX_AI_ReportDataPoints_Report']
+  }
+}
+
+Table AI_TemplateVersions [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  TemplateId int [not null]
+  VersionNo int [not null]
+  FileName nvarchar(255) [not null]
+  FilePath nvarchar(1000) [not null]
+  FileHashSha256 char(64) [note: 'Cảnh báo trùng (38.2)']
+  PlaceholdersJson nvarchar(max)
+  StructureJson nvarchar(max)
+  Status nvarchar(20) [not null, default: 'Draft', note: '\'Draft\',\'Published\',\'Retired\'']
+  TestPreviewUrl nvarchar(1000) [note: '(38.4)']
+  PublishedTime datetime2(7)
+  PublishedByUserId bigint
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TemplateId, VersionNo) [unique, name: 'UX_AI_TemplateVersions']
+  }
+}
+
+// ---------------- AI_Tich_hop ----------------
+Table AI_IntegrationConfigs [headercolor: #27AE60, note: '[MỚI] Kế thừa DPS.Dms.Core.Base.BaseEntity (Id int)'] {
+  Id int [pk, increment]
+  SystemType nvarchar(30) [not null, note: '\'DocumentManagement\', \'TaskManagement\', \'SharedDatabase\'']
+  ServiceUrl nvarchar(500) [not null]
+  AuthMethod nvarchar(20) [not null, note: '\'ApiKey\', \'Bearer\', \'Basic\', \'OAuth2\'']
+  EncryptedCredentials nvarchar(max) [not null, note: 'Mã hóa bằng SimpleStringCipher / Data Protection']
+  DataScopeJson nvarchar(max)
+  DataPolicy nvarchar(30) [not null, default: 'NotForAI', note: '\'ImportToKnowledgeBase\',\'RealtimeQueryOnly\',\'NotForAI\' (39.3)']
+  TargetPartitionId int
+  SyncMode nvarchar(20) [not null, default: 'Schedule', note: '\'Schedule\',\'Event\',\'Manual\' (39.4)']
+  CronExpression nvarchar(100)
+  LastTestJson nvarchar(max) [note: 'Kiểm tra kết nối (39.2)']
+  LastSyncTime datetime2(7)
+  LastSyncStatus nvarchar(20)
+  TenantId int [note: 'BaseEntity']
+  Numbering nvarchar(max) [note: 'BaseEntity']
+  Code nvarchar(95) [note: 'BaseEntity']
+  Name nvarchar(512) [not null, note: 'BaseEntity']
+  "Note" nvarchar(max) [note: 'BaseEntity']
+  "Order" int [not null, note: 'BaseEntity']
+  IsDefault bit [not null, note: 'BaseEntity']
+  IsActive bit [not null, note: 'BaseEntity']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (TenantId, Code) [unique, name: 'UX_AI_IntegrationConfigs_Code', note: 'Filtered: WHERE IsDeleted = 0 AND Code IS NOT NULL']
+  }
+}
+
+Table AI_IntegrationSyncLogs [headercolor: #2F80ED, note: '[MỚI] Kế thừa FullAuditedEntity<long>, IMayHaveTenant'] {
+  Id bigint [pk, increment]
+  TenantId int
+  IntegrationConfigId int [not null]
+  TaskId bigint
+  Direction nvarchar(10) [not null, note: '\'In\', \'Out\'']
+  SyncMode nvarchar(20) [not null, note: '\'Schedule\', \'Event\', \'Manual\'']
+  Status nvarchar(20) [not null, note: '\'Running\', \'Completed\', \'PartiallyFailed\', \'Failed\'']
+  StartTime datetime2(7) [not null]
+  EndTime datetime2(7)
+  RecordsRead int [not null, default: 0]
+  RecordsCreated int [not null, default: 0]
+  RecordsUpdated int [not null, default: 0]
+  RecordsFailed int [not null, default: 0]
+  ErrorMessage nvarchar(max)
+  DetailJson nvarchar(max) [note: 'Danh sách bản ghi lỗi, mã tham chiếu phía hệ thống ngoài']
+  CreationTime datetime2(7) [not null]
+  CreatorUserId bigint
+  LastModificationTime datetime2(7)
+  LastModifierUserId bigint
+  IsDeleted bit [not null, default: 0]
+  DeleterUserId bigint
+  DeletionTime datetime2(7)
+
+  indexes {
+    (IntegrationConfigId, StartTime) [name: 'IX_AI_IntegrationSyncLogs_Config']
+  }
+}
+
+// ================= TableGroup =================
+TableGroup ABP_He_thong {
+  AbpUsers
+  AbpRoles
+  AbpUserRoles
+  AbpPermissions
+  AbpRoleClaims
+  AbpUserClaims
+  AbpUserLogins
+  AbpUserTokens
+  AbpUserAccounts
+  AbpPersistedGrants
+  AbpOrganizationUnits
+  AbpOrganizationUnitRoles
+  AbpUserOrganizationUnits
+  AbpAuditLogs
+  AbpUserLoginAttempts
+  AbpEntityChangeSets
+  AbpEntityChanges
+  AbpEntityPropertyChanges
+  AbpSettings
+  AbpLanguages
+  AbpLanguageTexts
+  AbpFeatures
+  AbpEditions
+  AbpEditionPermissions
+  AbpTenants
+  AbpEmailTemplates
+  AbpNotifications
+  AbpUserNotifications
+  AbpTenantNotifications
+  AbpNotificationSubscriptions
+  AbpBackgroundJobs
+  AbpWebhookEvents
+  AbpWebhookSendAttempts
+  AbpWebhookSubscriptions
+  AbpDynamicProperties
+  AbpDynamicPropertyValues
+  AbpDynamicEntityProperties
+  AbpDynamicEntityPropertyValues
+  AbpDynamicEntityPropertyValueRevisions
+  AbpDynamicProperties_Entity_UI
+  AbpDynamicProperties_Entity_UI_Page
+  AbpDynamicProperties_Entity_UI_Page_Detail
+  AbpDashboardWidgets
+  AbpRoleDashboardWidgets
+  AbpEditionDashboardWidgets
+  AppBinaryObjects
+  __EFMigrationsHistory
+}
+
+TableGroup HangFire_Jobs {
+  HangFire.AggregatedCounter
+  HangFire.Counter
+  HangFire.Hash
+  HangFire.Job
+  HangFire.JobParameter
+  HangFire.JobQueue
+  HangFire.List
+  HangFire.Schema
+  HangFire.Server
+  HangFire.Set
+  HangFire.State
+}
+
+TableGroup Dms_Don_vi_Can_bo {
+  Dms_WorkDepartment
+  Dms_WorkPosition
+  Dms_Employee
+  Hrm_Employee_WorkLocation
+  Dms_TenantInfo
+  Dms_TenantInfo_Detail
+}
+
+TableGroup Dms_Danh_muc {
+  Dms_City
+  Dms_District
+  Dms_Ward
+  Dms_Nation
+  Dms_Ethnic
+}
+
+TableGroup Dms_Thong_bao {
+  Dms_SystemNotifications
+  Dms_SystemNotificationUsers
+  UserDeviceTokens
+}
+
+TableGroup Luong_phe_duyet {
+  App_ApprovalWorkflows
+  App_ApprovalWorkflowSteps
+  App_ApprovalWorkflowDepartments
+  App_ApprovalRequests
+  AbpApprovalHistory
+}
+
+TableGroup AI_Hien_co {
+  AI_ChatConversations
+  AI_ChatMessages
+  AI_ReportSummaries
+  AI_Slides
+  AI_ReportTemplate
+  AI_MindMaps
+}
+
+TableGroup AI_Nen_tang {
+  AI_Categories
+  AI_UserGroups
+  AI_UserGroupMembers
+  AI_DataPartitions
+  AI_Folders
+  AI_PartitionPermissions
+  AI_ConfigVersions
+}
+
+TableGroup AI_Loi {
+  AI_Models
+  AI_AgentConfigs
+  AI_Tasks
+  AI_ExecutionLogs
+  AI_SystemAlerts
+  AI_Backups
+}
+
+TableGroup AI_Kho_tri_thuc {
+  AI_KnowledgeDocuments
+  AI_SourceReferences
+}
+
+TableGroup AI_Nghiep_vu_van_ban {
+  AI_DocumentReviews
+  AI_DocumentAnalyses
+  AI_ExtractedTasks
+  AI_DocumentRoutings
+  AI_DocumentDrafts
+  AI_OutputVersions
+  AI_ReportDataPoints
+  AI_TemplateVersions
+}
+
+TableGroup AI_Tich_hop {
+  AI_IntegrationConfigs
+  AI_IntegrationSyncLogs
+}
+
+// ================= FK vật lý =================
+Ref: AbpDynamicEntityProperties.DynamicPropertyId > AbpDynamicProperties.Id
+Ref: AbpDynamicEntityPropertyValues.DynamicEntityPropertyId > AbpDynamicEntityProperties.Id
+Ref: AbpDynamicProperties_Entity_UI_Page.UIId > AbpDynamicProperties_Entity_UI.Id
+Ref: AbpDynamicProperties_Entity_UI_Page_Detail.UiPageId > AbpDynamicProperties_Entity_UI_Page.Id
+Ref: AbpDynamicPropertyValues.DynamicPropertyId > AbpDynamicProperties.Id
+Ref: AbpEntityChanges.EntityChangeSetId > AbpEntityChangeSets.Id
+Ref: AbpEntityPropertyChanges.EntityChangeId > AbpEntityChanges.Id
+Ref: AbpFeatures.EditionId > AbpEditions.Id
+Ref: AbpOrganizationUnits.ParentId > AbpOrganizationUnits.Id
+Ref: AbpPermissions.RoleId > AbpRoles.Id
+Ref: AbpPermissions.UserId > AbpUsers.Id
+Ref: AbpRoleClaims.RoleId > AbpRoles.Id
+Ref: AbpRoles.CreatorUserId > AbpUsers.Id
+Ref: AbpRoles.DeleterUserId > AbpUsers.Id
+Ref: AbpRoles.LastModifierUserId > AbpUsers.Id
+Ref: AbpSettings.UserId > AbpUsers.Id
+Ref: AbpTenants.EditionId > AbpEditions.Id
+Ref: AbpTenants.CreatorUserId > AbpUsers.Id
+Ref: AbpTenants.DeleterUserId > AbpUsers.Id
+Ref: AbpTenants.LastModifierUserId > AbpUsers.Id
+Ref: AbpUserClaims.UserId > AbpUsers.Id
+Ref: AbpUserLogins.UserId > AbpUsers.Id
+Ref: AbpUserOrganizationUnits.UserId > AbpUsers.Id
+Ref: AbpUserRoles.UserId > AbpUsers.Id
+Ref: AbpUsers.CreatorUserId > AbpUsers.Id
+Ref: AbpUsers.DeleterUserId > AbpUsers.Id
+Ref: AbpUsers.LastModifierUserId > AbpUsers.Id
+Ref: AbpUserTokens.UserId > AbpUsers.Id
+Ref: AbpWebhookSendAttempts.WebhookEventId > AbpWebhookEvents.Id
+Ref: AI_ChatMessages.ConversationId > AI_ChatConversations.Id
+Ref: App_ApprovalRequests.WorkflowId > App_ApprovalWorkflows.Id
+Ref: App_ApprovalRequests.WorkflowStepId > App_ApprovalWorkflowSteps.Id
+Ref: App_ApprovalWorkflowDepartments.WorkflowId > App_ApprovalWorkflows.Id
+Ref: App_ApprovalWorkflowDepartments.WorkDepartmentId > Dms_WorkDepartment.Id
+Ref: App_ApprovalWorkflowSteps.WorkflowId > App_ApprovalWorkflows.Id
+Ref: Dms_District.CityId > Dms_City.Id
+Ref: Dms_Employee.WorkLocationId > Dms_TenantInfo_Detail.Id
+Ref: Dms_Employee.WorkDepartmentId > Dms_WorkDepartment.Id
+Ref: Dms_Employee.WorkPositionId > Dms_WorkPosition.Id
+Ref: Dms_SystemNotificationUsers.SystemNotificationId > Dms_SystemNotifications.Id
+Ref: Dms_TenantInfo.CityId > Dms_City.Id
+Ref: Dms_TenantInfo.WardId > Dms_Ward.Id
+Ref: Dms_TenantInfo_Detail.TenantInfoId > Dms_TenantInfo.Id
+Ref: Dms_Ward.CityId > Dms_City.Id
+Ref: Dms_Ward.DistrictId > Dms_District.Id
+Ref: Dms_WorkDepartment.ParentId > Dms_WorkDepartment.Id
+Ref: Hrm_Employee_WorkLocation.EmployeeId > Dms_Employee.Id
+Ref: Hrm_Employee_WorkLocation.WorkLocationId > Dms_TenantInfo_Detail.Id
+Ref: HangFire.JobParameter.JobId > HangFire.Job.Id
+Ref: HangFire.State.JobId > HangFire.Job.Id
+Ref: AI_Categories.ParentId > AI_Categories.Id
+Ref: AI_UserGroupMembers.UserGroupId > AI_UserGroups.Id
+Ref: AI_DataPartitions.UserGroupId > AI_UserGroups.Id
+Ref: AI_DataPartitions.TransferredToPartitionId > AI_DataPartitions.Id
+Ref: AI_Folders.PartitionId > AI_DataPartitions.Id
+Ref: AI_Folders.ParentId > AI_Folders.Id
+Ref: AI_PartitionPermissions.UserGroupId > AI_UserGroups.Id
+Ref: AI_PartitionPermissions.PartitionId > AI_DataPartitions.Id
+Ref: AI_PartitionPermissions.FolderId > AI_Folders.Id
+Ref: AI_PartitionPermissions.DocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_AgentConfigs.ModelId > AI_Models.Id
+Ref: AI_Tasks.RetryOfTaskId > AI_Tasks.Id
+Ref: AI_ExecutionLogs.ModelId > AI_Models.Id
+Ref: AI_ExecutionLogs.TaskId > AI_Tasks.Id
+Ref: AI_Backups.TaskId > AI_Tasks.Id
+Ref: AI_KnowledgeDocuments.PartitionId > AI_DataPartitions.Id
+Ref: AI_KnowledgeDocuments.FolderId > AI_Folders.Id
+Ref: AI_KnowledgeDocuments.ImportTaskId > AI_Tasks.Id
+Ref: AI_KnowledgeDocuments.PreviousVersionId > AI_KnowledgeDocuments.Id
+Ref: AI_KnowledgeDocuments.ReplacedByDocId > AI_KnowledgeDocuments.Id
+Ref: AI_KnowledgeDocuments.EmbeddingModelId > AI_Models.Id
+Ref: AI_SourceReferences.DocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_DocumentReviews.SourceDocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_DocumentReviews.TaskId > AI_Tasks.Id
+Ref: AI_DocumentAnalyses.SourceDocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_DocumentAnalyses.TaskId > AI_Tasks.Id
+Ref: AI_ExtractedTasks.TaskId > AI_Tasks.Id
+Ref: AI_ExtractedTasks.SourceDocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_DocumentRoutings.SourceDocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_DocumentRoutings.TaskId > AI_Tasks.Id
+Ref: AI_DocumentDrafts.SavedDocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_DocumentDrafts.TaskId > AI_Tasks.Id
+Ref: AI_ReportDataPoints.ReportSummaryId > AI_ReportSummaries.Id
+Ref: AI_ReportDataPoints.SourceDocumentId > AI_KnowledgeDocuments.Id
+Ref: AI_TemplateVersions.TemplateId > AI_ReportTemplate.Id
+Ref: AI_IntegrationConfigs.TargetPartitionId > AI_DataPartitions.Id
+Ref: AI_IntegrationSyncLogs.IntegrationConfigId > AI_IntegrationConfigs.Id
+Ref: AI_IntegrationSyncLogs.TaskId > AI_Tasks.Id
+
+// ================= Quan hệ logic (không có FK vật lý) =================
+Ref: Dms_Employee.UserId > AbpUsers.Id // logical
+Ref: AI_ChatConversations.UserId > AbpUsers.Id // logical
+Ref: AI_ChatMessages.ExecutionLogId > AI_ExecutionLogs.Id // logical
+Ref: AI_ReportSummaries.TemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_ReportSummaries.TaskId > AI_Tasks.Id // logical
+Ref: AI_Slides.TemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_Slides.TaskId > AI_Tasks.Id // logical
+Ref: AI_ReportTemplate.WorkDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_UserGroups.WorkDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_UserGroups.ManagingDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_UserGroupMembers.UserId > AbpUsers.Id // logical
+Ref: AI_ExtractedTasks.ConfirmedByUserId > AbpUsers.Id // logical
+Ref: AI_DocumentRoutings.ConfirmedByUserId > AbpUsers.Id // logical
+Ref: AI_DataPartitions.OwnerUserId > AbpUsers.Id // logical
+Ref: AI_DataPartitions.WorkDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_PartitionPermissions.UserId > AbpUsers.Id // logical
+Ref: AI_PartitionPermissions.RoleId > AbpRoles.Id // logical
+Ref: AI_PartitionPermissions.WorkDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_Tasks.UserId > AbpUsers.Id // logical
+Ref: AI_Tasks.WorkDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_Tasks.TemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_ExecutionLogs.UserId > AbpUsers.Id // logical
+Ref: AI_ExecutionLogs.ConversationId > AI_ChatConversations.Id // logical
+Ref: AI_ExecutionLogs.TemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_KnowledgeDocuments.ApprovalRequestId > App_ApprovalRequests.Id // logical
+Ref: AI_DocumentReviews.UserId > AbpUsers.Id // logical
+Ref: AI_DocumentReviews.RuleTemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_DocumentReviews.CompareTemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_DocumentAnalyses.UserId > AbpUsers.Id // logical
+Ref: AI_ExtractedTasks.LeadUnitId > Dms_WorkDepartment.Id // logical
+Ref: AI_DocumentRoutings.AiPrimaryUnitId > Dms_WorkDepartment.Id // logical
+Ref: AI_DocumentRoutings.FinalPrimaryUnitId > Dms_WorkDepartment.Id // logical
+Ref: AI_DocumentRoutings.IntegrationConfigId > AI_IntegrationConfigs.Id // logical
+Ref: AI_DocumentDrafts.UserId > AbpUsers.Id // logical
+Ref: AI_DocumentDrafts.TemplateId > AI_ReportTemplate.Id // logical
+Ref: AI_ReportDataPoints.SourceUnitId > Dms_WorkDepartment.Id // logical
+Ref: AI_ReportDataPoints.ResolvedByUserId > AbpUsers.Id // logical
+Ref: AI_ExecutionLogs.MessageId > AI_ChatMessages.Id // logical
+Ref: AI_ExecutionLogs.WorkDepartmentId > Dms_WorkDepartment.Id // logical
+Ref: AI_KnowledgeDocuments.VersionGroupId > AI_KnowledgeDocuments.Id // logical
+Ref: AI_KnowledgeDocuments.MetadataConfirmedByUserId > AbpUsers.Id // logical
+Ref: AI_SystemAlerts.HandledByUserId > AbpUsers.Id // logical
+Ref: AI_ConfigVersions.AppliedByUserId > AbpUsers.Id // logical
+Ref: AI_TemplateVersions.PublishedByUserId > AbpUsers.Id // logical

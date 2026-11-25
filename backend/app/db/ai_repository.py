@@ -191,8 +191,20 @@ class AIRepository:
         if kind:
             terms.append(table.c.TemplateType == kind)
         rows = await self.rows("ReportTemplate", *terms)
-        # Chính sách mẫu có phạm vi riêng cần được triển khai trước khi mở cho người khác.
-        return [dict(r) for r in rows if self.principal.is_admin or not r["UsageScopeJson"]]
+        if self.principal.is_admin:
+            return [dict(r) for r in rows]
+        from app.services.template_access import allows_template
+        employee = self.tables["Dms_Employee"]
+        departments = set((await self.conn.execute(select(employee.c.WorkDepartmentId).where(
+            employee.c.TenantId == self.principal.tenant_id, employee.c.UserId == self.user_id,
+            employee.c.IsDeleted == False))).scalars())
+        member, group = self.table("UserGroupMembers"), self.table("UserGroups")
+        groups = set((await self.conn.execute(select(group.c.Id).join(
+            member, member.c.UserGroupId == group.c.Id).where(
+                self.scope(group), self.scope(member), group.c.IsActive == True,
+                group.c.Status == "Active", member.c.UserId == self.user_id,
+                member.c.LeftTime.is_(None)))).scalars())
+        return [dict(r) for r in rows if allows_template(r["UsageScopeJson"], departments, groups)]
 
     async def template_version(self, template, version_no=None):
         table = self.table("TemplateVersions")
