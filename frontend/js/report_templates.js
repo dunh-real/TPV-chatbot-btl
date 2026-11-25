@@ -94,10 +94,13 @@
     button.disabled = true;
     var signature = JSON.stringify(entry.mapping);
     try {
-      await API.templateConfirm({ file_id: entry.file_id, mapping: entry.mapping });
+      var res = await API.templateConfirm({ file_id: entry.file_id, mapping: entry.mapping });
       // Sửa trong lúc đang gửi phải xác nhận lại; không dùng mapping cũ.
       if (state === entry && signature === JSON.stringify(currentMapping())) {
-        entry.confirmed = true; message('Mẫu đã xác nhận. Chọn nguồn, nhập yêu cầu rồi bấm Soạn báo cáo.');
+        entry.confirmed = true;
+        var extraMsg = res && res.is_new ? ' (Đã lưu vào CSDL để tất cả mọi người cùng dùng)' : '';
+        message('Mẫu đã xác nhận' + extraMsg + '. Chọn nguồn, nhập yêu cầu rồi bấm Soạn báo cáo.');
+        if (typeof catalog === 'function') catalog();
       }
     } catch (e) { if (state === entry) message(e.message, true); }
     finally { button.disabled = false; }

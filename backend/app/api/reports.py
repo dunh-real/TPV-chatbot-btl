@@ -54,19 +54,23 @@ async def analyze_template(request: TemplateAnalyzeRequest):
 
 @router.post("/templates/confirm", dependencies=[Depends(quyen.can_quyen("Ai.ReportDrafting", "xác nhận mẫu"))])
 async def confirm_template(request: TemplateConfirmRequest):
-    from app.services.template_analyzer import confirm
-    return await confirm(request.file_id, request.mapping, store_file=True)
+    from app.services.template_analyzer import confirm, register_template_if_not_exists
+    result = await confirm(request.file_id, request.mapping, store_file=True)
+    saved = await register_template_if_not_exists(request.file_id, request.mapping)
+    result.update(saved)
+    return result
 
 
 @router.post("/templates/preview", response_model=DraftResponse,
              dependencies=[Depends(quyen.can_quyen("Ai.ReportDrafting", "xem thử báo cáo theo mẫu"))])
 async def preview_template(request: TemplatePreviewRequest):
-    """Bản nháp thử từ mẫu upload: không tạo mẫu, tác vụ hoặc sản phẩm MSSQL."""
+    """Bản nháp thử từ mẫu upload: tự động lưu mẫu vào CSDL nếu chưa có để mọi người cùng dùng."""
     from app.db.business_types import TemplateInfo
-    from app.services.template_analyzer import confirm, template_path
+    from app.services.template_analyzer import confirm, template_path, register_template_if_not_exists
     from app.services.report_fields import draft_from_mapping
     confirmed = await confirm(request.file_id, request.mapping)
-    template = TemplateInfo(ma_template="PREVIEW", ten_bao_cao="Bản nháp theo mẫu tải lên",
+    saved = await register_template_if_not_exists(request.file_id, request.mapping)
+    template = TemplateInfo(ma_template=saved.get("code", "PREVIEW"), ten_bao_cao=saved.get("name", "Bản nháp theo mẫu tải lên"),
         file_path=str(template_path(request.file_id)), fields=confirmed["structure_json"])
     result = await draft_from_mapping(request.request, None, None, request.inputs,
         request.nguon, request.source_file_id, request.doc_ids, None, [], template=template,

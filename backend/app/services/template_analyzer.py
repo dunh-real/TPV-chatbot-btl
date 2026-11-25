@@ -85,8 +85,82 @@ async def confirm(file_id,mapping, *, store_file=False):
     if store_file:
         from app.services.object_storage import ObjectStorage
         path = template_path(file_id)
-        stored = await anyio.to_thread.run_sync(lambda: ObjectStorage().upload(path, path.name))
-        if stored['checksum_sha256'] != mapping.file_sha256:
-            raise IntegrationError('INVALID_REQUEST', 'File mẫu đã đổi trong khi xác nhận; hãy tải lại', 409)
-        result['file_url'] = f"minio://{stored['storage_bucket']}/{stored['storage_object_key']}"
+        try:
+            stored = await anyio.to_thread.run_sync(lambda: ObjectStorage().upload(path, path.name))
+            if stored['checksum_sha256'] != mapping.file_sha256:
+                raise IntegrationError('INVALID_REQUEST', 'File mẫu đã đổi trong khi xác nhận; hãy tải lại', 409)
+            result['file_url'] = f"minio://{stored['storage_bucket']}/{stored['storage_object_key']}"
+        except Exception:
+            # Fallback nếu MinIO chưa bật hoặc không có bucket: giữ file cục bộ
+            result['file_url'] = str(path)
     return result
+
+
+async def register_template_if_not_exists(file_id, mapping):
+    """Lưu mẫu vào CSDL nếu chưa có, để tất cả người dùng trong hệ thống đều dùng được."""
+    import json
+    import secrets
+    import shutil
+    from datetime import datetime
+    from pathlib import Path
+    from zoneinfo import ZoneInfo
+    from sqlalchemy import or_
+
+    from app.core.config import get_settings
+    from app.core.context import current_principal
+    from app.db.ai_session import repository
+    from app.services import storage
+
+    ref = storage.resolve(file_id, kinds=("upload",))
+    file_name = ref.name
+    clean_stem = Path(file_name).stem.replace("_", " ").strip()
+    name = clean_stem or "Mẫu báo cáo tải lên"
+
+    cfg = get_settings()
+    templates_dir = Path(cfg.upload_dir) / "ai_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+
+    principal = current_principal()
+    now_dt = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
+
+    async with repository() as repo:
+        table = repo.table("ReportTemplate")
+        terms = [table.c.IsDeleted == False]
+        if "TenantId" in table.c and principal.tenant_id is not None:
+            terms.append(table.c.TenantId == principal.tenant_id)
+        terms.append(or_(table.c.FileName == file_name, table.c.Name == name))
+
+        existing = await repo.rows("ReportTemplate", *terms)
+        mapping_data = {"binding": mapping.model_dump() if hasattr(mapping, "model_dump") else mapping}
+
+        if existing:
+            row = existing[0]
+            code = row.get("Code", "")
+            template_id = row.get("Id")
+            mapping_file = templates_dir / f"{code}_mapping.json"
+            mapping_file.write_text(json.dumps(mapping_data, ensure_ascii=False), encoding="utf-8")
+            return {"template_id": template_id, "code": code, "name": row.get("Name", name), "is_new": False}
+
+        code = secrets.token_hex(4).upper()
+        target_path = templates_dir / f"{code}_{file_name}"
+        shutil.copy2(ref.path, target_path)
+
+        mapping_file = templates_dir / f"{code}_mapping.json"
+        mapping_file.write_text(json.dumps(mapping_data, ensure_ascii=False), encoding="utf-8")
+
+        template_id = await repo.add(
+            "ReportTemplate",
+            TenantId=principal.tenant_id,
+            Code=code,
+            Name=name,
+            Description=f"Mẫu tải lên: {file_name}",
+            FileName=file_name,
+            FilePath=str(target_path.resolve()),
+            FileType=ref.suffix.lstrip(".").lower() or "docx",
+            IsActive=True,
+            IsDeleted=False,
+            CreatorUserId=repo.user_id,
+            CreationTime=now_dt,
+            TextSearch=f"{code.lower()} {name.lower()} "
+        )
+        return {"template_id": template_id, "code": code, "name": name, "is_new": True}

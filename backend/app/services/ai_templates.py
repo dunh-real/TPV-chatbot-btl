@@ -26,6 +26,8 @@ def template_fields(fields_json, structure_json):
 
 
 async def list_templates(kind=None):
+    cfg = get_settings()
+    mapping_dir = Path(cfg.upload_dir) / "ai_templates"
     async with repository() as repo:
         rows = await repo.templates(kind)
         result = []
@@ -33,7 +35,15 @@ async def list_templates(kind=None):
             version = await repo.template_version(row)
             if version is None:
                 continue
-            fields = template_fields(version.get("FieldsJson"), version.get("StructureJson"))
+            code = row.get("Code", "")
+            mapping_file = mapping_dir / f"{code}_mapping.json"
+            struct_json = version.get("StructureJson")
+            if not struct_json and mapping_file.is_file():
+                try:
+                    struct_json = mapping_file.read_text(encoding="utf-8")
+                except Exception:
+                    pass
+            fields = template_fields(version.get("FieldsJson"), struct_json)
             template = TemplateInfo(ma_template=row.get("Code", ""), ten_bao_cao=row.get("Name", ""),
                 loai_bao_cao=row.get("TemplateType") or row.get("FileType") or "General", mo_ta=row.get("Description") or "",
                 file_path=version.get("FileUrl") or version.get("FilePath") or "", fields=fields)
@@ -44,11 +54,19 @@ async def list_templates(kind=None):
 
 
 async def materialize(template):
-    url = urlsplit(template.file_path or "")
+    if not template.file_path:
+        return template
+    # Nếu file đã tồn tại cục bộ trên đĩa thì dùng trực tiếp
+    p = Path(template.file_path)
+    if p.is_file():
+        return template
+    url = urlsplit(template.file_path)
     if url.scheme not in {"s3", "minio"}:
-        # Không tự tải URL bên ngoài hoặc mở đường dẫn lấy từ DB.
-        if template.file_path:
-            raise ValueError("File mẫu cần tham chiếu s3://bucket/object trên MinIO")
+        cfg = get_settings()
+        local_cand = Path(cfg.upload_dir) / "ai_templates" / Path(template.file_path).name
+        if local_cand.is_file():
+            template.file_path = str(local_cand)
+            return template
         return template
     cfg = get_settings()
     bucket, key = parse_reference(template.file_path)
@@ -76,14 +94,25 @@ async def get_version(template_id, version_no):
     from app.services.integration_errors import IntegrationError
     if template_id <= 0 or version_no <= 0:
         raise IntegrationError('INVALID_REQUEST', 'ID mẫu và phiên bản phải lớn hơn 0', 422)
+    cfg = get_settings()
+    mapping_dir = Path(cfg.upload_dir) / "ai_templates"
     async with repository() as repo:
         row = next((r for r in await repo.templates() if r["Id"] == template_id), None)
         version = await repo.template_version(row, version_no) if row else None
         if not version:
             raise IntegrationError("INVALID_REQUEST", "Không tìm thấy phiên bản mẫu đã công bố trong phạm vi quyền", 404)
+        code = row.get("Code", "")
+        mapping_file = mapping_dir / f"{code}_mapping.json"
+        struct_json = version.get("StructureJson")
+        if not struct_json and mapping_file.is_file():
+            try:
+                struct_json = mapping_file.read_text(encoding="utf-8")
+            except Exception:
+                pass
         template = TemplateInfo(ma_template=row["Code"], ten_bao_cao=row["Name"],
-            file_path=version["FileUrl"], fields=template_fields(version["FieldsJson"], version["StructureJson"]),
-            ai_id=template_id, ai_version=version["VersionNo"], ai_hash=version["FileHashSha256"])
+            file_path=version.get("FileUrl") or version.get("FilePath") or "",
+            fields=template_fields(version.get("FieldsJson"), struct_json),
+            ai_id=template_id, ai_version=version.get("VersionNo", 1), ai_hash=version.get("FileHashSha256", ""))
     binding(template)
     return await materialize(template)
 
