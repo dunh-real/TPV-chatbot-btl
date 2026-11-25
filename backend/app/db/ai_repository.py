@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, case, func, insert, or_, select, update
+from sqlalchemy import and_, case, delete, func, insert, or_, select, update
 
 from app.core.context import current_principal
 
@@ -47,7 +47,9 @@ class AIRepository:
                 raise TimeoutError("Không lấy được khóa ghi AI")
 
     def scope(self, table, owned=False):
-        terms = [table.c.TenantId == self.principal.tenant_id, table.c.IsDeleted == False]
+        terms = [table.c.TenantId == self.principal.tenant_id]
+        if "IsDeleted" in table.c:
+            terms.append(table.c.IsDeleted == False)
         if owned and table.name == "AI_KnowledgeDocuments":
             terms.append(self.document_scope(table))
         elif owned and not self.principal.is_admin:
@@ -85,14 +87,18 @@ class AIRepository:
         table = self.table(name)
         audit = dict(TenantId=self.principal.tenant_id, CreatorUserId=self.user_id,
                      CreationTime=now(), IsDeleted=False)
-        values = {**{k: v for k, v in audit.items() if k in table.c}, **values}
-        return (await self.conn.execute(insert(table).values(**values).returning(table.c.Id))).scalar_one()
+        merged = {**{k: v for k, v in audit.items() if k in table.c}, **values}
+        filtered = {k: v for k, v in merged.items() if k in table.c}
+        return (await self.conn.execute(insert(table).values(**filtered).returning(table.c.Id))).scalar_one()
 
     async def patch(self, name, row_id, **values):
         table = self.table(name)
         if "LastModificationTime" in table.c:
             values.update(LastModificationTime=now(), LastModifierUserId=self.user_id)
-        await self.conn.execute(update(table).where(table.c.Id == row_id, self.scope(table, True)).values(**values))
+        filtered = {k: v for k, v in values.items() if k in table.c}
+        if not filtered:
+            return
+        await self.conn.execute(update(table).where(table.c.Id == row_id, self.scope(table, True)).values(**filtered))
 
     async def rows(self, name, *terms, owned=False):
         table = self.table(name)
@@ -187,29 +193,50 @@ class AIRepository:
 
     async def templates(self, kind=None):
         table = self.table("ReportTemplate")
-        terms = [table.c.IsActive == True, table.c.Status == "Published"]
-        if kind:
+        terms = []
+        if "IsActive" in table.c:
+            terms.append(table.c.IsActive == True)
+        if "Status" in table.c:
+            terms.append(table.c.Status == "Published")
+        if kind and "TemplateType" in table.c:
             terms.append(table.c.TemplateType == kind)
         rows = await self.rows("ReportTemplate", *terms)
         if self.principal.is_admin:
             return [dict(r) for r in rows]
         from app.services.template_access import allows_template
-        employee = self.tables["Dms_Employee"]
-        departments = set((await self.conn.execute(select(employee.c.WorkDepartmentId).where(
-            employee.c.TenantId == self.principal.tenant_id, employee.c.UserId == self.user_id,
-            employee.c.IsDeleted == False))).scalars())
-        member, group = self.table("UserGroupMembers"), self.table("UserGroups")
-        groups = set((await self.conn.execute(select(group.c.Id).join(
-            member, member.c.UserGroupId == group.c.Id).where(
-                self.scope(group), self.scope(member), group.c.IsActive == True,
-                group.c.Status == "Active", member.c.UserId == self.user_id,
-                member.c.LeftTime.is_(None)))).scalars())
-        return [dict(r) for r in rows if allows_template(r["UsageScopeJson"], departments, groups)]
+        employee = self.tables.get("Dms_Employee")
+        departments = set()
+        if employee is not None:
+            terms_emp = [employee.c.UserId == self.user_id]
+            if "TenantId" in employee.c:
+                terms_emp.append(employee.c.TenantId == self.principal.tenant_id)
+            if "IsDeleted" in employee.c:
+                terms_emp.append(employee.c.IsDeleted == False)
+            departments = set((await self.conn.execute(select(employee.c.WorkDepartmentId).where(*terms_emp))).scalars())
+        member, group = self.tables.get("AI_UserGroupMembers"), self.tables.get("AI_UserGroups")
+        groups = set()
+        if member is not None and group is not None:
+            terms_group = [self.scope(group), self.scope(member), member.c.UserId == self.user_id]
+            if "IsActive" in group.c:
+                terms_group.append(group.c.IsActive == True)
+            if "Status" in group.c:
+                terms_group.append(group.c.Status == "Active")
+            if "LeftTime" in member.c:
+                terms_group.append(member.c.LeftTime.is_(None))
+            groups = set((await self.conn.execute(select(group.c.Id).join(
+                member, member.c.UserGroupId == group.c.Id).where(*terms_group))).scalars())
+        return [dict(r) for r in rows if allows_template(r.get("UsageScopeJson", "{}"), departments, groups)]
 
     async def template_version(self, template, version_no=None):
+        if "AI_TemplateVersions" not in self.tables:
+            return dict(template)
         table = self.table("TemplateVersions")
-        rows = await self.rows("TemplateVersions", table.c.TemplateId == template["Id"],
-            table.c.VersionNo == (version_no or template["CurrentVersionNo"]), table.c.Status == "Published")
+        terms = [table.c.TemplateId == template["Id"]]
+        if "VersionNo" in table.c:
+            terms.append(table.c.VersionNo == (version_no or template.get("CurrentVersionNo", 1)))
+        if "Status" in table.c:
+            terms.append(table.c.Status == "Published")
+        rows = await self.rows("TemplateVersions", *terms)
         return dict(rows[0]) if rows else None
 
     async def conversation(self, key, create=False):
@@ -244,12 +271,25 @@ class AIRepository:
             await self.add("ChatMessages", ConversationId=conversation_id, Message=content,
                            IsFromUser=role == "user", NoEvidence=False)
         table = self.table("ChatConversations")
-        await self.conn.execute(update(table).where(table.c.Id == conversation_id, self.scope(table),
-            table.c.UserId == self.user_id).values(LastMessageTime=now(), MessageCount=table.c.MessageCount+len(turns)))
+        update_vals = {}
+        if "LastMessageTime" in table.c:
+            update_vals["LastMessageTime"] = now()
+        if "MessageCount" in table.c:
+            update_vals["MessageCount"] = table.c.MessageCount + len(turns)
+        if update_vals:
+            await self.conn.execute(update(table).where(table.c.Id == conversation_id, self.scope(table),
+                table.c.UserId == self.user_id).values(**update_vals))
         return len(turns)
 
     async def clear_history(self, key):
         conversation_id = await self.conversation(key)
         if conversation_id is not None:
-            await self.patch("ChatConversations", conversation_id, IsDeleted=True,
-                             DeletionTime=now(), DeleterUserId=self.user_id)
+            table = self.table("ChatConversations")
+            if "IsDeleted" in table.c:
+                await self.patch("ChatConversations", conversation_id, IsDeleted=True,
+                                 DeletionTime=now(), DeleterUserId=self.user_id)
+            else:
+                msg_table = self.table("ChatMessages")
+                if msg_table is not None and "ConversationId" in msg_table.c:
+                    await self.conn.execute(delete(msg_table).where(msg_table.c.ConversationId == conversation_id))
+                await self.conn.execute(delete(table).where(table.c.Id == conversation_id, self.scope(table, True)))

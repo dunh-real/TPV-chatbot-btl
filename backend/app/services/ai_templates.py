@@ -33,12 +33,12 @@ async def list_templates(kind=None):
             version = await repo.template_version(row)
             if version is None:
                 continue
-            fields = template_fields(version["FieldsJson"], version["StructureJson"])
-            template = TemplateInfo(ma_template=row["Code"], ten_bao_cao=row["Name"],
-                loai_bao_cao=row["TemplateType"], mo_ta=row["Description"] or "",
-                file_path=version["FileUrl"], fields=fields)
-            template.ai_id, template.ai_version = row["Id"], version["VersionNo"]
-            template.ai_hash = version["FileHashSha256"]
+            fields = template_fields(version.get("FieldsJson"), version.get("StructureJson"))
+            template = TemplateInfo(ma_template=row.get("Code", ""), ten_bao_cao=row.get("Name", ""),
+                loai_bao_cao=row.get("TemplateType") or row.get("FileType") or "General", mo_ta=row.get("Description") or "",
+                file_path=version.get("FileUrl") or version.get("FilePath") or "", fields=fields)
+            template.ai_id, template.ai_version = row.get("Id"), version.get("VersionNo", 1)
+            template.ai_hash = version.get("FileHashSha256", "")
             result.append(template)
         return result
 

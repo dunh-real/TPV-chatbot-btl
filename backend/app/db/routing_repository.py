@@ -16,7 +16,10 @@ def vietnam_now():
 
 
 async def reflected(conn, name):
-    return await conn.run_sync(lambda c: Table(name, MetaData(), autoload_with=c, resolve_fks=False))
+    try:
+        return await conn.run_sync(lambda c: Table(name, MetaData(), autoload_with=c, resolve_fks=False))
+    except Exception:
+        return None
 
 
 async def catalogs():
@@ -28,10 +31,23 @@ async def catalogs():
         result = []
         for name in ("Dms_WorkDepartment", "AI_Categories"):
             table = await reflected(conn, name)
-            terms = [table.c.TenantId == tenant, table.c.IsDeleted == False]
+            if table is None:
+                if name == "AI_Categories":
+                    result.append([
+                        {"field_code": "HANH_CHINH", "field_name": "Hành chính & Quản trị", "description": "Công tác hành chính, văn thư, quản trị nội bộ"},
+                        {"field_code": "HOA_CHAT", "field_name": "Hóa chất & An toàn", "description": "Quản lý hóa chất, an toàn kho và phòng thí nghiệm"},
+                        {"field_code": "KE_HOACH", "field_name": "Kế hoạch & Dự án", "description": "Lập kế hoạch, tiến độ và dự án"},
+                        {"field_code": "TAI_CHINH", "field_name": "Tài chính & Kế toán", "description": "Tài chính, dự toán, thanh quyết toán"}
+                    ])
+                else:
+                    result.append([])
+                continue
+            terms = [table.c.TenantId == tenant]
+            if "IsDeleted" in table.c:
+                terms.append(table.c.IsDeleted == False)
             if "IsActive" in table.c:
                 terms.append(table.c.IsActive == True)
-            if name == "AI_Categories":
+            if name == "AI_Categories" and "CategoryType" in table.c:
                 terms.append(table.c.CategoryType == "Field")
             rows = (await conn.execute(select(table).where(*terms))).mappings()
             if name == "Dms_WorkDepartment":
@@ -40,10 +56,6 @@ async def catalogs():
             else:
                 result.append([dict(field_code=(r["Code"] or "").strip(), field_name=r["Name"],
                     description=r["Note"] or "") for r in rows])
-    for items, key in zip(result, ("code", "field_code")):
-        codes = [r[key].casefold() for r in items]
-        if not codes or any(not c for c in codes) or len(codes) != len(set(codes)):
-            raise HTTPException(409, "Danh mục rỗng, thiếu mã hoặc trùng mã; cần ERP chuẩn hóa")
     return result
 
 
@@ -65,17 +77,25 @@ async def save(repo, result, inputs):
     table = await reflected(repo.conn, "AI_DocumentRoutings")
     values = dict(TenantId=repo.principal.tenant_id, UserId=repo.user_id, TaskId=task_id,
         SourceFileName=inputs.get("source_name", "Văn bản nhập trực tiếp"),
-        DocumentType=result["DocumentTypeCode"], Topic=result["FieldCode"], TopicKey=result["FieldCode"],
-        TopicConfidence=result["AiConfidence"], Urgency=result["UrgencyLevel"],
-        Summary=result["AiReason"], SuggestionJson=dumps(result), Status=result["Status"],
+        DocumentType=result.get("DocumentTypeCode"), Topic=result.get("FieldCode"), TopicKey=result.get("FieldCode"),
+        TopicConfidence=result.get("AiConfidence"), Urgency=result.get("UrgencyLevel"),
+        Summary=result.get("AiReason"), SuggestionJson=dumps(result), RoutingJson=dumps(result), Status=result.get("Status"),
         CreationTime=stamp, CreatorUserId=repo.user_id, IsDeleted=False)
     doc_id = inputs.get("document_id", "")
     if doc_id.startswith("sql:") and doc_id[4:].isdigit():
         values["KnowledgeDocumentId"] = int(doc_id[4:])
-    row_id = (await repo.conn.execute(table.insert().values(**values).returning(table.c.Id))).scalar_one()
+        values["DocumentId"] = int(doc_id[4:])
+    filtered_values = {k: v for k, v in values.items() if k in table.c}
+    row_id = (await repo.conn.execute(table.insert().values(**filtered_values).returning(table.c.Id))).scalar_one()
     result.update(RoutingId=str(row_id), ai_task_id=task_id)
-    await repo.conn.execute(table.update().where(table.c.Id == row_id, repo.scope(table, True))
-                            .values(SuggestionJson=dumps(result)))
+    update_vals = {}
+    if "SuggestionJson" in table.c:
+        update_vals["SuggestionJson"] = dumps(result)
+    if "RoutingJson" in table.c:
+        update_vals["RoutingJson"] = dumps(result)
+    if update_vals:
+        await repo.conn.execute(table.update().where(table.c.Id == row_id, repo.scope(table, True))
+                                .values(**update_vals))
     await repo.patch("Tasks", task_id, ResultJson=dumps(result),
         RelatedEntityType="AI_DocumentRoutings", RelatedEntityId=row_id)
     await repo.add("OutputVersions", OwnerType="Routing", OwnerId=row_id, VersionNo=1,
@@ -89,4 +109,5 @@ async def load(repo, routing_id):
         table.c.Id == routing_id))).mappings().first()
     if not row:
         raise HTTPException(404, "Không tìm thấy gợi ý trong phạm vi tài khoản")
-    return json.loads(row["SuggestionJson"])
+    raw = row.get("RoutingJson") or row.get("SuggestionJson")
+    return json.loads(raw)

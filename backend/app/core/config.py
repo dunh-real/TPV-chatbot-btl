@@ -21,6 +21,16 @@ class Settings(BaseSettings):
     app_name: str = "TPV Chatbot Backend"
     debug: bool = False
     log_level: str = "INFO"
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug(cls, v):
+        if isinstance(v, str):
+            if v.lower() in ("release", "prod", "production", "false", "0", "no", "off"):
+                return False
+            if v.lower() in ("debug", "dev", "development", "true", "1", "yes", "on"):
+                return True
+        return bool(v)
     admin_api_key: str = ""
     admin_model_hosts: list[str] = ["localhost", "127.0.0.1"]
     agent_config_dir: str = "./data/agent_configs"

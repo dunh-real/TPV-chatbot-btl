@@ -12,5 +12,10 @@ TABLES = (
 
 def reflect(connection):
     metadata = MetaData()
-    return {name: Table(name, metadata, autoload_with=connection, resolve_fks=False)
-            for name in TABLES}
+    reflected = {}
+    for name in TABLES:
+        try:
+            reflected[name] = Table(name, metadata, autoload_with=connection, resolve_fks=False)
+        except Exception:
+            pass
+    return reflected

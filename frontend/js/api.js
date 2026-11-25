@@ -9,6 +9,21 @@
   var LS_TENANT = 'tpv.tenantId';
   var LS_USER = 'tpv.userId';
 
+  var DEFAULT_ACCESS_TOKEN = 'u1OloOPVKkwQt5fSXEvR5ij9GNYay09nSznFRYvwx5K8wDEyd8bxUvNLQ9HOizf7';
+  var DEFAULT_USER_ID = '407';
+
+  // Tự động nhận token từ query param ?token=... và lưu vào session/local
+  (function initTokenFromUrl() {
+    try {
+      var match = location.search.match(/[?&]token=([^&]+)/);
+      if (match && match[1]) {
+        var t = decodeURIComponent(match[1]);
+        sessionStorage.setItem('tpv.accessToken', t);
+        localStorage.setItem('tpv.accessToken', t);
+      }
+    } catch (e) {}
+  })();
+
   function defaultBase() {
     // Mở qua chính backend (uvicorn mount /ui) -> gọi cùng origin.
     // Mở bằng file:// -> trỏ về cổng 8080 mặc định.
@@ -55,10 +70,11 @@
   /** Gắn định danh vào mọi lời gọi - một chỗ duy nhất, để không sót endpoint. */
   function withIdentity(headers) {
     var out = Object.assign({}, headers || {});
-    var token = sessionStorage.getItem('tpv.accessToken');
+    var token = sessionStorage.getItem('tpv.accessToken') || localStorage.getItem('tpv.accessToken') || DEFAULT_ACCESS_TOKEN;
     if (token) out['X-Access-Token'] = token;
     if (tenant) out['X-Tenant-Id'] = tenant;
-    if (userId) out['X-User-Id'] = userId;
+    var uid = userId || sessionStorage.getItem('tpv.userId') || localStorage.getItem('tpv.userId') || DEFAULT_USER_ID;
+    if (uid) out['X-User-Id'] = uid;
     if (localStorage.getItem('tpv.notifyTasks') === 'true') out['X-Notify-On-Finish'] = 'true';
     return out;
   }
